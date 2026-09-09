@@ -1,13 +1,6 @@
 import CancelIcon from '@mui/icons-material/Cancel';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Paper,
-  Stack,
-  Tooltip,
-} from '@mui/material';
+import { Box, Button, CircularProgress, Paper, Stack, Tooltip } from '@mui/material';
 import { useState } from 'react';
 
 import type { GameStatus } from '../../constants/gameStatus.ts';
@@ -122,9 +115,7 @@ export function HostGameControls({
                       px: { xs: 3, sm: 5 },
                       width: { xs: '100%', sm: 'auto' },
                       bgcolor: hasEnoughPlayers ? '#00629B' : undefined,
-                      boxShadow: hasEnoughPlayers
-                        ? '0 8px 20px rgba(0, 98, 155, 0.35)'
-                        : 'none',
+                      boxShadow: hasEnoughPlayers ? '0 8px 20px rgba(0, 98, 155, 0.35)' : 'none',
                       '&:hover': {
                         bgcolor: '#004F7D',
                       },

@@ -53,7 +53,9 @@ export const hostGameService = {
   },
 
   async endQuestion(gameId: string): Promise<QuestionResultsResponse> {
-    const response = await axiosClient.post<QuestionResultsResponse>(`/games/${gameId}/end-question`);
+    const response = await axiosClient.post<QuestionResultsResponse>(
+      `/games/${gameId}/end-question`,
+    );
     return response.data;
   },
 

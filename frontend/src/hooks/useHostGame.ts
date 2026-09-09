@@ -1,9 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  type HostGameStateResponse,
-  hostGameService,
-} from '../api/hostGameService.ts';
+import { type HostGameStateResponse, hostGameService } from '../api/hostGameService.ts';
 import type {
   GameParticipantResponse,
   HostQuestionResponse,

@@ -125,11 +125,7 @@ export function HostGamePage() {
   const isFinished = gameState.status === 'Finished';
 
   return (
-    <GameLayout
-      quizTitle={gameState.quizTitle}
-      gamePin={gameState.pin}
-      isGameActive={!isFinished}
-    >
+    <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
       <MetadataManager title={`${pageTitle} - Kahoot`} noIndex />
 
       <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 8 }}>

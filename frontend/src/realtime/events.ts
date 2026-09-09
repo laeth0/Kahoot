@@ -1,10 +1,5 @@
 export type GameStatus =
-  | 'Created'
-  | 'Lobby'
-  | 'QuestionActive'
-  | 'QuestionResults'
-  | 'Leaderboard'
-  | 'Finished';
+  'Created' | 'Lobby' | 'QuestionActive' | 'QuestionResults' | 'Leaderboard' | 'Finished';
 
 export interface RealtimeError {
   code: string;

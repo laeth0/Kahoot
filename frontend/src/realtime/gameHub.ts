@@ -19,9 +19,7 @@ export function createGameHubConnection(requireHostAuth = false): HubConnection 
   const builder = new HubConnectionBuilder()
     .withUrl(hubUrl, {
       transport: HttpTransportType.WebSockets | HttpTransportType.LongPolling,
-      accessTokenFactory: requireHostAuth
-        ? () => authService.getAccessToken() ?? ''
-        : undefined,
+      accessTokenFactory: requireHostAuth ? () => authService.getAccessToken() ?? '' : undefined,
     })
     .withAutomaticReconnect({
       nextRetryDelayInMilliseconds: (retryContext) => {

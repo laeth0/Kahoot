@@ -1,13 +1,6 @@
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import SearchIcon from '@mui/icons-material/Search';
-import {
-  Box,
-  Card,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Box, Card, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
 
 import type { GameParticipantResponse } from '../../realtime/events.ts';

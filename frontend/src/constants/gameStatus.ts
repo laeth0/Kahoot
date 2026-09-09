@@ -1,10 +1,5 @@
 export type GameStatus =
-  | 'Created'
-  | 'Lobby'
-  | 'QuestionActive'
-  | 'QuestionResults'
-  | 'Leaderboard'
-  | 'Finished';
+  'Created' | 'Lobby' | 'QuestionActive' | 'QuestionResults' | 'Leaderboard' | 'Finished';
 
 export const GAME_PHASES: { id: GameStatus; label: string }[] = [
   { id: 'Lobby', label: 'Lobby' },

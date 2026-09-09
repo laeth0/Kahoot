@@ -1,14 +1,7 @@
 import CloseIcon from '@mui/icons-material/Close';
 import PersonIcon from '@mui/icons-material/Person';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import {
-  Avatar,
-  Box,
-  IconButton,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import { memo } from 'react';
 
 import type { GameParticipantResponse } from '../../realtime/events.ts';

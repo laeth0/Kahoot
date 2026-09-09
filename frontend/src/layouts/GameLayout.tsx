@@ -156,7 +156,9 @@ export function GameLayout({
                 </Box>
               )}
 
-              <Tooltip title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen (Projector Mode)'}>
+              <Tooltip
+                title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen (Projector Mode)'}
+              >
                 <IconButton
                   onClick={toggleFullscreen}
                   color="inherit"

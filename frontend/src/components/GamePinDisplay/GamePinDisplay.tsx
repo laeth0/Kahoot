@@ -23,8 +23,12 @@ export interface GamePinDisplayProps {
 export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const joinUrl = typeof window !== 'undefined' ? `${window.location.origin}/join?pin=${pin}` : `/join?pin=${pin}`;
-  const displayHost = typeof window !== 'undefined' ? `${window.location.host}/join` : 'our-site/join';
+  const joinUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/join?pin=${pin}`
+      : `/join?pin=${pin}`;
+  const displayHost =
+    typeof window !== 'undefined' ? `${window.location.host}/join` : 'our-site/join';
 
   const handleCopyPin = async () => {
     try {
