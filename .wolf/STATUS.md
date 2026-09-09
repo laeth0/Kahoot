@@ -42,18 +42,39 @@ budget_tokens: 1000
   - **Quality Gates:** 0 lint errors (`eslint .`), 100% Prettier compliant, 0 TypeScript build errors (`tsc -b && vite build`).
   - **E2E Browser Verification:** Automated verification with recorded video (`host_quiz_management_flow_1788973051046.webp`) covering login, quiz creation, question authoring, checklist validation, quiz publishing, and library status.
 
+- **Frontend Phase 3: Host Game Setup & Lobby at 500-player scale (Completed & Verified):**
+  - **Zero Comments Constraint:** 100% enforced across all Phase 3 frontend code.
+  - **SignalR Realtime Infrastructure:**
+    - `src/realtime/events.ts`: Strict TypeScript definitions for all hub payloads matching `IGameClient` and `RealtimeResponse<T>`.
+    - `src/realtime/gameHub.ts`: Factory for `/hubs/game` with host JWT authorization and automatic reconnection policy.
+    - `src/hooks/useGameHubConnection.ts`: Lifecycle hook (`connecting`, `connected`, `reconnecting`, `disconnected`) without reactive ref render issues.
+    - `src/hooks/useHostGame.ts`: Host controller hook featuring high-velocity join batching (`150ms` throttle), optimistic and real-time state synchronization, double-click protection, and participant management.
+    - `src/constants/gameStatus.ts`: Resilient normalization handling both integer and string backend game status representations (`0/Created`, `1/Lobby`, `2/QuestionActive`, `3/QuestionResults`, `4/Leaderboard`, `5/Finished`).
+  - **Projector-First Lobby Components:**
+    - `GameLayout` (`src/layouts/GameLayout.tsx`): Full-viewport projector-first layout with fullscreen toggle, live PIN badge, and game leave confirmation.
+    - `ConnectionStatusBanner` (`src/components/ConnectionStatusBanner/`): Live connectivity banner with manual reconnect action.
+    - `GamePinDisplay` (`src/components/GamePinDisplay/`): Projector-scale 6-digit Game PIN display, join instructions, and one-click copy actions with feedback toasts.
+    - `PlayerCountBadge` (`src/components/PlayerCountBadge/`): High-visibility participant counter with real-time count updates.
+    - `ParticipantTile` (`src/components/ParticipantTile/`): Participant card with deterministic avatar styling, nickname truncation, online indicator, and kick action.
+    - `ParticipantGrid` (`src/components/ParticipantGrid/`): Responsive, windowed participant grid with empty state, instant search filtering, and kick confirmation dialog.
+    - `GamePhaseIndicator` (`src/components/GamePhaseIndicator/`): Stepper indicating active and upcoming game phases.
+    - `HostGameControls` (`src/components/HostGameControls/`): Sticky host controls with disabled state explanation tooltip when 0 players and active state when >= 1 player.
+    - `HostGamePage` (`src/pages/HostGamePage/`): Comprehensive host game page mounted at `/host/game/:gameId`.
+  - **Quality Gates:** 0 ESLint errors, 100% Prettier formatted, 0 TypeScript compile errors (`tsc -b && vite build`).
+  - **E2E Browser Verification:** Automated verification with recorded video (`host_lobby_e2e_verified_1788974955625.webp`) validating game creation, initial lobby state, SignalR participant joins (`Tariq_Dev`, `Noor_Engineer`), participant kick (`Noor_Engineer`), and live game launch into `QuestionActive`.
+
 ---
 
 ## 🚀 Next phase
 
-**Goal:** Phase 3 — Host Live Game Control & Player In-Game Experience (Game Lobby, Question Countdown, Real-Time Answer Submission, Question Results, Leaderboard, and Game Finished).
+**Goal:** Phase 4 — Participant Join & Waiting Experience (FR-4.1 to FR-4.4).
 
 ### Acceptance criteria
-1. Host can view player roster in live lobby, copy join link / PIN, and start the game.
-2. Player connects via SignalR to `GameHub` on `/hubs/game`, sees lobby waiting screen.
-3. Host advances through questions, question timer countdown runs on both host & player devices.
-4. Player submits answers (color-coded answer pads), host displays live answer tally.
-5. Score calculation and leaderboard presentation after each question.
+1. Player enters Game PIN on `/join` with instant format validation and server validation.
+2. Player enters nickname with client & server validation (`Game.NicknameTaken` friendly handling).
+3. Player receives session token and connects to SignalR `GameHub` on `/hubs/game`.
+4. Player sees live waiting screen with "You're in!", animated pulsing waiting state, and game info.
+5. Reconnection handling if network drops or tab reloads.
 
 ---
 
