@@ -1,12 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { type HostGameStateResponse, hostGameService } from '../api/hostGameService.ts';
-import type {
-  GameParticipantResponse,
-  HostQuestionResponse,
-  LeaderboardResponse,
-  QuestionResultsResponse,
-} from '../realtime/events.ts';
+import { hostGameService, type HostGameStateResponse } from '../api/hostGameService.ts';
+import type { GameParticipantResponse, HostQuestionResponse } from '../realtime/events.ts';
 import { invokeJoinAsHost } from '../realtime/gameHub.ts';
 import { useGameHubConnection } from './useGameHubConnection.ts';
 
@@ -133,7 +128,7 @@ export function useHostGame(gameId: string | undefined) {
       );
     };
 
-    const handleQuestionEnded = (_payload: QuestionResultsResponse) => {
+    const handleQuestionEnded = () => {
       setGameState((prev) =>
         prev
           ? {
@@ -144,7 +139,7 @@ export function useHostGame(gameId: string | undefined) {
       );
     };
 
-    const handleLeaderboardUpdated = (_payload: LeaderboardResponse) => {
+    const handleLeaderboardUpdated = () => {
       setGameState((prev) =>
         prev
           ? {
@@ -155,7 +150,7 @@ export function useHostGame(gameId: string | undefined) {
       );
     };
 
-    const handleGameEnded = (_payload: LeaderboardResponse) => {
+    const handleGameEnded = () => {
       setGameState((prev) =>
         prev
           ? {

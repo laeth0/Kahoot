@@ -1,58 +1,65 @@
 import { type HubConnection, HubConnectionState } from '@microsoft/signalr';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { createGameHubConnection } from '../realtime/gameHub.ts';
 
-export type ConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+export type HubConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 
 export function useGameHubConnection(requireHostAuth = false) {
-  const [status, setStatus] = useState<ConnectionStatus>('disconnected');
-  const connectionRef = useRef<HubConnection | null>(null);
+  const [connection, setConnection] = useState<HubConnection | null>(null);
+  const [status, setStatus] = useState<HubConnectionStatus>('connecting');
   const [retryTrigger, setRetryTrigger] = useState(0);
 
   useEffect(() => {
     let isCancelled = false;
-    const connection = createGameHubConnection(requireHostAuth);
-    connectionRef.current = connection;
+    const hubConnection = createGameHubConnection(requireHostAuth);
 
-    setStatus('connecting');
-
-    connection.onreconnecting(() => {
+    hubConnection.onreconnecting(() => {
       if (!isCancelled) setStatus('reconnecting');
     });
 
-    connection.onreconnected(() => {
+    hubConnection.onreconnected(() => {
       if (!isCancelled) setStatus('connected');
     });
 
-    connection.onclose(() => {
-      if (!isCancelled) setStatus('disconnected');
+    hubConnection.onclose(() => {
+      if (!isCancelled) {
+        setStatus('disconnected');
+        setConnection(null);
+      }
     });
 
-    connection
+    hubConnection
       .start()
       .then(() => {
-        if (!isCancelled) setStatus('connected');
+        if (!isCancelled) {
+          setConnection(hubConnection);
+          setStatus('connected');
+        }
       })
       .catch(() => {
-        if (!isCancelled) setStatus('disconnected');
+        if (!isCancelled) {
+          setConnection(null);
+          setStatus('disconnected');
+        }
       });
 
     return () => {
       isCancelled = true;
-      if (connection.state !== HubConnectionState.Disconnected) {
-        connection.stop().catch(() => {});
+      if (hubConnection.state !== HubConnectionState.Disconnected) {
+        hubConnection.stop().catch(() => {});
       }
-      connectionRef.current = null;
+      setConnection(null);
     };
   }, [requireHostAuth, retryTrigger]);
 
-  const retry = () => {
+  const retry = useCallback(() => {
+    setStatus('connecting');
     setRetryTrigger((prev) => prev + 1);
-  };
+  }, []);
 
   return {
-    connection: connectionRef.current,
+    connection,
     status,
     retry,
   };
