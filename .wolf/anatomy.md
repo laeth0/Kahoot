@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:53:31.495Z
-> Files: 265 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T19:07:03.406Z
+> Files: 266 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -14,6 +14,7 @@
 - `docker-compose.yml` — Docker Compose services (~509 tok)
 - `Final Claude Code Prompt — Kahoot-like Platform.md` — 1. Required Technology Stack (~7074 tok)
 - `GEMINI.md` — OpenWolf (~75 tok)
+- `prompt2.md` — Claude Code Prompt — Finish the Platform: Remaining Phases, Full Compatibility, Zero Comments, Beaut (~5778 tok)
 
 ## backend/
 
