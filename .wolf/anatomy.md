@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:23:35.137Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:27:17.771Z
 > Files: 175 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -367,6 +367,6 @@
 
 ## docs/
 
-- `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2399 tok)
+- `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2503 tok)
 - `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~2120 tok)
-- `realtime-protocol.md` — Real-Time Protocol (SignalR) — Kahoot-like Platform (~1736 tok)
+- `realtime-protocol.md` — Real-Time Protocol (SignalR) — Kahoot-like Platform (~2257 tok)

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:23:35.137Z",
+    "lastScanned": "2026-09-09T09:27:17.771Z",
     "fileCount": 175,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "11e3706fc3f14714768c6804767649135d9c1c33fc5e8e2c36fd809614111ac0",
-    "storeUpdatedAt": "2026-09-09T09:23:35.152Z",
-    "rootHash": "5ee43d98000e08b3"
+    "renderedHash": "ccf1c57e388dc3091e6d24aff8cbdc92d617869a2b572428dbe0c48fb39cb936",
+    "storeUpdatedAt": "2026-09-09T09:27:17.791Z",
+    "rootHash": "dc5a21746f894fd0"
   },
   "files": {
     "AGENTS.md": {
@@ -201,11 +201,11 @@
     },
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
-      "tokens": 2399,
-      "hash": "850769409ee4327b",
-      "size": 9630,
-      "mtimeMs": 1788944473719.3767,
-      "updatedAt": "2026-09-09T09:01:13.838Z",
+      "tokens": 2503,
+      "hash": "031fba715f89a393",
+      "size": 10046,
+      "mtimeMs": 1788946037629.0945,
+      "updatedAt": "2026-09-09T09:27:17.770Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
@@ -1434,11 +1434,11 @@
     },
     "docs/realtime-protocol.md": {
       "description": "Real-Time Protocol (SignalR) — Kahoot-like Platform",
-      "tokens": 1736,
-      "hash": "8ff7e8bc34f49025",
-      "size": 6974,
-      "mtimeMs": 1788944462765.5693,
-      "updatedAt": "2026-09-09T09:01:02.873Z",
+      "tokens": 2257,
+      "hash": "f4ba50e87855a285",
+      "size": 9081,
+      "mtimeMs": 1788946018326.437,
+      "updatedAt": "2026-09-09T09:26:58.556Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Common/HostClaims.cs": {

@@ -167,10 +167,11 @@ Allowed transitions (all others are rejected server-side):
 
 ## FR-8 Real-Time Protocol
 
-- All live game communication uses a typed event contract over SignalR groups (`game:{gameId}`), so events never fan out to unrelated connections.
+- All live game communication uses a typed event contract over SignalR groups, so events never fan out to unrelated connections. Player connections are grouped separately from host connections (`game:{gameId}` vs `game:{gameId}:host`), so payloads meant for the host are never delivered to players.
 - Each event documents direction, payload, validation, possible errors, and idempotency behaviour — see [`realtime-protocol.md`](./realtime-protocol.md).
 - Idempotent operations: submit answer, start game, start question, end question, next question, end game (host double-clicks and network retries must not corrupt state).
-- Every use case is implemented in `Kahoot.Application` as a MediatR command/query returning `Result` / `Result<T>`; the `question:start` payload sent to players excludes the correct answer (`QuestionStartedResponse.Player`), which the host receives separately (`QuestionStartedResponse.Host`).
+- Every use case is implemented in `Kahoot.Application` as a MediatR command/query returning `Result` / `Result<T>`. Host game-control runs through the REST controllers (the hub cannot resolve the authenticated host); the hub serves player actions (`JoinGame`, `Reconnect`, `SubmitAnswer`) and the host subscription (`JoinAsHost`), and controllers broadcast the outcome to the group.
+- The question-start payload sent to players excludes the correct answer (`QuestionStartedResponse.Player`); the host receives it separately (`QuestionStartedResponse.Host`).
 
 ---
 

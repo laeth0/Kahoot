@@ -2,118 +2,144 @@
 
 > Living specification for the API layer. The Application layer is transport-agnostic:
 > every use case is a MediatR command/query returning `Result` / `Result<T>`.
-> The API's `GameHub` and controllers call `ISender.Send(...)` and then broadcast the
-> result to the SignalR group. This file defines those events so the hub can be built
-> without guessing.
+> Controllers and `GameHub` call `ISender.Send(...)`; on success the controller
+> broadcasts the outcome to the SignalR group through `GameNotifier`
+> (`IHubContext<GameHub, IGameClient>`). This file defines the transport contract.
 
 ---
 
 ## Groups & connections
 
-- One SignalR group per game: `game:{gameId}`.
-- The **host** connection joins `game:{gameId}` after `POST /api/games` (authenticated).
-- A **player** connection joins `game:{gameId}` after `JoinGame` / `ReconnectParticipant`,
-  identified by the opaque `sessionToken` (hashed server-side; never the `ConnectionId`).
-- On disconnect the hub sets `Participant.ConnectionId = null`; on (re)connect it sets it
-  again. Identity always comes from the session token, never the connection id.
+- Hub endpoint: `/hubs/game`.
+- Two groups per game:
+  - `game:{gameId}` — player connections.
+  - `game:{gameId}:host` — host connection(s).
+- A **player** connection joins `game:{gameId}` after a successful `JoinGame` or
+  `Reconnect` hub call. Identity is the opaque `sessionToken` (hashed server-side;
+  never the `ConnectionId`); the raw token is held in per-connection state so
+  `SubmitAnswer` does not resend it.
+- A **host** connection joins `game:{gameId}:host` after a successful `JoinAsHost`
+  hub call (`Authorize`d with the host JWT; game ownership is verified).
+- On (re)connect the hub sets `Participant.ConnectionId`; on disconnect it clears it
+  and raises `ParticipantLeft` to the host group.
+
+### Why host game-control is REST-only
+
+`IHttpContextAccessor.HttpContext` is `null` during hub method invocations, so
+`ICurrentUser` (which the host-authenticated MediatR handlers depend on) cannot
+resolve the caller inside the hub. Host game-control therefore runs through the
+REST controllers, where `HttpContext` is present. The hub is player-facing plus a
+host *subscription* channel (`JoinAsHost`), and controllers push events to the
+groups after each command succeeds.
 
 ---
 
-## Client → Server (hub methods → Application commands)
+## Client → Server (hub methods)
 
-| Hub method | Auth | Command | Notes |
+All hub methods return `RealtimeResponse<T>` = `{ success, data, error }` where
+`error` is `{ code, description }` (never thrown; `JoinAsHost` additionally requires
+a valid JWT, so an unauthenticated call is rejected by the pipeline).
+
+| Hub method | Auth | Command | Returns |
 |---|---|---|---|
-| `JoinGame(pin, nickname)` | none | `JoinGameCommand` | returns `JoinGameResponse` incl. one-time `sessionToken` |
-| `Reconnect(sessionToken)` | none | `ReconnectParticipantCommand` | returns `PlayerGameStateResponse` |
-| `SubmitAnswer(gameId, questionId, selectedChoiceId)` | session token (connection state) | `SubmitAnswerCommand` | idempotent; ack only, no correctness |
-| `StartGame(gameId)` | host JWT | `StartGameCommand` | |
-| `StartNextQuestion(gameId)` | host JWT | `StartNextQuestionCommand` | double-click safe |
-| `EndQuestion(gameId)` | host JWT | `EndQuestionCommand` | early-closes the answer window |
-| `ShowLeaderboard(gameId)` | host JWT | `ShowLeaderboardCommand` | computes + persists ranks once |
-| `EndGame(gameId)` | host JWT | `EndGameCommand` | |
-| `RemoveParticipant(gameId, participantId)` | host JWT | `RemoveParticipantCommand` | |
+| `JoinGame(pin, nickname)` | none | `JoinGameCommand` | `RealtimeResponse<JoinGameResponse>` (incl. one-time `sessionToken`) |
+| `Reconnect(sessionToken)` | none | `ReconnectParticipantCommand` | `RealtimeResponse<PlayerGameStateResponse>` |
+| `SubmitAnswer(questionId, selectedChoiceId)` | session token (connection state) | `SubmitAnswerCommand` | `RealtimeResponse<AnswerAckResponse>` |
+| `JoinAsHost(gameId)` | host JWT (query-string `access_token`) | ownership check | `RealtimeResponse<bool>` |
 
-All host commands also have REST equivalents (see controller map below); the hub methods
-exist so the host screen can drive the game over the same socket.
+### `SubmitAnswer` validation / idempotency
 
-### `SubmitAnswer` payload / validation / idempotency
-
-```
-Client -> Server: SubmitAnswer { gameId, questionId, selectedChoiceId }
-                  (participant session token taken from the connection, not the payload)
-```
-
-- Rejected (`Result` failure, mapped to `answer:rejected`) when: game not `QuestionActive`,
-  `questionId` != current, `selectedChoiceId` not in the question, session token invalid,
-  participant removed, or `serverTime > questionEndsAt` (**deadline inclusive**).
-- Accepted → `answer:accepted` `{ accepted: true, alreadyAnswered: false }`.
-- Duplicate (same `gameId+questionId+participant`, enforced by the DB unique index) →
-  `answer:accepted` `{ accepted: true, alreadyAnswered: true }`. No second row, no second score.
+- The `gameId` and the player `sessionToken` are taken from per-connection state
+  set by `JoinGame` / `Reconnect`; only `questionId` + `selectedChoiceId` are sent.
+- Failure `error.code` (mapped from `GameErrors`): game not `QuestionActive`,
+  `questionId` not current, `selectedChoiceId` not in the question, session token
+  invalid, participant removed, or `serverTime > questionEndsAt`
+  (**deadline inclusive**).
+- Success → `{ success: true, data: { accepted: true, alreadyAnswered: false } }`.
+- Duplicate (same `game + question + participant`, enforced by the DB unique index
+  `uq_answer_participant_question`) → `{ accepted: true, alreadyAnswered: true }`.
+  No second row, no second score.
 
 ---
 
-## Server → Client events
+## Server → Client events (`IGameClient`)
 
-Payload types are the Application response records (`Kahoot.Application.Games.Common`).
+Strongly-typed client; method names below are the event names. Payload types are
+the Application response records (`Kahoot.Application.Games.Common`).
 
-| Event | Target | Trigger (command) | Payload |
+| Method | Target group(s) | Trigger | Payload |
 |---|---|---|---|
-| `participant:joined` | `game:{id}` | `JoinGameCommand` success | `{ participantId, nickname }` |
-| `participant:left` | `game:{id}` | hub disconnect | `{ participantId }` |
-| `participant:removed` | `game:{id}` + removed player | `RemoveParticipantCommand` | `{ participantId }` |
-| `game:state` | requesting connection | `GetHostGameStateQuery` / `ReconnectParticipantCommand` | `HostGameStateResponse` / `PlayerGameStateResponse` |
-| `question:start` | `game:{id}` (players) | `StartGameCommand` / `StartNextQuestionCommand` | `QuestionStartedResponse.Player` (**no correct answer**) |
-| `question:start:host` | host connection | same | `QuestionStartedResponse.Host` (**includes** `correctChoiceId`) |
-| `question:end` | `game:{id}` | `EndQuestionCommand` | `QuestionResultsResponse` (safe to reveal now) |
-| `question:results` | `game:{id}` | `EndQuestionCommand` / `GetQuestionResultsQuery` | `QuestionResultsResponse` |
-| `leaderboard:update` | `game:{id}` | `ShowLeaderboardCommand` / `EndGameCommand` | `LeaderboardResponse` |
-| `game:end` | `game:{id}` | `EndGameCommand` | `LeaderboardResponse` (final) |
-| `answer:accepted` / `answer:rejected` | submitting connection | `SubmitAnswerCommand` | ack / `{ code, description }` |
-| `connection:restored` | reconnecting player | `ReconnectParticipantCommand` | `PlayerGameStateResponse` |
+| `ParticipantJoined` | players + host | `JoinGame` hub / `POST /api/games/join` | `GameParticipantResponse` |
+| `ParticipantLeft` | host | hub disconnect | `Guid participantId` |
+| `ParticipantRemoved` | players + host | `RemoveParticipantCommand` | `Guid participantId` |
+| `QuestionStarted` | players | `StartGameCommand` / `StartNextQuestionCommand` | `PlayerQuestionResponse` (**no correct answer**) |
+| `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceId`) |
+| `QuestionEnded` | players + host | `EndQuestionCommand` | `QuestionResultsResponse` |
+| `LeaderboardUpdated` | players + host | `ShowLeaderboardCommand` | `LeaderboardResponse` |
+| `GameEnded` | players + host | `EndGameCommand` | `LeaderboardResponse` (final) |
 
-**The `question:start` payload broadcast to players MUST be `QuestionStartedResponse.Player`.**
-`QuestionStartedResponse.Host` (which carries `correctChoiceId` and per-choice `isCorrect`)
-goes only to the host connection.
+**Players never receive `correctChoiceId` or per-choice `isCorrect` before the
+question is closed** — the players group only ever gets `PlayerQuestionResponse`
+for `QuestionStarted`; `HostQuestionResponse` goes solely to the host group.
 
----
-
-## REST controller map (host + player bootstrap)
-
-| Route | Auth | Request → | Handler |
-|---|---|---|---|
-| `POST /api/auth/register` | none | `RegisterHostCommand` | (expose only if self-registration is wanted) |
-| `POST /api/auth/login` | none | `LoginCommand` | |
-| `POST /api/auth/refresh` | none | `RefreshTokenCommand` | rotation + reuse detection |
-| `POST /api/auth/logout` | none | `LogoutCommand` | |
-| `GET /api/quizzes` | host | `ListQuizzesQuery` | |
-| `POST /api/quizzes` | host | `CreateQuizCommand` | |
-| `GET /api/quizzes/{id}` | host | `GetQuizQuery` | |
-| `PUT /api/quizzes/{id}` | host | `UpdateQuizCommand` | un-publishes |
-| `DELETE /api/quizzes/{id}` | host | `DeleteQuizCommand` | blocked if ever played |
-| `POST /api/quizzes/{id}/publish` | host | `PublishQuizCommand` | validates the quiz |
-| `POST /api/quizzes/{id}/questions` | host | `AddQuestionCommand` | |
-| `PUT /api/quizzes/{id}/questions/{qid}` | host | `UpdateQuestionCommand` | |
-| `DELETE /api/quizzes/{id}/questions/{qid}` | host | `DeleteQuestionCommand` | |
-| `PUT /api/quizzes/{id}/questions/order` | host | `ReorderQuestionsCommand` | |
-| `POST /api/uploads/images` | host | `IImageUploadService` | already implemented |
-| `POST /api/games` | host | `CreateGameCommand` | → `{ gameId, pin }` |
-| `GET /api/games/{id}` | host | `GetHostGameStateQuery` | |
-| `GET /api/games/{id}/questions/{qid}/results` | host | `GetQuestionResultsQuery` | |
-| `GET /api/games/{id}/leaderboard` | host | `GetLeaderboardQuery` | |
-| `POST /api/games/{id}/start` … `/end` | host | game commands | mirror the hub methods |
-| `POST /api/games/join` | none | `JoinGameCommand` | for the join page before opening the socket |
+The full leaderboard is not broadcast per answer; it is computed and persisted once
+per question close (`ShowLeaderboardCommand` / `EndGameCommand`).
 
 ---
 
-## Mapping `Result` failures to responses
+## REST controller map
 
-- `ValidationError` (`Validation.Failed`) → HTTP 400 `ProblemDetails` with `errors` dictionary
-  / hub `*:rejected` with the dictionary.
-- `Auth.Unauthorized` → 401. `Auth.Forbidden` → 403.
-- `*.NotFound` → 404.
-- `Game.InvalidStateTransition`, `Game.ConcurrentModification`, `Quiz.InUse`,
-  `Quiz.HasSessions`, `Quiz.ConcurrentModification`, `Game.NicknameTaken`,
-  `Game.PinUnavailable` → 409.
-- Everything else with a failure `Result` → 400 with `{ code, description }`.
-- Never leak provider/SQL text; the `IDbExceptionInterpreter` already converts unique
-  violations into typed errors inside the handlers.
+Auth: `host` = valid host JWT (`Authorize`); `none` = anonymous.
+
+| Route | Auth | Request → | Handler | Success |
+|---|---|---|---|---|
+| `POST /api/auth/login` | none | `LoginRequest` → `LoginCommand` | | 200 `AuthenticationResponse` |
+| `POST /api/auth/refresh` | none | `RefreshRequest` → `RefreshTokenCommand` | rotation + reuse detection | 200 `AuthenticationResponse` |
+| `POST /api/auth/logout` | none | `LogoutRequest` → `LogoutCommand` | idempotent | 204 |
+| `GET /api/quizzes` | host | `ListQuizzesQuery` | | 200 `QuizSummaryResponse[]` |
+| `POST /api/quizzes` | host | `CreateQuizRequest` → `CreateQuizCommand` | | 201 `{ id }` |
+| `GET /api/quizzes/{id}` | host | `GetQuizQuery` | | 200 `QuizDetailResponse` |
+| `PUT /api/quizzes/{id}` | host | `UpdateQuizRequest` → `UpdateQuizCommand` | un-publishes | 204 |
+| `DELETE /api/quizzes/{id}` | host | `DeleteQuizCommand` | blocked once ever played | 204 |
+| `POST /api/quizzes/{id}/publish` | host | `PublishQuizCommand` | validates the quiz | 204 |
+| `POST /api/quizzes/{id}/questions` | host | `SaveQuestionRequest` → `AddQuestionCommand` | | 201 `{ id }` |
+| `PUT /api/quizzes/{id}/questions/{questionId}` | host | `SaveQuestionRequest` → `UpdateQuestionCommand` | | 204 |
+| `DELETE /api/quizzes/{id}/questions/{questionId}` | host | `DeleteQuestionCommand` | | 204 |
+| `PUT /api/quizzes/{id}/questions/order` | host | `ReorderQuestionsRequest` → `ReorderQuestionsCommand` | | 204 |
+| `POST /api/uploads/images` | host | `multipart/form-data` field `file` → `IImageUploadService` | magic-byte + size check | 201 `{ url }` |
+| `POST /api/games` | host | `CreateGameRequest` → `CreateGameCommand` | | 201 `CreateGameResponse` |
+| `GET /api/games/{id}` | host | `GetHostGameStateQuery` | | 200 `HostGameStateResponse` |
+| `GET /api/games/{id}/questions/{questionId}/results` | host | `GetQuestionResultsQuery` | | 200 `QuestionResultsResponse` |
+| `GET /api/games/{id}/leaderboard` | host | `GetLeaderboardQuery` | | 200 `LeaderboardResponse` |
+| `POST /api/games/{id}/start` | host | `StartGameCommand` | broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
+| `POST /api/games/{id}/advance` | host | `StartNextQuestionCommand` | double-click safe; broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
+| `POST /api/games/{id}/end-question` | host | `EndQuestionCommand` | early-closes window; broadcasts `QuestionEnded` | 200 `QuestionResultsResponse` |
+| `POST /api/games/{id}/leaderboard` | host | `ShowLeaderboardCommand` | persists ranks; broadcasts `LeaderboardUpdated` | 200 `LeaderboardResponse` |
+| `POST /api/games/{id}/end` | host | `EndGameCommand` | broadcasts `GameEnded` | 200 `LeaderboardResponse` |
+| `DELETE /api/games/{id}/participants/{participantId}` | host | `RemoveParticipantCommand` | idempotent; broadcasts `ParticipantRemoved` | 204 |
+| `POST /api/games/join` | none | `JoinGameRequest` → `JoinGameCommand` | join page before opening the socket; broadcasts `ParticipantJoined` | 200 `JoinGameResponse` |
+
+There is **no registration endpoint** — the only host account is the configuration
+seed (`Seeding:Host`). Players never authenticate.
+
+---
+
+## Mapping `Result` failures to HTTP (`ApiControllerBase`)
+
+- `ValidationError` (`Validation.Failed`) → **400** `ValidationProblemDetails`
+  (`errors` dictionary keyed by field).
+- `Auth.Forbidden` → **403**.
+- Any other `Auth.*` code (`Auth.Unauthorized`, `Auth.InvalidCredentials`,
+  `Auth.InvalidRefreshToken`, `Auth.RefreshTokenReuse`) → **401**.
+- Code ending `.NotFound`, or `Game.InvalidPin` → **404**.
+- Conflict set → **409**: `Game.InvalidStateTransition`, `Game.ConcurrentModification`,
+  `Game.NicknameTaken`, `Game.PinUnavailable`, `Game.NoMoreQuestions`,
+  `Game.NotJoinable`, `Game.QuizNotPublished`, `Quiz.InUse`, `Quiz.HasSessions`,
+  `Quiz.ConcurrentModification`.
+- Any other failure `Result` → **400** `ProblemDetails` with `code` extension.
+
+Non-validation problem bodies are `application/problem+json`:
+`{ "title": <description>, "status": <code>, "code": <error code> }`. Provider/SQL
+text never leaks — `IDbExceptionInterpreter` converts unique-constraint violations
+into typed errors inside the handlers, and unhandled exceptions are caught by
+`GlobalExceptionHandler` (500 `ProblemDetails`, details logged only).
