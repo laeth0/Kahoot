@@ -216,3 +216,6 @@ description: chronological action log per session, consolidated weekly
 | 11:52 | Created backend/src/Kahoot.Application/Games/EndQuestion/EndQuestionCommandHandler.cs | — | ~647 |
 | 11:52 | Created backend/src/Kahoot.Application/Games/Common/LeaderboardBuilder.cs | — | ~584 |
 | 11:52 | Created backend/src/Kahoot.Application/Games/ShowLeaderboard/ShowLeaderboardCommand.cs | — | ~61 |
+| 11:52 | Created backend/src/Kahoot.Application/Games/ShowLeaderboard/ShowLeaderboardCommandHandler.cs | — | ~556 |
+| 11:52 | Created backend/src/Kahoot.Application/Games/EndGame/EndGameCommand.cs | — | ~56 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/EndGame/EndGameCommandHandler.cs | — | ~522 |

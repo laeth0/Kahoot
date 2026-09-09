@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:52:40.852Z
-> Files: 133 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:53:06.308Z
+> Files: 136 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -124,6 +124,11 @@
 - `CreateGameCommand.cs` — Class: CreateGameCommand (~58 tok)
 - `CreateGameCommandHandler.cs` — Class: CreateGameCommandHandler (~652 tok)
 
+## backend/src/Kahoot.Application/Games/EndGame/
+
+- `EndGameCommand.cs` — Class: EndGameCommand (~56 tok)
+- `EndGameCommandHandler.cs` — Class: EndGameCommandHandler (~522 tok)
+
 ## backend/src/Kahoot.Application/Games/EndQuestion/
 
 - `EndQuestionCommand.cs` — Class: EndQuestionCommand (~60 tok)
@@ -142,6 +147,7 @@
 ## backend/src/Kahoot.Application/Games/ShowLeaderboard/
 
 - `ShowLeaderboardCommand.cs` — Class: ShowLeaderboardCommand (~61 tok)
+- `ShowLeaderboardCommandHandler.cs` — Class: ShowLeaderboardCommandHandler (~556 tok)
 
 ## backend/src/Kahoot.Application/Games/StartGame/
 

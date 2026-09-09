@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:52:40.852Z",
-    "fileCount": 133,
+    "lastScanned": "2026-09-09T08:53:06.308Z",
+    "fileCount": 136,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "bbd13f981286262f1b91374fbc282f887fa87cba31b59ca45d513aeca655b179",
-    "storeUpdatedAt": "2026-09-09T08:52:40.869Z",
-    "rootHash": "6de0b768b1d1d2c2"
+    "renderedHash": "014ef31c391cb5c3ad7657a052115e4122d0f696ffa1d0803a3abd631e484d18",
+    "storeUpdatedAt": "2026-09-09T08:53:06.336Z",
+    "rootHash": "2ff9bc2ee28e6397"
   },
   "files": {
     "AGENTS.md": {
@@ -1205,6 +1205,33 @@
       "size": 226,
       "mtimeMs": 1788943960616.7808,
       "updatedAt": "2026-09-09T08:52:40.851Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Games/ShowLeaderboard/ShowLeaderboardCommandHandler.cs": {
+      "description": "Class: ShowLeaderboardCommandHandler",
+      "tokens": 556,
+      "hash": "0b284b3031c45f3f",
+      "size": 2084,
+      "mtimeMs": 1788943971606.4158,
+      "updatedAt": "2026-09-09T08:52:51.870Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Games/EndGame/EndGameCommand.cs": {
+      "description": "Class: EndGameCommand",
+      "tokens": 56,
+      "hash": "4b785750eb345dde",
+      "size": 210,
+      "mtimeMs": 1788943976031.7776,
+      "updatedAt": "2026-09-09T08:52:56.370Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Games/EndGame/EndGameCommandHandler.cs": {
+      "description": "Class: EndGameCommandHandler",
+      "tokens": 522,
+      "hash": "721b3365c99d7868",
+      "size": 1957,
+      "mtimeMs": 1788943985982.8657,
+      "updatedAt": "2026-09-09T08:53:06.307Z",
       "source": "hook"
     }
   },
