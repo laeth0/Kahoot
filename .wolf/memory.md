@@ -60,3 +60,12 @@ description: chronological action log per session, consolidated weekly
 | 10:36 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~189 |
 | 10:37 | Created backend/src/Kahoot.Domain/Games/Answer.cs | — | ~189 |
 | 10:46 | Created docs/functional-requirements.md | — | ~1976 |
+| 10:46 | Created docs/non-functional-requirements.md | — | ~2047 |
+| 10:46 | Created backend/src/Kahoot.Domain/Hosts/Host.cs | — | ~100 |
+| 10:47 | Created backend/projectSchema.dbml | — | ~2791 |
+| 10:50 | Created backend/src/Kahoot.Application/Common/Security/IPasswordHasher.cs | — | ~47 |
+| 10:50 | Created backend/src/Kahoot.Infrastructure/Security/BcryptPasswordHasher.cs | — | ~133 |
+| 10:50 | Created backend/src/Kahoot.Infrastructure/Persistence/KahootDbContext.cs | — | ~334 |
+| 10:50 | Created backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs | — | ~302 |
+| 10:50 | Created backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs | — | ~223 |
+| 10:50 | Created backend/src/Kahoot.Infrastructure/Persistence/Interceptors/AuditableEntityInterceptor.cs | — | ~442 |

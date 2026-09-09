@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:46:00.603Z
-> Files: 22 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:50:53.190Z
+> Files: 28 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -16,7 +16,11 @@
 
 ## backend/
 
-- `projectSchema.dbml` — ============================================================================= (~3671 tok)
+- `projectSchema.dbml` (~2791 tok)
+
+## backend/src/Kahoot.Application/Common/Security/
+
+- `IPasswordHasher.cs` — Class: IPasswordHasher (~47 tok)
 
 ## backend/src/Kahoot.Domain/Common/
 
@@ -37,7 +41,7 @@
 
 ## backend/src/Kahoot.Domain/Hosts/
 
-- `Host.cs` — Class: Host (~113 tok)
+- `Host.cs` — Class: Host (~100 tok)
 - `RefreshToken.cs` — Class: RefreshToken (~120 tok)
 
 ## backend/src/Kahoot.Domain/Quizzes/
@@ -46,6 +50,20 @@
 - `Question.cs` — Class: Question (~112 tok)
 - `Quiz.cs` — Class: Quiz (~99 tok)
 
+## backend/src/Kahoot.Infrastructure/Persistence/
+
+- `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~334 tok)
+- `KahootDbContextFactory.cs` — Class: KahootDbContextFactory (~223 tok)
+
+## backend/src/Kahoot.Infrastructure/Persistence/Interceptors/
+
+- `AuditableEntityInterceptor.cs` — Class: AuditableEntityInterceptor (~442 tok)
+
+## backend/src/Kahoot.Infrastructure/Security/
+
+- `BcryptPasswordHasher.cs` — Class: BcryptPasswordHasher (~133 tok)
+
 ## docs/
 
 - `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~1852 tok)
+- `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~1919 tok)
