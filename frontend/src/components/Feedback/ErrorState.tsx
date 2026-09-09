@@ -6,6 +6,7 @@ export interface ErrorStateProps {
   title?: string;
   message: string;
   onRetry?: () => void;
+  retryText?: string;
   status?: 400 | 401 | 403 | 404 | 429 | 500;
   variant?: 'inline' | 'panel';
 }
@@ -14,6 +15,7 @@ export function ErrorState({
   title = 'Something went wrong',
   message,
   onRetry,
+  retryText = 'Try Again',
   variant = 'panel',
 }: ErrorStateProps) {
   if (variant === 'inline') {
@@ -24,7 +26,7 @@ export function ErrorState({
         action={
           onRetry ? (
             <Button color="inherit" size="small" onClick={onRetry} startIcon={<RefreshIcon />}>
-              Retry
+              {retryText}
             </Button>
           ) : undefined
         }
@@ -81,7 +83,7 @@ export function ErrorState({
             startIcon={<RefreshIcon />}
             sx={{ minHeight: 44, px: 3, mt: 1, fontWeight: 600 }}
           >
-            Try Again
+            {retryText}
           </Button>
         )}
       </Stack>

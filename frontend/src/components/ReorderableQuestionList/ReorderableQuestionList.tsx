@@ -1,9 +1,9 @@
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import HelpOutlinedIcon from '@mui/icons-material/HelpOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import {
@@ -63,7 +63,7 @@ export function ReorderableQuestionList({
             color: '#00629b',
           }}
         >
-          <HelpOutlineIcon sx={{ fontSize: 36 }} />
+          <HelpOutlinedIcon sx={{ fontSize: 36 }} />
         </Box>
         <Typography variant="h6" sx={{ fontWeight: 800, color: '#09131f', mb: 1 }}>
           No questions added yet
@@ -203,7 +203,7 @@ export function ReorderableQuestionList({
                           maxWidth: 540,
                         }}
                       >
-                        <CheckCircleOutlineIcon sx={{ color: '#10b981', fontSize: 18 }} />
+                        <CheckCircleOutlinedIcon sx={{ color: '#10b981', fontSize: 18 }} />
                         <Typography
                           variant="caption"
                           sx={{
@@ -279,7 +279,7 @@ export function ReorderableQuestionList({
                       aria-label={`Delete question ${index + 1}`}
                       sx={{ color: '#ef4444' }}
                     >
-                      <DeleteOutlineIcon fontSize="small" />
+                      <DeleteOutlinedIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
                 </Stack>

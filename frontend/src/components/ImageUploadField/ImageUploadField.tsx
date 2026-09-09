@@ -1,5 +1,5 @@
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import {
   Alert,
   Box,
@@ -131,7 +131,7 @@ export function ImageUploadField({
             disabled={disabled || isUploading}
             size="small"
           >
-            <DeleteOutlineIcon />
+            <DeleteOutlinedIcon />
           </IconButton>
         </Paper>
       ) : (

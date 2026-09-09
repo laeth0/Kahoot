@@ -516,7 +516,7 @@ export function QuizEditorPage() {
         onClose={() => setMetadataModalOpen(false)}
         maxWidth="sm"
         fullWidth
-        PaperProps={{ sx: { borderRadius: 3 } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogTitle sx={{ fontWeight: 800, color: '#09131f' }}>Edit Quiz Details</DialogTitle>
         <Divider />

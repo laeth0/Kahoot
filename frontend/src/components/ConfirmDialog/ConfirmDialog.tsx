@@ -12,11 +12,17 @@ import type { ReactNode } from 'react';
 export interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  content: ReactNode;
+  content?: ReactNode;
+  message?: string;
+  children?: ReactNode;
   confirmLabel?: string;
+  confirmText?: string;
   cancelLabel?: string;
+  cancelText?: string;
   confirmColor?: 'primary' | 'error' | 'secondary';
+  severity?: string;
   isConfirming?: boolean;
+  isLoading?: boolean;
   onConfirm: () => void | Promise<void>;
   onCancel: () => void;
 }
@@ -25,25 +31,40 @@ export function ConfirmDialog({
   open,
   title,
   content,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  confirmColor = 'primary',
-  isConfirming = false,
+  message,
+  children,
+  confirmLabel,
+  confirmText,
+  cancelLabel,
+  cancelText,
+  confirmColor,
+  severity,
+  isConfirming,
+  isLoading,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const finalConfirmLabel = confirmLabel || confirmText || 'Confirm';
+  const finalCancelLabel = cancelLabel || cancelText || 'Cancel';
+  const finalIsLoading = Boolean(isConfirming || isLoading);
+  const finalConfirmColor: 'primary' | 'error' | 'secondary' =
+    confirmColor || (severity === 'error' ? 'error' : 'primary');
+  const finalContent = content ?? message;
+
   return (
     <Dialog
       open={open}
-      onClose={isConfirming ? undefined : onCancel}
+      onClose={finalIsLoading ? undefined : onCancel}
       aria-labelledby="confirm-dialog-title"
       aria-describedby="confirm-dialog-description"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          p: 1,
-          maxWidth: 440,
-          width: '100%',
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            p: 1,
+            maxWidth: 440,
+            width: '100%',
+          },
         },
       }}
     >
@@ -51,33 +72,34 @@ export function ConfirmDialog({
         {title}
       </DialogTitle>
       <DialogContent>
-        {typeof content === 'string' ? (
+        {typeof finalContent === 'string' ? (
           <DialogContentText id="confirm-dialog-description" sx={{ color: '#334e68' }}>
-            {content}
+            {finalContent}
           </DialogContentText>
         ) : (
-          content
+          finalContent
         )}
+        {children}
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
         <Button
           onClick={onCancel}
-          disabled={isConfirming}
+          disabled={finalIsLoading}
           variant="outlined"
           color="inherit"
           sx={{ minHeight: 40, fontWeight: 600 }}
         >
-          {cancelLabel}
+          {finalCancelLabel}
         </Button>
         <Button
           onClick={onConfirm}
-          disabled={isConfirming}
+          disabled={finalIsLoading}
           variant="contained"
-          color={confirmColor}
-          startIcon={isConfirming ? <CircularProgress size={18} color="inherit" /> : null}
+          color={finalConfirmColor}
+          startIcon={finalIsLoading ? <CircularProgress size={18} color="inherit" /> : null}
           sx={{ minHeight: 40, fontWeight: 700, px: 2.5 }}
         >
-          {isConfirming ? 'Processing...' : confirmLabel}
+          {finalIsLoading ? 'Processing...' : finalConfirmLabel}
         </Button>
       </DialogActions>
     </Dialog>

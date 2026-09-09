@@ -141,9 +141,7 @@ function QuestionFormContent({
       return;
     }
 
-    const invalidChoice = choices.some(
-      (c) => (!c.text || !c.text.trim()) && !c.imageUrl,
-    );
+    const invalidChoice = choices.some((c) => (!c.text || !c.text.trim()) && !c.imageUrl);
     if (invalidChoice) {
       setValidationError('Every choice must have either answer text or an image.');
       return;
@@ -347,9 +345,7 @@ function QuestionFormContent({
             variant="contained"
             color="primary"
             disabled={isSaving}
-            startIcon={
-              isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />
-            }
+            startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
             sx={{ minHeight: 44, fontWeight: 700, px: 3 }}
           >
             {isSaving ? 'Saving Question...' : 'Save Question'}
@@ -378,9 +374,11 @@ export function QuestionFormDialog({
       maxWidth="md"
       fullWidth
       aria-labelledby="question-dialog-title"
-      PaperProps={{
-        sx: {
-          borderRadius: isFullScreen ? 0 : 3,
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: isFullScreen ? 0 : 3,
+          },
         },
       }}
     >

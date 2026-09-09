@@ -9,15 +9,13 @@ import {
 
 export function useQuiz(quizId: string | undefined) {
   const [quiz, setQuiz] = useState<QuizDetailResponse | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => Boolean(quizId));
   const [error, setError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const [refreshIndex, setRefreshIndex] = useState(0);
 
   useEffect(() => {
     if (!quizId) {
-      setQuiz(null);
-      setIsLoading(false);
       return;
     }
 

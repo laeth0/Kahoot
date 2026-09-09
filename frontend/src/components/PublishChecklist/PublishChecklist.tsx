@@ -30,19 +30,12 @@ export function PublishChecklist({ questions }: PublishChecklistProps) {
           mb: 1.5,
         }}
       >
-        {isPublishable
-          ? 'Ready to Publish & Host'
-          : 'Publishing Requirements Checklist (FR-3.2)'}
+        {isPublishable ? 'Ready to Publish & Host' : 'Publishing Requirements Checklist (FR-3.2)'}
       </Typography>
 
       <Stack spacing={1.25}>
         {items.map((item) => (
-          <Stack
-            key={item.id}
-            direction="row"
-            spacing={1.25}
-            sx={{ alignItems: 'flex-start' }}
-          >
+          <Stack key={item.id} direction="row" spacing={1.25} sx={{ alignItems: 'flex-start' }}>
             {item.passed ? (
               <CheckCircleIcon sx={{ fontSize: 18, color: '#16a34a', mt: 0.2 }} />
             ) : (
@@ -59,13 +52,11 @@ export function PublishChecklist({ questions }: PublishChecklistProps) {
               >
                 {item.label}
               </Typography>
-              {!item.passed &&
-                item.failingQuestions &&
-                item.failingQuestions.length > 0 && (
-                  <Typography variant="caption" sx={{ color: '#dc2626', display: 'block' }}>
-                    Issue on question(s): #{item.failingQuestions.join(', #')}
-                  </Typography>
-                )}
+              {!item.passed && item.failingQuestions && item.failingQuestions.length > 0 && (
+                <Typography variant="caption" sx={{ color: '#dc2626', display: 'block' }}>
+                  Issue on question(s): #{item.failingQuestions.join(', #')}
+                </Typography>
+              )}
             </Box>
           </Stack>
         ))}

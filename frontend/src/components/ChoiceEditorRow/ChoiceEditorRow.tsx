@@ -1,5 +1,5 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import {
   Box,
@@ -107,7 +107,9 @@ export function ChoiceEditorRow({
                   icon={<RadioButtonUncheckedIcon sx={{ fontSize: 20 }} />}
                   checkedIcon={<CheckCircleIcon sx={{ fontSize: 20, color: '#059669' }} />}
                   size="small"
-                  inputProps={{ 'aria-label': `Mark choice ${letter} as correct` }}
+                  slotProps={{
+                    input: { 'aria-label': `Mark choice ${letter} as correct` },
+                  }}
                 />
                 <Typography
                   variant="caption"
@@ -130,7 +132,7 @@ export function ChoiceEditorRow({
               disabled={disabled}
               aria-label={`Delete choice ${letter}`}
             >
-              <DeleteOutlineIcon fontSize="small" />
+              <DeleteOutlinedIcon fontSize="small" />
             </IconButton>
           )}
         </Stack>
