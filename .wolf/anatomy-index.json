@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T07:54:04.150Z",
-    "fileCount": 28,
+    "lastScanned": "2026-09-09T07:54:53.741Z",
+    "fileCount": 34,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "97e81cbdb84fd644e24dc6ad71622ace9fff65817d2acf9ed5a967659a0e0f8e",
-    "storeUpdatedAt": "2026-09-09T07:54:04.161Z",
-    "rootHash": "08d4cfebfde15cb5"
+    "renderedHash": "05ae34eca8c54cfbaec45c94c57951d4d4f460c6735517800ce1278c143062a0",
+    "storeUpdatedAt": "2026-09-09T07:54:53.753Z",
+    "rootHash": "ccb74a9c2099ea3d"
   },
   "files": {
     "AGENTS.md": {
@@ -260,6 +260,60 @@
       "size": 1646,
       "mtimeMs": 1788940443987.6704,
       "updatedAt": "2026-09-09T07:54:04.149Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs": {
+      "description": "Class: HostConfiguration",
+      "tokens": 327,
+      "hash": "b7ea1382f231ca23",
+      "size": 1225,
+      "mtimeMs": 1788940452181.3083,
+      "updatedAt": "2026-09-09T07:54:12.337Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/RefreshTokenConfiguration.cs": {
+      "description": "Class: RefreshTokenConfiguration",
+      "tokens": 266,
+      "hash": "8f8109fa18c45116",
+      "size": 996,
+      "mtimeMs": 1788940459052.1025,
+      "updatedAt": "2026-09-09T07:54:19.212Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuizConfiguration.cs": {
+      "description": "Class: QuizConfiguration",
+      "tokens": 274,
+      "hash": "fc089edfe7218616",
+      "size": 1024,
+      "mtimeMs": 1788940465766.1511,
+      "updatedAt": "2026-09-09T07:54:25.902Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuestionConfiguration.cs": {
+      "description": "Class: QuestionConfiguration",
+      "tokens": 508,
+      "hash": "d8d056c6c628ae9d",
+      "size": 1902,
+      "mtimeMs": 1788940474862.9084,
+      "updatedAt": "2026-09-09T07:54:35.022Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ChoiceConfiguration.cs": {
+      "description": "Class: ChoiceConfiguration",
+      "tokens": 276,
+      "hash": "9c0aed01bb59edcb",
+      "size": 1032,
+      "mtimeMs": 1788940481578.9143,
+      "updatedAt": "2026-09-09T07:54:41.737Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs": {
+      "description": "Class: GameSessionConfiguration",
+      "tokens": 750,
+      "hash": "1cf6f26917056746",
+      "size": 2809,
+      "mtimeMs": 1788940493605.0347,
+      "updatedAt": "2026-09-09T07:54:53.741Z",
       "source": "hook"
     }
   },

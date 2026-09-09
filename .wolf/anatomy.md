@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:54:04.150Z
-> Files: 28 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:54:53.741Z
+> Files: 34 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -54,6 +54,15 @@
 
 - `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~334 tok)
 - `KahootDbContextFactory.cs` — Class: KahootDbContextFactory (~223 tok)
+
+## backend/src/Kahoot.Infrastructure/Persistence/Configurations/
+
+- `ChoiceConfiguration.cs` — Class: ChoiceConfiguration (~276 tok)
+- `GameSessionConfiguration.cs` — Class: GameSessionConfiguration (~750 tok)
+- `HostConfiguration.cs` — Class: HostConfiguration (~327 tok)
+- `QuestionConfiguration.cs` — Class: QuestionConfiguration (~508 tok)
+- `QuizConfiguration.cs` — Class: QuizConfiguration (~274 tok)
+- `RefreshTokenConfiguration.cs` — Class: RefreshTokenConfiguration (~266 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/Interceptors/
 

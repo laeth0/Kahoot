@@ -75,3 +75,9 @@ description: chronological action log per session, consolidated weekly
 | 10:53 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~188 |
 | 10:53 | Created backend/src/Kahoot.Domain/Games/Answer.cs | — | ~188 |
 | 10:54 | Edited backend/src/Kahoot.Infrastructure/Persistence/Interceptors/AuditableEntityInterceptor.cs | modified if() | ~102 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs | — | ~327 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/RefreshTokenConfiguration.cs | — | ~266 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuizConfiguration.cs | — | ~274 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuestionConfiguration.cs | — | ~508 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/ChoiceConfiguration.cs | — | ~276 |
+| 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs | — | ~750 |
