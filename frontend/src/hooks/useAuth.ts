@@ -1,6 +1,6 @@
 import { useContext } from 'react';
 
-import { AuthContext, type AuthContextType } from '../context/AuthContext.tsx';
+import { AuthContext, type AuthContextType } from '../context/AuthContext.ts';
 
 /**
  * Custom React Hook providing access to Host authentication context.

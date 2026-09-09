@@ -1,25 +1,7 @@
-import {
-  createContext,
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import { authService, type HostUser } from '../api/authService.ts';
-
-export interface AuthContextType {
-  host: HostUser | null;
-  token: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
-  login: (username: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  clearError: () => void;
-}
-
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { AuthContext } from './AuthContext.ts';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [host, setHost] = useState<HostUser | null>(() => {

@@ -16,7 +16,7 @@ import {
   Typography,
 } from '@mui/material';
 
-import { useAuth } from '../../context/AuthContext.tsx';
+import { useAuth } from '../../hooks/useAuth.ts';
 
 export function HostDashboard() {
   const { host } = useAuth();

@@ -116,3 +116,5 @@ description: chronological action log per session, consolidated weekly
 | 11:17 | Edited backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs | inline fix | ~13 |
 | 11:17 | Created backend/src/Kahoot.Infrastructure/Storage/LocalFileStorage.cs | — | ~318 |
 | 11:18 | Created backend/src/Kahoot.Api/Controllers/UploadsController.cs | — | ~409 |
+| 11:18 | Created backend/src/Kahoot.Api/Program.cs | — | ~502 |
+| 11:18 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+6 lines) | ~87 |

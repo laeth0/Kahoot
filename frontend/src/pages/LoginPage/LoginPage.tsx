@@ -18,7 +18,7 @@ import {
 import { type FormEvent, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useAuth } from '../../context/AuthContext.tsx';
+import { useAuth } from '../../hooks/useAuth.ts';
 
 export function LoginPage() {
   const { login, isLoading } = useAuth();

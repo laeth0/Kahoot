@@ -1,5 +1,9 @@
 using Kahoot.Application;
+using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -25,6 +29,14 @@ builder.Services.AddCors(options =>
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
+var fileStorageOptions = builder.Configuration.GetSection(FileStorageOptions.SectionName).Get<FileStorageOptions>()
+                         ?? new FileStorageOptions();
+
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = fileStorageOptions.MaxSizeBytes;
+});
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
@@ -36,6 +48,17 @@ if (app.Environment.IsDevelopment())
 app.UseCors("FrontendCorsPolicy");
 
 app.UseHttpsRedirection();
+
+var uploadsRoot = app.Services.GetRequiredService<IOptions<FileStorageOptions>>().Value
+    .ResolveRootPath(app.Environment.ContentRootPath);
+Directory.CreateDirectory(uploadsRoot);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    RequestPath = fileStorageOptions.NormalizedPublicBasePath,
+    ServeUnknownFileTypes = false
+});
 
 app.UseAuthorization();
 

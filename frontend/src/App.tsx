@@ -2,7 +2,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
 import { BrowserRouter } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext.tsx';
+import { AuthProvider } from './context/AuthProvider.tsx';
 import { AppRoutes } from './routes/routes.tsx';
 import { theme } from './theme/index.ts';
 

@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:18:03.447Z
-> Files: 47 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:18:20.866Z
+> Files: 48 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -20,7 +20,8 @@
 
 ## backend/src/Kahoot.Api/
 
-- `appsettings.json` (~135 tok)
+- `appsettings.json` (~193 tok)
+- `Program.cs` — Class: Program (~502 tok)
 
 ## backend/src/Kahoot.Api/Controllers/
 
