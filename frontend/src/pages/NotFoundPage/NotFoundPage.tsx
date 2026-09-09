@@ -5,10 +5,6 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 
-/**
- * 404 Not Found page with noindex metadata and clear return paths
- * for both players and hosts.
- */
 export function NotFoundPage() {
   return (
     <>

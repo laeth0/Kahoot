@@ -8,10 +8,6 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'kahoot_host_refresh_token';
 export const ACCESS_TOKEN_EXPIRES_KEY = 'kahoot_host_access_expires_at';
 export const REFRESH_TOKEN_EXPIRES_KEY = 'kahoot_host_refresh_expires_at';
 
-/**
- * Centralized Axios client: base URL from configuration, bearer-token injection,
- * and ProblemDetails-aware error interpretation.
- */
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -57,7 +53,6 @@ axiosClient.interceptors.response.use(
 
     const data = error.response?.data;
 
-    // Handle validation errors dictionary if present
     if (data?.errors && typeof data.errors === 'object') {
       const firstKey = Object.keys(data.errors)[0];
       const firstError = firstKey && data.errors[firstKey]?.[0];

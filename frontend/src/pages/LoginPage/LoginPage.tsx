@@ -25,9 +25,6 @@ import { getFriendlyErrorMessage } from '../../constants/errorCodes.ts';
 import { VALIDATION } from '../../constants/validation.ts';
 import { useAuth } from '../../hooks/useAuth.ts';
 
-/**
- * Host Login Page: authenticated entry for event hosts and quiz administrators.
- */
 export function LoginPage() {
   const { login, isLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -43,11 +40,9 @@ export function LoginPage() {
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  // Return path from ProtectedRoute redirect, or fallback to host dashboard
   const from =
     (location.state as { from?: { pathname: string } })?.from?.pathname || '/host/dashboard';
 
-  // If already authenticated, redirect to destination
   useEffect(() => {
     if (isAuthenticated) {
       navigate(from, { replace: true });
@@ -107,7 +102,6 @@ export function LoginPage() {
         }}
       >
         <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
-          {/* Header */}
           <Stack spacing={1.5} sx={{ textAlign: 'center', mb: 3.5, alignItems: 'center' }}>
             <Box
               sx={{
@@ -132,7 +126,6 @@ export function LoginPage() {
             </Typography>
           </Stack>
 
-          {/* Friendly Player Redirection Notice */}
           <Alert
             severity="info"
             icon={<SportsEsportsIcon />}
@@ -164,17 +157,14 @@ export function LoginPage() {
             </Box>
           </Alert>
 
-          {/* Form Error Banner */}
           {formError && (
             <Alert severity="error" role="alert" sx={{ mb: 3 }}>
               {formError}
             </Alert>
           )}
 
-          {/* Login Form */}
           <Box component="form" onSubmit={handleSubmit} noValidate>
             <Stack spacing={2.5}>
-              {/* Username Input */}
               <Box>
                 <Typography
                   component="label"
@@ -214,7 +204,6 @@ export function LoginPage() {
                 <InlineFieldError id={usernameErrorId} error={usernameError} />
               </Box>
 
-              {/* Password Input */}
               <Box>
                 <Typography
                   component="label"
@@ -266,7 +255,6 @@ export function LoginPage() {
                 <InlineFieldError id={passwordErrorId} error={passwordError} />
               </Box>
 
-              {/* Submit Action */}
               <Button
                 type="submit"
                 fullWidth

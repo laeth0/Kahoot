@@ -18,7 +18,6 @@ export interface LoginPayload {
   password: string;
 }
 
-/** Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`. */
 interface AuthenticationResponseDto {
   hostId: string;
   username: string;
@@ -38,7 +37,6 @@ function toAuthResponse(dto: AuthenticationResponseDto): AuthResponse {
   };
 }
 
-/** Host authentication (username + password; no email). The server is authoritative. */
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthResponse> {
     const response = await axiosClient.post<AuthenticationResponseDto>('/auth/login', payload);
@@ -57,8 +55,8 @@ export const authService = {
       if (refreshToken) {
         await axiosClient.post('/auth/logout', { refreshToken });
       }
-    } catch {
-      // Logout is best-effort on the client; the server call is idempotent.
+    } catch (err) {
+      void err;
     }
   },
 };

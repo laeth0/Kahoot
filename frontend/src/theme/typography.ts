@@ -1,11 +1,5 @@
 import type { TypographyVariantsOptions } from '@mui/material/styles';
 
-/**
- * Modern, crisp typography hierarchy using Inter / sans-serif.
- * Distinct heading weights with tight letter spacing for high-tech aesthetic.
- * Sizing, weights, line-heights, and letter-spacings are defined here,
- * allowing theme palette and container contrast inheritance to work cleanly.
- */
 export const typography: TypographyVariantsOptions = {
   fontFamily: [
     'Inter',

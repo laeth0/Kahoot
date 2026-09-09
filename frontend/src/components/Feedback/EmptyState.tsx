@@ -3,23 +3,14 @@ import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 
 export interface EmptyStateProps {
-  /** Main title */
   title: string;
-  /** Detailed description or instructions */
   description?: string;
-  /** Custom icon component override */
   icon?: ReactNode;
-  /** Optional call-to-action button label */
   actionLabel?: string;
-  /** Callback when CTA button is clicked */
   onAction?: () => void;
-  /** Optional icon for the action button */
   actionIcon?: ReactNode;
 }
 
-/**
- * Empty state display for screens with no items, questions, or participants yet.
- */
 export function EmptyState({
   title,
   description,

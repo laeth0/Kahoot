@@ -1,10 +1,5 @@
 import type { Components, Theme } from '@mui/material/styles';
 
-/**
- * MUI Component overrides tailored to the light theme with IEEE / tech aesthetic:
- * Clean rounded shapes (8px/12px/16px), subtle border lines (#e2e8f0),
- * crisp white elevated surfaces, and refined primary brand accents.
- */
 export const components: Components<Theme> = {
   MuiCssBaseline: {
     styleOverrides: {

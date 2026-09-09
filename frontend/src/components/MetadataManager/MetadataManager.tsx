@@ -1,22 +1,14 @@
 import { useEffect } from 'react';
 
 export interface MetadataManagerProps {
-  /** Page title without the brand suffix */
   title: string;
-  /** Meta description for search engines and social cards */
   description?: string;
-  /** When true or when on non-public routes, sets robots to noindex, nofollow */
   noindex?: boolean;
-  /** Optional canonical URL override */
   canonicalUrl?: string;
 }
 
 const BRAND_SUFFIX = 'IEEEXtreme Kahoot';
 
-/**
- * Centralized metadata boundary managing document head properties:
- * title, meta description, robots indexing rules, and canonical link.
- */
 export function MetadataManager({
   title,
   description,
@@ -24,11 +16,9 @@ export function MetadataManager({
   canonicalUrl,
 }: MetadataManagerProps) {
   useEffect(() => {
-    // 1. Update Title
     const originalTitle = document.title;
     document.title = title ? `${title} | ${BRAND_SUFFIX}` : BRAND_SUFFIX;
 
-    // 2. Update Meta Description
     let metaDescription = document.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -40,7 +30,6 @@ export function MetadataManager({
       metaDescription.content = description;
     }
 
-    // 3. Update Robots Tag
     let metaRobots = document.querySelector<HTMLMetaElement>('meta[name="robots"]');
     if (!metaRobots) {
       metaRobots = document.createElement('meta');
@@ -50,7 +39,6 @@ export function MetadataManager({
     const prevRobots = metaRobots.content;
     metaRobots.content = noindex ? 'noindex, nofollow' : 'index, follow';
 
-    // 4. Update Canonical Link
     let linkCanonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]');
     if (!linkCanonical) {
       linkCanonical = document.createElement('link');

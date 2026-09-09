@@ -20,18 +20,17 @@ budget_tokens: 1000
 - **Frontend Documentation:** Updated `README.md` with complete directory tree, technology stack, directory responsibilities, and scripts guide. Build, lint, and format verified cleanly.
 - **Frontend Assets:** Moved `logo.jpeg` to `frontend/src/assets/logo.jpeg` (and `frontend/public/logo.jpeg`).
 - **Frontend Light Theme & Colors:** Configured custom MUI light theme derived from `logo.jpeg` (`src/theme/palette.ts`, `typography.ts`, `components.ts`, `index.ts`), design tokens (`src/styles/tokens.css`, `src/index.css`), Google Fonts Inter (`index.html`), and verification showcase in `src/App.tsx`. Enforced light theme only. Verified with lint, prettier, build, and browser testing.
-- **Frontend Architecture, Host Login & Player Join:**
-  - Implemented centralized Axios HTTP client (`src/api/axiosClient.ts`) with auth Bearer token injection and error interpretation interceptors.
-  - Implemented Host auth service (`src/api/authService.ts`) with username + password credentials and offline fallback simulation.
-  - Implemented Player game service (`src/api/gameService.ts`) for joining sessions via PIN and nickname.
-  - Implemented global Host `AuthContext`, `AuthProvider`, and `useAuth` hook (`src/context/`, `src/hooks/useAuth.ts`).
-  - Implemented centralized routing and route guards (`src/routes/routes.tsx`, `src/routes/ProtectedRoute.tsx`).
-  - Implemented `RootLayout` with branded navigation header and accessible landmarks, plus `AuthLayout` for host login.
-  - Built Player Home Page (`src/pages/HomePage/HomePage.tsx`) with Game PIN + player handle entry, live feedback, and UI/UX Pro Max standards.
-  - Built Host Login Page (`src/pages/LoginPage/LoginPage.tsx`) with username + password (no email), show/hide toggle, and error states.
-  - Built Protected Host Dashboard (`src/pages/HostDashboard/HostDashboard.tsx`) with quiz catalog overview and session launchers.
-  - Cleaned `src/App.tsx` to mount providers and routes without hardcoded showcase colors.
-  - Verified 100% clean formatting, ESLint, TypeScript production build, and automated browser end-to-end verification.
+- **Frontend Phase 1: Public Landing & Host Authentication:**
+  - Built high-impact, creative, and intuitive Landing Page (`src/pages/HomePage/HomePage.tsx`) with IEEE Ocean Blue branding, hero with live status badge, embedded `PinEntryForm` with digit formatting and sanitization, secondary Host Login CTA, 3-step "How to Participate" guide cards, and feature highlights grid.
+  - Implemented dedicated Join Game page (`src/pages/JoinPage/JoinPage.tsx`) supporting deep links (`?pin=...`), PIN validation, player handle input, and direct session joining.
+  - Hardened Host Login Page (`src/pages/LoginPage/LoginPage.tsx`) with username + password authentication (no email), show/hide password toggle, return-URL redirect, and rate-limit handling.
+  - Built reusable `PinEntryForm` (`src/components/PinEntryForm/PinEntryForm.tsx`).
+  - Implemented token persistence (access + refresh tokens with expiration timestamps) in `AuthProvider`, `authService`, and `axiosClient`.
+  - Implemented silent access-token renewal hook (`src/hooks/useTokenRefresh.ts`) with tab visibility detection.
+  - Implemented centralized SEO and accessibility `MetadataManager` (`src/components/MetadataManager/MetadataManager.tsx`) managing title, meta description, and `noindex` rules.
+  - Built accessible feedback primitives (`LoadingState`, `EmptyState`, `ErrorState`, `InlineFieldError`, `LiveRegion`) and `AppErrorBoundary`.
+  - Enhanced `NotFoundPage` (`src/pages/NotFoundPage/NotFoundPage.tsx`) with noindex tag and dual return paths.
+  - Verified 100% clean formatting, ESLint, TypeScript production build, and comprehensive browser E2E verification.
 - **Cleanup:** Removed `.opencode` and `.cursor` directories.
 - **Backend Architecture:** Created .NET 10 Clean Architecture solution (`Kahoot.sln`) with `Domain`, `Application`, `Infrastructure`, and `Api` projects. Installed required stack (`EF Core 10`, `PostgreSQL/Npgsql`, `MediatR`, `FluentValidation`, `Mapster`, `Scrutor`, `Scalar.AspNetCore`, `SignalR`). Added `backend/.gitignore`.
 - **Containerization:** Created `backend/Dockerfile`, `backend/.dockerignore`, `frontend/Dockerfile`, `frontend/nginx.conf`, `frontend/.dockerignore`, and root `docker-compose.yml` (PostgreSQL 17, .NET 10 API, React Vite Nginx). Verified with `docker compose config`.
@@ -41,49 +40,18 @@ budget_tokens: 1000
 
 ## 🚀 Next phase
 
-**Goal:** _<what we're building next, in 1 sentence>_
+**Goal:** Phase 2 — Host Quiz Management (Quiz Library, Create Quiz, Quiz Editor with drawer/dialog, ReorderableQuestionList, ImageUploadField, and PublishChecklist).
 
 ### Acceptance criteria
-1. _<concrete user-visible outcome>_
-2. _<...>_
-
-### Files to create / edit
-| Type | File | Content |
-|---|---|---|
-| new | `path/to/file.ts` | _what it does_ |
-
-### Closed decisions
-- _<choice + reasoning>_
-
-### Open decisions
-- _<question to ask the user before coding>_
+1. Host can view, search, and delete owned quizzes in `/host/quizzes`.
+2. Host can create a new quiz at `/host/quizzes/new` and edit it at `/host/quizzes/:quizId`.
+3. Question and choices management via dialog/drawer supporting 2–6 choices with 1 correct answer.
+4. Image upload integration with `POST /api/uploads/images`.
+5. FR-3.2 live validation checklist before publishing and 409 handling.
 
 ---
 
 ## 📁 Active architecture
 
-- **Stack:** _<frameworks, libraries, runtime>_
-- **Key tables / modules:** _<list>_
-- **Patterns:** _<conventions enforced project-wide>_
-
----
-
-## ⚠️ External blockers (don't block coding)
-
-- _<env vars, secrets, external accounts, manual steps>_
-
----
-
-## 🔧 Useful commands
-
-```bash
-# add the most-used commands here so the next session has them ready
-```
-
----
-
-## 📚 References (read IF needed)
-
-- `.wolf/cerebrum.md` — User Preferences + Do-Not-Repeat + Decision Log
-- `.wolf/anatomy.md` — token-efficient file index
-- `.wolf/buglog.json` — known bugs + fixes
+- **Stack:** React 19 + TypeScript + Vite, Material UI v9, Emotion, React Router DOM 7, Axios, Zod, SignalR.
+- **Patterns:** Strictly Light Theme (`#00629B` IEEE Ocean Blue, `#0284C7` Radar Cyan, `#F4F8FC` canvas, `#09131F` text), centralized routing, custom hooks, accessible landmarks, noindex on protected routes.

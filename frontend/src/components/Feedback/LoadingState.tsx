@@ -1,17 +1,11 @@
 import { Box, CircularProgress, Skeleton, Stack, Typography } from '@mui/material';
 
 export interface LoadingStateProps {
-  /** Variant of loading presentation */
   variant?: 'spinner' | 'page' | 'card' | 'rows';
-  /** Accessible announcement message */
   message?: string;
-  /** Number of rows if variant is 'rows' */
   rowCount?: number;
 }
 
-/**
- * Accessible loading state presentation with aria-live announcement.
- */
 export function LoadingState({
   variant = 'spinner',
   message = 'Loading content, please wait...',

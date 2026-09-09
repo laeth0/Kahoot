@@ -21,7 +21,6 @@ import { useAuth } from '../../hooks/useAuth.ts';
 export function HostDashboard() {
   const { host } = useAuth();
 
-  // Sample initial quiz list for host overview
   const sampleQuizzes = [
     {
       id: 'quiz-01',
@@ -45,7 +44,6 @@ export function HostDashboard() {
   return (
     <Box sx={{ flexGrow: 1, py: { xs: 4, md: 6 }, bgcolor: '#f4f8fc' }}>
       <Container maxWidth="lg">
-        {/* Welcome Header */}
         <Paper
           elevation={0}
           sx={{
@@ -96,7 +94,6 @@ export function HostDashboard() {
           </Stack>
         </Paper>
 
-        {/* Quizzes Grid */}
         <Box sx={{ mb: 3 }}>
           <Typography variant="h5" component="h2" sx={{ fontWeight: 700, color: '#09131f', mb: 2 }}>
             Your Quizzes

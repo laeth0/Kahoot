@@ -2,15 +2,10 @@ import ErrorIcon from '@mui/icons-material/Error';
 import { Box, Typography } from '@mui/material';
 
 export interface InlineFieldErrorProps {
-  /** HTML ID for aria-describedby binding */
   id?: string;
-  /** Error message to announce and display */
   error?: string | null;
 }
 
-/**
- * Accessible inline error message tied to form fields via aria-describedby.
- */
 export function InlineFieldError({ id, error }: InlineFieldErrorProps) {
   if (!error) return null;
 

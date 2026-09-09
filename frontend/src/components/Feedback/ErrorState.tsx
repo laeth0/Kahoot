@@ -3,21 +3,13 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import { Alert, Box, Button, Paper, Stack, Typography } from '@mui/material';
 
 export interface ErrorStateProps {
-  /** Error heading */
   title?: string;
-  /** Detailed error message */
   message: string;
-  /** Callback to retry the operation */
   onRetry?: () => void;
-  /** Optional status code variant */
   status?: 400 | 401 | 403 | 404 | 429 | 500;
-  /** Inline vs full panel display */
   variant?: 'inline' | 'panel';
 }
 
-/**
- * ProblemDetails-aware error display with accessible alert announcement and optional retry.
- */
 export function ErrorState({
   title = 'Something went wrong',
   message,

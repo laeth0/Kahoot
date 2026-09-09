@@ -2,9 +2,6 @@ import { useContext } from 'react';
 
 import { AuthContext, type AuthContextType } from '../context/AuthContext.ts';
 
-/**
- * Custom React Hook providing access to Host authentication context.
- */
 export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (!context) {

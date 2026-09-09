@@ -1,6 +1,3 @@
-/**
- * Centralized validation limits aligning with backend contracts.
- */
 export const VALIDATION = {
   PIN: {
     MIN_LENGTH: 4,

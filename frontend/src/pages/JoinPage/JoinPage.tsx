@@ -24,10 +24,6 @@ import { PinEntryForm } from '../../components/PinEntryForm/index.ts';
 import { getFriendlyErrorMessage } from '../../constants/errorCodes.ts';
 import { VALIDATION } from '../../constants/validation.ts';
 
-/**
- * Player Join Page: receives PIN (via URL query param or user input),
- * captures player nickname, and connects to the active session.
- */
 export function JoinPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialPin = searchParams.get('pin') ?? '';
@@ -79,7 +75,6 @@ export function JoinPage() {
         nickname: cleanNickname,
       });
 
-      // Store sessionToken for the player
       sessionStorage.setItem(`kahoot_session_${response.gameId}`, response.sessionToken);
 
       setJoinResult({
@@ -122,7 +117,6 @@ export function JoinPage() {
             }}
           >
             <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
-              {/* Header Icon & Title */}
               <Stack spacing={1.5} sx={{ textAlign: 'center', mb: 3.5, alignItems: 'center' }}>
                 <Box
                   sx={{
@@ -150,7 +144,6 @@ export function JoinPage() {
                 </Typography>
               </Stack>
 
-              {/* Success View */}
               {joinResult ? (
                 <Stack spacing={3} sx={{ textAlign: 'center', py: 2 }}>
                   <Alert severity="success" sx={{ fontSize: '1.05rem', fontWeight: 600 }}>
@@ -175,7 +168,6 @@ export function JoinPage() {
                   </Button>
                 </Stack>
               ) : !hasValidPin ? (
-                /* Step 1: PIN Input */
                 <PinEntryForm
                   initialPin={pin}
                   onSubmit={handlePinSubmit}
@@ -183,7 +175,6 @@ export function JoinPage() {
                   helperText="Enter the 6-digit game PIN"
                 />
               ) : (
-                /* Step 2: Nickname Input */
                 <Box component="form" onSubmit={handleJoinSubmit} noValidate>
                   {apiError && (
                     <Alert severity="error" sx={{ mb: 3 }}>

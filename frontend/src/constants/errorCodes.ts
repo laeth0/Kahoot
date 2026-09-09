@@ -1,6 +1,3 @@
-/**
- * Maps backend error codes to user-friendly copy.
- */
 export const ERROR_MESSAGES: Record<string, string> = {
   'Auth.InvalidCredentials': 'The username or password you entered is incorrect.',
   'Auth.HostNotFound': 'Host account not found.',
@@ -15,9 +12,6 @@ export const ERROR_MESSAGES: Record<string, string> = {
   'Quiz.InUse': 'This quiz currently has an active session and cannot be modified.',
 };
 
-/**
- * Resolves an error code or raw message into a user-friendly display string.
- */
 export function getFriendlyErrorMessage(
   codeOrMessage?: string | null,
   fallback = 'An unexpected error occurred',

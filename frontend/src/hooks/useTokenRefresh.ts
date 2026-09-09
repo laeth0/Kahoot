@@ -2,13 +2,8 @@ import { useEffect } from 'react';
 
 import { useAuth } from './useAuth.ts';
 
-const REFRESH_MARGIN_MS = 60 * 1000; // Refresh 60 seconds before expiration
-const MIN_TIMEOUT_MS = 5 * 1000; // Minimum 5s backoff
-
-/**
- * Hook for automatic, silent refresh of the host's access token before it expires.
- * Also checks token freshness whenever the browser tab becomes visible.
- */
+const REFRESH_MARGIN_MS = 60 * 1000;
+const MIN_TIMEOUT_MS = 5 * 1000;
 export function useTokenRefresh() {
   const { isAuthenticated, accessTokenExpiresAt, refreshToken, refreshSession } = useAuth();
 
@@ -32,8 +27,8 @@ export function useTokenRefresh() {
       timerId = setTimeout(async () => {
         try {
           await refreshSession();
-        } catch {
-          // Failure handling is managed within refreshSession (auto-logout)
+        } catch (err) {
+          void err;
         }
       }, delay);
     };
@@ -44,7 +39,6 @@ export function useTokenRefresh() {
       if (document.visibilityState === 'visible') {
         const expiresTime = new Date(accessTokenExpiresAt).getTime();
         const now = Date.now();
-        // If expired or within the margin, refresh immediately
         if (expiresTime - now <= REFRESH_MARGIN_MS) {
           refreshSession();
         } else {

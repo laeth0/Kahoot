@@ -16,7 +16,6 @@ export function AuthLayout() {
       }}
     >
       <Container maxWidth="sm">
-        {/* Top Back Navigation */}
         <Stack
           direction="row"
           sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
@@ -63,7 +62,6 @@ export function AuthLayout() {
           </Stack>
         </Stack>
 
-        {/* Auth Content Outlet */}
         <Box component="main">
           <Outlet />
         </Box>

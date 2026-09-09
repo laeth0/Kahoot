@@ -16,26 +16,15 @@ import { VALIDATION } from '../../constants/validation.ts';
 import { InlineFieldError } from '../Feedback/InlineFieldError.tsx';
 
 export interface PinEntryFormProps {
-  /** Optional pre-filled game PIN */
   initialPin?: string;
-  /** Custom submit handler. If omitted, navigates to /join?pin={pin} */
   onSubmit?: (pin: string) => void | Promise<void>;
-  /** Auto focus the PIN input */
   autoFocus?: boolean;
-  /** Disable the form inputs and button */
   disabled?: boolean;
-  /** Submit button text */
   buttonText?: string;
-  /** Size variant */
   size?: 'medium' | 'large';
-  /** Helper text displayed below input */
   helperText?: string;
 }
 
-/**
- * Reusable Game PIN input form adhering to WCAG 2.2 AA standards
- * and UI/UX Pro Max guidelines.
- */
 export function PinEntryForm({
   initialPin = '',
   onSubmit,
@@ -53,7 +42,6 @@ export function PinEntryForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handlePinChange = (value: string) => {
-    // Only allow digits and spaces, max 8 chars
     const cleaned = value.replace(/[^0-9\s]/g, '').slice(0, 8);
     setPin(cleaned);
     if (errorMessage) {

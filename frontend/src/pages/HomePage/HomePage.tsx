@@ -22,10 +22,6 @@ import logo from '../../assets/logo.jpeg';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { PinEntryForm } from '../../components/PinEntryForm/index.ts';
 
-/**
- * Public Landing Page: primary entry point for players to enter a PIN,
- * hosts to access the administration portal, and visitors to understand the platform.
- */
 export function HomePage() {
   return (
     <>
@@ -42,10 +38,8 @@ export function HomePage() {
         }}
       >
         <Container maxWidth="lg">
-          {/* Hero Section */}
           <Box component="section" aria-labelledby="hero-title" sx={{ mb: { xs: 6, md: 10 } }}>
             <Stack spacing={3} sx={{ textAlign: 'center', alignItems: 'center', mb: 5 }}>
-              {/* Live Badge */}
               <Chip
                 icon={
                   <Box
@@ -72,7 +66,6 @@ export function HomePage() {
                 }}
               />
 
-              {/* Brand Logo */}
               <Box
                 component="img"
                 src={logo}
@@ -87,7 +80,6 @@ export function HomePage() {
                 }}
               />
 
-              {/* Primary Heading */}
               <Typography
                 id="hero-title"
                 variant="h1"
@@ -104,7 +96,6 @@ export function HomePage() {
                 Real-Time Competitive Quizzing for Engineers
               </Typography>
 
-              {/* Subtitle */}
               <Typography
                 variant="body1"
                 sx={{
@@ -119,7 +110,6 @@ export function HomePage() {
               </Typography>
             </Stack>
 
-            {/* Central Action Card */}
             <Card
               elevation={0}
               sx={{
@@ -150,7 +140,6 @@ export function HomePage() {
                   Enter the 6-digit PIN shown on the host's screen
                 </Typography>
 
-                {/* Shared PinEntryForm */}
                 <PinEntryForm size="large" buttonText="Continue to Game" />
 
                 <Divider sx={{ my: 3 }}>
@@ -159,7 +148,6 @@ export function HomePage() {
                   </Typography>
                 </Divider>
 
-                {/* Secondary Host Login Action */}
                 <Button
                   component={RouterLink}
                   to="/login"
@@ -185,7 +173,6 @@ export function HomePage() {
             </Card>
           </Box>
 
-          {/* "How It Works" 3-Step Guide */}
           <Box
             component="section"
             aria-labelledby="how-it-works-title"
@@ -359,7 +346,6 @@ export function HomePage() {
             </Grid>
           </Box>
 
-          {/* Platform Features Grid */}
           <Box component="section" aria-labelledby="features-title" sx={{ mb: 4 }}>
             <Paper
               elevation={0}

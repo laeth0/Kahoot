@@ -13,10 +13,6 @@ interface State {
   error: Error | null;
 }
 
-/**
- * Robust React Error Boundary isolating runtime render crashes
- * with accessible announcement and recovery actions.
- */
 export class AppErrorBoundary extends Component<Props, State> {
   public override state: State = {
     hasError: false,

@@ -1,15 +1,10 @@
 import { Box } from '@mui/material';
 
 export interface LiveRegionProps {
-  /** Text to announce to assistive technologies */
   message?: string | null;
-  /** Politeness level for the live region */
   politeness?: 'polite' | 'assertive';
 }
 
-/**
- * Visually hidden screen-reader live region for notifying users of asynchronous updates.
- */
 export function LiveRegion({ message, politeness = 'polite' }: LiveRegionProps) {
   return (
     <Box

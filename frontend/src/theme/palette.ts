@@ -1,10 +1,5 @@
 import type { PaletteOptions } from '@mui/material/styles';
 
-/**
- * Light theme palette derived from the IEEEXtreme Palestine Section logo colors.
- * Strict light mode only: deep tech ocean blue primary, luminous cyan accent,
- * crisp white paper surfaces, and high-contrast dark navy text.
- */
 export const palette: PaletteOptions = {
   mode: 'light',
   primary: {

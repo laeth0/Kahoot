@@ -2,40 +2,37 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { AuthLayout } from '../layouts/AuthLayout.tsx';
 import { RootLayout } from '../layouts/RootLayout.tsx';
+import { CreateQuizPage } from '../pages/CreateQuizPage/index.ts';
 import { HomePage } from '../pages/HomePage/HomePage.tsx';
-import { HostDashboard } from '../pages/HostDashboard/HostDashboard.tsx';
 import { JoinPage } from '../pages/JoinPage/JoinPage.tsx';
 import { LoginPage } from '../pages/LoginPage/LoginPage.tsx';
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage.tsx';
+import { QuizEditorPage } from '../pages/QuizEditorPage/index.ts';
+import { QuizLibraryPage } from '../pages/QuizLibraryPage/index.ts';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
 
-/**
- * Centralized application route definitions with nested layouts and protected routes.
- */
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Public Pages with Root Navigation Shell */}
       <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
         <Route path="join" element={<JoinPage />} />
       </Route>
 
-      {/* Host Authentication Layout */}
       <Route element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />
       </Route>
 
-      {/* Protected Host Area */}
       <Route path="host" element={<ProtectedRoute />}>
         <Route element={<RootLayout />}>
-          <Route index element={<Navigate to="dashboard" replace />} />
-          <Route path="dashboard" element={<HostDashboard />} />
-          <Route path="quizzes" element={<HostDashboard />} />
+          <Route index element={<Navigate to="quizzes" replace />} />
+          <Route path="dashboard" element={<Navigate to="/host/quizzes" replace />} />
+          <Route path="quizzes" element={<QuizLibraryPage />} />
+          <Route path="quizzes/new" element={<CreateQuizPage />} />
+          <Route path="quizzes/:quizId" element={<QuizEditorPage />} />
         </Route>
       </Route>
 
-      {/* Catch-all 404 Page */}
       <Route element={<RootLayout />}>
         <Route path="*" element={<NotFoundPage />} />
       </Route>

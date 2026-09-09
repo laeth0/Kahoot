@@ -1,5 +1,6 @@
 import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
+import QuizIcon from '@mui/icons-material/Quiz';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import {
   AppBar,
@@ -19,15 +20,10 @@ import { AppErrorBoundary } from '../components/ErrorBoundary/index.ts';
 import { useAuth } from '../hooks/useAuth.ts';
 import { useTokenRefresh } from '../hooks/useTokenRefresh.ts';
 
-/**
- * Root Layout containing standard header navigation, accessible skip link,
- * error boundary protection, and silent authentication token refresh.
- */
 export function RootLayout() {
   const { host, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Activate silent access token renewal while the application is active
   useTokenRefresh();
 
   const handleLogout = async () => {
@@ -37,7 +33,6 @@ export function RootLayout() {
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Accessible Skip Link */}
       <Box
         component="a"
         href="#main-content"
@@ -60,11 +55,9 @@ export function RootLayout() {
         Skip to main content
       </Box>
 
-      {/* Modern Header */}
       <AppBar position="sticky" sx={{ bgcolor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between', py: 1.25 }}>
-            {/* Brand Logo & Title */}
             <Stack
               component={RouterLink}
               to="/"
@@ -113,7 +106,6 @@ export function RootLayout() {
               </Box>
             </Stack>
 
-            {/* Navigation Actions */}
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
               <Button
                 component={RouterLink}
@@ -142,12 +134,13 @@ export function RootLayout() {
                   />
                   <Button
                     component={RouterLink}
-                    to="/host/dashboard"
+                    to="/host/quizzes"
                     variant="contained"
                     color="primary"
+                    startIcon={<QuizIcon />}
                     sx={{ minHeight: 44, px: 2 }}
                   >
-                    Dashboard
+                    My Quizzes
                   </Button>
                   <Button
                     variant="outlined"
@@ -181,7 +174,6 @@ export function RootLayout() {
         </Container>
       </AppBar>
 
-      {/* Main Content Area */}
       <Box
         id="main-content"
         component="main"
@@ -198,7 +190,6 @@ export function RootLayout() {
         </AppErrorBoundary>
       </Box>
 
-      {/* Footer */}
       <Box
         component="footer"
         sx={{
