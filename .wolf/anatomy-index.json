@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:59:25.919Z",
-    "fileCount": 158,
+    "lastScanned": "2026-09-09T09:01:13.838Z",
+    "fileCount": 159,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "c19213535f3b6df94f8501c551cba48bb5e29558cc642a92797e75f38046443c",
-    "storeUpdatedAt": "2026-09-09T08:59:25.934Z",
-    "rootHash": "6ef3933f34e3a929"
+    "renderedHash": "0422294937a282d85d45f585cecd18f4fa365f27a7b4213670c3603ca5e35d38",
+    "storeUpdatedAt": "2026-09-09T09:01:13.847Z",
+    "rootHash": "3d7c52b0b6d6a6db"
   },
   "files": {
     "AGENTS.md": {
@@ -201,11 +201,11 @@
     },
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
-      "tokens": 2312,
-      "hash": "139683381306ac92",
-      "size": 9278,
-      "mtimeMs": 1788942448602.369,
-      "updatedAt": "2026-09-09T08:27:28.764Z",
+      "tokens": 2399,
+      "hash": "850769409ee4327b",
+      "size": 9630,
+      "mtimeMs": 1788944473719.3767,
+      "updatedAt": "2026-09-09T09:01:13.838Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
@@ -1430,6 +1430,15 @@
       "size": 637,
       "mtimeMs": 1788944347241.251,
       "updatedAt": "2026-09-09T08:59:07.546Z",
+      "source": "hook"
+    },
+    "docs/realtime-protocol.md": {
+      "description": "Real-Time Protocol (SignalR) — Kahoot-like Platform",
+      "tokens": 1736,
+      "hash": "8ff7e8bc34f49025",
+      "size": 6974,
+      "mtimeMs": 1788944462765.5693,
+      "updatedAt": "2026-09-09T09:01:02.873Z",
       "source": "hook"
     }
   },
