@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "meta": {
+    "lastScanned": "2026-09-09T06:45:21.748Z",
+    "fileCount": 4,
+    "hits": 0,
+    "misses": 0,
+    "renderedHash": "ae5931d05513064920006b250572056ab12c78d594dc1cc04802d67b7ae9b371",
+    "storeUpdatedAt": "2026-09-09T06:45:21.750Z",
+    "rootHash": "1a1e50ddcf4ed98c"
+  },
+  "files": {
+    "AGENTS.md": {
+      "description": "OpenWolf",
+      "tokens": 75,
+      "hash": "e401f79554a8d796",
+      "size": 297,
+      "mtimeMs": 1788936321492.5125,
+      "updatedAt": "2026-09-09T06:45:21.741Z",
+      "source": "scan"
+    },
+    "CLAUDE.md": {
+      "description": "OpenWolf",
+      "tokens": 99,
+      "hash": "074d6b42b583729a",
+      "size": 395,
+      "mtimeMs": 1788936321422.5713,
+      "updatedAt": "2026-09-09T06:45:21.742Z",
+      "source": "scan"
+    },
+    "Final Claude Code Prompt — Kahoot-like Platform.md": {
+      "description": "1. Required Technology Stack",
+      "tokens": 7074,
+      "hash": "ce9518fe5cacf140",
+      "size": 28421,
+      "mtimeMs": 1788936208756.6797,
+      "updatedAt": "2026-09-09T06:45:21.743Z",
+      "source": "scan"
+    },
+    "GEMINI.md": {
+      "description": "OpenWolf",
+      "tokens": 75,
+      "hash": "e401f79554a8d796",
+      "size": 297,
+      "mtimeMs": 1788936321648.0168,
+      "updatedAt": "2026-09-09T06:45:21.744Z",
+      "source": "scan"
+    }
+  },
+  "preamble": [
+    "> Project structure index. Auto-maintained by OpenWolf hooks and daemon.",
+    "> Run `openwolf scan` to generate, or wait for the first Claude Code session.",
+    "> Status: Pending initial scan"
+  ]
+}
