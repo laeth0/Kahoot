@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:57:40.664Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T10:02:53.750Z
 > Files: 186 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -83,7 +83,7 @@
 ## backend/src/Kahoot.Application/Authentication/Refresh/
 
 - `RefreshTokenCommand.cs` — Class: RefreshTokenCommand (~66 tok)
-- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~957 tok)
+- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~1029 tok)
 - `RefreshTokenCommandValidator.cs` — Class: RefreshTokenCommandValidator (~82 tok)
 
 ## backend/src/Kahoot.Application/Authentication/RefreshToken/

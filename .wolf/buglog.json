@@ -221,6 +221,21 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T09:45:24.153Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-09-09T10:03:03.918Z",
+      "error_message": "23503 FK violation fk_refresh_tokens_refresh_tokens_replaced_by_token_id on POST /api/auth/refresh",
+      "file": "backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs",
+      "root_cause": "Race-safe rewrite used ExecuteUpdateAsync to set replaced_by_token_id = rotated.Id BEFORE the rotated token row was inserted; ExecuteUpdate runs immediately so the self-FK pointed at a non-existent row.",
+      "fix": "Insert the rotated token first (SaveChanges), THEN run the atomic guarded ExecuteUpdate on the old token (WHERE RevokedAt IS NULL) setting RevokedAt + ReplacedByTokenId; if 0 rows (lost the rotation race) revoke the orphan rotated token and return InvalidRefreshToken.",
+      "tags": [
+        "ef-core",
+        "fk",
+        "concurrency",
+        "auth",
+        "cs"
+      ]
     }
   ]
 }

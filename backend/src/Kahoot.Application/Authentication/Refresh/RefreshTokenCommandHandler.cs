@@ -67,6 +67,9 @@ internal sealed class RefreshTokenCommandHandler(
             jwtOptions.Value.RefreshTokenDays,
             now);
 
+        dbContext.RefreshTokens.Add(rotated);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         int rotatedRows = await dbContext.RefreshTokens
             .Where(token => token.Id == stored.Id && token.RevokedAt == null)
             .ExecuteUpdateAsync(
@@ -77,11 +80,14 @@ internal sealed class RefreshTokenCommandHandler(
 
         if (rotatedRows == 0)
         {
+            await dbContext.RefreshTokens
+                .Where(token => token.Id == rotated.Id)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(token => token.RevokedAt, now.UtcDateTime),
+                    cancellationToken);
+
             return Result.Failure<AuthenticationResponse>(AuthenticationErrors.InvalidRefreshToken);
         }
-
-        dbContext.RefreshTokens.Add(rotated);
-        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(response);
     }

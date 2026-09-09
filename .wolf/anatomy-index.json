@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:57:40.664Z",
+    "lastScanned": "2026-09-09T10:02:53.750Z",
     "fileCount": 186,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "df72011e16692ab63daeb2d2a52547defdf11e9302acebce1ce3136c11c9cb3e",
-    "storeUpdatedAt": "2026-09-09T09:57:40.677Z",
-    "rootHash": "5628114ab13b3871"
+    "renderedHash": "4ea95db78e01f82f781b9e7edfd3a9a092358ab9dbd42b2d7a462892cda4e7f6",
+    "storeUpdatedAt": "2026-09-09T10:02:53.764Z",
+    "rootHash": "d907e9fa44685bf2"
   },
   "files": {
     "AGENTS.md": {
@@ -777,11 +777,11 @@
     },
     "backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs": {
       "description": "Class: RefreshTokenCommandHandler",
-      "tokens": 957,
-      "hash": "07314e3c4a9b5f68",
-      "size": 3587,
-      "mtimeMs": 1788947181309.3982,
-      "updatedAt": "2026-09-09T09:46:21.453Z",
+      "tokens": 1029,
+      "hash": "774b2051a2cabae4",
+      "size": 3858,
+      "mtimeMs": 1788948173620.694,
+      "updatedAt": "2026-09-09T10:02:53.749Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Quizzes/Common/QuizContracts.cs": {
