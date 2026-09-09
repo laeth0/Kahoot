@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:44:30.466Z",
+    "lastScanned": "2026-09-09T09:46:04.647Z",
     "fileCount": 182,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "43f298958dcdf349015a751f59110b854a78aea388cd2618d3bcf1dc587db43f",
-    "storeUpdatedAt": "2026-09-09T09:44:30.487Z",
-    "rootHash": "54c7f8f92ee5f459"
+    "renderedHash": "976d83d336770d4b27410db98bb19c0a5536105d45efb94808b0a3e2f2ca0e1e",
+    "storeUpdatedAt": "2026-09-09T09:46:04.662Z",
+    "rootHash": "cce39d3d2417aeab"
   },
   "files": {
     "AGENTS.md": {
@@ -642,11 +642,11 @@
     },
     "backend/src/Kahoot.Application/Authentication/Common/AuthTokenFactory.cs": {
       "description": "Class: AuthTokenFactory",
-      "tokens": 321,
-      "hash": "e2a7f8bc087dc4e0",
-      "size": 1202,
-      "mtimeMs": 1788943138002.652,
-      "updatedAt": "2026-09-09T08:38:58.166Z",
+      "tokens": 325,
+      "hash": "72e3fa25b67af7b5",
+      "size": 1216,
+      "mtimeMs": 1788947143725.0708,
+      "updatedAt": "2026-09-09T09:45:43.984Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Authentication/Register/RegisterHostCommand.cs": {
@@ -696,11 +696,11 @@
     },
     "backend/src/Kahoot.Application/Authentication/Login/LoginCommandHandler.cs": {
       "description": "Class: LoginCommandHandler",
-      "tokens": 510,
-      "hash": "05cfe5558621db2f",
-      "size": 1911,
-      "mtimeMs": 1788943190715.7012,
-      "updatedAt": "2026-09-09T08:39:50.880Z",
+      "tokens": 518,
+      "hash": "9381ea54d91e6dd2",
+      "size": 1941,
+      "mtimeMs": 1788947149628.6394,
+      "updatedAt": "2026-09-09T09:45:49.797Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Authentication/RefreshToken/RefreshTokenCommand.cs": {
@@ -777,11 +777,11 @@
     },
     "backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs": {
       "description": "Class: RefreshTokenCommandHandler",
-      "tokens": 725,
-      "hash": "08d70cc4f2ead2f1",
-      "size": 2718,
-      "mtimeMs": 1788943286631.219,
-      "updatedAt": "2026-09-09T08:41:26.767Z",
+      "tokens": 963,
+      "hash": "8197a28410716dba",
+      "size": 3610,
+      "mtimeMs": 1788947164467.3806,
+      "updatedAt": "2026-09-09T09:46:04.647Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Quizzes/Common/QuizContracts.cs": {
@@ -1056,11 +1056,11 @@
     },
     "backend/src/Kahoot.Application/Games/Common/GameContracts.cs": {
       "description": "Class: GameContracts",
-      "tokens": 682,
-      "hash": "92f838b9e23c6a52",
-      "size": 2555,
-      "mtimeMs": 1788943745608.469,
-      "updatedAt": "2026-09-09T08:49:05.871Z",
+      "tokens": 705,
+      "hash": "18b7a26d8e1445af",
+      "size": 2643,
+      "mtimeMs": 1788947106591.8296,
+      "updatedAt": "2026-09-09T09:45:06.795Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/Common/GameErrors.cs": {
@@ -1317,11 +1317,11 @@
     },
     "backend/src/Kahoot.Application/Games/Reconnect/ReconnectParticipantCommandHandler.cs": {
       "description": "Class: ReconnectParticipantCommandHandler",
-      "tokens": 1052,
-      "hash": "e69c2052a192e292",
-      "size": 3944,
-      "mtimeMs": 1788944097751.7146,
-      "updatedAt": "2026-09-09T08:54:57.868Z",
+      "tokens": 1281,
+      "hash": "d1c2c2e5a2ba78d7",
+      "size": 4801,
+      "mtimeMs": 1788947123947.912,
+      "updatedAt": "2026-09-09T09:45:24.126Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/GetHostGameState/GetHostGameStateQuery.cs": {
@@ -1551,11 +1551,11 @@
     },
     "backend/src/Kahoot.Api/Realtime/GameHub.cs": {
       "description": "Class: GameHub",
-      "tokens": 1326,
-      "hash": "268ad6840c82df75",
-      "size": 4969,
-      "mtimeMs": 1788945687991.8967,
-      "updatedAt": "2026-09-09T09:21:28.122Z",
+      "tokens": 1512,
+      "hash": "fc2bd85dac03e570",
+      "size": 5669,
+      "mtimeMs": 1788947091864.7678,
+      "updatedAt": "2026-09-09T09:44:52.040Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Controllers/AuthController.cs": {

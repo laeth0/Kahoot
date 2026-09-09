@@ -1,26 +1,29 @@
 using Kahoot.Api.Common;
-using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Games.Common;
 using Kahoot.Application.Games.JoinGame;
+using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Games.Reconnect;
 using Kahoot.Application.Games.SubmitAnswer;
 using Kahoot.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Api.Realtime;
 
 public sealed class GameHub(
     ISender sender,
-    IApplicationDbContext dbContext,
-    GameNotifier notifier) : Hub<IGameClient>
+    GameNotifier notifier,
+    TimeProvider timeProvider) : Hub<IGameClient>
 {
     private const string GameIdItem = "gameId";
     private const string ParticipantIdItem = "participantId";
     private const string SessionTokenItem = "sessionToken";
+    private const string SubmitWindowItem = "submitWindow";
+
+    private static readonly TimeSpan SubmitWindow = TimeSpan.FromSeconds(3);
+    private const int MaxSubmitsPerWindow = 5;
 
     public async Task<RealtimeResponse<JoinGameResponse>> JoinGame(string pin, string nickname)
     {
@@ -64,6 +67,11 @@ public sealed class GameHub(
             return RealtimeResponse<AnswerAckResponse>.Failure(GameErrors.InvalidSessionToken);
         }
 
+        if (!AllowSubmit())
+        {
+            return RealtimeResponse<AnswerAckResponse>.Failure(GameErrors.TooManyAnswerAttempts);
+        }
+
         Result<AnswerAckResponse> result = await sender.Send(
             new SubmitAnswerCommand(gameId, questionId, sessionToken, selectedChoiceId),
             Context.ConnectionAborted);
@@ -81,11 +89,10 @@ public sealed class GameHub(
             return RealtimeResponse<bool>.Failure(SharedErrors.Unauthorized);
         }
 
-        bool ownsGame = await dbContext.GameSessions.AnyAsync(
-            session => session.Id == gameId && session.HostId == hostId,
-            Context.ConnectionAborted);
+        Result<bool> ownership = await sender.Send(
+            new AuthorizeHostGameQuery(gameId, hostId), Context.ConnectionAborted);
 
-        if (!ownsGame)
+        if (ownership.IsFailure || !ownership.Value)
         {
             return RealtimeResponse<bool>.Failure(GameErrors.NotFound);
         }
@@ -99,12 +106,7 @@ public sealed class GameHub(
     {
         if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
         {
-            await dbContext.Participants
-                .Where(participant => participant.Id == participantId && participant.ConnectionId == Context.ConnectionId)
-                .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(participant => participant.ConnectionId, (string?)null),
-                    CancellationToken.None);
-
+            await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
             await notifier.ParticipantLeftAsync(gameId, participantId);
         }
 
@@ -118,11 +120,41 @@ public sealed class GameHub(
         Context.Items[SessionTokenItem] = sessionToken;
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GameGroups.Players(gameId), Context.ConnectionAborted);
+        await sender.Send(
+            new AttachParticipantConnectionCommand(participantId, Context.ConnectionId),
+            Context.ConnectionAborted);
+    }
 
-        await dbContext.Participants
-            .Where(participant => participant.Id == participantId)
-            .ExecuteUpdateAsync(
-                setters => setters.SetProperty(participant => participant.ConnectionId, Context.ConnectionId),
-                Context.ConnectionAborted);
+    private bool AllowSubmit()
+    {
+        DateTimeOffset now = timeProvider.GetUtcNow();
+
+        if (Context.Items[SubmitWindowItem] is not SubmitRateWindow window)
+        {
+            Context.Items[SubmitWindowItem] = new SubmitRateWindow(now, 1);
+            return true;
+        }
+
+        if (now - window.StartedAt > SubmitWindow)
+        {
+            window.StartedAt = now;
+            window.Count = 1;
+            return true;
+        }
+
+        if (window.Count >= MaxSubmitsPerWindow)
+        {
+            return false;
+        }
+
+        window.Count++;
+        return true;
+    }
+
+    private sealed class SubmitRateWindow(DateTimeOffset startedAt, int count)
+    {
+        public DateTimeOffset StartedAt { get; set; } = startedAt;
+
+        public int Count { get; set; } = count;
     }
 }

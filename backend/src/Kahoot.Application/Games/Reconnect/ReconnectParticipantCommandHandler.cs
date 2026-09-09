@@ -88,6 +88,24 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                 cancellationToken);
         }
 
+        QuestionResultsResponse? lastQuestionResults = null;
+        if (participant.Status is GameStatus.QuestionResults or GameStatus.Leaderboard
+            && participant.CurrentQuestionId is { } revealedQuestionId)
+        {
+            lastQuestionResults = await QuestionResultsBuilder.BuildAsync(
+                dbContext,
+                participant.GameId,
+                revealedQuestionId,
+                participant.CurrentQuestionIndex ?? 0,
+                cancellationToken);
+        }
+
+        LeaderboardResponse? leaderboard = null;
+        if (participant.Status is GameStatus.QuestionResults or GameStatus.Leaderboard or GameStatus.Finished)
+        {
+            leaderboard = await LeaderboardBuilder.ReadAsync(dbContext, participant.GameId, cancellationToken);
+        }
+
         return Result.Success(new PlayerGameStateResponse(
             participant.GameId,
             participant.Status,
@@ -96,6 +114,8 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
             participant.TotalScore,
             participant.LastRank,
             alreadyAnswered,
-            currentQuestion));
+            currentQuestion,
+            lastQuestionResults,
+            leaderboard));
     }
 }

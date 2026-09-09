@@ -23,11 +23,20 @@ internal sealed class RefreshTokenCommandHandler(
         string tokenHash = tokenHasher.Hash(command.RefreshToken);
         DateTimeOffset now = timeProvider.GetUtcNow();
 
-        RefreshToken? stored = await dbContext.RefreshTokens
-            .Include(token => token.Host)
-            .FirstOrDefaultAsync(token => token.TokenHash == tokenHash, cancellationToken);
+        var stored = await dbContext.RefreshTokens
+            .AsNoTracking()
+            .Where(token => token.TokenHash == tokenHash)
+            .Select(token => new
+            {
+                token.Id,
+                token.HostId,
+                token.ExpiresAt,
+                token.RevokedAt,
+                Username = token.Host!.Username
+            })
+            .FirstOrDefaultAsync(cancellationToken);
 
-        if (stored?.Host is null)
+        if (stored is null)
         {
             return Result.Failure<AuthenticationResponse>(AuthenticationErrors.InvalidRefreshToken);
         }
@@ -40,21 +49,37 @@ internal sealed class RefreshTokenCommandHandler(
 
         if (stored.ExpiresAt <= now.UtcDateTime)
         {
-            stored.RevokedAt = now.UtcDateTime;
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.RefreshTokens
+                .Where(token => token.Id == stored.Id && token.RevokedAt == null)
+                .ExecuteUpdateAsync(
+                    setters => setters.SetProperty(token => token.RevokedAt, now.UtcDateTime),
+                    cancellationToken);
+
             return Result.Failure<AuthenticationResponse>(AuthenticationErrors.InvalidRefreshToken);
         }
 
         (RefreshToken rotated, AuthenticationResponse response) = AuthTokenFactory.Issue(
-            stored.Host,
+            stored.HostId,
+            stored.Username,
             jwtTokenService,
             secureTokenGenerator,
             tokenHasher,
             jwtOptions.Value.RefreshTokenDays,
             now);
 
-        stored.RevokedAt = now.UtcDateTime;
-        stored.ReplacedByTokenId = rotated.Id;
+        int rotatedRows = await dbContext.RefreshTokens
+            .Where(token => token.Id == stored.Id && token.RevokedAt == null)
+            .ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(token => token.RevokedAt, now.UtcDateTime)
+                    .SetProperty(token => token.ReplacedByTokenId, rotated.Id),
+                cancellationToken);
+
+        if (rotatedRows == 0)
+        {
+            return Result.Failure<AuthenticationResponse>(AuthenticationErrors.InvalidRefreshToken);
+        }
+
         dbContext.RefreshTokens.Add(rotated);
         await dbContext.SaveChangesAsync(cancellationToken);
 

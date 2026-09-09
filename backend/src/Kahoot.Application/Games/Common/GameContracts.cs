@@ -83,4 +83,6 @@ public sealed record PlayerGameStateResponse(
     int TotalScore,
     int? Rank,
     bool AlreadyAnsweredCurrentQuestion,
-    PlayerQuestionResponse? CurrentQuestion);
+    PlayerQuestionResponse? CurrentQuestion,
+    QuestionResultsResponse? LastQuestionResults,
+    LeaderboardResponse? Leaderboard);

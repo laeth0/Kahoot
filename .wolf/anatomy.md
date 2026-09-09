@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:44:30.466Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:46:04.647Z
 > Files: 182 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -52,7 +52,7 @@
 ## backend/src/Kahoot.Api/Realtime/
 
 - `GameGroups.cs` — Class: GameGroups (~55 tok)
-- `GameHub.cs` — Class: GameHub (~1326 tok)
+- `GameHub.cs` — Class: GameHub (~1512 tok)
 - `GameNotifier.cs` — Class: GameNotifier (~405 tok)
 - `IGameClient.cs` — Class: IGameClient (~152 tok)
 - `RealtimeResponse.cs` — Class: RealtimeResponse (~124 tok)
@@ -65,13 +65,13 @@
 
 - `AuthenticationErrors.cs` — Class: AuthenticationErrors (~156 tok)
 - `AuthenticationResponse.cs` — Class: AuthenticationResponse (~72 tok)
-- `AuthTokenFactory.cs` — Class: AuthTokenFactory (~321 tok)
+- `AuthTokenFactory.cs` — Class: AuthTokenFactory (~325 tok)
 - `JwtOptions.cs` — Class: JwtOptions (~146 tok)
 
 ## backend/src/Kahoot.Application/Authentication/Login/
 
 - `LoginCommand.cs` — Class: LoginCommand (~67 tok)
-- `LoginCommandHandler.cs` — Class: LoginCommandHandler (~510 tok)
+- `LoginCommandHandler.cs` — Class: LoginCommandHandler (~518 tok)
 - `LoginCommandValidator.cs` — Class: LoginCommandValidator (~95 tok)
 
 ## backend/src/Kahoot.Application/Authentication/Logout/
@@ -82,7 +82,7 @@
 ## backend/src/Kahoot.Application/Authentication/Refresh/
 
 - `RefreshTokenCommand.cs` — Class: RefreshTokenCommand (~66 tok)
-- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~725 tok)
+- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~963 tok)
 - `RefreshTokenCommandValidator.cs` — Class: RefreshTokenCommandValidator (~82 tok)
 
 ## backend/src/Kahoot.Application/Authentication/RefreshToken/
@@ -140,7 +140,7 @@
 
 ## backend/src/Kahoot.Application/Games/Common/
 
-- `GameContracts.cs` — Class: GameContracts (~682 tok)
+- `GameContracts.cs` — Class: GameContracts (~705 tok)
 - `GameErrors.cs` — Class: GameErrors (~674 tok)
 - `GameQuestionMapper.cs` — Class: GameQuestionMapper (~524 tok)
 - `GameTime.cs` — Class: GameTime (~56 tok)
@@ -202,7 +202,7 @@
 ## backend/src/Kahoot.Application/Games/Reconnect/
 
 - `ReconnectParticipantCommand.cs` — Class: ReconnectParticipantCommand (~64 tok)
-- `ReconnectParticipantCommandHandler.cs` — Class: ReconnectParticipantCommandHandler (~1052 tok)
+- `ReconnectParticipantCommandHandler.cs` — Class: ReconnectParticipantCommandHandler (~1281 tok)
 
 ## backend/src/Kahoot.Application/Games/RemoveParticipant/
 

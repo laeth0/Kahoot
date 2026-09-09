@@ -37,7 +37,8 @@ internal sealed class LoginCommandHandler(
         }
 
         (RefreshToken refreshToken, AuthenticationResponse response) = AuthTokenFactory.Issue(
-            host,
+            host.Id,
+            host.Username,
             jwtTokenService,
             secureTokenGenerator,
             tokenHasher,

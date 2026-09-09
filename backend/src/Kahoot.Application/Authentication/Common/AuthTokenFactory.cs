@@ -6,28 +6,29 @@ namespace Kahoot.Application.Authentication.Common;
 internal static class AuthTokenFactory
 {
     public static (RefreshToken RefreshToken, AuthenticationResponse Response) Issue(
-        Host host,
+        Guid hostId,
+        string username,
         IJwtTokenService jwtTokenService,
         ISecureTokenGenerator secureTokenGenerator,
         ITokenHasher tokenHasher,
         int refreshTokenDays,
         DateTimeOffset now)
     {
-        AccessTokenResult accessToken = jwtTokenService.CreateAccessToken(host.Id, host.Username);
+        AccessTokenResult accessToken = jwtTokenService.CreateAccessToken(hostId, username);
 
         string rawRefreshToken = secureTokenGenerator.GenerateToken();
         DateTimeOffset refreshTokenExpiresAt = now.AddDays(refreshTokenDays);
 
         RefreshToken refreshToken = new()
         {
-            HostId = host.Id,
+            HostId = hostId,
             TokenHash = tokenHasher.Hash(rawRefreshToken),
             ExpiresAt = refreshTokenExpiresAt.UtcDateTime
         };
 
         AuthenticationResponse response = new(
-            host.Id,
-            host.Username,
+            hostId,
+            username,
             accessToken.Token,
             accessToken.ExpiresAt,
             rawRefreshToken,
