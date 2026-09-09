@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:17:11.969Z",
-    "fileCount": 44,
+    "lastScanned": "2026-09-09T08:18:03.447Z",
+    "fileCount": 47,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "235cb3c802e566c450a8530cdb3c5c91212653c15b1a81c5408f745a141c40bb",
-    "storeUpdatedAt": "2026-09-09T08:17:11.986Z",
-    "rootHash": "736ea060138433eb"
+    "renderedHash": "753d13ce2d8924664b17a46e3b93cd78afa6ab8ce783c724436e2d95660e522d",
+    "storeUpdatedAt": "2026-09-09T08:18:03.457Z",
+    "rootHash": "25c12f7b462b3ec8"
   },
   "files": {
     "AGENTS.md": {
@@ -399,11 +399,38 @@
     },
     "backend/src/Kahoot.Application/Common/Storage/ImageSignature.cs": {
       "description": "Class: ImageSignature",
-      "tokens": 242,
-      "hash": "f95ea745a18251f1",
-      "size": 905,
-      "mtimeMs": 1788941831847.6104,
-      "updatedAt": "2026-09-09T08:17:11.969Z",
+      "tokens": 255,
+      "hash": "2d91fb3ae4ea8a0a",
+      "size": 956,
+      "mtimeMs": 1788941844551.8792,
+      "updatedAt": "2026-09-09T08:17:24.715Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs": {
+      "description": "Class: ImageUploadService",
+      "tokens": 591,
+      "hash": "d871add0bc4e131f",
+      "size": 2214,
+      "mtimeMs": 1788941863253.1711,
+      "updatedAt": "2026-09-09T08:17:43.427Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Storage/LocalFileStorage.cs": {
+      "description": "Class: LocalFileStorage",
+      "tokens": 318,
+      "hash": "ddeb0690fc231d29",
+      "size": 1191,
+      "mtimeMs": 1788941874048.9534,
+      "updatedAt": "2026-09-09T08:17:54.200Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Api/Controllers/UploadsController.cs": {
+      "description": "Controller: UploadsController",
+      "tokens": 409,
+      "hash": "79b2b153307d9843",
+      "size": 1531,
+      "mtimeMs": 1788941883270.9915,
+      "updatedAt": "2026-09-09T08:18:03.446Z",
       "source": "hook"
     }
   },

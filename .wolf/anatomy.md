@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:17:11.969Z
-> Files: 44 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:18:03.447Z
+> Files: 47 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -22,6 +22,10 @@
 
 - `appsettings.json` (~135 tok)
 
+## backend/src/Kahoot.Api/Controllers/
+
+- `UploadsController.cs` — Controller: UploadsController (~409 tok)
+
 ## backend/src/Kahoot.Application/Common/Security/
 
 - `IPasswordHasher.cs` — Class: IPasswordHasher (~47 tok)
@@ -30,7 +34,8 @@
 
 - `FileStorageOptions.cs` — Class: FileStorageOptions (~213 tok)
 - `IFileStorage.cs` — Class: IFileStorage (~49 tok)
-- `ImageSignature.cs` — Class: ImageSignature (~242 tok)
+- `ImageSignature.cs` — Class: ImageSignature (~255 tok)
+- `ImageUploadService.cs` — Class: ImageUploadService (~591 tok)
 
 ## backend/src/Kahoot.Domain/Common/
 
@@ -93,6 +98,10 @@
 - `DatabaseMigrationHostedService.cs` — Class: DatabaseMigrationHostedService (~465 tok)
 - `DatabaseSeederHostedService.cs` — Class: DatabaseSeederHostedService (~623 tok)
 - `HostSeedOptions.cs` — Class: HostSeedOptions (~91 tok)
+
+## backend/src/Kahoot.Infrastructure/Storage/
+
+- `LocalFileStorage.cs` — Class: LocalFileStorage (~318 tok)
 
 ## docs/
 
