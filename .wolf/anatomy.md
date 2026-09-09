@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:50:21.295Z
-> Files: 183 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:54:23.507Z
+> Files: 186 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -384,3 +384,9 @@
 - `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2503 tok)
 - `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~2120 tok)
 - `realtime-protocol.md` — Real-Time Protocol (SignalR) — Kahoot-like Platform (~2257 tok)
+
+## frontend/src/api/
+
+- `authService.ts` — Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`. (~505 tok)
+- `axiosClient.ts` — Centralized Axios client: base URL from configuration, bearer-token injection, (~438 tok)
+- `gameService.ts` — Server game-state values (must match `Kahoot.Domain.Games.GameStatus`). (~270 tok)

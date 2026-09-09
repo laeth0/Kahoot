@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:50:21.295Z",
-    "fileCount": 183,
+    "lastScanned": "2026-09-09T09:54:23.507Z",
+    "fileCount": 186,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "0fbf47d752cfc1a2973499a553b6156df275865c241f17467cc623727c84f14a",
-    "storeUpdatedAt": "2026-09-09T09:50:21.315Z",
-    "rootHash": "5e133ed254256560"
+    "renderedHash": "f489dd5fdc14be9f877ca10526b890400376281c078ff11665658a0a894366fb",
+    "storeUpdatedAt": "2026-09-09T09:54:23.516Z",
+    "rootHash": "d7d5377f77861a4d"
   },
   "files": {
     "AGENTS.md": {
@@ -1655,6 +1655,70 @@
       "size": 2108,
       "mtimeMs": 1788947283313.5764,
       "updatedAt": "2026-09-09T09:48:03.464Z",
+      "source": "hook"
+    },
+    "frontend/src/api/axiosClient.ts": {
+      "description": "Centralized Axios client: base URL from configuration, bearer-token injection,",
+      "tokens": 438,
+      "hash": "c0828f852aed2de3",
+      "size": 1530,
+      "mtimeMs": 1788947632043.8342,
+      "updatedAt": "2026-09-09T09:53:52.184Z",
+      "source": "hook"
+    },
+    "frontend/src/api/authService.ts": {
+      "description": "Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`.",
+      "tokens": 505,
+      "hash": "943fb733fbb10177",
+      "size": 1765,
+      "mtimeMs": 1788947656419.9739,
+      "updatedAt": "2026-09-09T09:54:16.541Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "HostUser",
+          "kind": "section",
+          "startLine": 3,
+          "endLine": 7,
+          "tokens": 19
+        },
+        {
+          "name": "AuthResponse",
+          "kind": "section",
+          "startLine": 8,
+          "endLine": 15,
+          "tokens": 47
+        },
+        {
+          "name": "LoginPayload",
+          "kind": "section",
+          "startLine": 16,
+          "endLine": 21,
+          "tokens": 44
+        },
+        {
+          "name": "AuthenticationResponseDto",
+          "kind": "section",
+          "startLine": 22,
+          "endLine": 30,
+          "tokens": 55
+        },
+        {
+          "name": "toAuthResponse",
+          "kind": "fn",
+          "startLine": 31,
+          "endLine": 63,
+          "tokens": 326
+        }
+      ]
+    },
+    "frontend/src/api/gameService.ts": {
+      "description": "Server game-state values (must match `Kahoot.Domain.Games.GameStatus`).",
+      "tokens": 270,
+      "hash": "57ed9554dbbdc9d3",
+      "size": 943,
+      "mtimeMs": 1788947663396.2175,
+      "updatedAt": "2026-09-09T09:54:23.506Z",
       "source": "hook"
     }
   },

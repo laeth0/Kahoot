@@ -311,3 +311,7 @@ description: chronological action log per session, consolidated weekly
 | 12:50 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | modified AuthController() | ~154 |
 | 12:50 | Edited backend/src/Kahoot.Api/Controllers/GamesController.cs | 6→7 lines | ~52 |
 | 12:50 | Edited backend/src/Kahoot.Api/Controllers/GamesController.cs | 3→4 lines | ~47 |
+| 12:53 | Created frontend/src/api/axiosClient.ts | — | ~438 |
+| 12:54 | Created frontend/src/api/authService.ts | — | ~504 |
+| 12:54 | Edited frontend/src/api/authService.ts | modified logout() | ~78 |
+| 12:54 | Created frontend/src/api/gameService.ts | — | ~270 |
