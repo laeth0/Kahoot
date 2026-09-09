@@ -508,6 +508,22 @@
       "related_bugs": [],
       "occurrences": 2,
       "last_seen": "2026-09-09T15:46:34.453Z"
+    },
+    {
+      "id": "bug-033",
+      "timestamp": "2026-09-09T15:47:13.344Z",
+      "error_message": "Wrong operator: || should be >>",
+      "file": "load-tests/run.sh",
+      "root_cause": "Used \"||\" instead of \">>\"",
+      "fix": "Changed operator || → >>",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "sh"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T15:47:13.344Z"
     }
   ]
 }

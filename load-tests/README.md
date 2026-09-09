@@ -175,9 +175,30 @@ the bucket) — then prints the PASS/FAIL table. Per-scenario JSON lands in
 
 ---
 
-## How to run — step by step
+## How to run
 
-### Option A (recommended): the project `docker-compose.yml`, sized like Railway
+### One command — `load-tests/run.sh`
+
+Brings up the `docker-compose.yml` backend, waits for `/health`, runs the tests,
+optionally checks DB integrity, optionally tears down. (Bash — on Windows use
+Git Bash / WSL.)
+
+```bash
+./load-tests/run.sh                      # compose backend up + full acceptance suite
+./load-tests/run.sh answer-burst         # one scenario
+./load-tests/run.sh all --verify         # every scenario, then verify/verify.sql
+./load-tests/run.sh --no-up ramp         # backend already running elsewhere
+./load-tests/run.sh --down-after         # run, then `docker compose down -v`
+./load-tests/run.sh --down               # just tear the stack down
+./load-tests/run.sh -- -e PLAYERS=200    # pass flags through to every k6 run
+BASE_URL=https://x.up.railway.app/api SIGNALR_URL=https://x.up.railway.app \
+  ./load-tests/run.sh --no-up            # against a deployed URL
+```
+
+Exit code is `run-all.js`'s (non-zero if any scenario / threshold failed).
+`./load-tests/run.sh --help` lists everything.
+
+### The same, by hand
 
 The root `../docker-compose.yml` caps each service (single replica, **API 2 vCPU /
 1 GiB, DB 1 vCPU / 1 GiB**) and runs `ASPNETCORE_ENVIRONMENT=Production`, so a

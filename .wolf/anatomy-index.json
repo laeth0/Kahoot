@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:46:34.431Z",
+    "lastScanned": "2026-09-09T15:47:46.599Z",
     "fileCount": 212,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "fbea006c38ce12156efa2fba72e209538d9959b7427d1ceda734d3ed0b2ef302",
-    "storeUpdatedAt": "2026-09-09T15:46:34.442Z",
-    "rootHash": "3dba42091847383f"
+    "renderedHash": "832951166ea81c9bd271e558a146cdd38114be9b89c1d7f787a6aae5dd24035e",
+    "storeUpdatedAt": "2026-09-09T15:47:46.609Z",
+    "rootHash": "a9c4c39c06dd4664"
   },
   "files": {
     "AGENTS.md": {
@@ -2680,11 +2680,11 @@
     },
     "load-tests/README.md": {
       "description": "Project documentation",
-      "tokens": 4474,
-      "hash": "4efe457e13618996",
-      "size": 18013,
-      "mtimeMs": 1788968668869.1968,
-      "updatedAt": "2026-09-09T15:44:28.963Z",
+      "tokens": 4711,
+      "hash": "1eee9fcb65810fa9",
+      "size": 18961,
+      "mtimeMs": 1788968866497.8103,
+      "updatedAt": "2026-09-09T15:47:46.598Z",
       "source": "hook"
     },
     "load-tests/docker-compose.railway-sim.yml": {
@@ -2707,11 +2707,11 @@
     },
     "load-tests/run.sh": {
       "description": "run.sh - one command to load-test the Kahoot backend.",
-      "tokens": 1192,
-      "hash": "e9c9c4cd0d4fde44",
-      "size": 4470,
-      "mtimeMs": 1788968794324.89,
-      "updatedAt": "2026-09-09T15:46:34.431Z",
+      "tokens": 1207,
+      "hash": "93a0e609b7367a5e",
+      "size": 4523,
+      "mtimeMs": 1788968833214.455,
+      "updatedAt": "2026-09-09T15:47:13.320Z",
       "source": "hook"
     }
   },

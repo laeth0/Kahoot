@@ -50,7 +50,8 @@ while [ $# -gt 0 ]; do
     -h|--help)
       sed -n '2,21{s/^# \{0,1\}//;p}' "$0"
       exit 0 ;;
-    --) shift; K6_PASSTHROUGH=("$@"); break ;;
+    --) shift; K6_PASSTHROUGH+=("$@"); break ;;
+    -e|--env) K6_PASSTHROUGH+=("$1" "${2:-}"); shift ;;
     -*) K6_PASSTHROUGH+=("$1") ;;
     *)  SCENARIOS+=("$1") ;;
   esac
@@ -101,14 +102,12 @@ echo " OK"
 
 # --- 3. run the tests --------------------------------------------------
 cd "$HERE"
-set +e
-if [ ${#K6_PASSTHROUGH[@]} -gt 0 ]; then
-  node run-all.js "${SCENARIOS[@]}" -- "${K6_PASSTHROUGH[@]}"
-else
-  node run-all.js "${SCENARIOS[@]}"
-fi
+cmd=(node run-all.js)
+[ ${#SCENARIOS[@]} -gt 0 ] && cmd+=("${SCENARIOS[@]}")
+[ ${#K6_PASSTHROUGH[@]} -gt 0 ] && cmd+=(-- "${K6_PASSTHROUGH[@]}")
+echo ">> ${cmd[*]}"
+"${cmd[@]}"
 RUN_RC=$?
-set -e 2>/dev/null || true
 
 # --- 4. optional DB integrity check --------------------------------------
 if [ "$DO_VERIFY" -eq 1 ]; then
