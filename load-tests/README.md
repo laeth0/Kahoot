@@ -194,9 +194,8 @@ docker compose up -d --build db backend
 # 2. Wait for the API (migrations + host seed run on startup)
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5000/health   # expect 200
 
-# 3. Point the tests at it and run
-cd load-tests            # so k6 writes results/ and reads .env conventions
-cp .env.example .env      # then set BASE_URL=http://localhost:5000/api + SIGNALR_URL=http://localhost:5000
+# 3. Run — load-tests/.env is already set for this backend (localhost:5000)
+cd load-tests
 node run-all.js                                   # full acceptance set
 #   or one scenario:
 k6 run -e ALLOW_LOAD_TEST=true -e BASE_URL=http://localhost:5000/api \

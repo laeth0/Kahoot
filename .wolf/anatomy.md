@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:42:21.978Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:44:28.964Z
 > Files: 211 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -396,7 +396,7 @@
 
 - `.gitignore` — Git ignore rules (~49 tok)
 - `docker-compose.railway-sim.yml` — Kahoot backend + Postgres, tuned to approximate ONE small Railway instance: (~777 tok)
-- `README.md` — Project documentation (~4507 tok)
+- `README.md` — Project documentation (~4474 tok)
 - `run-all.js` — fs: cooldownSeconds, loadDotenv, parseArgs + 9 more (~2760 tok)
 
 ## load-tests/config/

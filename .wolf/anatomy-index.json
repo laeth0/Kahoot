@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:42:21.978Z",
+    "lastScanned": "2026-09-09T15:44:28.964Z",
     "fileCount": 211,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "30c160088472488e78891294e951f620c91af4b0079a5bdc5d0a6caf314eb5fd",
-    "storeUpdatedAt": "2026-09-09T15:42:21.987Z",
-    "rootHash": "8e9629fadb988019"
+    "renderedHash": "d8aa5a61cc1abead4f1ebfd52068527988ab32fd70b03c58679c51c4b72e3d4a",
+    "storeUpdatedAt": "2026-09-09T15:44:28.972Z",
+    "rootHash": "35b04a62cc8b2cf4"
   },
   "files": {
     "AGENTS.md": {
@@ -2680,11 +2680,11 @@
     },
     "load-tests/README.md": {
       "description": "Project documentation",
-      "tokens": 4507,
-      "hash": "3542dac8eb930b27",
-      "size": 18140,
-      "mtimeMs": 1788968541869.8806,
-      "updatedAt": "2026-09-09T15:42:21.977Z",
+      "tokens": 4474,
+      "hash": "4efe457e13618996",
+      "size": 18013,
+      "mtimeMs": 1788968668869.1968,
+      "updatedAt": "2026-09-09T15:44:28.963Z",
       "source": "hook"
     },
     "load-tests/docker-compose.railway-sim.yml": {
