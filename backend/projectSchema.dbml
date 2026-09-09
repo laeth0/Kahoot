@@ -59,6 +59,7 @@ Table refresh_tokens {
   indexes {
     token_hash [unique, name: 'uq_refresh_token_hash', note: 'Lookup on refresh']
     host_id [name: 'ix_refresh_token_host_id']
+    replaced_by_token_id [name: 'ix_refresh_tokens_replaced_by_token_id', note: 'FK index for the self-referencing rotation chain']
   }
 
   Note: 'Host session persistence for JWT refresh-token rotation with reuse detection.'
@@ -189,6 +190,7 @@ Table answers {
   indexes {
     (game_session_id, question_id, participant_id) [unique, name: 'uq_answer_participant_question', note: 'FINAL integrity boundary: one accepted answer per (game, question, player). A duplicate insert raises a unique violation that the application maps to an idempotent already-answered response']
     (game_session_id, question_id) [name: 'ix_answer_game_question', note: 'Response count and per-choice aggregation when a question closes']
+    question_id [name: 'ix_answers_question_id', note: 'FK index; the composite above does not lead with question_id']
     participant_id [name: 'ix_answer_participant_id', note: 'answer history for one player, for the results screen']
     selected_choice_id [name: 'ix_answer_selected_choice_id', note: 'FK integrity checks and per-choice statistics']
   }

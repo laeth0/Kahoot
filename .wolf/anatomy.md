@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:57:33.480Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:01:06.265Z
 > Files: 41 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -16,7 +16,7 @@
 
 ## backend/
 
-- `projectSchema.dbml` (~2791 tok)
+- `projectSchema.dbml` (~2858 tok)
 
 ## backend/src/Kahoot.Api/
 
