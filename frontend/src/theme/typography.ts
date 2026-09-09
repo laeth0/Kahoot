@@ -1,0 +1,98 @@
+import type { TypographyVariantsOptions } from '@mui/material/styles';
+
+/**
+ * Modern, crisp typography hierarchy using Inter / sans-serif.
+ * Distinct heading weights with tight letter spacing for high-tech aesthetic.
+ */
+export const typography: TypographyVariantsOptions = {
+  fontFamily: [
+    'Inter',
+    '-apple-system',
+    'BlinkMacSystemFont',
+    '"Segoe UI"',
+    'Roboto',
+    'Helvetica',
+    'Arial',
+    'sans-serif',
+  ].join(','),
+  h1: {
+    fontSize: '2.5rem',
+    fontWeight: 700,
+    lineHeight: 1.2,
+    letterSpacing: '-0.025em',
+    color: '#09131f',
+  },
+  h2: {
+    fontSize: '2rem',
+    fontWeight: 700,
+    lineHeight: 1.25,
+    letterSpacing: '-0.02em',
+    color: '#09131f',
+  },
+  h3: {
+    fontSize: '1.75rem',
+    fontWeight: 600,
+    lineHeight: 1.3,
+    letterSpacing: '-0.015em',
+    color: '#09131f',
+  },
+  h4: {
+    fontSize: '1.5rem',
+    fontWeight: 600,
+    lineHeight: 1.35,
+    letterSpacing: '-0.01em',
+    color: '#09131f',
+  },
+  h5: {
+    fontSize: '1.25rem',
+    fontWeight: 600,
+    lineHeight: 1.4,
+    color: '#09131f',
+  },
+  h6: {
+    fontSize: '1rem',
+    fontWeight: 600,
+    lineHeight: 1.45,
+    color: '#09131f',
+  },
+  subtitle1: {
+    fontSize: '1rem',
+    fontWeight: 500,
+    lineHeight: 1.5,
+    color: '#334e68',
+  },
+  subtitle2: {
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    lineHeight: 1.5,
+    color: '#334e68',
+  },
+  body1: {
+    fontSize: '1rem',
+    lineHeight: 1.6,
+    color: '#09131f',
+  },
+  body2: {
+    fontSize: '0.875rem',
+    lineHeight: 1.6,
+    color: '#334e68',
+  },
+  button: {
+    fontSize: '0.875rem',
+    fontWeight: 600,
+    textTransform: 'none',
+    letterSpacing: '0.01em',
+  },
+  caption: {
+    fontSize: '0.75rem',
+    lineHeight: 1.5,
+    color: '#64748b',
+  },
+  overline: {
+    fontSize: '0.75rem',
+    fontWeight: 600,
+    letterSpacing: '0.08em',
+    textTransform: 'uppercase',
+    color: '#64748b',
+  },
+};
