@@ -38,7 +38,7 @@ import { MetadataManager } from '../../components/MetadataManager/MetadataManage
 import {
   evaluateQuizPublishCriteria,
   PublishChecklist,
-} from '../../components/PublishChecklist/PublishChecklist.tsx';
+} from '../../components/PublishChecklist/index.ts';
 import { QuestionFormDialog } from '../../components/QuestionForm/QuestionFormDialog.tsx';
 import { ReorderableQuestionList } from '../../components/ReorderableQuestionList/ReorderableQuestionList.tsx';
 import { useQuiz } from '../../hooks/useQuiz.ts';

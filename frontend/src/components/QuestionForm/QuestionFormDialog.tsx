@@ -23,7 +23,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { type FormEvent, useEffect, useState } from 'react';
+import { type FormEvent, useState } from 'react';
 
 import type { ChoiceInput, SaveQuestionPayload } from '../../api/quizQuestionService.ts';
 import type { QuestionResponse } from '../../api/quizService.ts';
@@ -52,45 +52,35 @@ const POINT_OPTIONS = [
   { label: 'No Points (0 pts)', value: 0 },
 ];
 
-export function QuestionFormDialog({
-  open,
+interface QuestionFormContentProps {
+  initialData?: QuestionResponse | null;
+  onClose: () => void;
+  onSubmit: (payload: SaveQuestionPayload) => Promise<void>;
+  isSaving: boolean;
+}
+
+function QuestionFormContent({
+  initialData,
   onClose,
   onSubmit,
-  initialData,
-  isSaving = false,
-}: QuestionFormDialogProps) {
-  const theme = useTheme();
-  const isFullScreen = useMediaQuery(theme.breakpoints.down('md'));
-
-  const [text, setText] = useState<string>('');
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
-  const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(20);
-  const [points, setPoints] = useState<number>(1000);
-  const [choices, setChoices] = useState<ChoiceInput[]>(DEFAULT_CHOICES);
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (initialData) {
-      setText(initialData.text);
-      setImageUrl(initialData.imageUrl);
-      setTimeLimitSeconds(initialData.timeLimitSeconds);
-      setPoints(initialData.points);
-      setChoices(
-        initialData.choices.map((c) => ({
+  isSaving,
+}: QuestionFormContentProps) {
+  const [text, setText] = useState<string>(() => initialData?.text ?? '');
+  const [imageUrl, setImageUrl] = useState<string | null>(() => initialData?.imageUrl ?? null);
+  const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(
+    () => initialData?.timeLimitSeconds ?? 20,
+  );
+  const [points, setPoints] = useState<number>(() => initialData?.points ?? 1000);
+  const [choices, setChoices] = useState<ChoiceInput[]>(() =>
+    initialData
+      ? initialData.choices.map((c) => ({
           text: c.text,
           imageUrl: c.imageUrl,
           isCorrect: c.isCorrect,
-        })),
-      );
-    } else {
-      setText('');
-      setImageUrl(null);
-      setTimeLimitSeconds(20);
-      setPoints(1000);
-      setChoices(DEFAULT_CHOICES);
-    }
-    setValidationError(null);
-  }, [initialData, open]);
+        }))
+      : DEFAULT_CHOICES,
+  );
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleChoiceChange = (index: number, updated: ChoiceInput) => {
     setChoices((prev) => {
@@ -151,7 +141,9 @@ export function QuestionFormDialog({
       return;
     }
 
-    const invalidChoice = choices.some((c) => (!c.text || !c.text.trim()) && !c.imageUrl);
+    const invalidChoice = choices.some(
+      (c) => (!c.text || !c.text.trim()) && !c.imageUrl,
+    );
     if (invalidChoice) {
       setValidationError('Every choice must have either answer text or an image.');
       return;
@@ -169,19 +161,7 @@ export function QuestionFormDialog({
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={isSaving ? undefined : onClose}
-      fullScreen={isFullScreen}
-      maxWidth="md"
-      fullWidth
-      aria-labelledby="question-dialog-title"
-      PaperProps={{
-        sx: {
-          borderRadius: isFullScreen ? 0 : 3,
-        },
-      }}
-    >
+    <>
       <DialogTitle
         id="question-dialog-title"
         sx={{
@@ -367,13 +347,52 @@ export function QuestionFormDialog({
             variant="contained"
             color="primary"
             disabled={isSaving}
-            startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
+            startIcon={
+              isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />
+            }
             sx={{ minHeight: 44, fontWeight: 700, px: 3 }}
           >
             {isSaving ? 'Saving Question...' : 'Save Question'}
           </Button>
         </DialogActions>
       </Box>
+    </>
+  );
+}
+
+export function QuestionFormDialog({
+  open,
+  onClose,
+  onSubmit,
+  initialData,
+  isSaving = false,
+}: QuestionFormDialogProps) {
+  const theme = useTheme();
+  const isFullScreen = useMediaQuery(theme.breakpoints.down('md'));
+
+  return (
+    <Dialog
+      open={open}
+      onClose={isSaving ? undefined : onClose}
+      fullScreen={isFullScreen}
+      maxWidth="md"
+      fullWidth
+      aria-labelledby="question-dialog-title"
+      PaperProps={{
+        sx: {
+          borderRadius: isFullScreen ? 0 : 3,
+        },
+      }}
+    >
+      {open && (
+        <QuestionFormContent
+          key={initialData?.id ?? 'create'}
+          initialData={initialData}
+          onClose={onClose}
+          onSubmit={onSubmit}
+          isSaving={isSaving}
+        />
+      )}
     </Dialog>
   );
 }

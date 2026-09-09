@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { type SaveQuestionPayload, quizQuestionService } from '../api/quizQuestionService.ts';
+import { quizQuestionService, type SaveQuestionPayload } from '../api/quizQuestionService.ts';
 import {
   type QuizDetailResponse,
   quizService,
@@ -12,25 +12,49 @@ export function useQuiz(quizId: string | undefined) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState<boolean>(false);
+  const [refreshIndex, setRefreshIndex] = useState(0);
 
-  const fetchQuiz = useCallback(async () => {
+  useEffect(() => {
+    if (!quizId) {
+      setQuiz(null);
+      setIsLoading(false);
+      return;
+    }
+
+    let active = true;
+    quizService
+      .getQuiz(quizId)
+      .then((data) => {
+        if (active) {
+          setQuiz(data);
+          setError(null);
+          setIsLoading(false);
+        }
+      })
+      .catch((err) => {
+        if (active) {
+          const msg = err instanceof Error ? err.message : 'Failed to load quiz';
+          setError(msg);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [quizId, refreshIndex]);
+
+  const refetch = useCallback(async () => {
     if (!quizId) return;
-    setIsLoading(true);
-    setError(null);
     try {
       const data = await quizService.getQuiz(quizId);
       setQuiz(data);
+      setError(null);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load quiz';
       setError(msg);
-    } finally {
-      setIsLoading(false);
     }
   }, [quizId]);
-
-  useEffect(() => {
-    fetchQuiz();
-  }, [fetchQuiz]);
 
   const updateMetadata = useCallback(
     async (payload: UpdateQuizPayload) => {
@@ -72,12 +96,12 @@ export function useQuiz(quizId: string | undefined) {
       setIsMutating(true);
       try {
         await quizQuestionService.addQuestion(quizId, payload);
-        await fetchQuiz();
+        await refetch();
       } finally {
         setIsMutating(false);
       }
     },
-    [quizId, fetchQuiz],
+    [quizId, refetch],
   );
 
   const updateQuestion = useCallback(
@@ -86,12 +110,12 @@ export function useQuiz(quizId: string | undefined) {
       setIsMutating(true);
       try {
         await quizQuestionService.updateQuestion(quizId, questionId, payload);
-        await fetchQuiz();
+        await refetch();
       } finally {
         setIsMutating(false);
       }
     },
-    [quizId, fetchQuiz],
+    [quizId, refetch],
   );
 
   const deleteQuestion = useCallback(
@@ -100,12 +124,12 @@ export function useQuiz(quizId: string | undefined) {
       setIsMutating(true);
       try {
         await quizQuestionService.deleteQuestion(quizId, questionId);
-        await fetchQuiz();
+        await refetch();
       } finally {
         setIsMutating(false);
       }
     },
-    [quizId, fetchQuiz],
+    [quizId, refetch],
   );
 
   const reorderQuestions = useCallback(
@@ -114,20 +138,25 @@ export function useQuiz(quizId: string | undefined) {
       setIsMutating(true);
       try {
         await quizQuestionService.reorderQuestions(quizId, orderedQuestionIds);
-        await fetchQuiz();
+        await refetch();
       } finally {
         setIsMutating(false);
       }
     },
-    [quizId, fetchQuiz],
+    [quizId, refetch],
   );
+
+  const triggerReload = useCallback(() => {
+    setIsLoading(true);
+    setRefreshIndex((prev) => prev + 1);
+  }, []);
 
   return {
     quiz,
     isLoading,
     error,
     isMutating,
-    refetch: fetchQuiz,
+    refetch: triggerReload,
     updateMetadata,
     publish,
     addQuestion,

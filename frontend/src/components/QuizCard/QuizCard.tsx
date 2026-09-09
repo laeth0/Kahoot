@@ -3,7 +3,6 @@ import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import {
-  Box,
   Button,
   Card,
   CardActions,
