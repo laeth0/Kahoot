@@ -278,3 +278,6 @@ description: chronological action log per session, consolidated weekly
 | 12:31 | Edited backend/src/Kahoot.Api/Program.cs | 3→4 lines | ~27 |
 | 12:31 | Edited backend/src/Kahoot.Api/Program.cs | 5→6 lines | ~32 |
 | 12:32 | Edited backend/src/Kahoot.Api/Program.cs | 5→6 lines | ~32 |
+| 12:42 | Created backend/src/Kahoot.Application/Games/GameStateMachine.cs | — | ~401 |
+| 12:42 | Edited backend/src/Kahoot.Application/Games/GameStateMachine.cs | 2→2 lines | ~25 |
+| 12:42 | Created backend/src/Kahoot.Application/Games/Common/QuestionActivation.cs | — | ~314 |

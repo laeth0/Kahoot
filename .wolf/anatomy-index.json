@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:32:01.140Z",
+    "lastScanned": "2026-09-09T09:42:49.806Z",
     "fileCount": 176,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "35e5d312b71a6dd485458e52117dad1e967dee54d55b24a24eae9325ab9d2e10",
-    "storeUpdatedAt": "2026-09-09T09:32:01.156Z",
-    "rootHash": "8bcc23223b1a24f2"
+    "renderedHash": "938f9a9098d4ab73fa51000a7292bc0025733776deb44da5bf9f8c93ecde1f68",
+    "storeUpdatedAt": "2026-09-09T09:42:49.827Z",
+    "rootHash": "068db1d258949b74"
   },
   "files": {
     "AGENTS.md": {
@@ -570,11 +570,11 @@
     },
     "backend/src/Kahoot.Application/Games/GameStateMachine.cs": {
       "description": "Class: GameStateMachine",
-      "tokens": 241,
-      "hash": "d9b5ac26ae4db7cb",
-      "size": 901,
-      "mtimeMs": 1788943048481.2646,
-      "updatedAt": "2026-09-09T08:37:28.659Z",
+      "tokens": 387,
+      "hash": "471c7a69e5e5d8ba",
+      "size": 1451,
+      "mtimeMs": 1788946934559.3694,
+      "updatedAt": "2026-09-09T09:42:14.730Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/Scoring/IScoringService.cs": {
@@ -1119,11 +1119,11 @@
     },
     "backend/src/Kahoot.Application/Games/Common/QuestionActivation.cs": {
       "description": "Class: QuestionActivation",
-      "tokens": 358,
-      "hash": "78e9311abed663f5",
-      "size": 1341,
-      "mtimeMs": 1788943857957.3787,
-      "updatedAt": "2026-09-09T08:50:58.281Z",
+      "tokens": 314,
+      "hash": "70b9e4bebae03d7a",
+      "size": 1177,
+      "mtimeMs": 1788946969571.3862,
+      "updatedAt": "2026-09-09T09:42:49.805Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/StartGame/StartGameCommand.cs": {

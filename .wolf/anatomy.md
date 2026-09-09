@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:32:01.140Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:42:49.806Z
 > Files: 176 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -136,7 +136,7 @@
 
 ## backend/src/Kahoot.Application/Games/
 
-- `GameStateMachine.cs` — Class: GameStateMachine (~241 tok)
+- `GameStateMachine.cs` — Class: GameStateMachine (~387 tok)
 
 ## backend/src/Kahoot.Application/Games/Common/
 
@@ -146,7 +146,7 @@
 - `GameTime.cs` — Class: GameTime (~56 tok)
 - `HostGameGuard.cs` — Class: HostGameGuard (~260 tok)
 - `LeaderboardBuilder.cs` — Class: LeaderboardBuilder (~584 tok)
-- `QuestionActivation.cs` — Class: QuestionActivation (~358 tok)
+- `QuestionActivation.cs` — Class: QuestionActivation (~314 tok)
 - `QuestionResultsBuilder.cs` — Class: QuestionResultsBuilder (~552 tok)
 
 ## backend/src/Kahoot.Application/Games/CreateGame/

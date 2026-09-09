@@ -189,6 +189,22 @@
       "related_bugs": [],
       "occurrences": 2,
       "last_seen": "2026-09-09T09:21:52.540Z"
+    },
+    {
+      "id": "bug-013",
+      "timestamp": "2026-09-09T09:42:14.759Z",
+      "error_message": "Wrong reference: IReadOnlyDictionary should be Dictionary",
+      "file": "backend/src/Kahoot.Application/Games/GameStateMachine.cs",
+      "root_cause": "Used \"IReadOnlyDictionary\" instead of \"Dictionary\"",
+      "fix": "Changed IReadOnlyDictionary → Dictionary",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T09:42:14.759Z"
     }
   ]
 }
