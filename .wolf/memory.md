@@ -13,3 +13,4 @@ description: chronological action log per session, consolidated weekly
 | 10:00 | Created folder structure in frontend/src from STRUCTURE.md (folders only) | frontend/src/ | success | ~100 |
 | 10:01 | Documented complete frontend folder structure and responsibilities in README.md | frontend/README.md | success | ~300 |
 | 10:02 | Moved logo.jpeg to frontend/src/assets/logo.jpeg and frontend/public/logo.jpeg | frontend/src/assets/logo.jpeg | success | ~100 |
+| 10:03 | Removed .opencode and .cursor folders | .opencode, .cursor | success | ~50 |

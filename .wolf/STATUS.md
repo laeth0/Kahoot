@@ -19,6 +19,7 @@ budget_tokens: 1000
 - **Frontend Scaffolding:** Created folder structure per `STRUCTURE.md` (no files created).
 - **Frontend Documentation:** Updated `README.md` with complete directory tree, technology stack, directory responsibilities, and scripts guide. Build, lint, and format verified cleanly.
 - **Frontend Assets:** Moved `logo.jpeg` to `frontend/src/assets/logo.jpeg` (and `frontend/public/logo.jpeg`).
+- **Cleanup:** Removed `.opencode` and `.cursor` directories.
 
 ---
 
