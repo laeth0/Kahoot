@@ -1,4 +1,37 @@
 {
   "version": 1,
-  "bugs": []
+  "bugs": [
+    {
+      "id": "bug-001",
+      "timestamp": "2026-09-09T07:23:11.527Z",
+      "error_message": "Wrong condition in logic",
+      "file": "backend/src/Kahoot.Domain/Quizzes/Choice.cs",
+      "root_cause": "Condition was: if (orderIndex is < 0 or >= Domain.Quizzes.Question.Ma)",
+      "fix": "Changed to: if (orderIndex is < 0 or >= Question.MaxChoices)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T07:23:11.527Z"
+    },
+    {
+      "id": "bug-002",
+      "timestamp": "2026-09-09T07:26:46.137Z",
+      "error_message": "Incorrect value in code",
+      "file": "backend/projectSchema.dbml",
+      "root_cause": "Had 'List a host'",
+      "fix": "Changed to 'list the quizzes owned by a host'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "dbml"
+      ],
+      "related_bugs": [],
+      "occurrences": 3,
+      "last_seen": "2026-09-09T07:26:49.601Z"
+    }
+  ]
 }

@@ -22,3 +22,22 @@ description: chronological action log per session, consolidated weekly
 
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
+| 10:22 | Created backend/src/Kahoot.Domain/Common/Entity.cs | — | ~49 |
+| 10:22 | Created backend/src/Kahoot.Domain/Common/AuditableEntity.cs | — | ~52 |
+| 10:22 | Created backend/src/Kahoot.Domain/Common/DomainException.cs | — | ~46 |
+| 10:22 | Created backend/src/Kahoot.Domain/Hosts/Host.cs | — | ~464 |
+| 10:22 | Created backend/src/Kahoot.Domain/Hosts/RefreshToken.cs | — | ~430 |
+| 10:22 | Created backend/src/Kahoot.Domain/Quizzes/Quiz.cs | — | ~443 |
+| 10:23 | Created backend/src/Kahoot.Domain/Quizzes/Question.cs | — | ~838 |
+| 10:23 | Created backend/src/Kahoot.Domain/Quizzes/Choice.cs | — | ~382 |
+| 10:23 | Edited backend/src/Kahoot.Domain/Quizzes/Choice.cs | inline fix | ~15 |
+| 10:23 | Created backend/src/Kahoot.Domain/Games/GameStatus.cs | — | ~42 |
+| 10:23 | Created backend/src/Kahoot.Domain/Games/GameStatusTransitions.cs | — | ~269 |
+| 10:23 | Created backend/src/Kahoot.Domain/Games/InvalidGameStatusTransitionException.cs | — | ~114 |
+| 10:23 | Created backend/src/Kahoot.Domain/Games/GameSession.cs | — | ~856 |
+| 10:24 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~792 |
+| 10:24 | Created backend/src/Kahoot.Domain/Games/Answer.cs | — | ~601 |
+| 10:25 | Created backend/projectSchema.dbml | — | ~3665 |
+| 10:26 | Edited backend/projectSchema.dbml | inline fix | ~22 |
+| 10:26 | Edited backend/projectSchema.dbml | inline fix | ~41 |
+| 10:26 | Edited backend/projectSchema.dbml | inline fix | ~33 |
