@@ -29,7 +29,7 @@ function App() {
         <AppBar position="static">
           <Container maxWidth="lg">
             <Toolbar disableGutters sx={{ justifyContent: 'space-between', py: 1 }}>
-              <Stack direction="row" spacing={2} alignItems="center">
+              <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
                 <Box
                   component="img"
                   src={logo}
@@ -52,7 +52,7 @@ function App() {
                   </Typography>
                 </Box>
               </Stack>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <Chip
                   label="Light Theme Only"
                   size="small"
@@ -94,8 +94,7 @@ function App() {
               <Stack
                 direction={{ xs: 'column', md: 'row' }}
                 spacing={4}
-                alignItems="center"
-                justifyContent="space-between"
+                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
               >
                 <Box sx={{ maxWidth: 640 }}>
                   <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
@@ -170,10 +169,12 @@ function App() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'inherit' }}>
                         Primary Brand
                       </Typography>
-                      <Typography variant="caption">#00629B</Typography>
+                      <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.9 }}>
+                        #00629B
+                      </Typography>
                     </Box>
                     <Box
                       sx={{
@@ -185,10 +186,12 @@ function App() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'inherit' }}>
                         Radar Cyan Accent
                       </Typography>
-                      <Typography variant="caption">#0284C7</Typography>
+                      <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.9 }}>
+                        #0284C7
+                      </Typography>
                     </Box>
                     <Box
                       sx={{
@@ -200,10 +203,12 @@ function App() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Typography variant="body2" fontWeight={600}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'inherit' }}>
                         Deep Tech Navy
                       </Typography>
-                      <Typography variant="caption">#09131F</Typography>
+                      <Typography variant="caption" sx={{ color: 'inherit', opacity: 0.9 }}>
+                        #09131F
+                      </Typography>
                     </Box>
                     <Box
                       sx={{
@@ -216,10 +221,10 @@ function App() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Typography variant="body2" fontWeight={600} color="text.primary">
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.primary' }}>
                         Light Surface Canvas
                       </Typography>
-                      <Typography variant="caption" color="text.secondary">
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                         #F4F8FC
                       </Typography>
                     </Box>
@@ -302,8 +307,7 @@ function App() {
           <Container maxWidth="lg">
             <Stack
               direction={{ xs: 'column', sm: 'row' }}
-              justifyContent="space-between"
-              alignItems="center"
+              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
               spacing={2}
             >
               <Typography variant="body2" color="text.secondary">

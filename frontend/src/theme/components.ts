@@ -91,8 +91,7 @@ export const components: Components<Theme> = {
         borderRadius: 12,
         backgroundColor: '#ffffff',
         border: '1px solid #e2e8f0',
-        boxShadow:
-          '0 1px 3px 0 rgba(9, 19, 31, 0.05), 0 1px 2px -1px rgba(9, 19, 31, 0.03)',
+        boxShadow: '0 1px 3px 0 rgba(9, 19, 31, 0.05), 0 1px 2px -1px rgba(9, 19, 31, 0.03)',
         transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
       },
     },
@@ -194,8 +193,7 @@ export const components: Components<Theme> = {
       paper: {
         borderRadius: 16,
         border: '1px solid #e2e8f0',
-        boxShadow:
-          '0 20px 25px -5px rgba(9, 19, 31, 0.1), 0 8px 10px -6px rgba(9, 19, 31, 0.04)',
+        boxShadow: '0 20px 25px -5px rgba(9, 19, 31, 0.1), 0 8px 10px -6px rgba(9, 19, 31, 0.04)',
       },
     },
   },
