@@ -44,9 +44,11 @@ There is **no registration endpoint** — the host account must already exist
 Pass with `-e KEY=VALUE` on `k6 run`, or put them in `load-tests/.env` (only
 `run-all.js` reads that file). See [`.env.example`](.env.example).
 
+**k6 / test vars** (pass with `-e KEY=VALUE`, or set in `load-tests/.env` for `run-all.js`):
+
 | Var | Default | Meaning |
 |---|---|---|
-| `BASE_URL` | `http://localhost:5048/api` | REST API base, **including** `/api` |
+| `BASE_URL` | `http://localhost:5048/api` | REST API base, **including** `/api` (`.env` here sets `:5000` for Compose) |
 | `SIGNALR_URL` | origin of `BASE_URL` | SignalR host, no path |
 | `HUB_PATH` | `/hubs/game` | hub route (`Program.cs`) |
 | `HOST_USERNAME` / `HOST_PASSWORD` | `admin` / `admin` | host credentials — override for staging/Railway |
@@ -59,11 +61,21 @@ Pass with `-e KEY=VALUE` on `k6 run`, or put them in `load-tests/.env` (only
 | `STORM_PLAYERS` / `STORM_ROUNDS` | `PLAYERS` / `3` | reconnection storm |
 | `ANSWER_TIME_LIMIT` | `120` | question length (s) for answer/broadcast tests (min 5, max 300) |
 | `ENDURANCE_MINUTES` / `ENDURANCE_PLAYERS` | `10` / `200` | endurance scenario |
-| `CONNECT_RAMP` / `JOIN_RAMP` | `120s` / `90s` | how long to spread connection/join traffic |
-| `SIGNALR_SKIP_NEGOTIATION` | `false` | `true` connects straight to the WebSocket (halves HTTP requests) |
-| `SIGNALR_CONNECT_RETRIES` | `4` | retry a rate-limited negotiate / failed upgrade |
-| `CLOCK_SKEW_MS` | `0` | subtract from question-delivery latency if load box ≠ server clock |
+| `CONNECT_RAMP` / `JOIN_RAMP` / `SETTLE_SECONDS` | `240s` / `200s` / `60` | pace connection/join traffic under the rate limiter |
+| `SIGNALR_SKIP_NEGOTIATION` | `false` (`.env` here: `true`) | `true` = 1 HTTP req/connection (WS upgrade only) |
+| `SIGNALR_CONNECT_RETRIES` / `API_429_RETRIES` | `4` / `6` | retry a rate-limited connect / setup REST call (long backoff on 429) |
+| `SCENARIO_COOLDOWN` | `60` | `run-all.js`: idle seconds between scenarios (bucket refill) |
+| `CLOCK_SKEW_MS` | auto (from `/health` `Date` header) | manual override for the question-delivery clock correction |
 | `RUN_ID` | `local` | prefix for generated nicknames + summary files |
+
+**Compose "instance size" vars** (pass to `docker compose up`, not k6):
+
+| Var | Default | Meaning |
+|---|---|---|
+| `API_CPUS` / `API_MEM` | `2.0` / `1g` | backend container caps |
+| `DB_CPUS` / `DB_MEM` | `1.0` / `1g` | Postgres container caps |
+| `DB_HOST_PORT` | `5432` | host port for Postgres (use `5433` if `5432` is taken) |
+| `ASPNETCORE_ENVIRONMENT` | `Development` | set `Production` to mirror Railway |
 
 ---
 
@@ -163,24 +175,25 @@ the bucket) — then prints the PASS/FAIL table. Per-scenario JSON lands in
 
 ## How to run — step by step
 
-### Option A (recommended): Docker Compose, sized like one small Railway instance
+### Option A (recommended): the project `docker-compose.yml`, sized like Railway
 
-`load-tests/docker-compose.railway-sim.yml` runs the **same image**
-`../docker-compose.yml` builds, but as a self-contained stack tuned to model a
-single small Railway deployment: one backend replica, `ASPNETCORE_ENVIRONMENT=Production`,
-CPU + memory caps on the API and the database, and Postgres kept off the host
-(as on Railway). The API is published on `localhost:5000`.
+The root `../docker-compose.yml` carries per-service **CPU + memory caps** and a
+single replica, so a local run models one small Railway instance. Defaults:
+API **2 vCPU / 1 GiB**, DB **1 vCPU / 1 GiB** — override with `API_CPUS`,
+`API_MEM`, `DB_CPUS`, `DB_MEM`. The API is published on `localhost:5000`.
 
 ```bash
 # from the repo root
 
-# 1. Build + start the sized stack (first build does a dotnet publish, ~2–4 min)
-docker compose -f load-tests/docker-compose.railway-sim.yml up -d --build
+# 1. Build + start db + backend as "Railway" (Production, capped). First build
+#    does a dotnet publish (~2-4 min). DB_HOST_PORT avoids a local-Postgres clash
+#    on 5432; the backend uses db:5432 internally either way.
+DB_HOST_PORT=5433 ASPNETCORE_ENVIRONMENT=Production \
+  docker compose up -d --build db backend
 
-#    tune the "instance size" — defaults model a small paid box
-#    (API 2 vCPU / 1 GiB, DB 1 vCPU / 1 GiB):
-API_CPUS=1 API_MEM=512m DB_CPUS=1 DB_MEM=512m \
-  docker compose -f load-tests/docker-compose.railway-sim.yml up -d --build
+#    smaller box:
+API_CPUS=1 API_MEM=512m DB_CPUS=1 DB_MEM=512m DB_HOST_PORT=5433 \
+  ASPNETCORE_ENVIRONMENT=Production docker compose up -d --build db backend
 
 # 2. Wait for the API (migrations + host seed run on startup)
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5000/health   # expect 200
@@ -195,18 +208,20 @@ k6 run -e ALLOW_LOAD_TEST=true -e BASE_URL=http://localhost:5000/api \
        scenarios/answer-burst.js
 
 # 4. Watch the "Railway" box while it runs (separate terminal)
-docker stats kahoot-railway-sim-backend-1 kahoot-railway-sim-db-1
+docker stats kahoot-backend kahoot-db
 
-# 5. Definitive DB integrity check (Postgres has no host port here — exec in)
-docker compose -f load-tests/docker-compose.railway-sim.yml exec -T db \
+# 5. Definitive DB integrity check
+docker compose exec -T db \
   psql -U postgres -d kahoot -v ON_ERROR_STOP=1 < verify/verify.sql   # every section => (0 rows)
+#    (or, since DB_HOST_PORT publishes it:  node verify/verify-db.mjs  with
+#     DATABASE_URL=postgres://postgres:postgres@localhost:5433/kahoot)
 
-# 6. Tear down (‑v also wipes the DB volume for a clean next run)
-docker compose -f load-tests/docker-compose.railway-sim.yml down -v
+# 6. Tear down (-v also wipes the DB volume for a clean next run)
+docker compose down -v
 ```
 
-Real Railway: keep the container CPU/RAM close to your Railway service's plan so
-the numbers transfer. Because every k6 VU reaches the container through the
+Real Railway: keep the compose CPU/RAM caps close to your Railway service's plan
+so the numbers transfer. Because every k6 VU reaches the container through the
 Docker gateway, the API's per-IP rate limiter sees one client — the same
 single-origin constraint described below.
 
@@ -337,8 +352,8 @@ container CPU / memory, .NET thread-pool growth & GC, Npgsql pool usage, Postgre
 lock waits / slow queries. For **Option A** capture them with:
 
 ```bash
-docker stats kahoot-railway-sim-backend-1 kahoot-railway-sim-db-1        # live CPU/MEM
-docker compose -f load-tests/docker-compose.railway-sim.yml exec db \
+docker stats kahoot-backend kahoot-db                                   # live CPU/MEM
+docker compose exec db \
   psql -U postgres -d kahoot -c \
   "select state, count(*) from pg_stat_activity where datname='kahoot' group by 1;"
 ```

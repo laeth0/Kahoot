@@ -389,3 +389,7 @@ description: chronological action log per session, consolidated weekly
 | 18:17 | Edited load-tests/README.md | expanded (+14 lines) | ~320 |
 | 18:17 | Edited load-tests/README.md | 10→11 lines | ~175 |
 | 18:18 | Built k6 load-test suite (load-tests/): 10 scenarios + SignalR JSON-protocol client, run-all.js, verify.sql, docker-compose.railway-sim.yml (Railway-sized stack). Smoke runs PASS; per-IP rate limiter (240+120/30s) forces slow connection ramps from a single IP. Full 500-player acceptance run in progress vs Railway-sim (API 2vCPU/1GiB). | load-tests/** | in progress | ~9000 |
+| 18:21 | Edited docker-compose.yml | expanded (+22 lines) | ~570 |
+| 18:22 | Edited load-tests/README.md | modified A() | ~580 |
+| 18:23 | Edited load-tests/README.md | expanded (+12 lines) | ~603 |
+| 18:23 | Edited load-tests/verify/verify-db.mjs | 6→9 lines | ~137 |

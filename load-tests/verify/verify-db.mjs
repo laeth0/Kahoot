@@ -4,9 +4,12 @@
  * dependency is needed. Point it at the database with DATABASE_URL, or let it
  * exec into a local docker container.
  *
- *   node verify/verify-db.mjs                       # uses $DATABASE_URL
+ *   node verify/verify-db.mjs                       # uses $DATABASE_URL (default: localhost:5433)
  *   node verify/verify-db.mjs <game-session-uuid>   # scope to one game
- *   PSQL_DOCKER=kahoot-loadtest-db node verify/verify-db.mjs   # docker exec psql
+ *   PSQL_DOCKER=kahoot-db node verify/verify-db.mjs # docker exec into the compose container
+ *
+ * With the project docker-compose.yml you can also skip this script entirely:
+ *   docker compose exec -T db psql -U postgres -d kahoot -v ON_ERROR_STOP=1 < verify/verify.sql
  *
  * Exit code is non-zero if psql reports any violation rows.
  */

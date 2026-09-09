@@ -1,3 +1,8 @@
+# Resource caps model a single small Railway instance (single replica + CPU/RAM
+# limits) so local load tests produce numbers that transfer. Override per run:
+#   API_CPUS=1 API_MEM=512m DB_CPUS=1 DB_MEM=512m docker compose up -d --build
+# 5432 is often taken by a local Postgres — set DB_HOST_PORT=5433 if so
+# (the backend talks to `db:5432` internally regardless).
 services:
   db:
     image: postgres:17-alpine
@@ -8,14 +13,20 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "${DB_HOST_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d kahoot"]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "${DB_CPUS:-1.0}"
+          memory: "${DB_MEM:-1g}"
 
   backend:
     build:
@@ -24,15 +35,26 @@ services:
     container_name: kahoot-backend
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Development
+      # Railway runs Production; default stays Development for local dev.
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Development}"
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=kahoot;Username=postgres;Password=postgres"
       Cors__AllowedOrigins__0: "http://localhost:3000"
       Cors__AllowedOrigins__1: "http://localhost:5173"
+      # On real Railway these come from project Variables, not the image.
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:-dev-only-signing-key-change-me-in-production-32chars-min}"
+      Seeding__Host__Username: "${HOST_USERNAME:-admin}"
+      Seeding__Host__Password: "${HOST_PASSWORD:-admin}"
     ports:
       - "5000:8080"
     depends_on:
       db:
         condition: service_healthy
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "${API_CPUS:-2.0}"
+          memory: "${API_MEM:-1g}"
 
   frontend:
     build:

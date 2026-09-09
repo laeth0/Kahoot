@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:17:59.734Z
-> Files: 210 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:23:28.755Z
+> Files: 211 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -11,6 +11,7 @@
 
 - `AGENTS.md` — OpenWolf (~75 tok)
 - `CLAUDE.md` — OpenWolf (~99 tok)
+- `docker-compose.yml` — Docker Compose services (~636 tok)
 - `Final Claude Code Prompt — Kahoot-like Platform.md` — 1. Required Technology Stack (~7074 tok)
 - `GEMINI.md` — OpenWolf (~75 tok)
 
@@ -395,7 +396,7 @@
 
 - `.gitignore` — Git ignore rules (~49 tok)
 - `docker-compose.railway-sim.yml` — Kahoot backend + Postgres, tuned to approximate ONE small Railway instance: (~777 tok)
-- `README.md` — Project documentation (~4359 tok)
+- `README.md` — Project documentation (~4539 tok)
 - `run-all.js` — fs: cooldownSeconds, loadDotenv, parseArgs + 9 more (~2760 tok)
 
 ## load-tests/config/
@@ -427,5 +428,5 @@
 
 ## load-tests/verify/
 
-- `verify-db.mjs` — Declares here (~464 tok)
+- `verify-db.mjs` — Declares here (~522 tok)
 - `verify.sql` — Out-of-band correctness verification, straight against PostgreSQL. (~1267 tok)

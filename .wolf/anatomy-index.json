@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:17:59.734Z",
-    "fileCount": 210,
+    "lastScanned": "2026-09-09T15:23:28.755Z",
+    "fileCount": 211,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "dd1f7967048cdaf13ecb79f7e9be553e4edeae544a0008c56a98f4914ce48e22",
-    "storeUpdatedAt": "2026-09-09T15:17:59.742Z",
-    "rootHash": "1067e6b777873be7"
+    "renderedHash": "6bc4ec2d0d147f3b21146881fccdced4212ba0698e098be2d14c9d4510de1e63",
+    "storeUpdatedAt": "2026-09-09T15:23:28.767Z",
+    "rootHash": "21b81935f0855b2b"
   },
   "files": {
     "AGENTS.md": {
@@ -2671,20 +2671,20 @@
     },
     "load-tests/verify/verify-db.mjs": {
       "description": "Declares here",
-      "tokens": 464,
-      "hash": "527b1c1ecad2637f",
-      "size": 1739,
-      "mtimeMs": 1788963738714.0857,
-      "updatedAt": "2026-09-09T14:22:18.815Z",
+      "tokens": 522,
+      "hash": "4adf7344c176fc7e",
+      "size": 1955,
+      "mtimeMs": 1788967408621.1724,
+      "updatedAt": "2026-09-09T15:23:28.754Z",
       "source": "hook"
     },
     "load-tests/README.md": {
       "description": "Project documentation",
-      "tokens": 4359,
-      "hash": "49682e19e4d82f28",
-      "size": 17559,
-      "mtimeMs": 1788967079643.7727,
-      "updatedAt": "2026-09-09T15:17:59.733Z",
+      "tokens": 4539,
+      "hash": "0522cafb02f2555c",
+      "size": 18269,
+      "mtimeMs": 1788967395381.964,
+      "updatedAt": "2026-09-09T15:23:15.496Z",
       "source": "hook"
     },
     "load-tests/docker-compose.railway-sim.yml": {
@@ -2694,6 +2694,15 @@
       "size": 2719,
       "mtimeMs": 1788966541441.8196,
       "updatedAt": "2026-09-09T15:09:01.555Z",
+      "source": "hook"
+    },
+    "docker-compose.yml": {
+      "description": "Docker Compose services",
+      "tokens": 636,
+      "hash": "44757b57d02cc4f7",
+      "size": 2228,
+      "mtimeMs": 1788967312070.7266,
+      "updatedAt": "2026-09-09T15:21:52.160Z",
       "source": "hook"
     }
   },
