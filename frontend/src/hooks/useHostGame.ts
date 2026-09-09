@@ -258,6 +258,25 @@ export function useHostGame(gameId: string | undefined) {
     };
   }, [gameId, gameState?.status, questionResults, currentQuestion]);
 
+  useEffect(() => {
+    const phase = normalizeGameStatus(gameState?.status ?? 'Lobby');
+    if (!gameId || (phase !== 'Leaderboard' && phase !== 'Finished') || leaderboard) {
+      return;
+    }
+    let active = true;
+    hostGameService
+      .getLeaderboard(gameId)
+      .then((data) => {
+        if (active) {
+          setLeaderboard(data);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [gameId, gameState?.status, leaderboard]);
+
   const participants = useMemo(() => Array.from(participantsMap.values()), [participantsMap]);
 
   const runAction = useCallback(async (action: () => Promise<unknown>, fallbackMessage: string) => {

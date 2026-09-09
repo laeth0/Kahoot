@@ -68,7 +68,7 @@ export function QuizLibraryPage() {
       const response = await hostGameService.createGame(quizId);
       setSnackbarSeverity('success');
       setSnackbarMessage(`Game created with PIN: ${response.pin}. Launching lobby...`);
-      navigate(`/host/game/${response.gameId}`);
+      navigate(`/host/game/${response.gameId}`, { state: { quizId } });
     } catch (err) {
       setSnackbarSeverity('error');
       const msg = err instanceof Error ? err.message : 'Failed to launch game session';

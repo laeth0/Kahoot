@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:43:27.034Z
-> Files: 255 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:53:31.495Z
+> Files: 265 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -414,6 +414,11 @@
 - `choiceVisuals.tsx` — CHOICE_LETTERS (~307 tok)
 - `index.ts` (~33 tok)
 
+## frontend/src/components/GameFinishedScreen/
+
+- `GameFinishedScreen.tsx` — GameFinishedScreen (~785 tok)
+- `index.ts` (~27 tok)
+
 ## frontend/src/components/HostGameControls/
 
 - `HostGameControls.tsx` — primaryButtonSx (~1768 tok)
@@ -423,10 +428,20 @@
 - `index.ts` (~24 tok)
 - `KickedNotice.tsx` — KickedNotice (~527 tok)
 
+## frontend/src/components/LeaderboardList/
+
+- `index.ts` (~26 tok)
+- `LeaderboardList.tsx` — RANK_COLORS (~1252 tok)
+
 ## frontend/src/components/NicknameEntryForm/
 
 - `index.ts` (~27 tok)
 - `NicknameEntryForm.tsx` — NicknameEntryForm (~1728 tok)
+
+## frontend/src/components/PodiumView/
+
+- `index.ts` (~23 tok)
+- `PodiumView.tsx` — MEDALS (~864 tok)
 
 ## frontend/src/components/QuestionMedia/
 
@@ -455,14 +470,14 @@
 
 ## frontend/src/hooks/
 
-- `useHostGame.ts` — Exports useHostGame (~3490 tok)
-- `usePlayerGame.ts` — Exports AnswerState, PlayerState, usePlayerGame (~2861 tok)
+- `useHostGame.ts` — Exports useHostGame (~3616 tok)
+- `usePlayerGame.ts` — Exports AnswerState, PlayerState, usePlayerGame (~2978 tok)
 - `useServerCountdown.ts` — Exports CountdownState, ServerCountdownOptions, useServerCountdown (~819 tok)
 - `useSessionToken.ts` — Exports PlayerSession, getSession, saveSession, clearSession + 4 more (~844 tok)
 
 ## frontend/src/pages/HostGamePage/
 
-- `HostGamePage.tsx` — HostGamePage (~2455 tok)
+- `HostGamePage.tsx` — HostGamePage (~3220 tok)
 - `HostLeaderboardView.tsx` — HostLeaderboardView (~621 tok)
 - `HostQuestionView.tsx` — HostQuestionView (~830 tok)
 
@@ -473,9 +488,18 @@
 ## frontend/src/pages/PlayerGamePage/
 
 - `index.ts` (~30 tok)
-- `PlayerGamePage.tsx` — ordinal (~2054 tok)
+- `PlayerGamePage.tsx` — NoticeCard (~1994 tok)
+- `PlayerLeaderboardView.tsx` — PlayerLeaderboardView (~1028 tok)
 - `PlayerQuestionView.tsx` — PlayerQuestionView (~853 tok)
 - `PlayerResultsView.tsx` — PlayerResultsView (~854 tok)
+
+## frontend/src/pages/QuizEditorPage/
+
+- `QuizEditorPage.tsx` — QuizEditorPage (~6232 tok)
+
+## frontend/src/pages/QuizLibraryPage/
+
+- `QuizLibraryPage.tsx` — QuizLibraryPage (~3768 tok)
 
 ## frontend/src/realtime/
 
@@ -485,6 +509,10 @@
 ## frontend/src/routes/
 
 - `routes.tsx` — AppRoutes (~546 tok)
+
+## frontend/src/utils/
+
+- `rank.ts` — Exports ordinal (~68 tok)
 
 ## load-tests/
 

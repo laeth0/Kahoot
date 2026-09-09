@@ -1,4 +1,3 @@
-import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import SportsScoreIcon from '@mui/icons-material/SportsScore';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
@@ -7,6 +6,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { ConnectionStatusBanner } from '../../components/ConnectionStatusBanner/index.ts';
 import { LoadingState } from '../../components/Feedback/index.ts';
+import { GameFinishedScreen } from '../../components/GameFinishedScreen/index.ts';
 import { KickedNotice } from '../../components/KickedNotice/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { WaitingScreen } from '../../components/WaitingScreen/index.ts';
@@ -17,17 +17,9 @@ import {
   isQuestionResultsStatus,
 } from '../../constants/gameStatus.ts';
 import { usePlayerGame } from '../../hooks/usePlayerGame.ts';
+import { PlayerLeaderboardView } from './PlayerLeaderboardView.tsx';
 import { PlayerQuestionView } from './PlayerQuestionView.tsx';
 import { PlayerResultsView } from './PlayerResultsView.tsx';
-
-function ordinal(rank: number): string {
-  const mod100 = rank % 100;
-  if (mod100 >= 11 && mod100 <= 13) {
-    return `${rank}th`;
-  }
-  const suffix = ['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th';
-  return `${rank}${suffix}`;
-}
 
 interface NoticeCardProps {
   icon: ReactNode;
@@ -88,6 +80,10 @@ function NoticeCard({ icon, title, body, accent = false, actionLabel, onAction }
 
 export function PlayerGamePage() {
   const { gameId } = useParams<{ gameId: string }>();
+  return <PlayerGameSession key={gameId ?? 'none'} gameId={gameId} />;
+}
+
+function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
   const navigate = useNavigate();
 
   const {
@@ -102,6 +98,7 @@ export function PlayerGamePage() {
     answerState,
     selectedChoiceId,
     pointsThisQuestion,
+    rankDelta,
   } = usePlayerGame(gameId);
 
   const goHome = () => navigate('/');
@@ -109,6 +106,11 @@ export function PlayerGamePage() {
   const handleLeave = () => {
     void leaveGame();
     goHome();
+  };
+
+  const handlePlayAgain = () => {
+    void leaveGame();
+    navigate('/join');
   };
 
   const renderBody = (): ReactNode => {
@@ -177,30 +179,27 @@ export function PlayerGamePage() {
     }
 
     if (isLeaderboardStatus(playerState.status)) {
-      const gained =
-        pointsThisQuestion && pointsThisQuestion > 0 ? `+${pointsThisQuestion} this round. ` : '';
       return (
-        <NoticeCard
-          accent
-          icon={<EmojiEventsIcon sx={{ fontSize: 34 }} />}
-          title={
-            playerState.rank ? `You are in ${ordinal(playerState.rank)} place` : 'Standings updated'
-          }
-          body={`${gained}${playerState.totalScore} points so far. Get ready for the next question.`}
+        <PlayerLeaderboardView
+          participantId={playerState.participantId}
+          rank={playerState.rank}
+          totalScore={playerState.totalScore}
+          rankDelta={rankDelta}
+          leaderboard={playerState.leaderboard}
         />
       );
     }
 
     if (playerState.status === 'Finished') {
       return (
-        <NoticeCard
-          icon={<SportsScoreIcon sx={{ fontSize: 34 }} />}
-          title={
-            playerState.rank ? `You finished ${ordinal(playerState.rank)}` : 'The game has ended'
-          }
-          body={`Final score: ${playerState.totalScore}. Thanks for playing, ${playerState.nickname}.`}
-          actionLabel="Back to Home"
-          onAction={goHome}
+        <GameFinishedScreen
+          nickname={playerState.nickname}
+          participantId={playerState.participantId}
+          rank={playerState.rank}
+          totalScore={playerState.totalScore}
+          entries={playerState.leaderboard?.entries ?? []}
+          onPlayAgain={handlePlayAgain}
+          onLeave={handleLeave}
         />
       );
     }
@@ -221,7 +220,7 @@ export function PlayerGamePage() {
         paddingBottom: 'max(env(safe-area-inset-bottom), 24px)',
       }}
     >
-      <MetadataManager title="Live Game Lobby - Kahoot" noindex />
+      <MetadataManager title="Live Game - Kahoot" noindex />
 
       <Container
         maxWidth={false}
@@ -238,12 +237,7 @@ export function PlayerGamePage() {
         {!isKicked && <ConnectionStatusBanner status={hubStatus} onRetry={retryHub} />}
 
         <Box
-          sx={{
-            flexGrow: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-          }}
+          sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}
         >
           {renderBody()}
         </Box>

@@ -1,3 +1,4 @@
+import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import {
@@ -10,15 +11,19 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
+import { hostGameService } from '../../api/hostGameService.ts';
 import { ConnectionStatusBanner } from '../../components/ConnectionStatusBanner/index.ts';
 import { GamePhaseIndicator } from '../../components/GamePhaseIndicator/index.ts';
 import { GamePinDisplay } from '../../components/GamePinDisplay/index.ts';
 import { HostGameControls } from '../../components/HostGameControls/index.ts';
+import { LeaderboardList } from '../../components/LeaderboardList/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { ParticipantGrid } from '../../components/ParticipantGrid/index.ts';
 import { PlayerCountBadge } from '../../components/PlayerCountBadge/index.ts';
+import { PodiumView } from '../../components/PodiumView/index.ts';
 import { QuestionResultsChart } from '../../components/QuestionResultsChart/index.ts';
 import {
   isFinishedStatus,
@@ -29,12 +34,20 @@ import {
 } from '../../constants/gameStatus.ts';
 import { useHostGame } from '../../hooks/useHostGame.ts';
 import { GameLayout } from '../../layouts/GameLayout.tsx';
-import { HostLeaderboardView } from './HostLeaderboardView.tsx';
 import { HostQuestionView } from './HostQuestionView.tsx';
 
 export function HostGamePage() {
   const { gameId } = useParams<{ gameId: string }>();
+  return <HostGameSession key={gameId ?? 'none'} gameId={gameId} />;
+}
+
+function HostGameSession({ gameId }: { gameId: string | undefined }) {
   const navigate = useNavigate();
+  const location = useLocation();
+  const quizId = (location.state as { quizId?: string } | null)?.quizId ?? null;
+
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+  const [newSessionError, setNewSessionError] = useState<string | null>(null);
 
   const {
     gameState,
@@ -57,6 +70,22 @@ export function HostGamePage() {
     endGame,
     removeParticipant,
   } = useHostGame(gameId);
+
+  const handleStartNewSession = async () => {
+    if (!quizId || isCreatingNew) {
+      return;
+    }
+    setIsCreatingNew(true);
+    setNewSessionError(null);
+    try {
+      const created = await hostGameService.createGame(quizId);
+      navigate(`/host/game/${created.gameId}`, { state: { quizId }, replace: true });
+    } catch (err) {
+      setNewSessionError(err instanceof Error ? err.message : 'Could not start a new session.');
+    } finally {
+      setIsCreatingNew(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -117,7 +146,6 @@ export function HostGamePage() {
   }
 
   const status = gameState.status;
-  const isLobby = isLobbyStatus(status);
   const isFinished = isFinishedStatus(status);
   const paused = hubConnectionStatus !== 'connected';
 
@@ -137,6 +165,15 @@ export function HostGamePage() {
     </Box>
   );
 
+  const leaderboardCard = (heading: string, maxRows: number) => (
+    <Card sx={{ borderRadius: 4, border: '2px solid #E2E8F0', p: { xs: 3, sm: 4 } }}>
+      <Typography variant="h4" component="h1" sx={{ fontWeight: 900, color: '#09131F', mb: 3 }}>
+        {heading}
+      </Typography>
+      <LeaderboardList entries={leaderboard?.entries ?? []} maxRows={maxRows} size="projector" />
+    </Card>
+  );
+
   return (
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
       <MetadataManager title={`${gameState.quizTitle} - Host - Kahoot`} noindex />
@@ -152,7 +189,7 @@ export function HostGamePage() {
           />
         </Box>
 
-        {isLobby && (
+        {isLobbyStatus(status) && (
           <>
             <Box
               sx={{
@@ -232,28 +269,65 @@ export function HostGamePage() {
 
         {isLeaderboardStatus(status) && (
           <>
-            <HostLeaderboardView leaderboard={leaderboard} heading="Standings" />
+            {leaderboardCard('Standings', 12)}
             {controls}
           </>
         )}
 
         {isFinished && (
-          <>
-            <Alert severity="info" sx={{ borderRadius: 3, fontWeight: 600, mb: 3 }}>
-              This game session has finished. Start a new session from your Quiz Library.
-            </Alert>
-            <HostLeaderboardView leaderboard={leaderboard} heading="Final Results" />
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-              <Button
-                variant="contained"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate('/host/quizzes')}
-                sx={{ fontWeight: 700, textTransform: 'none', bgcolor: '#00629B', minHeight: 48 }}
+          <Stack spacing={3}>
+            <Card sx={{ borderRadius: 4, border: '2px solid #00629B', p: { xs: 3, sm: 4 } }}>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ fontWeight: 900, color: '#09131F', mb: 1, textAlign: 'center' }}
               >
-                Return to Quizzes
+                Final Results
+              </Typography>
+              <PodiumView entries={leaderboard?.entries ?? []} />
+            </Card>
+
+            {leaderboardCard('Full Standings', 20)}
+
+            {newSessionError && (
+              <Alert severity="error" sx={{ borderRadius: 2 }}>
+                {newSessionError}
+              </Alert>
+            )}
+
+            <Stack
+              direction={{ xs: 'column', sm: 'row' }}
+              spacing={2}
+              sx={{ justifyContent: 'center' }}
+            >
+              <Button
+                variant="outlined"
+                startIcon={<ArrowBackIcon />}
+                onClick={() => navigate(quizId ? `/host/quizzes/${quizId}` : '/host/quizzes')}
+                sx={{ fontWeight: 700, textTransform: 'none', minHeight: 48 }}
+              >
+                Back to Quiz
               </Button>
-            </Box>
-          </>
+              {quizId && (
+                <Button
+                  variant="contained"
+                  startIcon={
+                    isCreatingNew ? <CircularProgress size={18} color="inherit" /> : <AddIcon />
+                  }
+                  onClick={handleStartNewSession}
+                  disabled={isCreatingNew}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    bgcolor: '#00629B',
+                    minHeight: 48,
+                  }}
+                >
+                  {isCreatingNew ? 'Starting…' : 'Start New Session'}
+                </Button>
+              )}
+            </Stack>
+          </Stack>
         )}
       </Box>
     </GameLayout>

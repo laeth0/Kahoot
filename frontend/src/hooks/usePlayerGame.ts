@@ -37,6 +37,7 @@ export interface PlayerState {
 interface LiveRefs {
   participantId: string | null;
   totalScore: number;
+  rank: number | null;
 }
 
 function myLeaderboardEntry(board: LeaderboardResponse, participantId: string) {
@@ -55,20 +56,25 @@ export function usePlayerGame(gameId: string | undefined) {
   const [answerState, setAnswerState] = useState<AnswerState>('idle');
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [scoreBeforeQuestion, setScoreBeforeQuestion] = useState(0);
+  const [rankDelta, setRankDelta] = useState<number | null>(null);
 
-  const liveRef = useRef<LiveRefs>({ participantId: null, totalScore: 0 });
+  const liveRef = useRef<LiveRefs>({ participantId: null, totalScore: 0, rank: null });
+  const rankBeforeQuestionRef = useRef<number | null>(null);
   const submitInFlightRef = useRef(false);
 
   useEffect(() => {
     liveRef.current = {
       participantId: playerState?.participantId ?? null,
       totalScore: playerState?.totalScore ?? 0,
+      rank: playerState?.rank ?? null,
     };
-  }, [playerState?.participantId, playerState?.totalScore]);
+  }, [playerState?.participantId, playerState?.totalScore, playerState?.rank]);
 
   const applyState = useCallback((data: PlayerGameStateResponse) => {
     const status = normalizeGameStatus(data.status);
     setScoreBeforeQuestion(data.totalScore);
+    setRankDelta(null);
+    rankBeforeQuestionRef.current = data.rank ?? null;
     setPlayerState((previous) => ({
       nickname: data.nickname,
       status,
@@ -150,6 +156,8 @@ export function usePlayerGame(gameId: string | undefined) {
     const handleQuestionStarted = (question: PlayerQuestionResponse) => {
       submitInFlightRef.current = false;
       setScoreBeforeQuestion(liveRef.current.totalScore);
+      rankBeforeQuestionRef.current = liveRef.current.rank;
+      setRankDelta(null);
       setSelectedChoiceId(null);
       setAnswerState('idle');
       setPlayerState((previous) =>
@@ -172,36 +180,31 @@ export function usePlayerGame(gameId: string | undefined) {
       );
     };
 
+    const foldLeaderboard = (board: LeaderboardResponse, status: 'Leaderboard' | 'Finished') => {
+      const pid = liveRef.current.participantId;
+      const mine = pid ? myLeaderboardEntry(board, pid) : null;
+      const newRank = mine?.rank ?? null;
+      const before = rankBeforeQuestionRef.current;
+      setRankDelta(newRank !== null && before !== null ? before - newRank : null);
+      setPlayerState((previous) =>
+        previous
+          ? {
+              ...previous,
+              status,
+              leaderboard: board,
+              totalScore: mine?.totalScore ?? previous.totalScore,
+              rank: mine?.rank ?? previous.rank,
+            }
+          : previous,
+      );
+    };
+
     const handleLeaderboardUpdated = (board: LeaderboardResponse) => {
-      setPlayerState((previous) => {
-        if (!previous) {
-          return previous;
-        }
-        const mine = myLeaderboardEntry(board, previous.participantId);
-        return {
-          ...previous,
-          status: 'Leaderboard',
-          leaderboard: board,
-          totalScore: mine?.totalScore ?? previous.totalScore,
-          rank: mine?.rank ?? previous.rank,
-        };
-      });
+      foldLeaderboard(board, 'Leaderboard');
     };
 
     const handleGameEnded = (board: LeaderboardResponse) => {
-      setPlayerState((previous) => {
-        if (!previous) {
-          return previous;
-        }
-        const mine = myLeaderboardEntry(board, previous.participantId);
-        return {
-          ...previous,
-          status: 'Finished',
-          leaderboard: board,
-          totalScore: mine?.totalScore ?? previous.totalScore,
-          rank: mine?.rank ?? previous.rank,
-        };
-      });
+      foldLeaderboard(board, 'Finished');
     };
 
     connection.on('ParticipantJoined', handleParticipantJoined);
@@ -303,6 +306,7 @@ export function usePlayerGame(gameId: string | undefined) {
     answerState,
     selectedChoiceId,
     pointsThisQuestion,
+    rankDelta,
   };
 }
 

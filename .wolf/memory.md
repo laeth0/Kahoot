@@ -537,3 +537,24 @@ description: chronological action log per session, consolidated weekly
 | 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 7→9 lines | ~59 |
 | 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 1→2 lines | ~34 |
 | 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 4→5 lines | ~68 |
+| 21:49 | Created frontend/src/components/LeaderboardList/LeaderboardList.tsx | — | ~1252 |
+| 21:49 | Created frontend/src/components/PodiumView/PodiumView.tsx | — | ~864 |
+| 21:49 | Created frontend/src/components/GameFinishedScreen/GameFinishedScreen.tsx | — | ~838 |
+| 21:49 | Created frontend/src/utils/rank.ts | — | ~68 |
+| 21:50 | Edited frontend/src/components/GameFinishedScreen/GameFinishedScreen.tsx | reduced (-8 lines) | ~132 |
+| 21:50 | Created frontend/src/components/LeaderboardList/index.ts | — | ~26 |
+| 21:50 | Created frontend/src/components/PodiumView/index.ts | — | ~23 |
+| 21:50 | Created frontend/src/components/GameFinishedScreen/index.ts | — | ~27 |
+| 21:50 | Edited frontend/src/hooks/usePlayerGame.ts | 4→5 lines | ~29 |
+| 21:50 | Edited frontend/src/hooks/usePlayerGame.ts | 13→16 lines | ~216 |
+| 21:50 | Edited frontend/src/hooks/usePlayerGame.ts | added nullish coalescing | ~81 |
+| 21:50 | Edited frontend/src/hooks/usePlayerGame.ts | 5→7 lines | ~92 |
+| 21:50 | Edited frontend/src/hooks/usePlayerGame.ts | modified if() | ~187 |
+| 21:51 | Edited frontend/src/hooks/usePlayerGame.ts | modified myLeaderboardEntry() | ~272 |
+| 21:51 | Edited frontend/src/hooks/usePlayerGame.ts | 6→7 lines | ~30 |
+| 21:51 | Edited frontend/src/hooks/useHostGame.ts | added optional chaining | ~166 |
+| 21:51 | Created frontend/src/pages/PlayerGamePage/PlayerLeaderboardView.tsx | — | ~1028 |
+| 21:52 | Created frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | — | ~1994 |
+| 21:53 | Created frontend/src/pages/HostGamePage/HostGamePage.tsx | — | ~3220 |
+| 21:53 | Edited frontend/src/pages/QuizLibraryPage/QuizLibraryPage.tsx | CSS: state | ~75 |
+| 21:53 | Edited frontend/src/pages/QuizEditorPage/QuizEditorPage.tsx | CSS: state, quizId | ~77 |

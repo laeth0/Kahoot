@@ -126,7 +126,7 @@ export function QuizEditorPage() {
       const res = await hostGameService.createGame(quiz.id);
       setSnackbarSeverity('success');
       setSnackbarMessage(`Game created with PIN: ${res.pin}. Redirecting to game lobby...`);
-      navigate(`/host/game/${res.gameId}`);
+      navigate(`/host/game/${res.gameId}`, { state: { quizId: quiz.id } });
     } catch (err) {
       setSnackbarSeverity('error');
       const msg = err instanceof Error ? err.message : 'Failed to create game session';

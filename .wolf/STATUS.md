@@ -6,7 +6,7 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-09 (Phase 5 complete)
+> Last updated: 2026-09-09 (Phase 6 complete)
 
 ---
 
@@ -88,23 +88,36 @@ budget_tokens: 1000
   - **E2E Verified (Chrome CDP vs live Docker backend):** host Start → player renders the question (<2.5s), `ServerCountdown` ticking; player taps a tile → "Answer locked in!"; host End Question → both show `QuestionResultsChart` with the correct choice + counts; host Show Leaderboard → player "1st place, 939 points" (time-weighted score via `LeaderboardUpdated`); host Next Question → Q2 on both; host End → both Finished ("You finished 1st"). Host page verified through its own on-screen controls (lobby → active → results → leaderboard → Q2).
   - **Known limits:** host live answered-count is 2s poll, not push (backend has no per-answer event); a player who reconnects after answering keeps `alreadyAnswered` + deadline but loses which choice they picked (not in `PlayerGameStateResponse`); "+points this round" shows on the player Leaderboard card (score only arrives with `LeaderboardUpdated`, after the Results view).
 
+- **Frontend Phase 6: Results, Leaderboard & Game End (Completed & Verified):**
+  - **Zero Comments Constraint:** 100% enforced (audit clean).
+  - **Components:** `src/components/LeaderboardList` (ranked rows, gold/silver/bronze rank badges, "(you)" highlight, `rankDeltas` map → ▲/▼/– chip with `ArrowUpward`/`ArrowDownward` non-colour cue, `maxRows` cap + "and N more players", separate row if the highlighted player is past the cap, `compact` / `projector` sizes); `src/components/PodiumView` (2·1·3 columns, varying heights, `EmojiEvents` medals, "you" ring, renders 1–3); `src/components/GameFinishedScreen` (hero "You finished Nth" + score, `PodiumView`, compact `LeaderboardList`, Play Again / Leave). `src/utils/rank.ts` `ordinal()` shared (removed the duplicate in `PlayerGamePage`). `HostLeaderboardView` (Phase 5 stopgap) deleted — `HostGamePage` composes `LeaderboardList` directly.
+  - **`usePlayerGame`:** tracks `rankBeforeQuestionRef` (snapshotted on `QuestionStarted` from a synced `liveRef`, and on reconnect) → derived `rankDelta` (positive = moved up) set in `foldLeaderboard` on `LeaderboardUpdated` / `GameEnded`; exposes `rankDelta`. Session is NOT auto-cleared on Finished (so a reload still reconnects to the snapshot); cleared only on the player's Play Again / Leave action.
+  - **`useHostGame`:** one-shot `getLeaderboard` fetch when landing on `Leaderboard` / `Finished` with no cached `leaderboard` (mirrors the Phase 5 `getQuestionResults` reload path).
+  - **Pages:** `PlayerGamePage` → new `PlayerLeaderboardView` (hero "YOUR POSITION / Nth" + rank-delta line + `LeaderboardList` top-5 with own delta + "Next question soon…" pulse) and `GameFinishedScreen` for Finished (Play Again → `leaveGame()` + `/join`; Leave → `leaveGame()` + `/`). `HostGamePage` Leaderboard view → `LeaderboardList` (projector, 12 rows); Finished view → `PodiumView` + full `LeaderboardList` (20) + "Back to Quiz" + "Start New Session".
+  - **Per-session isolation (FR-5a):** `PlayerGamePage` / `HostGamePage` split into an outer route component that renders the session component with `key={gameId}` → a full remount (fresh `usePlayerGame` / `useHostGame` / hub) when the `gameId` route param changes. `quizId` is threaded via router `location.state` from the Phase-2 "Start game" call sites (`QuizLibraryPage`, `QuizEditorPage`) so Finished's "Back to Quiz" / "Start New Session" work (`HostGameStateResponse` has no `quizId`); "Start New Session" `POST /games` then `navigate(replace)` to the new keyed URL.
+  - **Quality Gates:** `format:check` clean, `eslint .` 0/0 (incl. `react-hooks` v7), `tsc -b && vite build` clean, comment audit clean.
+  - **E2E Verified (Chrome CDP vs live Docker backend, host driven via REST):** player round-1 → `PlayerLeaderboardView` ("YOUR POSITION / 1st / 0 points", list row "Rania (you)", "Next question soon…"); round-2 → same (delta hidden at 0 for a lone player — wiring exercised); `POST /end` → `GameFinishedScreen` ("You finished 1st!", `PodiumView`, list, Play Again / Leave); **Play Again → `/join` and `sessionStorage` session cleared** (FR-5a). Host Finished/Leaderboard views are pure-render over `leaderboard` data already verified flowing in Phase 5.
+  - **Known limits:** rank-delta is only the player's own (backend sends no per-player history); host page verified indirectly (its auth-seeding in the CDP harness is flaky, but the render paths are unchanged data-wise from Phase 5's verified host run).
+
 ---
 
 ## 🚀 Next phase
 
-**Goal:** Phase 6 — Results, Leaderboard & Game End per `docs/frontend-pages-plan.md` (lines 625–681).
+**Goal:** Phase 7 — Resilience, Errors, Accessibility & Polish per `docs/frontend-pages-plan.md` (lines 683–733). Hardening only, no new pages.
 
-### Acceptance criteria (summary)
-1. Between-question leaderboard on host + players; player sees own rank + rank delta since last question.
-2. End game moves every client to Finished; podium + final scores match `LeaderboardResponse`.
-3. Reconnect during Leaderboard/Finished restores the snapshot (`PlayerGameStateResponse.leaderboard`).
-4. Starting a second session of the same quiz shows a fresh lobby, zero carried-over state (per-`gameId` isolation; clear `sessionToken` on finish/leave).
-5. Host reaches a new session from Finished in two clicks ("Back to quiz" + "Start new session").
+### Scope (summary)
+1. Global HTTP handling in one place: `401` (clear + `/login` + toast), `403`, `404`, `409` (reconcile from server), `429` (cooldown, no retry storm), `5xx` (`ErrorState` + Retry).
+2. Connection resilience: `onreconnecting`/`onreconnected`/`onclose` with backoff + jitter; on reconnect always re-`Reconnect` (player) / re-`JoinAsHost` + `GET /games/{id}` (host) and re-hydrate; freeze timers while disconnected; "game no longer exists" → Finished/Not-found fallback.
+3. Idempotency UX: debounce every host control + player submit; reconcile against the broadcast echo (mostly done in Phase 5 via `actionInFlightRef` / `submitInFlightRef` — audit).
+4. Accessibility pass (WCAG 2.2 AA): one `<h1>` per phase, heading order, landmarks, keyboard path through choices/controls/dialogs, visible focus, focus moved to phase heading on view change, polite live-region announcements ("question started", "answer accepted", "results in", "player removed", "you were removed"), non-colour cues (already on choices/deltas — audit), AA contrast, ~44px targets, `prefers-reduced-motion` (audit — most animations already guard it), `inputmode`/`autocomplete` on PIN + nickname, no paste-blocking on login.
+5. Responsive/projector pass: confirm the host correct-answer highlight is host-screen-only and clearly separated; `/play/*` at 320px + 200% zoom + safe areas; laptop fallback for host.
+6. Performance pass (NFR-1): 500-participant lobby + answer-results rendering — windowed lists, batched participant events (host already batches at 150ms), memoised rows, no full re-sort per event, `Reconnect` storms spread with jitter.
+7. SEO pass: `/`, `/join`, `/login` unique titles + descriptions + self-referential canonicals + crawlable `<a href>`; every host/play route `noindex` (done); `robots.txt` + minimal sitemap for the 3 public routes.
 
-### Phase 5 wiring ready for Phase 6
-- `usePlayerGame` already stores `playerState.leaderboard` (from `LeaderboardUpdated` / `GameEnded` / reconnect) and derives `pointsThisQuestion`; `useHostGame` stores `leaderboard`. Both pages render minimal Leaderboard/Finished placeholders — replace with `LeaderboardList` / `PodiumView` / `GameFinishedScreen`.
-- Rank-delta needs the previous rank retained across a question; add `previousRank` tracking in `usePlayerGame`.
-- On player Finished, clear the session (`useSessionToken` `clear`) per FR-5a isolation.
+### Phase 6 wiring ready for Phase 7
+- `LiveRegion` component exists (`src/components/Feedback/LiveRegion.tsx`) but is not wired anywhere — thread it through `usePlayerGame` / `useHostGame` state transitions for the a11y announcements.
+- `ConnectionStatusBanner` already renders for both pages; Phase 7 adds the blocking-overlay behaviour for `disconnected` and timer-freeze is already handled via the `paused` prop on `useServerCountdown`.
+- No `AppErrorBoundary` around `/play/*` or `/host/game/*` yet — add per-route boundaries that reset on `gameId` change (the pages are already keyed by `gameId`).
 
 ---
 
