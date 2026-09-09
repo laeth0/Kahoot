@@ -26,7 +26,8 @@ internal sealed class EndQuestionCommandHandler(
 
         GameSession game = gameResult.Value;
 
-        if (game.Status is not (GameStatus.QuestionActive or GameStatus.QuestionResults))
+        bool reentry = game.Status == GameStatus.QuestionResults;
+        if (!reentry && !GameStateMachine.CanFire(game.Status, GameTransition.RevealQuestionResults))
         {
             return Result.Failure<QuestionResultsResponse>(GameErrors.InvalidStateTransition);
         }

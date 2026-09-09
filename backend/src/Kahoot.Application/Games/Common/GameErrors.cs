@@ -51,4 +51,7 @@ public static class GameErrors
 
     public static readonly Error ChoiceNotInQuestion =
         new("Game.ChoiceNotInQuestion", "The selected choice does not belong to the current question.");
+
+    public static readonly Error TooManyAnswerAttempts =
+        new("Game.TooManyAnswerAttempts", "Too many answer attempts in a short time. Please slow down.");
 }

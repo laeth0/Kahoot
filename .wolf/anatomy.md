@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:42:49.806Z
-> Files: 176 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:44:30.466Z
+> Files: 182 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -141,7 +141,7 @@
 ## backend/src/Kahoot.Application/Games/Common/
 
 - `GameContracts.cs` — Class: GameContracts (~682 tok)
-- `GameErrors.cs` — Class: GameErrors (~630 tok)
+- `GameErrors.cs` — Class: GameErrors (~674 tok)
 - `GameQuestionMapper.cs` — Class: GameQuestionMapper (~524 tok)
 - `GameTime.cs` — Class: GameTime (~56 tok)
 - `HostGameGuard.cs` — Class: HostGameGuard (~260 tok)
@@ -157,12 +157,12 @@
 ## backend/src/Kahoot.Application/Games/EndGame/
 
 - `EndGameCommand.cs` — Class: EndGameCommand (~56 tok)
-- `EndGameCommandHandler.cs` — Class: EndGameCommandHandler (~522 tok)
+- `EndGameCommandHandler.cs` — Class: EndGameCommandHandler (~572 tok)
 
 ## backend/src/Kahoot.Application/Games/EndQuestion/
 
 - `EndQuestionCommand.cs` — Class: EndQuestionCommand (~60 tok)
-- `EndQuestionCommandHandler.cs` — Class: EndQuestionCommandHandler (~647 tok)
+- `EndQuestionCommandHandler.cs` — Class: EndQuestionCommandHandler (~668 tok)
 
 ## backend/src/Kahoot.Application/Games/GetHostGameState/
 
@@ -190,6 +190,15 @@
 - `ILeaderboardService.cs` — Class: ILeaderboardService (~100 tok)
 - `LeaderboardService.cs` — Class: LeaderboardService (~186 tok)
 
+## backend/src/Kahoot.Application/Games/Presence/
+
+- `AttachParticipantConnectionCommand.cs` — Class: AttachParticipantConnectionCommand (~54 tok)
+- `AttachParticipantConnectionCommandHandler.cs` — Class: AttachParticipantConnectionCommandHandler (~269 tok)
+- `AuthorizeHostGameQuery.cs` — Class: AuthorizeHostGameQuery (~47 tok)
+- `AuthorizeHostGameQueryHandler.cs` — Class: AuthorizeHostGameQueryHandler (~196 tok)
+- `DetachParticipantConnectionCommand.cs` — Class: DetachParticipantConnectionCommand (~54 tok)
+- `DetachParticipantConnectionCommandHandler.cs` — Class: DetachParticipantConnectionCommandHandler (~290 tok)
+
 ## backend/src/Kahoot.Application/Games/Reconnect/
 
 - `ReconnectParticipantCommand.cs` — Class: ReconnectParticipantCommand (~64 tok)
@@ -208,17 +217,17 @@
 ## backend/src/Kahoot.Application/Games/ShowLeaderboard/
 
 - `ShowLeaderboardCommand.cs` — Class: ShowLeaderboardCommand (~61 tok)
-- `ShowLeaderboardCommandHandler.cs` — Class: ShowLeaderboardCommandHandler (~556 tok)
+- `ShowLeaderboardCommandHandler.cs` — Class: ShowLeaderboardCommandHandler (~564 tok)
 
 ## backend/src/Kahoot.Application/Games/StartGame/
 
 - `StartGameCommand.cs` — Class: StartGameCommand (~59 tok)
-- `StartGameCommandHandler.cs` — Class: StartGameCommandHandler (~612 tok)
+- `StartGameCommandHandler.cs` — Class: StartGameCommandHandler (~789 tok)
 
 ## backend/src/Kahoot.Application/Games/StartNextQuestion/
 
 - `StartNextQuestionCommand.cs` — Class: StartNextQuestionCommand (~63 tok)
-- `StartNextQuestionCommandHandler.cs` — Class: StartNextQuestionCommandHandler (~627 tok)
+- `StartNextQuestionCommandHandler.cs` — Class: StartNextQuestionCommandHandler (~848 tok)
 
 ## backend/src/Kahoot.Application/Games/SubmitAnswer/
 

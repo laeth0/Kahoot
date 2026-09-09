@@ -281,3 +281,15 @@ description: chronological action log per session, consolidated weekly
 | 12:42 | Created backend/src/Kahoot.Application/Games/GameStateMachine.cs | — | ~401 |
 | 12:42 | Edited backend/src/Kahoot.Application/Games/GameStateMachine.cs | 2→2 lines | ~25 |
 | 12:42 | Created backend/src/Kahoot.Application/Games/Common/QuestionActivation.cs | — | ~314 |
+| 12:43 | Created backend/src/Kahoot.Application/Games/StartGame/StartGameCommandHandler.cs | — | ~789 |
+| 12:43 | Created backend/src/Kahoot.Application/Games/StartNextQuestion/StartNextQuestionCommandHandler.cs | — | ~848 |
+| 12:43 | Edited backend/src/Kahoot.Application/Games/EndQuestion/EndQuestionCommandHandler.cs | not() → CanFire() | ~88 |
+| 12:43 | Edited backend/src/Kahoot.Application/Games/ShowLeaderboard/ShowLeaderboardCommandHandler.cs | modified if() | ~113 |
+| 12:43 | Edited backend/src/Kahoot.Application/Games/EndGame/EndGameCommandHandler.cs | added 1 condition(s) | ~129 |
+| 12:43 | Created backend/src/Kahoot.Application/Games/Presence/AttachParticipantConnectionCommand.cs | — | ~54 |
+| 12:43 | Created backend/src/Kahoot.Application/Games/Presence/AttachParticipantConnectionCommandHandler.cs | — | ~269 |
+| 12:43 | Created backend/src/Kahoot.Application/Games/Presence/DetachParticipantConnectionCommand.cs | — | ~54 |
+| 12:44 | Created backend/src/Kahoot.Application/Games/Presence/DetachParticipantConnectionCommandHandler.cs | — | ~290 |
+| 12:44 | Created backend/src/Kahoot.Application/Games/Presence/AuthorizeHostGameQuery.cs | — | ~47 |
+| 12:44 | Created backend/src/Kahoot.Application/Games/Presence/AuthorizeHostGameQueryHandler.cs | — | ~196 |
+| 12:44 | Edited backend/src/Kahoot.Application/Games/Common/GameErrors.cs | 3→6 lines | ~87 |

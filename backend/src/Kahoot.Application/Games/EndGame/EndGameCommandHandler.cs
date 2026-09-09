@@ -31,6 +31,11 @@ internal sealed class EndGameCommandHandler(
             return Result.Success(await LeaderboardBuilder.ReadAsync(dbContext, game.Id, cancellationToken));
         }
 
+        if (!GameStateMachine.CanFire(game.Status, GameTransition.EndGame))
+        {
+            return Result.Failure<LeaderboardResponse>(GameErrors.InvalidStateTransition);
+        }
+
         List<Participant> participants = await dbContext.Participants
             .Where(participant => participant.GameSessionId == game.Id && !participant.IsRemoved)
             .ToListAsync(cancellationToken);

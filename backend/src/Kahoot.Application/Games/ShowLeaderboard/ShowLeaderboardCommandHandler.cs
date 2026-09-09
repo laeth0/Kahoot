@@ -32,7 +32,7 @@ internal sealed class ShowLeaderboardCommandHandler(
             return Result.Success(await LeaderboardBuilder.ReadAsync(dbContext, game.Id, cancellationToken));
         }
 
-        if (game.Status != GameStatus.QuestionResults)
+        if (!GameStateMachine.CanFire(game.Status, GameTransition.ShowLeaderboard))
         {
             return Result.Failure<LeaderboardResponse>(GameErrors.InvalidStateTransition);
         }
