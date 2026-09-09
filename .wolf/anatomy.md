@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:05:01.899Z
-> Files: 228 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:43:27.034Z
+> Files: 255 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -392,6 +392,31 @@
 - `authService.ts` — Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`. (~505 tok)
 - `axiosClient.ts` — Exports TOKEN_STORAGE_KEY, USER_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY, ACCESS_TOKEN_EXPIRES_KEY + 3 (~781 tok)
 - `gameService.ts` — Server game-state values (must match `Kahoot.Domain.Games.GameStatus`). (~270 tok)
+- `hostGameService.ts` — API routes: DELETE (1 endpoints) (~806 tok)
+- `media.ts` — Exports resolveMediaUrl (~120 tok)
+
+## frontend/src/components/AnswerFeedbackScreen/
+
+- `AnswerFeedbackScreen.tsx` — CONTENT (~1053 tok)
+- `index.ts` (~28 tok)
+
+## frontend/src/components/AnsweredCounter/
+
+- `AnsweredCounter.tsx` — AnsweredCounter (~698 tok)
+- `index.ts` (~26 tok)
+
+## frontend/src/components/ChoiceGrid/
+
+- `ChoiceButton.tsx` — ChoiceButton (~1109 tok)
+- `ChoiceGrid.tsx` — ChoiceGrid (~566 tok)
+- `ChoiceShape.tsx` — ChoiceShape (~249 tok)
+- `choiceVisuals.ts` — Exports CHOICE_LETTERS, CHOICE_COLORS, choiceLetter, choiceColor (~119 tok)
+- `choiceVisuals.tsx` — CHOICE_LETTERS (~307 tok)
+- `index.ts` (~33 tok)
+
+## frontend/src/components/HostGameControls/
+
+- `HostGameControls.tsx` — primaryButtonSx (~1768 tok)
 
 ## frontend/src/components/KickedNotice/
 
@@ -403,6 +428,21 @@
 - `index.ts` (~27 tok)
 - `NicknameEntryForm.tsx` — NicknameEntryForm (~1728 tok)
 
+## frontend/src/components/QuestionMedia/
+
+- `index.ts` (~24 tok)
+- `QuestionMedia.tsx` — QuestionMedia (~261 tok)
+
+## frontend/src/components/QuestionResultsChart/
+
+- `index.ts` (~28 tok)
+- `QuestionResultsChart.tsx` — QuestionResultsChart (~982 tok)
+
+## frontend/src/components/ServerCountdown/
+
+- `index.ts` (~26 tok)
+- `ServerCountdown.tsx` — barColor (~652 tok)
+
 ## frontend/src/components/WaitingScreen/
 
 - `index.ts` (~24 tok)
@@ -410,12 +450,21 @@
 
 ## frontend/src/constants/
 
-- `errorCodes.ts` — Exports ERROR_MESSAGES, getFriendlyErrorMessage (~346 tok)
+- `errorCodes.ts` — Exports ERROR_MESSAGES, getFriendlyErrorMessage (~506 tok)
+- `gameStatus.ts` — Exports NormalizedGameStatus, GameStatus, GAME_PHASES, normalizeGameStatus + 6 more (~617 tok)
 
 ## frontend/src/hooks/
 
-- `usePlayerGame.ts` — Exports PlayerState, usePlayerGame (~1441 tok)
-- `useSessionToken.ts` — Exports PlayerSession, getSession, saveSession, clearSession, useSessionToken (~550 tok)
+- `useHostGame.ts` — Exports useHostGame (~3490 tok)
+- `usePlayerGame.ts` — Exports AnswerState, PlayerState, usePlayerGame (~2861 tok)
+- `useServerCountdown.ts` — Exports CountdownState, ServerCountdownOptions, useServerCountdown (~819 tok)
+- `useSessionToken.ts` — Exports PlayerSession, getSession, saveSession, clearSession + 4 more (~844 tok)
+
+## frontend/src/pages/HostGamePage/
+
+- `HostGamePage.tsx` — HostGamePage (~2455 tok)
+- `HostLeaderboardView.tsx` — HostLeaderboardView (~621 tok)
+- `HostQuestionView.tsx` — HostQuestionView (~830 tok)
 
 ## frontend/src/pages/JoinPage/
 
@@ -424,12 +473,14 @@
 ## frontend/src/pages/PlayerGamePage/
 
 - `index.ts` (~30 tok)
-- `PlayerGamePage.tsx` — NoticeCard (~1493 tok)
+- `PlayerGamePage.tsx` — ordinal (~2054 tok)
+- `PlayerQuestionView.tsx` — PlayerQuestionView (~853 tok)
+- `PlayerResultsView.tsx` — PlayerResultsView (~854 tok)
 
 ## frontend/src/realtime/
 
-- `events.ts` — Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 10 more (~780 tok)
-- `gameHub.ts` — Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect (~468 tok)
+- `events.ts` — Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 11 more (~806 tok)
+- `gameHub.ts` — Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect, invokeSubmitAnswer (~564 tok)
 
 ## frontend/src/routes/
 

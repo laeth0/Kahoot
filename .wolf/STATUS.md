@@ -6,7 +6,7 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-09
+> Last updated: 2026-09-09 (Phase 5 complete)
 
 ---
 
@@ -63,18 +63,48 @@ budget_tokens: 1000
   - **Quality Gates:** 0 ESLint errors, 100% Prettier formatted, 0 TypeScript compile errors (`tsc -b && vite build`).
   - **E2E Browser Verification:** Automated verification with recorded video (`host_lobby_e2e_verified_1788974955625.webp`) validating game creation, initial lobby state, SignalR participant joins (`Tariq_Dev`, `Noor_Engineer`), participant kick (`Noor_Engineer`), and live game launch into `QuestionActive`.
 
+- **Frontend Phase 4: Participant Join & Waiting Lobby (Completed & Verified):**
+  - **Zero Comments Constraint:** 100% enforced (audit clean across `frontend/src`).
+  - **Session identity:** `src/hooks/useSessionToken.ts` — `getSession/saveSession/clearSession` (+ `useSessionToken` hook) persisting `{ sessionToken, participantId, nickname, gameId }` under `sessionStorage["kahoot_player_session_<gameId>"]`; storage access is try/catch-guarded (booleans, never empty catch).
+  - **Typed error boundary:** `axiosClient.ts` now rejects with `ApiError { message, code, status }` (reads `problem+json` `code` extension); `constants/errorCodes.ts` friendly copy refined for `Game.InvalidPin` / `Game.NicknameTaken` / `Game.NotJoinable` / `Game.InvalidSessionToken`.
+  - **Realtime:** `realtime/events.ts` adds `PlayerChoiceResponse` / `PlayerQuestionResponse` / `PlayerGameStateResponse` + `QuestionStarted` client event; `realtime/gameHub.ts` adds `invokeReconnect(connection, sessionToken)`.
+  - **Player lifecycle hook:** `src/hooks/usePlayerGame.ts` — reads session, opens anonymous hub (`useGameHubConnection(false)`), calls `Reconnect` on connect and on every reconnect, folds `ParticipantJoined` (count++), `ParticipantRemoved` (self → `isKicked` + hub teardown; other → count--), `QuestionStarted` (→ `QuestionActive`), `GameEnded` (→ `Finished`). Derived `error` / `isLoading` (no setState-in-effect). Returns `{ playerState, isKicked, isLoading, error, hubStatus, retryHub, leaveGame }`.
+  - **Components:** `NicknameEntryForm` (2–30 char counter, `Game.NicknameTaken` field feedback, Change-PIN back), `WaitingScreen` ("You're in!", 2s `prefers-reduced-motion`-aware pulsing radar ring, nickname badge, live count, Leave-with-confirm), `KickedNotice` (removed-by-host + no-rejoin note).
+  - **Pages:** `JoinPage` refactored to 2-step flow (`?pin=` 6-digit deep link → nickname step), maps 404/409 by `ApiError.code`, 429 soft cooldown, saves session + navigates to `/play/:gameId`. New `PlayerGamePage` at `/play/:gameId` (mobile-first ≤600px container, `MetadataManager noindex`, `ConnectionStatusBanner`, state-driven: kicked / connecting / not-found / lobby `WaitingScreen` / finished / question-placeholder). Route registered top-level in `routes.tsx`.
+  - **Quality Gates:** `format:check` clean, `eslint .` 0/0, `tsc -b && vite build` clean.
+  - **E2E Verified (Chrome CDP vs live Docker backend):** REST join success shape + `409 Game.NicknameTaken` + `404 Game.InvalidPin` (both carry `code`); hub `Reconnect` success (camelCase, integer `status`) + `Game.InvalidSessionToken` failure; `/play/:gameId` renders `WaitingScreen`; live count ticked 1→2 on a second `ParticipantJoined`; host `DELETE …/participants/{id}` → player screen transitioned to `KickedNotice` instantly; `/join?pin=` deep link jumps to nickname step.
+  - **Note:** work was auto-committed to `main` by the project hook as `dfbccaa` (repo's established pattern). Player-facing lobby count starts at 1 and tracks deltas only (no player-facing count in the backend contract) — known limitation.
+
+- **Frontend Phase 5: Live Gameplay (Host + Player) (Completed & Verified):**
+  - **Zero Comments Constraint:** 100% enforced (audit clean).
+  - **Countdown:** `src/hooks/useServerCountdown.ts` — anchors client↔server skew from the first `endsAt`/`startedAt` payload (ref set in effect, never during render), `requestAnimationFrame` tick throttled to seconds + ~1% bar steps, pauses on `document.hidden` and on `paused` prop (frozen on disconnect). `src/components/ServerCountdown` is purely presentational (takes `CountdownState`); the pages own the hook so the player can gate submission on `expired`.
+  - **Realtime:** `events.ts` adds `AnswerAckResponse`; `gameHub.ts` adds `invokeSubmitAnswer(connection, questionId, choiceId)`. `hostGameService.QuestionStartedResponse.player` now typed `PlayerQuestionResponse`.
+  - **Session:** `useSessionToken.ts` adds `getHostQuestion` / `saveHostQuestion` / `clearHostQuestion` (`kahoot_host_question_<gameId>`) so the host rehydrates the active question after a mid-question reload (`HostGameStateResponse` carries no question text — gap #2).
+  - **Components:** `ChoiceGrid` + `ChoiceButton` + `ChoiceShape` (2–6 Kahoot tiles, non-colour cue = per-slot shape icon + letter A–F, states idle/selected/submitting/locked/correct/incorrect/muted, optional count chip); `QuestionMedia` (16:9 reserved box, absolute URL via new `src/api/media.ts` `resolveMediaUrl`); `AnsweredCounter` (ring + "X / Y"); `QuestionResultsChart` (per-choice bars, correct marked, "N of M answered"); `AnswerFeedbackScreen` (accepted / alreadyAnswered / tooLate / rejected / slowDown). `HostGameControls` extended with `onEndQuestion` / `onNextQuestion` / `onShowLeaderboard` + phase-driven primary button + `actionError` alert.
+  - **`usePlayerGame`:** `PlayerState` extended with `currentQuestion` / `alreadyAnswered` / `lastResults` / `leaderboard`; folds `QuestionStarted` (→ Active, reset answer state), `QuestionEnded` (→ Results + `lastResults`), `LeaderboardUpdated` (→ Leaderboard, pull own `totalScore`/`rank` from entry), `GameEnded` (→ Finished + entry). New `submitAnswer(choiceId)` → `invokeSubmitAnswer`; `answerState` machine (`idle|submitting|accepted|alreadyAnswered|tooLate|rejected|slowDown`) mapping `Game.QuestionClosed|QuestionNotActive`→tooLate, `Game.TooManyAnswerAttempts`→slowDown, `Game.ParticipantRemoved`→kick. `scoreBeforeQuestion` state → derived `pointsThisQuestion`.
+  - **`useHostGame`:** adds `currentQuestion` (seeded from `getHostQuestion`) / `questionResults` / `leaderboard` / `actionError`; `advanceQuestion` / `endQuestion` / `showLeaderboard` actions via a shared `runAction` wrapper (single `isActionPending` debounce, `ApiError.code`→friendly message, all backend re-entry paths idempotent). Answered-count polling of `GET /games/{id}` every 2s while `QuestionActive` (no per-answer broadcast exists). Reconnect re-`JoinAsHost` + `refetch` guarded by a "was subscribed" ref (no setState-in-effect). One-shot `getQuestionResults` fetch when landing on Results with no cached results.
+  - **Pages:** `PlayerGamePage` gains `PlayerQuestionView` (feedback-or-question + `ServerCountdown` + `ChoiceGrid`, locked on submit/expiry/disconnect) and `PlayerResultsView` (verdict + points pop + `ChoiceGrid` reveal with distribution), plus Leaderboard/Finished notice cards with `ordinal()` rank. `HostGamePage` gains `HostQuestionView` (question + `AnsweredCounter` + projector `ServerCountdown` + `ChoiceGrid` host-only correct highlight) and `HostLeaderboardView`; Question Results renders `QuestionResultsChart`.
+  - **Quality Gates:** `format:check` clean, `eslint .` 0/0 (incl. `react-hooks` v7 `refs`/`purity`/`set-state-in-effect`/`static-components`), `tsc -b && vite build` clean, comment audit clean.
+  - **E2E Verified (Chrome CDP vs live Docker backend):** host Start → player renders the question (<2.5s), `ServerCountdown` ticking; player taps a tile → "Answer locked in!"; host End Question → both show `QuestionResultsChart` with the correct choice + counts; host Show Leaderboard → player "1st place, 939 points" (time-weighted score via `LeaderboardUpdated`); host Next Question → Q2 on both; host End → both Finished ("You finished 1st"). Host page verified through its own on-screen controls (lobby → active → results → leaderboard → Q2).
+  - **Known limits:** host live answered-count is 2s poll, not push (backend has no per-answer event); a player who reconnects after answering keeps `alreadyAnswered` + deadline but loses which choice they picked (not in `PlayerGameStateResponse`); "+points this round" shows on the player Leaderboard card (score only arrives with `LeaderboardUpdated`, after the Results view).
+
 ---
 
 ## 🚀 Next phase
 
-**Goal:** Phase 4 — Participant Join & Waiting Experience (FR-4.1 to FR-4.4).
+**Goal:** Phase 6 — Results, Leaderboard & Game End per `docs/frontend-pages-plan.md` (lines 625–681).
 
-### Acceptance criteria
-1. Player enters Game PIN on `/join` with instant format validation and server validation.
-2. Player enters nickname with client & server validation (`Game.NicknameTaken` friendly handling).
-3. Player receives session token and connects to SignalR `GameHub` on `/hubs/game`.
-4. Player sees live waiting screen with "You're in!", animated pulsing waiting state, and game info.
-5. Reconnection handling if network drops or tab reloads.
+### Acceptance criteria (summary)
+1. Between-question leaderboard on host + players; player sees own rank + rank delta since last question.
+2. End game moves every client to Finished; podium + final scores match `LeaderboardResponse`.
+3. Reconnect during Leaderboard/Finished restores the snapshot (`PlayerGameStateResponse.leaderboard`).
+4. Starting a second session of the same quiz shows a fresh lobby, zero carried-over state (per-`gameId` isolation; clear `sessionToken` on finish/leave).
+5. Host reaches a new session from Finished in two clicks ("Back to quiz" + "Start new session").
+
+### Phase 5 wiring ready for Phase 6
+- `usePlayerGame` already stores `playerState.leaderboard` (from `LeaderboardUpdated` / `GameEnded` / reconnect) and derives `pointsThisQuestion`; `useHostGame` stores `leaderboard`. Both pages render minimal Leaderboard/Finished placeholders — replace with `LeaderboardList` / `PodiumView` / `GameFinishedScreen`.
+- Rank-delta needs the previous rank retained across a question; add `previousRank` tracking in `usePlayerGame`.
+- On player Finished, clear the session (`useSessionToken` `clear`) per FR-5a isolation.
 
 ---
 

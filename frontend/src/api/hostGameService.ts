@@ -3,6 +3,7 @@ import type {
   GameStatus,
   HostQuestionResponse,
   LeaderboardResponse,
+  PlayerQuestionResponse,
   QuestionResultsResponse,
 } from '../realtime/events.ts';
 import { axiosClient } from './axiosClient.ts';
@@ -15,7 +16,7 @@ export interface CreateGameResponse {
 
 export interface QuestionStartedResponse {
   host: HostQuestionResponse;
-  player: unknown;
+  player: PlayerQuestionResponse;
 }
 
 export interface HostGameStateResponse {

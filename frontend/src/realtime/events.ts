@@ -58,6 +58,11 @@ export interface QuestionResultsResponse {
   choices: ChoiceResultResponse[];
 }
 
+export interface AnswerAckResponse {
+  accepted: boolean;
+  alreadyAnswered: boolean;
+}
+
 export interface LeaderboardEntryResponse {
   rank: number;
   participantId: string;

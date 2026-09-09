@@ -6,7 +6,7 @@ import {
 } from '@microsoft/signalr';
 
 import { authService } from '../api/authService.ts';
-import type { PlayerGameStateResponse, RealtimeResponse } from './events.ts';
+import type { AnswerAckResponse, PlayerGameStateResponse, RealtimeResponse } from './events.ts';
 
 const SIGNALR_URL =
   import.meta.env.VITE_SIGNALR_URL ??
@@ -48,5 +48,17 @@ export async function invokeReconnect(
   return await connection.invoke<RealtimeResponse<PlayerGameStateResponse>>(
     'Reconnect',
     sessionToken,
+  );
+}
+
+export async function invokeSubmitAnswer(
+  connection: HubConnection,
+  questionId: string,
+  selectedChoiceId: string,
+): Promise<RealtimeResponse<AnswerAckResponse>> {
+  return await connection.invoke<RealtimeResponse<AnswerAckResponse>>(
+    'SubmitAnswer',
+    questionId,
+    selectedChoiceId,
   );
 }

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T18:05:01.899Z",
-    "fileCount": 228,
+    "lastScanned": "2026-09-09T18:43:27.034Z",
+    "fileCount": 255,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "169e8a63ba64ab2fb5df856185760949a5dab2c9a21ee2059e8996a3d969f8df",
-    "storeUpdatedAt": "2026-09-09T18:05:01.912Z",
-    "rootHash": "96ef8d8d24656302"
+    "renderedHash": "23919b95db6de634b3957c00afdb8c0b663fd51da6486bea104158921e1b7d67",
+    "storeUpdatedAt": "2026-09-09T18:43:27.069Z",
+    "rootHash": "1c4d20daefaec49e"
   },
   "files": {
     "AGENTS.md": {
@@ -2740,65 +2740,86 @@
       "source": "hook"
     },
     "frontend/src/hooks/useSessionToken.ts": {
-      "description": "Exports PlayerSession, getSession, saveSession, clearSession, useSessionToken",
-      "tokens": 550,
-      "hash": "c69f53ec85e2fb1b",
-      "size": 1925,
-      "mtimeMs": 1788976987163.4321,
-      "updatedAt": "2026-09-09T18:03:07.271Z",
+      "description": "Exports PlayerSession, getSession, saveSession, clearSession + 4 more",
+      "tokens": 844,
+      "hash": "27cd1d5f953fac97",
+      "size": 2952,
+      "mtimeMs": 1788978026345.9253,
+      "updatedAt": "2026-09-09T18:20:26.500Z",
       "source": "hook",
       "symbols": [
         {
           "name": "PlayerSession",
           "kind": "section",
-          "startLine": 3,
-          "endLine": 11,
-          "tokens": 59
+          "startLine": 5,
+          "endLine": 14,
+          "tokens": 84
         },
         {
           "name": "isValidSession",
           "kind": "fn",
-          "startLine": 12,
-          "endLine": 25,
+          "startLine": 15,
+          "endLine": 28,
           "tokens": 124
         },
         {
           "name": "getSession",
           "kind": "fn",
-          "startLine": 26,
-          "endLine": 38,
+          "startLine": 29,
+          "endLine": 41,
           "tokens": 88
         },
         {
           "name": "saveSession",
           "kind": "fn",
-          "startLine": 39,
-          "endLine": 47,
+          "startLine": 42,
+          "endLine": 50,
           "tokens": 60
         },
         {
           "name": "clearSession",
           "kind": "fn",
-          "startLine": 48,
-          "endLine": 56,
+          "startLine": 51,
+          "endLine": 59,
           "tokens": 48
+        },
+        {
+          "name": "getHostQuestion",
+          "kind": "fn",
+          "startLine": 60,
+          "endLine": 75,
+          "tokens": 132
+        },
+        {
+          "name": "saveHostQuestion",
+          "kind": "fn",
+          "startLine": 76,
+          "endLine": 84,
+          "tokens": 67
+        },
+        {
+          "name": "clearHostQuestion",
+          "kind": "fn",
+          "startLine": 85,
+          "endLine": 93,
+          "tokens": 51
         },
         {
           "name": "useSessionToken",
           "kind": "fn",
-          "startLine": 57,
-          "endLine": 79,
+          "startLine": 94,
+          "endLine": 116,
           "tokens": 158
         }
       ]
     },
     "frontend/src/realtime/events.ts": {
-      "description": "Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 10 more",
-      "tokens": 780,
-      "hash": "f85801440f1739f0",
-      "size": 2729,
-      "mtimeMs": 1788976622271.0884,
-      "updatedAt": "2026-09-09T17:57:02.399Z",
+      "description": "Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 11 more",
+      "tokens": 806,
+      "hash": "02cdb873163600de",
+      "size": 2818,
+      "mtimeMs": 1788977974992.1697,
+      "updatedAt": "2026-09-09T18:19:35.110Z",
       "source": "hook",
       "symbols": [
         {
@@ -2851,66 +2872,112 @@
           "tokens": 59
         },
         {
-          "name": "LeaderboardEntryResponse",
+          "name": "AnswerAckResponse",
           "kind": "section",
           "startLine": 61,
-          "endLine": 67,
+          "endLine": 65,
+          "tokens": 26
+        },
+        {
+          "name": "LeaderboardEntryResponse",
+          "kind": "section",
+          "startLine": 66,
+          "endLine": 72,
           "tokens": 37
         },
         {
           "name": "LeaderboardResponse",
           "kind": "section",
-          "startLine": 68,
-          "endLine": 71,
+          "startLine": 73,
+          "endLine": 76,
           "tokens": 23
         },
         {
           "name": "PlayerChoiceResponse",
           "kind": "section",
-          "startLine": 72,
-          "endLine": 78,
+          "startLine": 77,
+          "endLine": 83,
           "tokens": 38
         },
         {
           "name": "PlayerQuestionResponse",
           "kind": "section",
-          "startLine": 79,
-          "endLine": 89,
+          "startLine": 84,
+          "endLine": 94,
           "tokens": 70
         },
         {
           "name": "PlayerGameStateResponse",
           "kind": "section",
-          "startLine": 90,
-          "endLine": 102,
+          "startLine": 95,
+          "endLine": 107,
           "tokens": 108
         },
         {
           "name": "GameClientEvents",
           "kind": "section",
-          "startLine": 103,
-          "endLine": 113,
+          "startLine": 108,
+          "endLine": 118,
           "tokens": 149
         }
       ]
     },
     "frontend/src/realtime/gameHub.ts": {
-      "description": "Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect",
-      "tokens": 468,
-      "hash": "2234b1731aa0def0",
-      "size": 1637,
-      "mtimeMs": 1788976632099.9092,
-      "updatedAt": "2026-09-09T17:57:12.239Z",
-      "source": "hook"
+      "description": "Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect, invokeSubmitAnswer",
+      "tokens": 564,
+      "hash": "cff0b7a9c4cd4d95",
+      "size": 1971,
+      "mtimeMs": 1788977989175.4126,
+      "updatedAt": "2026-09-09T18:19:49.323Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "createGameHubConnection",
+          "kind": "fn",
+          "startLine": 20,
+          "endLine": 40,
+          "tokens": 218
+        },
+        {
+          "name": "invokeJoinAsHost",
+          "kind": "fn",
+          "startLine": 41,
+          "endLine": 47,
+          "tokens": 61
+        },
+        {
+          "name": "invokeReconnect",
+          "kind": "fn",
+          "startLine": 48,
+          "endLine": 57,
+          "tokens": 77
+        },
+        {
+          "name": "invokeSubmitAnswer",
+          "kind": "fn",
+          "startLine": 58,
+          "endLine": 69,
+          "tokens": 88
+        }
+      ]
     },
     "frontend/src/constants/errorCodes.ts": {
       "description": "Exports ERROR_MESSAGES, getFriendlyErrorMessage",
-      "tokens": 346,
-      "hash": "2b647fd5a51863c0",
-      "size": 1210,
-      "mtimeMs": 1788976658963.8657,
-      "updatedAt": "2026-09-09T17:57:39.080Z",
-      "source": "hook"
+      "tokens": 506,
+      "hash": "bc4df9ce34448c81",
+      "size": 1768,
+      "mtimeMs": 1788977999768.4724,
+      "updatedAt": "2026-09-09T18:19:59.906Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "getFriendlyErrorMessage",
+          "kind": "fn",
+          "startLine": 22,
+          "endLine": 29,
+          "tokens": 66
+        }
+      ]
     },
     "frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx": {
       "description": "NicknameEntryForm",
@@ -3015,59 +3082,80 @@
       "source": "hook"
     },
     "frontend/src/hooks/usePlayerGame.ts": {
-      "description": "Exports PlayerState, usePlayerGame",
-      "tokens": 1441,
-      "hash": "1998c517269c463e",
-      "size": 5043,
-      "mtimeMs": 1788977030563.2112,
-      "updatedAt": "2026-09-09T18:03:50.684Z",
+      "description": "Exports AnswerState, PlayerState, usePlayerGame",
+      "tokens": 2861,
+      "hash": "75523ba8e72c30cd",
+      "size": 10012,
+      "mtimeMs": 1788979406704.2156,
+      "updatedAt": "2026-09-09T18:43:27.032Z",
       "source": "hook",
       "symbols": [
         {
           "name": "PlayerState",
           "kind": "section",
-          "startLine": 15,
-          "endLine": 23,
-          "tokens": 53
+          "startLine": 24,
+          "endLine": 36,
+          "tokens": 101
+        },
+        {
+          "name": "LiveRefs",
+          "kind": "section",
+          "startLine": 37,
+          "endLine": 41,
+          "tokens": 22
+        },
+        {
+          "name": "myLeaderboardEntry",
+          "kind": "fn",
+          "startLine": 42,
+          "endLine": 45,
+          "tokens": 49
         },
         {
           "name": "usePlayerGame",
           "kind": "fn",
-          "startLine": 24,
-          "endLine": 165,
-          "tokens": 1175
+          "startLine": 46,
+          "endLine": 310,
+          "tokens": 2388
         }
       ]
     },
     "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx": {
-      "description": "NoticeCard",
-      "tokens": 1493,
-      "hash": "130480a91d185a05",
-      "size": 5223,
-      "mtimeMs": 1788976891667.8745,
-      "updatedAt": "2026-09-09T18:01:31.774Z",
+      "description": "ordinal",
+      "tokens": 2054,
+      "hash": "d37801a7b79dcea0",
+      "size": 7190,
+      "mtimeMs": 1788979180610.763,
+      "updatedAt": "2026-09-09T18:39:40.761Z",
       "source": "hook",
       "symbols": [
         {
+          "name": "ordinal",
+          "kind": "fn",
+          "startLine": 23,
+          "endLine": 31,
+          "tokens": 66
+        },
+        {
           "name": "NoticeCardProps",
           "kind": "section",
-          "startLine": 16,
-          "endLine": 24,
+          "startLine": 32,
+          "endLine": 40,
           "tokens": 44
         },
         {
           "name": "NoticeCard",
           "kind": "fn",
-          "startLine": 25,
-          "endLine": 72,
+          "startLine": 41,
+          "endLine": 88,
           "tokens": 380
         },
         {
           "name": "PlayerGamePage",
           "kind": "fn",
-          "startLine": 73,
-          "endLine": 188,
-          "tokens": 820
+          "startLine": 89,
+          "endLine": 256,
+          "tokens": 1257
         }
       ]
     },
@@ -3113,6 +3201,582 @@
           "startLine": 19,
           "endLine": 198,
           "tokens": 1637
+        }
+      ]
+    },
+    "frontend/src/api/media.ts": {
+      "description": "Exports resolveMediaUrl",
+      "tokens": 120,
+      "hash": "a6b616cf77349dd1",
+      "size": 417,
+      "mtimeMs": 1788977949487.5422,
+      "updatedAt": "2026-09-09T18:19:09.600Z",
+      "source": "hook"
+    },
+    "frontend/src/hooks/useServerCountdown.ts": {
+      "description": "Exports CountdownState, ServerCountdownOptions, useServerCountdown",
+      "tokens": 819,
+      "hash": "ec3274853c84e608",
+      "size": 2864,
+      "mtimeMs": 1788978747145.0198,
+      "updatedAt": "2026-09-09T18:32:27.317Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "CountdownState",
+          "kind": "section",
+          "startLine": 3,
+          "endLine": 8,
+          "tokens": 29
+        },
+        {
+          "name": "ServerCountdownOptions",
+          "kind": "section",
+          "startLine": 9,
+          "endLine": 14,
+          "tokens": 34
+        },
+        {
+          "name": "CountdownAnchor",
+          "kind": "section",
+          "startLine": 15,
+          "endLine": 21,
+          "tokens": 43
+        },
+        {
+          "name": "parseMs",
+          "kind": "fn",
+          "startLine": 22,
+          "endLine": 29,
+          "tokens": 51
+        },
+        {
+          "name": "useServerCountdown",
+          "kind": "fn",
+          "startLine": 30,
+          "endLine": 109,
+          "tokens": 643
+        }
+      ]
+    },
+    "frontend/src/constants/gameStatus.ts": {
+      "description": "Exports NormalizedGameStatus, GameStatus, GAME_PHASES, normalizeGameStatus + 6 more",
+      "tokens": 617,
+      "hash": "6c71520c338e2042",
+      "size": 2159,
+      "mtimeMs": 1788978005494.8625,
+      "updatedAt": "2026-09-09T18:20:05.631Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "normalizeGameStatus",
+          "kind": "fn",
+          "startLine": 14,
+          "endLine": 23,
+          "tokens": 176
+        },
+        {
+          "name": "isLobbyStatus",
+          "kind": "fn",
+          "startLine": 24,
+          "endLine": 28,
+          "tokens": 42
+        },
+        {
+          "name": "isFinishedStatus",
+          "kind": "fn",
+          "startLine": 29,
+          "endLine": 32,
+          "tokens": 34
+        },
+        {
+          "name": "isQuestionActiveStatus",
+          "kind": "fn",
+          "startLine": 33,
+          "endLine": 36,
+          "tokens": 38
+        },
+        {
+          "name": "isQuestionResultsStatus",
+          "kind": "fn",
+          "startLine": 37,
+          "endLine": 40,
+          "tokens": 38
+        },
+        {
+          "name": "isLeaderboardStatus",
+          "kind": "fn",
+          "startLine": 41,
+          "endLine": 44,
+          "tokens": 36
+        },
+        {
+          "name": "getActiveStepIndex",
+          "kind": "fn",
+          "startLine": 45,
+          "endLine": 63,
+          "tokens": 112
+        }
+      ]
+    },
+    "frontend/src/components/QuestionMedia/QuestionMedia.tsx": {
+      "description": "QuestionMedia",
+      "tokens": 261,
+      "hash": "171033990ec2e8ad",
+      "size": 911,
+      "mtimeMs": 1788978084504.434,
+      "updatedAt": "2026-09-09T18:21:24.611Z",
+      "source": "hook"
+    },
+    "frontend/src/components/ServerCountdown/ServerCountdown.tsx": {
+      "description": "barColor",
+      "tokens": 652,
+      "hash": "f85a9ea258f1f667",
+      "size": 2282,
+      "mtimeMs": 1788978806473.712,
+      "updatedAt": "2026-09-09T18:33:26.630Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ServerCountdownProps",
+          "kind": "section",
+          "startLine": 5,
+          "endLine": 9,
+          "tokens": 34
+        },
+        {
+          "name": "barColor",
+          "kind": "fn",
+          "startLine": 10,
+          "endLine": 22,
+          "tokens": 66
+        },
+        {
+          "name": "ServerCountdown",
+          "kind": "fn",
+          "startLine": 23,
+          "endLine": 95,
+          "tokens": 510
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceGrid/choiceVisuals.tsx": {
+      "description": "CHOICE_LETTERS",
+      "tokens": 307,
+      "hash": "93945a82535a1b42",
+      "size": 1073,
+      "mtimeMs": 1788978108282.0679,
+      "updatedAt": "2026-09-09T18:21:48.405Z",
+      "source": "hook"
+    },
+    "frontend/src/components/ChoiceGrid/ChoiceButton.tsx": {
+      "description": "ChoiceButton",
+      "tokens": 1109,
+      "hash": "cc71dbb09e8bd6b9",
+      "size": 3880,
+      "mtimeMs": 1788978610768.5142,
+      "updatedAt": "2026-09-09T18:30:10.953Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ChoiceButtonProps",
+          "kind": "section",
+          "startLine": 11,
+          "endLine": 21,
+          "tokens": 65
+        },
+        {
+          "name": "ChoiceButton",
+          "kind": "fn",
+          "startLine": 22,
+          "endLine": 137,
+          "tokens": 922
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceGrid/ChoiceGrid.tsx": {
+      "description": "ChoiceGrid",
+      "tokens": 566,
+      "hash": "597e0389b86f57f3",
+      "size": 1981,
+      "mtimeMs": 1788978139313.1814,
+      "updatedAt": "2026-09-09T18:22:19.419Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ChoiceOption",
+          "kind": "section",
+          "startLine": 5,
+          "endLine": 10,
+          "tokens": 29
+        },
+        {
+          "name": "ChoiceGridProps",
+          "kind": "section",
+          "startLine": 11,
+          "endLine": 20,
+          "tokens": 78
+        },
+        {
+          "name": "ChoiceGrid",
+          "kind": "fn",
+          "startLine": 21,
+          "endLine": 79,
+          "tokens": 428
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceGrid/index.ts": {
+      "description": "",
+      "tokens": 33,
+      "hash": "2cdc710d8eba1cb2",
+      "size": 114,
+      "mtimeMs": 1788978143210.7427,
+      "updatedAt": "2026-09-09T18:22:23.329Z",
+      "source": "hook"
+    },
+    "frontend/src/components/ServerCountdown/index.ts": {
+      "description": "",
+      "tokens": 26,
+      "hash": "d6b84aa1e1b1a157",
+      "size": 88,
+      "mtimeMs": 1788978147156.4817,
+      "updatedAt": "2026-09-09T18:22:27.311Z",
+      "source": "hook"
+    },
+    "frontend/src/components/QuestionMedia/index.ts": {
+      "description": "",
+      "tokens": 24,
+      "hash": "fb69576edfd18e7c",
+      "size": 84,
+      "mtimeMs": 1788978150849.3618,
+      "updatedAt": "2026-09-09T18:22:30.983Z",
+      "source": "hook"
+    },
+    "frontend/src/components/AnsweredCounter/AnsweredCounter.tsx": {
+      "description": "AnsweredCounter",
+      "tokens": 698,
+      "hash": "f69dd21f2866b0b2",
+      "size": 2442,
+      "mtimeMs": 1788978162905.2812,
+      "updatedAt": "2026-09-09T18:22:43.001Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "AnsweredCounterProps",
+          "kind": "section",
+          "startLine": 3,
+          "endLine": 8,
+          "tokens": 33
+        },
+        {
+          "name": "AnsweredCounter",
+          "kind": "fn",
+          "startLine": 9,
+          "endLine": 91,
+          "tokens": 644
+        }
+      ]
+    },
+    "frontend/src/components/AnsweredCounter/index.ts": {
+      "description": "",
+      "tokens": 26,
+      "hash": "73b0f8fa17ca071a",
+      "size": 88,
+      "mtimeMs": 1788978167369.2258,
+      "updatedAt": "2026-09-09T18:22:47.482Z",
+      "source": "hook"
+    },
+    "frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx": {
+      "description": "QuestionResultsChart",
+      "tokens": 982,
+      "hash": "cbae655c3096d2a9",
+      "size": 3434,
+      "mtimeMs": 1788978627225.4639,
+      "updatedAt": "2026-09-09T18:30:27.392Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "QuestionResultsChartProps",
+          "kind": "section",
+          "startLine": 8,
+          "endLine": 11,
+          "tokens": 24
+        },
+        {
+          "name": "QuestionResultsChart",
+          "kind": "fn",
+          "startLine": 12,
+          "endLine": 101,
+          "tokens": 863
+        }
+      ]
+    },
+    "frontend/src/components/QuestionResultsChart/index.ts": {
+      "description": "",
+      "tokens": 28,
+      "hash": "56713cfa91d6b24b",
+      "size": 98,
+      "mtimeMs": 1788978185462.5105,
+      "updatedAt": "2026-09-09T18:23:05.579Z",
+      "source": "hook"
+    },
+    "frontend/src/components/AnswerFeedbackScreen/AnswerFeedbackScreen.tsx": {
+      "description": "CONTENT",
+      "tokens": 1053,
+      "hash": "54d876d0d9182165",
+      "size": 3687,
+      "mtimeMs": 1788978202459.4504,
+      "updatedAt": "2026-09-09T18:23:22.597Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "FeedbackContent",
+          "kind": "section",
+          "startLine": 15,
+          "endLine": 60,
+          "tokens": 361
+        },
+        {
+          "name": "AnswerFeedbackScreenProps",
+          "kind": "section",
+          "startLine": 61,
+          "endLine": 64,
+          "tokens": 24
+        },
+        {
+          "name": "AnswerFeedbackScreen",
+          "kind": "fn",
+          "startLine": 65,
+          "endLine": 129,
+          "tokens": 536
+        }
+      ]
+    },
+    "frontend/src/components/AnswerFeedbackScreen/index.ts": {
+      "description": "",
+      "tokens": 28,
+      "hash": "f933be45b53d4dd6",
+      "size": 98,
+      "mtimeMs": 1788978209670.668,
+      "updatedAt": "2026-09-09T18:23:29.839Z",
+      "source": "hook"
+    },
+    "frontend/src/components/HostGameControls/HostGameControls.tsx": {
+      "description": "primaryButtonSx",
+      "tokens": 1768,
+      "hash": "edfc14c219273a4d",
+      "size": 6194,
+      "mtimeMs": 1788978236339.0981,
+      "updatedAt": "2026-09-09T18:23:56.466Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "HostGameControlsProps",
+          "kind": "section",
+          "startLine": 12,
+          "endLine": 33,
+          "tokens": 168
+        },
+        {
+          "name": "HostGameControls",
+          "kind": "fn",
+          "startLine": 34,
+          "endLine": 210,
+          "tokens": 1432
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceGrid/choiceVisuals.ts": {
+      "description": "Exports CHOICE_LETTERS, CHOICE_COLORS, choiceLetter, choiceColor",
+      "tokens": 119,
+      "hash": "bdd5dde651a99b67",
+      "size": 416,
+      "mtimeMs": 1788978587766.8335,
+      "updatedAt": "2026-09-09T18:29:47.920Z",
+      "source": "hook"
+    },
+    "frontend/src/api/hostGameService.ts": {
+      "description": "API routes: DELETE (1 endpoints)",
+      "tokens": 806,
+      "hash": "b39569fbe719ed0f",
+      "size": 2821,
+      "mtimeMs": 1788978302530.0476,
+      "updatedAt": "2026-09-09T18:25:02.682Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "CreateGameResponse",
+          "kind": "section",
+          "startLine": 11,
+          "endLine": 16,
+          "tokens": 28
+        },
+        {
+          "name": "QuestionStartedResponse",
+          "kind": "section",
+          "startLine": 17,
+          "endLine": 21,
+          "tokens": 32
+        },
+        {
+          "name": "HostGameStateResponse",
+          "kind": "section",
+          "startLine": 22,
+          "endLine": 89,
+          "tokens": 680
+        }
+      ]
+    },
+    "frontend/src/hooks/useHostGame.ts": {
+      "description": "Exports useHostGame",
+      "tokens": 3490,
+      "hash": "3a1e75bd761f9b3a",
+      "size": 12213,
+      "mtimeMs": 1788979369078.1982,
+      "updatedAt": "2026-09-09T18:42:49.260Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "describeError",
+          "kind": "fn",
+          "startLine": 19,
+          "endLine": 28,
+          "tokens": 76
+        },
+        {
+          "name": "useHostGame",
+          "kind": "fn",
+          "startLine": 29,
+          "endLine": 394,
+          "tokens": 3203
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceGrid/ChoiceShape.tsx": {
+      "description": "ChoiceShape",
+      "tokens": 249,
+      "hash": "f3a9bccd3ab896c7",
+      "size": 871,
+      "mtimeMs": 1788978594321.141,
+      "updatedAt": "2026-09-09T18:29:54.458Z",
+      "source": "hook"
+    },
+    "frontend/src/pages/PlayerGamePage/PlayerQuestionView.tsx": {
+      "description": "PlayerQuestionView",
+      "tokens": 853,
+      "hash": "dd7aae3230bca831",
+      "size": 2991,
+      "mtimeMs": 1788978869691.7131,
+      "updatedAt": "2026-09-09T18:34:29.844Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "PlayerQuestionViewProps",
+          "kind": "section",
+          "startLine": 11,
+          "endLine": 18,
+          "tokens": 58
+        },
+        {
+          "name": "PlayerQuestionView",
+          "kind": "fn",
+          "startLine": 19,
+          "endLine": 91,
+          "tokens": 631
+        }
+      ]
+    },
+    "frontend/src/pages/PlayerGamePage/PlayerResultsView.tsx": {
+      "description": "PlayerResultsView",
+      "tokens": 854,
+      "hash": "957249bee0557d59",
+      "size": 2989,
+      "mtimeMs": 1788978883590.4297,
+      "updatedAt": "2026-09-09T18:34:43.744Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "PlayerResultsViewProps",
+          "kind": "section",
+          "startLine": 8,
+          "endLine": 15,
+          "tokens": 62
+        },
+        {
+          "name": "PlayerResultsView",
+          "kind": "fn",
+          "startLine": 16,
+          "endLine": 94,
+          "tokens": 690
+        }
+      ]
+    },
+    "frontend/src/pages/HostGamePage/HostQuestionView.tsx": {
+      "description": "HostQuestionView",
+      "tokens": 830,
+      "hash": "06eb2c8d31b6e43d",
+      "size": 2907,
+      "mtimeMs": 1788978942478.6367,
+      "updatedAt": "2026-09-09T18:35:42.649Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "HostQuestionViewProps",
+          "kind": "section",
+          "startLine": 10,
+          "endLine": 18,
+          "tokens": 60
+        },
+        {
+          "name": "HostQuestionView",
+          "kind": "fn",
+          "startLine": 19,
+          "endLine": 93,
+          "tokens": 628
+        }
+      ]
+    },
+    "frontend/src/pages/HostGamePage/HostLeaderboardView.tsx": {
+      "description": "HostLeaderboardView",
+      "tokens": 621,
+      "hash": "e8ba124028d524a7",
+      "size": 2172,
+      "mtimeMs": 1788978953245.153,
+      "updatedAt": "2026-09-09T18:35:53.424Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "HostLeaderboardViewProps",
+          "kind": "section",
+          "startLine": 5,
+          "endLine": 9,
+          "tokens": 32
+        },
+        {
+          "name": "HostLeaderboardView",
+          "kind": "fn",
+          "startLine": 10,
+          "endLine": 75,
+          "tokens": 552
+        }
+      ]
+    },
+    "frontend/src/pages/HostGamePage/HostGamePage.tsx": {
+      "description": "HostGamePage",
+      "tokens": 2455,
+      "hash": "c2d6114de529d4aa",
+      "size": 8600,
+      "mtimeMs": 1788978990049.3672,
+      "updatedAt": "2026-09-09T18:36:30.190Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "HostGamePage",
+          "kind": "fn",
+          "startLine": 35,
+          "endLine": 264,
+          "tokens": 2069
         }
       ]
     }

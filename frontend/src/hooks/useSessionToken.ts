@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 
+import type { HostQuestionResponse } from '../realtime/events.ts';
+
 export interface PlayerSession {
   sessionToken: string;
   participantId: string;
@@ -8,6 +10,7 @@ export interface PlayerSession {
 }
 
 const storageKey = (gameId: string): string => `kahoot_player_session_${gameId}`;
+const hostQuestionKey = (gameId: string): string => `kahoot_host_question_${gameId}`;
 
 function isValidSession(value: unknown): value is PlayerSession {
   if (!value || typeof value !== 'object') {
@@ -48,6 +51,44 @@ export function saveSession(gameId: string, data: PlayerSession): boolean {
 export function clearSession(gameId: string): boolean {
   try {
     sessionStorage.removeItem(storageKey(gameId));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function getHostQuestion(gameId: string): HostQuestionResponse | null {
+  try {
+    const raw = sessionStorage.getItem(hostQuestionKey(gameId));
+    if (!raw) {
+      return null;
+    }
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      typeof (parsed as { questionId?: unknown }).questionId === 'string'
+    ) {
+      return parsed as HostQuestionResponse;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export function saveHostQuestion(gameId: string, question: HostQuestionResponse): boolean {
+  try {
+    sessionStorage.setItem(hostQuestionKey(gameId), JSON.stringify(question));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearHostQuestion(gameId: string): boolean {
+  try {
+    sessionStorage.removeItem(hostQuestionKey(gameId));
     return true;
   } catch {
     return false;

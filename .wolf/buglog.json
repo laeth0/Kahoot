@@ -588,6 +588,150 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T18:05:01.924Z"
+    },
+    {
+      "id": "bug-038",
+      "timestamp": "2026-09-09T18:20:26.525Z",
+      "error_message": "Type error",
+      "file": "frontend/src/hooks/useSessionToken.ts",
+      "root_cause": "Missing or incorrect type annotation",
+      "fix": "Added type assertion/annotation",
+      "tags": [
+        "auto-detected",
+        "type-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:20:26.525Z"
+    },
+    {
+      "id": "bug-039",
+      "timestamp": "2026-09-09T18:24:46.137Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/ChoiceGrid/ChoiceButton.tsx",
+      "root_cause": "Had './choiceVisuals.tsx'",
+      "fix": "Changed to './choiceVisuals.ts'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:24:46.137Z"
+    },
+    {
+      "id": "bug-040",
+      "timestamp": "2026-09-09T18:24:51.773Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx",
+      "root_cause": "Had '../ChoiceGrid/choiceVisuals.tsx'",
+      "fix": "Changed to '../ChoiceGrid/choiceVisuals.ts'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:24:51.773Z"
+    },
+    {
+      "id": "bug-041",
+      "timestamp": "2026-09-09T18:30:00.504Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/ChoiceGrid/ChoiceButton.tsx",
+      "root_cause": "Had './choiceVisuals.ts'",
+      "fix": "Changed to './ChoiceShape.tsx'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:30:00.504Z"
+    },
+    {
+      "id": "bug-042",
+      "timestamp": "2026-09-09T18:30:16.647Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx",
+      "root_cause": "Had '../ChoiceGrid/choiceVisuals.ts'",
+      "fix": "Changed to '../ChoiceGrid/ChoiceShape.tsx'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:30:16.647Z"
+    },
+    {
+      "id": "bug-043",
+      "timestamp": "2026-09-09T18:31:10.565Z",
+      "error_message": "Significant refactor of usePlayerGame.ts",
+      "file": "frontend/src/hooks/usePlayerGame.ts",
+      "root_cause": "7 lines replaced/restructured",
+      "fix": "Rewrote 13→8 lines (7 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:31:10.565Z"
+    },
+    {
+      "id": "bug-044",
+      "timestamp": "2026-09-09T18:33:37.406Z",
+      "error_message": "Missing error handling in useHostGame.ts",
+      "file": "frontend/src/hooks/useHostGame.ts",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:33:37.406Z"
+    },
+    {
+      "id": "bug-045",
+      "timestamp": "2026-09-09T18:35:16.844Z",
+      "error_message": "Significant refactor of PlayerGamePage.tsx",
+      "file": "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx",
+      "root_cause": "5 lines replaced/restructured",
+      "fix": "Rewrote 21→64 lines (5 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:35:16.844Z"
+    },
+    {
+      "id": "bug-046",
+      "timestamp": "2026-09-09T18:35:24.360Z",
+      "error_message": "Null/undefined access in PlayerGamePage.tsx",
+      "file": "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:35:24.360Z"
     }
   ]
 }

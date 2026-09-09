@@ -472,3 +472,68 @@ description: chronological action log per session, consolidated weekly
 | 21:03 | Edited frontend/src/hooks/usePlayerGame.ts | inline fix | ~21 |
 | 21:04 | Edited frontend/src/components/KickedNotice/KickedNotice.tsx | 3→3 lines | ~53 |
 | 21:05 | Edited frontend/src/components/KickedNotice/KickedNotice.tsx | inline fix | ~15 |
+| 21:19 | Created frontend/src/api/media.ts | — | ~120 |
+| 21:19 | Created frontend/src/hooks/useServerCountdown.ts | — | ~844 |
+| 21:19 | Edited frontend/src/realtime/events.ts | 8→13 lines | ~84 |
+| 21:19 | Edited frontend/src/realtime/gameHub.ts | 2→6 lines | ~45 |
+| 21:19 | Edited frontend/src/realtime/gameHub.ts | modified invokeReconnect() | ~164 |
+| 21:19 | Edited frontend/src/constants/errorCodes.ts | expanded (+6 lines) | ~250 |
+| 21:20 | Edited frontend/src/constants/gameStatus.ts | modified isFinishedStatus() | ~146 |
+| 21:20 | Edited frontend/src/hooks/useSessionToken.ts | 10→13 lines | ~116 |
+| 21:20 | Edited frontend/src/hooks/useSessionToken.ts | added 2 condition(s) | ~298 |
+| 21:21 | Created frontend/src/components/QuestionMedia/QuestionMedia.tsx | — | ~261 |
+| 21:21 | Created frontend/src/components/ServerCountdown/ServerCountdown.tsx | — | ~694 |
+| 21:21 | Created frontend/src/components/ChoiceGrid/choiceVisuals.tsx | — | ~307 |
+| 21:22 | Created frontend/src/components/ChoiceGrid/ChoiceButton.tsx | — | ~1110 |
+| 21:22 | Created frontend/src/components/ChoiceGrid/ChoiceGrid.tsx | — | ~566 |
+| 21:22 | Created frontend/src/components/ChoiceGrid/index.ts | — | ~33 |
+| 21:22 | Created frontend/src/components/ServerCountdown/index.ts | — | ~26 |
+| 21:22 | Created frontend/src/components/QuestionMedia/index.ts | — | ~24 |
+| 21:22 | Created frontend/src/components/AnsweredCounter/AnsweredCounter.tsx | — | ~698 |
+| 21:22 | Created frontend/src/components/AnsweredCounter/index.ts | — | ~26 |
+| 21:23 | Created frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx | — | ~981 |
+| 21:23 | Created frontend/src/components/QuestionResultsChart/index.ts | — | ~28 |
+| 21:23 | Created frontend/src/components/AnswerFeedbackScreen/AnswerFeedbackScreen.tsx | — | ~1053 |
+| 21:23 | Created frontend/src/components/AnswerFeedbackScreen/index.ts | — | ~28 |
+| 21:23 | Created frontend/src/components/HostGameControls/HostGameControls.tsx | — | ~1768 |
+| 21:24 | Created frontend/src/components/ChoiceGrid/choiceVisuals.ts | — | ~336 |
+| 21:24 | Edited frontend/src/components/ChoiceGrid/ChoiceButton.tsx | 2→2 lines | ~39 |
+| 21:24 | Edited frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx | "../ChoiceGrid/choiceVisua" → "../ChoiceGrid/choiceVisua" | ~27 |
+| 21:25 | Edited frontend/src/api/hostGameService.ts | 19→20 lines | ~126 |
+| 21:26 | Created frontend/src/hooks/usePlayerGame.ts | — | ~2852 |
+| 21:27 | Created frontend/src/hooks/useHostGame.ts | — | ~3256 |
+| 21:28 | Edited frontend/src/hooks/useHostGame.ts | added 1 condition(s) | ~187 |
+| 21:29 | Created frontend/src/hooks/useServerCountdown.ts | — | ~795 |
+| 21:29 | Created frontend/src/components/ChoiceGrid/choiceVisuals.ts | — | ~119 |
+| 21:29 | Created frontend/src/components/ChoiceGrid/ChoiceShape.tsx | — | ~249 |
+| 21:30 | Edited frontend/src/components/ChoiceGrid/ChoiceButton.tsx | added 1 import(s) | ~48 |
+| 21:30 | Edited frontend/src/components/ChoiceGrid/ChoiceButton.tsx | 2→1 lines | ~11 |
+| 21:30 | Edited frontend/src/components/ChoiceGrid/ChoiceButton.tsx | 4→4 lines | ~52 |
+| 21:30 | Edited frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx | added 1 import(s) | ~60 |
+| 21:30 | Edited frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx | 3→2 lines | ~37 |
+| 21:30 | Edited frontend/src/components/QuestionResultsChart/QuestionResultsChart.tsx | 4→4 lines | ~63 |
+| 21:30 | Edited frontend/src/hooks/usePlayerGame.ts | 5→5 lines | ~90 |
+| 21:30 | Edited frontend/src/hooks/usePlayerGame.ts | 4→4 lines | ~58 |
+| 21:30 | Edited frontend/src/hooks/usePlayerGame.ts | 3→3 lines | ~47 |
+| 21:30 | Edited frontend/src/hooks/usePlayerGame.ts | modified max() | ~35 |
+| 21:30 | Edited frontend/src/hooks/usePlayerGame.ts | 5→4 lines | ~22 |
+| 21:31 | Edited frontend/src/hooks/usePlayerGame.ts | 13→8 lines | ~84 |
+| 21:32 | Created frontend/src/hooks/useServerCountdown.ts | — | ~819 |
+| 21:33 | Created frontend/src/components/ServerCountdown/ServerCountdown.tsx | — | ~652 |
+| 21:33 | Edited frontend/src/hooks/useHostGame.ts | added optional chaining | ~183 |
+| 21:34 | Created frontend/src/pages/PlayerGamePage/PlayerQuestionView.tsx | — | ~853 |
+| 21:34 | Created frontend/src/pages/PlayerGamePage/PlayerResultsView.tsx | — | ~854 |
+| 21:34 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | expanded (+7 lines) | ~307 |
+| 21:35 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | expanded (+11 lines) | ~63 |
+| 21:35 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | CSS: score | ~565 |
+| 21:35 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | added nullish coalescing | ~109 |
+| 21:35 | Created frontend/src/pages/HostGamePage/HostQuestionView.tsx | — | ~830 |
+| 21:35 | Created frontend/src/pages/HostGamePage/HostLeaderboardView.tsx | — | ~621 |
+| 21:36 | Created frontend/src/pages/HostGamePage/HostGamePage.tsx | — | ~2455 |
+| 21:39 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | 12→14 lines | ~155 |
+| 21:42 | Edited frontend/src/hooks/useHostGame.ts | modified if() | ~159 |
+| 21:42 | Edited frontend/src/hooks/useHostGame.ts | 3→4 lines | ~66 |
+| 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | modified if() | ~132 |
+| 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 7→9 lines | ~59 |
+| 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 1→2 lines | ~34 |
+| 21:43 | Edited frontend/src/hooks/usePlayerGame.ts | 4→5 lines | ~68 |

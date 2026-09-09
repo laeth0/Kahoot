@@ -1,4 +1,4 @@
-import HourglassTopIcon from '@mui/icons-material/HourglassTop';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import SportsScoreIcon from '@mui/icons-material/SportsScore';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
@@ -10,8 +10,24 @@ import { LoadingState } from '../../components/Feedback/index.ts';
 import { KickedNotice } from '../../components/KickedNotice/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { WaitingScreen } from '../../components/WaitingScreen/index.ts';
-import { isLobbyStatus } from '../../constants/gameStatus.ts';
+import {
+  isLeaderboardStatus,
+  isLobbyStatus,
+  isQuestionActiveStatus,
+  isQuestionResultsStatus,
+} from '../../constants/gameStatus.ts';
 import { usePlayerGame } from '../../hooks/usePlayerGame.ts';
+import { PlayerQuestionView } from './PlayerQuestionView.tsx';
+import { PlayerResultsView } from './PlayerResultsView.tsx';
+
+function ordinal(rank: number): string {
+  const mod100 = rank % 100;
+  if (mod100 >= 11 && mod100 <= 13) {
+    return `${rank}th`;
+  }
+  const suffix = ['th', 'st', 'nd', 'rd'][rank % 10] ?? 'th';
+  return `${rank}${suffix}`;
+}
 
 interface NoticeCardProps {
   icon: ReactNode;
@@ -74,8 +90,19 @@ export function PlayerGamePage() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
 
-  const { playerState, isKicked, isLoading, error, hubStatus, retryHub, leaveGame } =
-    usePlayerGame(gameId);
+  const {
+    playerState,
+    isKicked,
+    isLoading,
+    error,
+    hubStatus,
+    retryHub,
+    leaveGame,
+    submitAnswer,
+    answerState,
+    selectedChoiceId,
+    pointsThisQuestion,
+  } = usePlayerGame(gameId);
 
   const goHome = () => navigate('/');
 
@@ -118,26 +145,67 @@ export function PlayerGamePage() {
       );
     }
 
+    if (isQuestionActiveStatus(playerState.status) && playerState.currentQuestion) {
+      return (
+        <PlayerQuestionView
+          question={playerState.currentQuestion}
+          paused={hubStatus !== 'connected'}
+          answerState={answerState}
+          selectedChoiceId={selectedChoiceId}
+          onSelect={submitAnswer}
+        />
+      );
+    }
+
+    if (isQuestionResultsStatus(playerState.status)) {
+      return playerState.lastResults ? (
+        <PlayerResultsView
+          question={playerState.currentQuestion}
+          results={playerState.lastResults}
+          selectedChoiceId={selectedChoiceId}
+          totalScore={playerState.totalScore}
+          pointsThisQuestion={pointsThisQuestion}
+        />
+      ) : (
+        <NoticeCard
+          accent
+          icon={<SportsScoreIcon sx={{ fontSize: 34 }} />}
+          title="Results are in"
+          body="Waiting for the host to reveal the scores…"
+        />
+      );
+    }
+
+    if (isLeaderboardStatus(playerState.status)) {
+      const gained =
+        pointsThisQuestion && pointsThisQuestion > 0 ? `+${pointsThisQuestion} this round. ` : '';
+      return (
+        <NoticeCard
+          accent
+          icon={<EmojiEventsIcon sx={{ fontSize: 34 }} />}
+          title={
+            playerState.rank ? `You are in ${ordinal(playerState.rank)} place` : 'Standings updated'
+          }
+          body={`${gained}${playerState.totalScore} points so far. Get ready for the next question.`}
+        />
+      );
+    }
+
     if (playerState.status === 'Finished') {
       return (
         <NoticeCard
           icon={<SportsScoreIcon sx={{ fontSize: 34 }} />}
-          title="The game has ended"
-          body={`Thanks for playing, ${playerState.nickname}. Final results will appear on the host screen.`}
+          title={
+            playerState.rank ? `You finished ${ordinal(playerState.rank)}` : 'The game has ended'
+          }
+          body={`Final score: ${playerState.totalScore}. Thanks for playing, ${playerState.nickname}.`}
           actionLabel="Back to Home"
           onAction={goHome}
         />
       );
     }
 
-    return (
-      <NoticeCard
-        accent
-        icon={<HourglassTopIcon sx={{ fontSize: 34 }} />}
-        title="Question in progress"
-        body="The quiz is underway. Your question view arrives in the next release."
-      />
-    );
+    return <LoadingState variant="page" message="Syncing with the game…" />;
   };
 
   return (

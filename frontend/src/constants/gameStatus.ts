@@ -30,6 +30,18 @@ export function isFinishedStatus(status: GameStatus): boolean {
   return normalizeGameStatus(status) === 'Finished';
 }
 
+export function isQuestionActiveStatus(status: GameStatus): boolean {
+  return normalizeGameStatus(status) === 'QuestionActive';
+}
+
+export function isQuestionResultsStatus(status: GameStatus): boolean {
+  return normalizeGameStatus(status) === 'QuestionResults';
+}
+
+export function isLeaderboardStatus(status: GameStatus): boolean {
+  return normalizeGameStatus(status) === 'Leaderboard';
+}
+
 export function getActiveStepIndex(status: GameStatus): number {
   const normalized = normalizeGameStatus(status);
   switch (normalized) {
