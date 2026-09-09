@@ -14,7 +14,7 @@ budget_tokens: 1000
 
 <!-- Move items here from "🚀 Next phase" when finished. Group by area. -->
 
-- (nothing yet — fill in as work completes)
+- **Frontend:** Installed `axios`, `zod`, `@mui/material`, `@emotion/react`, `@emotion/styled`, and `@mui/icons-material`. Build verified.
 
 ---
 
