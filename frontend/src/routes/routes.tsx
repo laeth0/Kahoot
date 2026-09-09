@@ -4,7 +4,7 @@ import { AuthLayout } from '../layouts/AuthLayout.tsx';
 import { RootLayout } from '../layouts/RootLayout.tsx';
 import { CreateQuizPage } from '../pages/CreateQuizPage/index.ts';
 import { HomePage } from '../pages/HomePage/HomePage.tsx';
-import { HostGamePlaceholderPage } from '../pages/HostGamePlaceholderPage.tsx';
+import { HostGamePage } from '../pages/HostGamePage/index.ts';
 import { JoinPage } from '../pages/JoinPage/JoinPage.tsx';
 import { LoginPage } from '../pages/LoginPage/LoginPage.tsx';
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage.tsx';
@@ -31,8 +31,8 @@ export function AppRoutes() {
           <Route path="quizzes" element={<QuizLibraryPage />} />
           <Route path="quizzes/new" element={<CreateQuizPage />} />
           <Route path="quizzes/:quizId" element={<QuizEditorPage />} />
-          <Route path="game/:gameId" element={<HostGamePlaceholderPage />} />
         </Route>
+        <Route path="game/:gameId" element={<HostGamePage />} />
       </Route>
 
       <Route element={<RootLayout />}>
