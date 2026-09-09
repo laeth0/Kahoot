@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Kahoot.Api/Kahoot.Api.csproj" />
+    <Project Path="src/Kahoot.Application/Kahoot.Application.csproj" />
+    <Project Path="src/Kahoot.Domain/Kahoot.Domain.csproj" />
+    <Project Path="src/Kahoot.Infrastructure/Kahoot.Infrastructure.csproj" />
+  </Folder>
+</Solution>
