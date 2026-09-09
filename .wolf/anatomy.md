@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:25:32.967Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:27:41.816Z
 > Files: 49 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -107,5 +107,5 @@
 
 ## docs/
 
-- `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~1852 tok)
-- `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~1919 tok)
+- `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2312 tok)
+- `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~2120 tok)

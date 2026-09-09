@@ -74,6 +74,15 @@ The backend is the source of truth. Clients never decide: answer correctness, wh
 - Sensible limits on `/join` and answer operations.
 - Limits distinguish malicious repetition from a legitimate burst of 500 distinct players.
 
+### NFR-4.5 File uploads
+
+- Only host-authenticated requests may upload (enforced once host auth exists).
+- Enforce a content-type allowlist **and** verify the file's magic bytes; reject on mismatch.
+- Enforce a maximum size at both the form/multipart limit and the application layer.
+- Store with a server-generated random filename and a fixed extension derived from the validated type; never trust or reuse the client filename (no path traversal).
+- Serve uploads as static files with correct image content types and without directory browsing; uploads are not executable content.
+- Storage is behind an `IFileStorage` abstraction. The local-disk implementation is for development; Railway's container disk is ephemeral, so production must use object storage (S3/R2/etc.) behind the same abstraction.
+
 ---
 
 ## NFR-5 Reliability & Startup

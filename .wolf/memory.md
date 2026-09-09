@@ -123,3 +123,7 @@ description: chronological action log per session, consolidated weekly
 | 11:25 | Created backend/src/Kahoot.Application/Common/Storage/IImageUploadService.cs | — | ~75 |
 | 11:25 | Edited backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs | modified ImageUploadService() | ~40 |
 | 11:25 | Edited backend/src/Kahoot.Api/Controllers/UploadsController.cs | inline fix | ~26 |
+| 11:26 | Built frontend Axios client (src/api/axiosClient.ts), Host auth service & context (src/api/authService.ts, src/context/AuthProvider.tsx, src/hooks/useAuth.ts), Game service (src/api/gameService.ts), centralized router & ProtectedRoute (src/routes/routes.tsx), RootLayout/AuthLayout, Player Game PIN & nickname join HomePage (src/pages/HomePage/HomePage.tsx), Host Login page with username+password & show/hide toggle (src/pages/LoginPage/LoginPage.tsx), and protected HostDashboard. Cleaned App.tsx. Verified with ESLint, Prettier, build, and browser subagent e2e test. | frontend/src/** | success | ~6000 |
+| 11:27 | Edited docs/functional-requirements.md | expanded (+14 lines) | ~449 |
+| 11:27 | Edited docs/functional-requirements.md | expanded (+9 lines) | ~267 |
+| 11:27 | Edited docs/non-functional-requirements.md | expanded (+9 lines) | ~261 |

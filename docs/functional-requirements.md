@@ -66,11 +66,25 @@ A player:
 
 ## FR-3 Quiz Authoring
 
-- A quiz has a title, an optional description, and an ordered list of questions.
-- A question has text, an order, a time limit, base points, and 2–6 choices.
+- A quiz has a title, an optional description, an `isPublished` flag, and an ordered list of questions.
+- A question has text, an optional image, an order, a time limit, base points, and 2–6 choices.
+- A choice has text and/or an image (at least one), and an `isCorrect` flag.
 - Exactly one choice per question is the correct one.
+- A quiz must be **published** before a game can be started from it. Publishing requires the quiz to be valid (see FR-3.2).
 - A quiz that has ever been used to run a game cannot be deleted (historical results are preserved).
-- A quiz with a running game cannot be edited.
+- A quiz with a game session that is not finished cannot be edited.
+
+### FR-3.1 Images
+
+- The host may attach an image to a question and/or to a choice.
+- Images are uploaded through `POST /api/uploads/images` (`multipart/form-data`, field `file`), which validates the file and returns `{ "url": "<relative path>" }`.
+- Accepted types are configurable (`FileStorage:AllowedContentTypes`, default JPEG/PNG/WebP/GIF); the server verifies the file's magic bytes, not just the declared content type, and enforces `FileStorage:MaxSizeBytes` (default 5 MB).
+- The returned URL is a path relative to the API origin; clients compose the absolute URL using the configured API base URL. The API serves stored files as static content under `FileStorage:PublicBasePath` (default `/uploads`).
+- The stored URL is what gets saved on the question/choice when it is created or updated.
+
+### FR-3.2 Publish validation
+
+- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and exactly one correct choice, and every choice has text or an image.
 
 ---
 
@@ -104,6 +118,15 @@ Allowed transitions (all others are rejected server-side):
 - The PIN is short, generated server-side, and unique among games that are not finished.
 - A handle name must be unique within its game (case-insensitive) and pass validation/sanitization.
 - The host sees each join in real time and may remove a player; a removed player cannot rejoin the same game with the same handle.
+
+---
+
+## FR-5a Game Session Isolation
+
+- Each game run is a distinct `GameSession`; the same published quiz can be run any number of times.
+- Every run gets its own participants, answers, scores, and leaderboard. All of these rows are scoped by `gameSessionId`, and the one-answer-per-player uniqueness key is `(gameSessionId, questionId, participantId)`.
+- Data from earlier sessions is never read or mutated by a new session and never affects its state, scores, or leaderboard.
+- Prior sessions and their results remain queryable for history.
 
 ---
 

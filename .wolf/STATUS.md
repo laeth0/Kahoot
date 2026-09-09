@@ -20,6 +20,18 @@ budget_tokens: 1000
 - **Frontend Documentation:** Updated `README.md` with complete directory tree, technology stack, directory responsibilities, and scripts guide. Build, lint, and format verified cleanly.
 - **Frontend Assets:** Moved `logo.jpeg` to `frontend/src/assets/logo.jpeg` (and `frontend/public/logo.jpeg`).
 - **Frontend Light Theme & Colors:** Configured custom MUI light theme derived from `logo.jpeg` (`src/theme/palette.ts`, `typography.ts`, `components.ts`, `index.ts`), design tokens (`src/styles/tokens.css`, `src/index.css`), Google Fonts Inter (`index.html`), and verification showcase in `src/App.tsx`. Enforced light theme only. Verified with lint, prettier, build, and browser testing.
+- **Frontend Architecture, Host Login & Player Join:**
+  - Implemented centralized Axios HTTP client (`src/api/axiosClient.ts`) with auth Bearer token injection and error interpretation interceptors.
+  - Implemented Host auth service (`src/api/authService.ts`) with username + password credentials and offline fallback simulation.
+  - Implemented Player game service (`src/api/gameService.ts`) for joining sessions via PIN and nickname.
+  - Implemented global Host `AuthContext`, `AuthProvider`, and `useAuth` hook (`src/context/`, `src/hooks/useAuth.ts`).
+  - Implemented centralized routing and route guards (`src/routes/routes.tsx`, `src/routes/ProtectedRoute.tsx`).
+  - Implemented `RootLayout` with branded navigation header and accessible landmarks, plus `AuthLayout` for host login.
+  - Built Player Home Page (`src/pages/HomePage/HomePage.tsx`) with Game PIN + player handle entry, live feedback, and UI/UX Pro Max standards.
+  - Built Host Login Page (`src/pages/LoginPage/LoginPage.tsx`) with username + password (no email), show/hide toggle, and error states.
+  - Built Protected Host Dashboard (`src/pages/HostDashboard/HostDashboard.tsx`) with quiz catalog overview and session launchers.
+  - Cleaned `src/App.tsx` to mount providers and routes without hardcoded showcase colors.
+  - Verified 100% clean formatting, ESLint, TypeScript production build, and automated browser end-to-end verification.
 - **Cleanup:** Removed `.opencode` and `.cursor` directories.
 - **Backend Architecture:** Created .NET 10 Clean Architecture solution (`Kahoot.sln`) with `Domain`, `Application`, `Infrastructure`, and `Api` projects. Installed required stack (`EF Core 10`, `PostgreSQL/Npgsql`, `MediatR`, `FluentValidation`, `Mapster`, `Scrutor`, `Scalar.AspNetCore`, `SignalR`). Added `backend/.gitignore`.
 - **Containerization:** Created `backend/Dockerfile`, `backend/.dockerignore`, `frontend/Dockerfile`, `frontend/nginx.conf`, `frontend/.dockerignore`, and root `docker-compose.yml` (PostgreSQL 17, .NET 10 API, React Vite Nginx). Verified with `docker compose config`.

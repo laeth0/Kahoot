@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:25:32.967Z",
+    "lastScanned": "2026-09-09T08:27:41.816Z",
     "fileCount": 49,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "43435d9aeefcfd61d7d348f274241ffa96cbb328df0d8e4b96335fde9c53d4c3",
-    "storeUpdatedAt": "2026-09-09T08:25:32.979Z",
-    "rootHash": "842972a91cbb0df2"
+    "renderedHash": "b3ea1ebd5a8ff70da8eae76995d1b17c36b04cb90166481347d4858358c42cae",
+    "storeUpdatedAt": "2026-09-09T08:27:41.832Z",
+    "rootHash": "bd66fead295182c8"
   },
   "files": {
     "AGENTS.md": {
@@ -201,20 +201,20 @@
     },
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
-      "tokens": 1852,
-      "hash": "b89b50aa3e57b4e4",
-      "size": 7438,
-      "mtimeMs": 1788939960487.353,
-      "updatedAt": "2026-09-09T07:46:00.602Z",
+      "tokens": 2312,
+      "hash": "139683381306ac92",
+      "size": 9278,
+      "mtimeMs": 1788942448602.369,
+      "updatedAt": "2026-09-09T08:27:28.764Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
       "description": "Non-Functional Requirements — Kahoot-like Platform",
-      "tokens": 1919,
-      "hash": "bfbdce664d4cb5fe",
-      "size": 7687,
-      "mtimeMs": 1788939999128.334,
-      "updatedAt": "2026-09-09T07:46:39.236Z",
+      "tokens": 2120,
+      "hash": "00c6ab67bbb7cf88",
+      "size": 8491,
+      "mtimeMs": 1788942461660.5295,
+      "updatedAt": "2026-09-09T08:27:41.816Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Security/IPasswordHasher.cs": {
