@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:48:03.464Z",
+    "lastScanned": "2026-09-09T09:50:05.310Z",
     "fileCount": 183,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "2b4bb81fef8ccc03e4bc613fd8956847d2abc9f7c4c6f05b607af2c7e9d89855",
-    "storeUpdatedAt": "2026-09-09T09:48:03.474Z",
-    "rootHash": "2c424ee702feb775"
+    "renderedHash": "d5c06dbeedc067a99805425fa33c9d157546b6ef501ddb1193a225e7a77c40a4",
+    "storeUpdatedAt": "2026-09-09T09:50:05.331Z",
+    "rootHash": "a08f093aad653931"
   },
   "files": {
     "AGENTS.md": {
@@ -435,11 +435,11 @@
     },
     "backend/src/Kahoot.Api/Program.cs": {
       "description": "Class: Program",
-      "tokens": 1095,
-      "hash": "ca0fc87f8873eab9",
-      "size": 4103,
-      "mtimeMs": 1788946320947.9841,
-      "updatedAt": "2026-09-09T09:32:01.139Z",
+      "tokens": 1363,
+      "hash": "a9bc6511b086c19c",
+      "size": 5110,
+      "mtimeMs": 1788947393292.3113,
+      "updatedAt": "2026-09-09T09:49:53.515Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Storage/IImageUploadService.cs": {
@@ -1560,11 +1560,11 @@
     },
     "backend/src/Kahoot.Api/Controllers/AuthController.cs": {
       "description": "Class: AuthController",
-      "tokens": 477,
-      "hash": "138462804efc2e26",
-      "size": 1788,
-      "mtimeMs": 1788945712383.8452,
-      "updatedAt": "2026-09-09T09:21:52.515Z",
+      "tokens": 503,
+      "hash": "547a499b3f0ccd40",
+      "size": 1885,
+      "mtimeMs": 1788947405059.9192,
+      "updatedAt": "2026-09-09T09:50:05.308Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Controllers/QuizzesController.cs": {

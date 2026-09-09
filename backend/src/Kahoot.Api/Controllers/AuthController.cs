@@ -7,11 +7,13 @@ using Kahoot.Application.Authentication.Refresh;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Kahoot.Api.Controllers;
 
 [AllowAnonymous]
 [Route("api/auth")]
+[EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
 public sealed class AuthController(ISender sender) : ApiControllerBase
 {
     [HttpPost("login")]

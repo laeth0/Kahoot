@@ -305,3 +305,7 @@ description: chronological action log per session, consolidated weekly
 | 12:47 | Edited backend/src/Kahoot.Application/Games/Common/HostGameGuard.cs | added 1 condition(s) | ~351 |
 | 12:47 | Created backend/src/Kahoot.Application/Games/GetLeaderboard/GetLeaderboardQueryHandler.cs | — | ~254 |
 | 12:48 | Created backend/src/Kahoot.Api/Common/RateLimitingExtensions.cs | — | ~563 |
+| 12:49 | Created backend/src/Kahoot.Api/Program.cs | — | ~1366 |
+| 12:49 | Edited backend/src/Kahoot.Api/Program.cs | 6→6 lines | ~64 |
+| 12:49 | Edited backend/src/Kahoot.Api/Program.cs | 7→7 lines | ~63 |
+| 12:50 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | modified AuthController() | ~154 |

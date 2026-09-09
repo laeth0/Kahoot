@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:48:03.464Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:50:05.310Z
 > Files: 183 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -21,7 +21,7 @@
 ## backend/src/Kahoot.Api/
 
 - `appsettings.json` (~254 tok)
-- `Program.cs` — Class: Program (~1095 tok)
+- `Program.cs` — Class: Program (~1363 tok)
 
 ## backend/src/Kahoot.Api/Common/
 
@@ -41,7 +41,7 @@
 
 ## backend/src/Kahoot.Api/Controllers/
 
-- `AuthController.cs` — Class: AuthController (~477 tok)
+- `AuthController.cs` — Class: AuthController (~503 tok)
 - `GamesController.cs` — Class: GamesController (~2019 tok)
 - `QuizzesController.cs` — Class: QuizzesController (~1666 tok)
 - `UploadsController.cs` — Controller: UploadsController (~423 tok)
