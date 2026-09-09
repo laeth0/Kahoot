@@ -51,6 +51,8 @@ a valid JWT, so an unauthenticated call is rejected by the pipeline).
 
 - The `gameId` and the player `sessionToken` are taken from per-connection state
   set by `JoinGame` / `Reconnect`; only `questionId` + `selectedChoiceId` are sent.
+- Per-connection spam guard: at most 5 `SubmitAnswer` calls per rolling 3 s;
+  excess calls fail fast with `Game.TooManyAnswerAttempts` without touching the DB.
 - Failure `error.code` (mapped from `GameErrors`): game not `QuestionActive`,
   `questionId` not current, `selectedChoiceId` not in the question, session token
   invalid, participant removed, or `serverTime > questionEndsAt`
@@ -58,7 +60,13 @@ a valid JWT, so an unauthenticated call is rejected by the pipeline).
 - Success → `{ success: true, data: { accepted: true, alreadyAnswered: false } }`.
 - Duplicate (same `game + question + participant`, enforced by the DB unique index
   `uq_answer_participant_question`) → `{ accepted: true, alreadyAnswered: true }`.
-  No second row, no second score.
+  No second row, no second score. The accepted-answer INSERT and the participant
+  score `+=` run in one short transaction only when points > 0; a 0-point answer is
+  a single bare INSERT.
+- The hub holds no DB dependency: it delegates to
+  `AttachParticipantConnectionCommand` / `DetachParticipantConnectionCommand`
+  (connection bookkeeping) and `AuthorizeHostGameQuery` (host ownership), plus the
+  player MediatR commands.
 
 ---
 
@@ -121,6 +129,31 @@ Auth: `host` = valid host JWT (`Authorize`); `none` = anonymous.
 
 There is **no registration endpoint** — the only host account is the configuration
 seed (`Seeding:Host`). Players never authenticate.
+
+### Rate limiting (`Microsoft.AspNetCore.RateLimiting`, keyed by client IP)
+
+- `POST /api/auth/*` — fixed window, 10 requests / 5 min (anti credential-stuffing).
+- `POST /api/games/join` — token bucket, 60 burst + 30 / 10 s sustained (tolerates a
+  NAT'd classroom of distinct players; throttles scripted floods).
+- All other endpoints — global token bucket, 240 burst + 120 / 30 s per IP.
+- `/health` is exempt. Rejections are `429` `ProblemDetails`.
+- `X-Forwarded-*` is honoured (`UseForwardedHeaders`) so the partition key is the
+  real client IP behind Railway's proxy.
+
+---
+
+## Reconnection payload
+
+`ReconnectParticipantCommand` returns `PlayerGameStateResponse`, which now also
+carries, for the post-question phases:
+
+- `lastQuestionResults` (`QuestionResultsResponse`) when status is `QuestionResults`
+  or `Leaderboard` — safe to send, the answer is already revealed.
+- `leaderboard` (`LeaderboardResponse`) when status is `QuestionResults`,
+  `Leaderboard` or `Finished`.
+
+`currentQuestion` (`PlayerQuestionResponse`, no correct answer) is still only set
+while a question is active.
 
 ---
 

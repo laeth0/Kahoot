@@ -7,12 +7,7 @@ export interface JoinGamePayload {
 
 /** Server game-state values (must match `Kahoot.Domain.Games.GameStatus`). */
 export type GameStatus =
-  | 'Created'
-  | 'Lobby'
-  | 'QuestionActive'
-  | 'QuestionResults'
-  | 'Leaderboard'
-  | 'Finished';
+  'Created' | 'Lobby' | 'QuestionActive' | 'QuestionResults' | 'Leaderboard' | 'Finished';
 
 export interface JoinGameResponse {
   gameId: string;

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:54:23.507Z",
+    "lastScanned": "2026-09-09T09:57:40.664Z",
     "fileCount": 186,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "f489dd5fdc14be9f877ca10526b890400376281c078ff11665658a0a894366fb",
-    "storeUpdatedAt": "2026-09-09T09:54:23.516Z",
-    "rootHash": "d7d5377f77861a4d"
+    "renderedHash": "df72011e16692ab63daeb2d2a52547defdf11e9302acebce1ce3136c11c9cb3e",
+    "storeUpdatedAt": "2026-09-09T09:57:40.677Z",
+    "rootHash": "5628114ab13b3871"
   },
   "files": {
     "AGENTS.md": {
@@ -201,20 +201,20 @@
     },
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
-      "tokens": 2503,
-      "hash": "031fba715f89a393",
-      "size": 10046,
-      "mtimeMs": 1788946037629.0945,
-      "updatedAt": "2026-09-09T09:27:17.770Z",
+      "tokens": 2560,
+      "hash": "6eacf746eb851df8",
+      "size": 10273,
+      "mtimeMs": 1788947852146.3892,
+      "updatedAt": "2026-09-09T09:57:32.327Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
       "description": "Non-Functional Requirements — Kahoot-like Platform",
-      "tokens": 2120,
-      "hash": "00c6ab67bbb7cf88",
-      "size": 8491,
-      "mtimeMs": 1788942461660.5295,
-      "updatedAt": "2026-09-09T08:27:41.816Z",
+      "tokens": 2249,
+      "hash": "09ce9b78ba0f7393",
+      "size": 9010,
+      "mtimeMs": 1788947860509.915,
+      "updatedAt": "2026-09-09T09:57:40.664Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Security/IPasswordHasher.cs": {
@@ -1434,11 +1434,11 @@
     },
     "docs/realtime-protocol.md": {
       "description": "Real-Time Protocol (SignalR) — Kahoot-like Platform",
-      "tokens": 2257,
-      "hash": "f4ba50e87855a285",
-      "size": 9081,
-      "mtimeMs": 1788946018326.437,
-      "updatedAt": "2026-09-09T09:26:58.556Z",
+      "tokens": 2669,
+      "hash": "d4b66145d49b6e8a",
+      "size": 10738,
+      "mtimeMs": 1788947844876.2078,
+      "updatedAt": "2026-09-09T09:57:24.993Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Common/HostClaims.cs": {

@@ -73,6 +73,7 @@ The backend is the source of truth. Clients never decide: answer correctness, wh
 
 - Sensible limits on `/join` and answer operations.
 - Limits distinguish malicious repetition from a legitimate burst of 500 distinct players.
+- **Implemented:** `Microsoft.AspNetCore.RateLimiting`, partitioned by client IP (behind `UseForwardedHeaders` so the key is the real client): auth endpoints fixed-window 10 / 5 min; `POST /api/games/join` token bucket 60 burst + 30 / 10 s; a global per-IP token bucket (240 burst + 120 / 30 s) covers the rest; `/health` exempt. Hub `SubmitAnswer` has a per-connection guard (5 / rolling 3 s → `Game.TooManyAnswerAttempts`). The token-bucket burst sizes are set so a NAT'd room of distinct players is not throttled.
 
 ### NFR-4.5 File uploads
 

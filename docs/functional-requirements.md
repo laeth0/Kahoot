@@ -160,8 +160,8 @@ Allowed transitions (all others are rejected server-side):
 ## FR-7 Reconnection
 
 - A player reconnecting after a network drop keeps their identity via a secure session token — **not** the transient real-time connection id.
-- Reconnection must not create a second player record.
-- On reconnect the server restores: player identity, game, current state, current question, question deadline, whether the player already answered, current score, result state, and leaderboard where appropriate.
+- Reconnection must not create a second player record (the session-token hash is uniquely indexed; `Reconnect` never inserts a `Participant`).
+- On reconnect the server restores: player identity, game, current state, current question, question deadline, whether the player already answered, current score and rank. During `QuestionResults` / `Leaderboard` it also returns the revealed question results; during `QuestionResults` / `Leaderboard` / `Finished` it returns the leaderboard snapshot.
 
 ---
 

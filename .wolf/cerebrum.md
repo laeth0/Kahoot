@@ -38,6 +38,17 @@ budget_tokens: 2000
 - **Game session isolation** (hard req): every run = new `game_sessions` row; participants/answers/scores/leaderboard scoped by `game_session_id`; answer key `(game_session_id, question_id, participant_id)`; prior sessions never read/mutated. Schema + handlers satisfy this.
 - **DBML validation:** `npx -y -p @dbml/cli dbml2sql backend/projectSchema.dbml --postgres`. Gotcha: index-setting `note:` strings must not contain escaped `''` (table `Note: '''...'''` blocks are fine).
 - **Local machine gotcha:** `postgresql-x64-18` Windows service holds `localhost:5432` and shadows compose's `kahoot-db`; run test Postgres on a different host port (e.g. `5433`).
+- **Senior review pass (done, backend + FE build 0/0, e2e-verified):**
+  - `GameStateMachine` rewritten to named `GameTransition`s (`CanFire`/`TargetOf`) and now actually wired into StartGame/StartNextQuestion/EndQuestion/ShowLeaderboard/EndGame (was dead code). Idempotent re-entry paths kept separate.
+  - `StartGame`/`StartNextQuestion` no longer `Include` the whole question graph — load `CountAsync` + the single target question (`AsNoTracking`). `QuestionActivation.Activate/Rebuild` now take `(Question, totalQuestions)`.
+  - `SubmitAnswer` hot path: transaction ONLY when `points > 0`; a wrong (0-pt) answer is a bare INSERT (catch `uq_answer_participant_question` → idempotent dup).
+  - Refresh-token rotation is race-safe: `AsNoTracking` projection + atomic `ExecuteUpdateAsync` on `WHERE Id==x && RevokedAt==null`; 0 rows ⇒ lost race ⇒ `InvalidRefreshToken`. `AuthTokenFactory.Issue` now takes `(hostId, username)` not `Host`.
+  - `GameHub` is DB-free: new `Application/Games/Presence/{Attach,Detach}ParticipantConnectionCommand` + `AuthorizeHostGameQuery`. Hub injects only `ISender` + `GameNotifier` + `TimeProvider`. Per-connection answer throttle (5 / rolling 3 s) → `GameErrors.TooManyAnswerAttempts`.
+  - Reconnect (`PlayerGameStateResponse`) now also returns `LastQuestionResults` (QuestionResults/Leaderboard) and `Leaderboard` (QuestionResults/Leaderboard/Finished) — closes FR-7 gap.
+  - `Program.cs`: `UseForwardedHeaders` (KnownIPNetworks/Proxies cleared for Railway), `AddApiRateLimiting` (`RateLimitingExtensions`: `auth` fixed-window 10/5min, `join` token-bucket 60+30/10s, global 240+120/30s; `/health` exempt), `UseHsts` (non-dev), `UseStatusCodePages`, nosniff/DENY/no-referrer header middleware, `AddSignalR` options (MaxReceive 64KB, EnableDetailedErrors=dev, client/keepalive timeouts).
+  - `HostGameGuard.EnsureOwnedAsync` (ownership-only, no entity) used by GetLeaderboard handler.
+  - Frontend: removed the dangerous offline-simulation mocks in `authService`/`gameService`; mapped real DTOs (`hostId`→`host.id`, `status`); axios interceptor reads `ProblemDetails.detail/title`; added `frontend/.env.example` (`VITE_API_URL`, `VITE_SIGNALR_URL`).
+- **Known remaining gaps (not this pass):** frontend game UI + SignalR client (only Home/Login/Dashboard/404 exist); full metrics/observability (NFR-7/12, later phase); no load tests run (deferred); committed dev secrets `Jwt:SigningKey` + `Seeding:Host:Password` must be overridden per environment; single migration replica (no advisory lock).
 
 ## Do-Not-Repeat
 

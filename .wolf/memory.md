@@ -315,3 +315,7 @@ description: chronological action log per session, consolidated weekly
 | 12:54 | Created frontend/src/api/authService.ts | — | ~504 |
 | 12:54 | Edited frontend/src/api/authService.ts | modified logout() | ~78 |
 | 12:54 | Created frontend/src/api/gameService.ts | — | ~270 |
+| 12:57 | Edited docs/realtime-protocol.md | expanded (+8 lines) | ~347 |
+| 12:57 | Edited docs/realtime-protocol.md | expanded (+25 lines) | ~345 |
+| 12:57 | Edited docs/functional-requirements.md | 3→3 lines | ~170 |
+| 12:57 | Edited docs/non-functional-requirements.md | modified IP() | ~183 |
