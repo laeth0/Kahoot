@@ -393,3 +393,6 @@ description: chronological action log per session, consolidated weekly
 | 18:22 | Edited load-tests/README.md | modified A() | ~580 |
 | 18:23 | Edited load-tests/README.md | expanded (+12 lines) | ~603 |
 | 18:23 | Edited load-tests/verify/verify-db.mjs | 6→9 lines | ~137 |
+| 18:41 | Created docker-compose.yml | — | ~509 |
+| 18:42 | Edited load-tests/README.md | modified A() | ~399 |
+| 18:42 | Edited load-tests/README.md | 8→10 lines | ~150 |

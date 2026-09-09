@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:23:28.755Z",
+    "lastScanned": "2026-09-09T15:42:21.978Z",
     "fileCount": 211,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "6bc4ec2d0d147f3b21146881fccdced4212ba0698e098be2d14c9d4510de1e63",
-    "storeUpdatedAt": "2026-09-09T15:23:28.767Z",
-    "rootHash": "21b81935f0855b2b"
+    "renderedHash": "30c160088472488e78891294e951f620c91af4b0079a5bdc5d0a6caf314eb5fd",
+    "storeUpdatedAt": "2026-09-09T15:42:21.987Z",
+    "rootHash": "8e9629fadb988019"
   },
   "files": {
     "AGENTS.md": {
@@ -2680,11 +2680,11 @@
     },
     "load-tests/README.md": {
       "description": "Project documentation",
-      "tokens": 4539,
-      "hash": "0522cafb02f2555c",
-      "size": 18269,
-      "mtimeMs": 1788967395381.964,
-      "updatedAt": "2026-09-09T15:23:15.496Z",
+      "tokens": 4507,
+      "hash": "3542dac8eb930b27",
+      "size": 18140,
+      "mtimeMs": 1788968541869.8806,
+      "updatedAt": "2026-09-09T15:42:21.977Z",
       "source": "hook"
     },
     "load-tests/docker-compose.railway-sim.yml": {
@@ -2698,11 +2698,11 @@
     },
     "docker-compose.yml": {
       "description": "Docker Compose services",
-      "tokens": 636,
-      "hash": "44757b57d02cc4f7",
-      "size": 2228,
-      "mtimeMs": 1788967312070.7266,
-      "updatedAt": "2026-09-09T15:21:52.160Z",
+      "tokens": 509,
+      "hash": "949893ed0606cb20",
+      "size": 1780,
+      "mtimeMs": 1788968497636.6716,
+      "updatedAt": "2026-09-09T15:41:37.766Z",
       "source": "hook"
     }
   },

@@ -68,14 +68,16 @@ Pass with `-e KEY=VALUE` on `k6 run`, or put them in `load-tests/.env` (only
 | `CLOCK_SKEW_MS` | auto (from `/health` `Date` header) | manual override for the question-delivery clock correction |
 | `RUN_ID` | `local` | prefix for generated nicknames + summary files |
 
-**Compose "instance size" vars** (pass to `docker compose up`, not k6):
+**"Instance size" (Railway simulation)** is set **directly in `../docker-compose.yml`** —
+edit these values there, not via env vars:
 
-| Var | Default | Meaning |
+| Where | Value | Meaning |
 |---|---|---|
-| `API_CPUS` / `API_MEM` | `2.0` / `1g` | backend container caps |
-| `DB_CPUS` / `DB_MEM` | `1.0` / `1g` | Postgres container caps |
-| `DB_HOST_PORT` | `5432` | host port for Postgres (use `5433` if `5432` is taken) |
-| `ASPNETCORE_ENVIRONMENT` | `Development` | set `Production` to mirror Railway |
+| `backend.deploy.resources.limits` | `cpus: "2.0"`, `memory: "1g"` | API container cap |
+| `db.deploy.resources.limits` | `cpus: "1.0"`, `memory: "1g"` | Postgres container cap |
+| `backend.environment.ASPNETCORE_ENVIRONMENT` | `Production` | mirrors Railway |
+| `db.ports` | `5433:5432` | Postgres on host `localhost:5433` |
+| `backend.ports` | `5000:8080` | API on `localhost:5000` |
 
 ---
 
@@ -177,30 +179,24 @@ the bucket) — then prints the PASS/FAIL table. Per-scenario JSON lands in
 
 ### Option A (recommended): the project `docker-compose.yml`, sized like Railway
 
-The root `../docker-compose.yml` carries per-service **CPU + memory caps** and a
-single replica, so a local run models one small Railway instance. Defaults:
-API **2 vCPU / 1 GiB**, DB **1 vCPU / 1 GiB** — override with `API_CPUS`,
-`API_MEM`, `DB_CPUS`, `DB_MEM`. The API is published on `localhost:5000`.
+The root `../docker-compose.yml` caps each service (single replica, **API 2 vCPU /
+1 GiB, DB 1 vCPU / 1 GiB**) and runs `ASPNETCORE_ENVIRONMENT=Production`, so a
+local run models one small Railway instance. Change the `cpus` / `memory` values
+in that file to match your Railway plan. The API is published on `localhost:5000`,
+Postgres on host `localhost:5433`.
 
 ```bash
 # from the repo root
 
-# 1. Build + start db + backend as "Railway" (Production, capped). First build
-#    does a dotnet publish (~2-4 min). DB_HOST_PORT avoids a local-Postgres clash
-#    on 5432; the backend uses db:5432 internally either way.
-DB_HOST_PORT=5433 ASPNETCORE_ENVIRONMENT=Production \
-  docker compose up -d --build db backend
-
-#    smaller box:
-API_CPUS=1 API_MEM=512m DB_CPUS=1 DB_MEM=512m DB_HOST_PORT=5433 \
-  ASPNETCORE_ENVIRONMENT=Production docker compose up -d --build db backend
+# 1. Build + start db + backend (first build does a dotnet publish, ~2-4 min)
+docker compose up -d --build db backend
 
 # 2. Wait for the API (migrations + host seed run on startup)
 curl -s -o /dev/null -w '%{http_code}\n' http://localhost:5000/health   # expect 200
 
 # 3. Point the tests at it and run
 cd load-tests            # so k6 writes results/ and reads .env conventions
-cp .env.example .env      # already targets http://localhost:5000 in this repo
+cp .env.example .env      # then set BASE_URL=http://localhost:5000/api + SIGNALR_URL=http://localhost:5000
 node run-all.js                                   # full acceptance set
 #   or one scenario:
 k6 run -e ALLOW_LOAD_TEST=true -e BASE_URL=http://localhost:5000/api \
