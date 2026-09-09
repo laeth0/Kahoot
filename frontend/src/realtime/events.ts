@@ -69,10 +69,42 @@ export interface LeaderboardResponse {
   entries: LeaderboardEntryResponse[];
 }
 
+export interface PlayerChoiceResponse {
+  id: string;
+  orderIndex: number;
+  text?: string | null;
+  imageUrl?: string | null;
+}
+
+export interface PlayerQuestionResponse {
+  questionId: string;
+  questionIndex: number;
+  totalQuestions: number;
+  text: string;
+  imageUrl?: string | null;
+  timeLimitSeconds: number;
+  endsAt: string;
+  choices: PlayerChoiceResponse[];
+}
+
+export interface PlayerGameStateResponse {
+  gameId: string;
+  status: number | string;
+  participantId: string;
+  nickname: string;
+  totalScore: number;
+  rank?: number | null;
+  alreadyAnsweredCurrentQuestion: boolean;
+  currentQuestion?: PlayerQuestionResponse | null;
+  lastQuestionResults?: QuestionResultsResponse | null;
+  leaderboard?: LeaderboardResponse | null;
+}
+
 export interface GameClientEvents {
   ParticipantJoined: (participant: GameParticipantResponse) => void;
   ParticipantLeft: (participantId: string) => void;
   ParticipantRemoved: (participantId: string) => void;
+  QuestionStarted: (payload: PlayerQuestionResponse) => void;
   QuestionStartedForHost: (payload: HostQuestionResponse) => void;
   QuestionEnded: (payload: QuestionResultsResponse) => void;
   LeaderboardUpdated: (payload: LeaderboardResponse) => void;

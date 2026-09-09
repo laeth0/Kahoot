@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T16:15:32.899Z",
-    "fileCount": 213,
+    "lastScanned": "2026-09-09T18:05:01.899Z",
+    "fileCount": 228,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "688ed8a920aea0535409091ceef9f8835d81313c1789a7d81d0958d4a461b1f6",
-    "storeUpdatedAt": "2026-09-09T16:15:32.920Z",
-    "rootHash": "29ab325074826ae8"
+    "renderedHash": "169e8a63ba64ab2fb5df856185760949a5dab2c9a21ee2059e8996a3d969f8df",
+    "storeUpdatedAt": "2026-09-09T18:05:01.912Z",
+    "rootHash": "96ef8d8d24656302"
   },
   "files": {
     "AGENTS.md": {
@@ -1658,13 +1658,29 @@
       "source": "hook"
     },
     "frontend/src/api/axiosClient.ts": {
-      "description": "Centralized Axios client: base URL from configuration, bearer-token injection,",
-      "tokens": 438,
-      "hash": "c0828f852aed2de3",
-      "size": 1530,
-      "mtimeMs": 1788947632043.8342,
-      "updatedAt": "2026-09-09T09:53:52.184Z",
-      "source": "hook"
+      "description": "Exports TOKEN_STORAGE_KEY, USER_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY, ACCESS_TOKEN_EXPIRES_KEY + 3",
+      "tokens": 781,
+      "hash": "237aa72470dcbe45",
+      "size": 2733,
+      "mtimeMs": 1788976651220.7217,
+      "updatedAt": "2026-09-09T17:57:31.361Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ApiError",
+          "kind": "class",
+          "startLine": 11,
+          "endLine": 41,
+          "tokens": 207
+        },
+        {
+          "name": "ProblemDetails",
+          "kind": "section",
+          "startLine": 42,
+          "endLine": 100,
+          "tokens": 436
+        }
+      ]
     },
     "frontend/src/api/authService.ts": {
       "description": "Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`.",
@@ -2722,6 +2738,383 @@
       "mtimeMs": 1788970532786.708,
       "updatedAt": "2026-09-09T16:15:32.899Z",
       "source": "hook"
+    },
+    "frontend/src/hooks/useSessionToken.ts": {
+      "description": "Exports PlayerSession, getSession, saveSession, clearSession, useSessionToken",
+      "tokens": 550,
+      "hash": "c69f53ec85e2fb1b",
+      "size": 1925,
+      "mtimeMs": 1788976987163.4321,
+      "updatedAt": "2026-09-09T18:03:07.271Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "PlayerSession",
+          "kind": "section",
+          "startLine": 3,
+          "endLine": 11,
+          "tokens": 59
+        },
+        {
+          "name": "isValidSession",
+          "kind": "fn",
+          "startLine": 12,
+          "endLine": 25,
+          "tokens": 124
+        },
+        {
+          "name": "getSession",
+          "kind": "fn",
+          "startLine": 26,
+          "endLine": 38,
+          "tokens": 88
+        },
+        {
+          "name": "saveSession",
+          "kind": "fn",
+          "startLine": 39,
+          "endLine": 47,
+          "tokens": 60
+        },
+        {
+          "name": "clearSession",
+          "kind": "fn",
+          "startLine": 48,
+          "endLine": 56,
+          "tokens": 48
+        },
+        {
+          "name": "useSessionToken",
+          "kind": "fn",
+          "startLine": 57,
+          "endLine": 79,
+          "tokens": 158
+        }
+      ]
+    },
+    "frontend/src/realtime/events.ts": {
+      "description": "Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 10 more",
+      "tokens": 780,
+      "hash": "f85801440f1739f0",
+      "size": 2729,
+      "mtimeMs": 1788976622271.0884,
+      "updatedAt": "2026-09-09T17:57:02.399Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "RealtimeError",
+          "kind": "section",
+          "startLine": 4,
+          "endLine": 8,
+          "tokens": 22
+        },
+        {
+          "name": "RealtimeResponse",
+          "kind": "section",
+          "startLine": 9,
+          "endLine": 14,
+          "tokens": 31
+        },
+        {
+          "name": "GameParticipantResponse",
+          "kind": "section",
+          "startLine": 15,
+          "endLine": 23,
+          "tokens": 49
+        },
+        {
+          "name": "HostChoiceResponse",
+          "kind": "section",
+          "startLine": 24,
+          "endLine": 31,
+          "tokens": 43
+        },
+        {
+          "name": "HostQuestionResponse",
+          "kind": "section",
+          "startLine": 32,
+          "endLine": 44,
+          "tokens": 82
+        },
+        {
+          "name": "ChoiceResultResponse",
+          "kind": "section",
+          "startLine": 45,
+          "endLine": 51,
+          "tokens": 38
+        },
+        {
+          "name": "QuestionResultsResponse",
+          "kind": "section",
+          "startLine": 52,
+          "endLine": 60,
+          "tokens": 59
+        },
+        {
+          "name": "LeaderboardEntryResponse",
+          "kind": "section",
+          "startLine": 61,
+          "endLine": 67,
+          "tokens": 37
+        },
+        {
+          "name": "LeaderboardResponse",
+          "kind": "section",
+          "startLine": 68,
+          "endLine": 71,
+          "tokens": 23
+        },
+        {
+          "name": "PlayerChoiceResponse",
+          "kind": "section",
+          "startLine": 72,
+          "endLine": 78,
+          "tokens": 38
+        },
+        {
+          "name": "PlayerQuestionResponse",
+          "kind": "section",
+          "startLine": 79,
+          "endLine": 89,
+          "tokens": 70
+        },
+        {
+          "name": "PlayerGameStateResponse",
+          "kind": "section",
+          "startLine": 90,
+          "endLine": 102,
+          "tokens": 108
+        },
+        {
+          "name": "GameClientEvents",
+          "kind": "section",
+          "startLine": 103,
+          "endLine": 113,
+          "tokens": 149
+        }
+      ]
+    },
+    "frontend/src/realtime/gameHub.ts": {
+      "description": "Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect",
+      "tokens": 468,
+      "hash": "2234b1731aa0def0",
+      "size": 1637,
+      "mtimeMs": 1788976632099.9092,
+      "updatedAt": "2026-09-09T17:57:12.239Z",
+      "source": "hook"
+    },
+    "frontend/src/constants/errorCodes.ts": {
+      "description": "Exports ERROR_MESSAGES, getFriendlyErrorMessage",
+      "tokens": 346,
+      "hash": "2b647fd5a51863c0",
+      "size": 1210,
+      "mtimeMs": 1788976658963.8657,
+      "updatedAt": "2026-09-09T17:57:39.080Z",
+      "source": "hook"
+    },
+    "frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx": {
+      "description": "NicknameEntryForm",
+      "tokens": 1728,
+      "hash": "691c39f9edbc86c3",
+      "size": 6047,
+      "mtimeMs": 1788976680971.0369,
+      "updatedAt": "2026-09-09T17:58:01.076Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "NicknameEntryFormProps",
+          "kind": "section",
+          "startLine": 20,
+          "endLine": 29,
+          "tokens": 72
+        },
+        {
+          "name": "NicknameEntryForm",
+          "kind": "fn",
+          "startLine": 30,
+          "endLine": 195,
+          "tokens": 1512
+        }
+      ]
+    },
+    "frontend/src/components/NicknameEntryForm/index.ts": {
+      "description": "",
+      "tokens": 27,
+      "hash": "fffb3d51b87da2d4",
+      "size": 92,
+      "mtimeMs": 1788976684375.2002,
+      "updatedAt": "2026-09-09T17:58:04.489Z",
+      "source": "hook"
+    },
+    "frontend/src/components/WaitingScreen/WaitingScreen.tsx": {
+      "description": "pulseKeyframes",
+      "tokens": 1433,
+      "hash": "ce7d4f149021d106",
+      "size": 5014,
+      "mtimeMs": 1788976703921.4724,
+      "updatedAt": "2026-09-09T17:58:24.027Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "WaitingScreenProps",
+          "kind": "section",
+          "startLine": 11,
+          "endLine": 22,
+          "tokens": 85
+        },
+        {
+          "name": "WaitingScreen",
+          "kind": "fn",
+          "startLine": 23,
+          "endLine": 157,
+          "tokens": 1211
+        }
+      ]
+    },
+    "frontend/src/components/WaitingScreen/index.ts": {
+      "description": "",
+      "tokens": 24,
+      "hash": "a641dccf686c0cdd",
+      "size": 84,
+      "mtimeMs": 1788976712248.8372,
+      "updatedAt": "2026-09-09T17:58:32.366Z",
+      "source": "hook"
+    },
+    "frontend/src/components/KickedNotice/KickedNotice.tsx": {
+      "description": "KickedNotice",
+      "tokens": 527,
+      "hash": "b6cdfdd9509164ec",
+      "size": 1843,
+      "mtimeMs": 1788977101758.7007,
+      "updatedAt": "2026-09-09T18:05:01.898Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "KickedNoticeProps",
+          "kind": "section",
+          "startLine": 5,
+          "endLine": 8,
+          "tokens": 18
+        },
+        {
+          "name": "KickedNotice",
+          "kind": "fn",
+          "startLine": 9,
+          "endLine": 66,
+          "tokens": 456
+        }
+      ]
+    },
+    "frontend/src/components/KickedNotice/index.ts": {
+      "description": "",
+      "tokens": 24,
+      "hash": "3ccd0f2c088a16e1",
+      "size": 82,
+      "mtimeMs": 1788976726317.0227,
+      "updatedAt": "2026-09-09T17:58:46.438Z",
+      "source": "hook"
+    },
+    "frontend/src/hooks/usePlayerGame.ts": {
+      "description": "Exports PlayerState, usePlayerGame",
+      "tokens": 1441,
+      "hash": "1998c517269c463e",
+      "size": 5043,
+      "mtimeMs": 1788977030563.2112,
+      "updatedAt": "2026-09-09T18:03:50.684Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "PlayerState",
+          "kind": "section",
+          "startLine": 15,
+          "endLine": 23,
+          "tokens": 53
+        },
+        {
+          "name": "usePlayerGame",
+          "kind": "fn",
+          "startLine": 24,
+          "endLine": 165,
+          "tokens": 1175
+        }
+      ]
+    },
+    "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx": {
+      "description": "NoticeCard",
+      "tokens": 1493,
+      "hash": "130480a91d185a05",
+      "size": 5223,
+      "mtimeMs": 1788976891667.8745,
+      "updatedAt": "2026-09-09T18:01:31.774Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "NoticeCardProps",
+          "kind": "section",
+          "startLine": 16,
+          "endLine": 24,
+          "tokens": 44
+        },
+        {
+          "name": "NoticeCard",
+          "kind": "fn",
+          "startLine": 25,
+          "endLine": 72,
+          "tokens": 380
+        },
+        {
+          "name": "PlayerGamePage",
+          "kind": "fn",
+          "startLine": 73,
+          "endLine": 188,
+          "tokens": 820
+        }
+      ]
+    },
+    "frontend/src/pages/PlayerGamePage/index.ts": {
+      "description": "",
+      "tokens": 30,
+      "hash": "bacd47bbe2a37815",
+      "size": 103,
+      "mtimeMs": 1788976808289.4446,
+      "updatedAt": "2026-09-09T18:00:08.419Z",
+      "source": "hook"
+    },
+    "frontend/src/routes/routes.tsx": {
+      "description": "AppRoutes",
+      "tokens": 546,
+      "hash": "385b2ebb077c1e68",
+      "size": 1910,
+      "mtimeMs": 1788976818296.751,
+      "updatedAt": "2026-09-09T18:00:18.430Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "AppRoutes",
+          "kind": "fn",
+          "startLine": 16,
+          "endLine": 49,
+          "tokens": 314
+        }
+      ]
+    },
+    "frontend/src/pages/JoinPage/JoinPage.tsx": {
+      "description": "SIX_DIGIT_PIN",
+      "tokens": 1883,
+      "hash": "99de65feb88977d3",
+      "size": 6590,
+      "mtimeMs": 1788976859073.944,
+      "updatedAt": "2026-09-09T18:00:59.200Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "JoinPage",
+          "kind": "fn",
+          "startLine": 19,
+          "endLine": 198,
+          "tokens": 1637
+        }
+      ]
     }
   },
   "preamble": [

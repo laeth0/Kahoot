@@ -524,6 +524,70 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T15:47:13.344Z"
+    },
+    {
+      "id": "bug-034",
+      "timestamp": "2026-09-09T17:57:31.390Z",
+      "error_message": "Null/undefined access in axiosClient.ts",
+      "file": "frontend/src/api/axiosClient.ts",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T17:57:31.390Z"
+    },
+    {
+      "id": "bug-035",
+      "timestamp": "2026-09-09T18:03:46.151Z",
+      "error_message": "Wrong reference: activeSessionToken should be sessionToken",
+      "file": "frontend/src/hooks/usePlayerGame.ts",
+      "root_cause": "Used \"activeSessionToken\" instead of \"sessionToken\"",
+      "fix": "Changed activeSessionToken → sessionToken",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:03:46.151Z"
+    },
+    {
+      "id": "bug-036",
+      "timestamp": "2026-09-09T18:04:57.156Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/KickedNotice/KickedNotice.tsx",
+      "root_cause": "Had '@mui/icons-material/RemoveCircleOutline'",
+      "fix": "Changed to '@mui/icons-material/PersonRemove'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:04:57.156Z"
+    },
+    {
+      "id": "bug-037",
+      "timestamp": "2026-09-09T18:05:01.924Z",
+      "error_message": "Wrong reference: RemoveCircleOutlineIcon should be PersonRemoveIcon",
+      "file": "frontend/src/components/KickedNotice/KickedNotice.tsx",
+      "root_cause": "Used \"RemoveCircleOutlineIcon\" instead of \"PersonRemoveIcon\"",
+      "fix": "Changed RemoveCircleOutlineIcon → PersonRemoveIcon",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T18:05:01.924Z"
     }
   ]
 }

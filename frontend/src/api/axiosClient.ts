@@ -8,6 +8,18 @@ export const REFRESH_TOKEN_STORAGE_KEY = 'kahoot_host_refresh_token';
 export const ACCESS_TOKEN_EXPIRES_KEY = 'kahoot_host_access_expires_at';
 export const REFRESH_TOKEN_EXPIRES_KEY = 'kahoot_host_refresh_expires_at';
 
+export class ApiError extends Error {
+  readonly code?: string;
+  readonly status?: number;
+
+  constructor(message: string, code?: string, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.code = code;
+    this.status = status;
+  }
+}
+
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -36,6 +48,7 @@ interface ProblemDetails {
   errors?: Record<string, string[]>;
   message?: string;
   error?: string;
+  code?: string;
 }
 
 axiosClient.interceptors.response.use(
@@ -57,13 +70,17 @@ axiosClient.interceptors.response.use(
       const firstKey = Object.keys(data.errors)[0];
       const firstError = firstKey && data.errors[firstKey]?.[0];
       if (firstError) {
-        return Promise.reject(new Error(firstError));
+        return Promise.reject(new ApiError(firstError, data.code, status));
       }
     }
 
     if (status === 429) {
       return Promise.reject(
-        new Error('Too many requests. Please wait a moment before trying again.'),
+        new ApiError(
+          'Too many requests. Please wait a moment before trying again.',
+          data?.code ?? 'Http.RateLimited',
+          429,
+        ),
       );
     }
 
@@ -75,7 +92,7 @@ axiosClient.interceptors.response.use(
       error.message ??
       'An unexpected network error occurred';
 
-    return Promise.reject(new Error(message));
+    return Promise.reject(new ApiError(message, data?.code, status));
   },
 );
 

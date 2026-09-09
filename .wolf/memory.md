@@ -443,3 +443,32 @@ description: chronological action log per session, consolidated weekly
 
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
+| 20:56 | Created frontend/src/hooks/useSessionToken.ts | — | ~527 |
+| 20:57 | Edited frontend/src/realtime/events.ts | expanded (+32 lines) | ~386 |
+| 20:57 | Edited frontend/src/realtime/gameHub.ts | 2→2 lines | ~38 |
+| 20:57 | Edited frontend/src/realtime/gameHub.ts | modified invokeJoinAsHost() | ~137 |
+| 20:57 | Edited frontend/src/api/axiosClient.ts | modified constructor() | ~117 |
+| 20:57 | Edited frontend/src/api/axiosClient.ts | 10→11 lines | ~62 |
+| 20:57 | Edited frontend/src/api/axiosClient.ts | added nullish coalescing | ~233 |
+| 20:57 | Edited frontend/src/constants/errorCodes.ts | 6→7 lines | ~155 |
+| 20:58 | Created frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx | — | ~1728 |
+| 20:58 | Created frontend/src/components/NicknameEntryForm/index.ts | — | ~27 |
+| 20:58 | Created frontend/src/components/WaitingScreen/WaitingScreen.tsx | — | ~1433 |
+| 20:58 | Created frontend/src/components/WaitingScreen/index.ts | — | ~24 |
+| 20:58 | Created frontend/src/components/KickedNotice/KickedNotice.tsx | — | ~533 |
+| 20:58 | Created frontend/src/components/KickedNotice/index.ts | — | ~24 |
+| 20:59 | Created frontend/src/hooks/usePlayerGame.ts | — | ~1439 |
+| 20:59 | Created frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | — | ~2054 |
+| 21:00 | Created frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | — | ~1495 |
+| 21:00 | Created frontend/src/pages/PlayerGamePage/index.ts | — | ~30 |
+| 21:00 | Edited frontend/src/routes/routes.tsx | added 1 import(s) | ~76 |
+| 21:00 | Edited frontend/src/routes/routes.tsx | 6→8 lines | ~74 |
+| 21:00 | Created frontend/src/pages/JoinPage/JoinPage.tsx | — | ~1883 |
+| 21:01 | Edited frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx | 6→6 lines | ~32 |
+| 21:03 | Created frontend/src/hooks/useSessionToken.ts | — | ~550 |
+| 21:03 | Created frontend/src/hooks/usePlayerGame.ts | — | ~1464 |
+| 21:03 | Edited frontend/src/hooks/usePlayerGame.ts | modified if() | ~66 |
+| 21:03 | Edited frontend/src/hooks/usePlayerGame.ts | 3→3 lines | ~34 |
+| 21:03 | Edited frontend/src/hooks/usePlayerGame.ts | inline fix | ~21 |
+| 21:04 | Edited frontend/src/components/KickedNotice/KickedNotice.tsx | 3→3 lines | ~53 |
+| 21:05 | Edited frontend/src/components/KickedNotice/KickedNotice.tsx | inline fix | ~15 |

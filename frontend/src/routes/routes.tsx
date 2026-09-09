@@ -8,6 +8,7 @@ import { HostGamePage } from '../pages/HostGamePage/index.ts';
 import { JoinPage } from '../pages/JoinPage/JoinPage.tsx';
 import { LoginPage } from '../pages/LoginPage/LoginPage.tsx';
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage.tsx';
+import { PlayerGamePage } from '../pages/PlayerGamePage/index.ts';
 import { QuizEditorPage } from '../pages/QuizEditorPage/index.ts';
 import { QuizLibraryPage } from '../pages/QuizLibraryPage/index.ts';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
@@ -19,6 +20,8 @@ export function AppRoutes() {
         <Route index element={<HomePage />} />
         <Route path="join" element={<JoinPage />} />
       </Route>
+
+      <Route path="play/:gameId" element={<PlayerGamePage />} />
 
       <Route element={<AuthLayout />}>
         <Route path="login" element={<LoginPage />} />

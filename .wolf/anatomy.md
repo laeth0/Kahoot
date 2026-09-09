@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T16:15:32.899Z
-> Files: 213 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T18:05:01.899Z
+> Files: 228 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -390,8 +390,50 @@
 ## frontend/src/api/
 
 - `authService.ts` — Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`. (~505 tok)
-- `axiosClient.ts` — Centralized Axios client: base URL from configuration, bearer-token injection, (~438 tok)
+- `axiosClient.ts` — Exports TOKEN_STORAGE_KEY, USER_STORAGE_KEY, REFRESH_TOKEN_STORAGE_KEY, ACCESS_TOKEN_EXPIRES_KEY + 3 (~781 tok)
 - `gameService.ts` — Server game-state values (must match `Kahoot.Domain.Games.GameStatus`). (~270 tok)
+
+## frontend/src/components/KickedNotice/
+
+- `index.ts` (~24 tok)
+- `KickedNotice.tsx` — KickedNotice (~527 tok)
+
+## frontend/src/components/NicknameEntryForm/
+
+- `index.ts` (~27 tok)
+- `NicknameEntryForm.tsx` — NicknameEntryForm (~1728 tok)
+
+## frontend/src/components/WaitingScreen/
+
+- `index.ts` (~24 tok)
+- `WaitingScreen.tsx` — pulseKeyframes (~1433 tok)
+
+## frontend/src/constants/
+
+- `errorCodes.ts` — Exports ERROR_MESSAGES, getFriendlyErrorMessage (~346 tok)
+
+## frontend/src/hooks/
+
+- `usePlayerGame.ts` — Exports PlayerState, usePlayerGame (~1441 tok)
+- `useSessionToken.ts` — Exports PlayerSession, getSession, saveSession, clearSession, useSessionToken (~550 tok)
+
+## frontend/src/pages/JoinPage/
+
+- `JoinPage.tsx` — SIX_DIGIT_PIN (~1883 tok)
+
+## frontend/src/pages/PlayerGamePage/
+
+- `index.ts` (~30 tok)
+- `PlayerGamePage.tsx` — NoticeCard (~1493 tok)
+
+## frontend/src/realtime/
+
+- `events.ts` — Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 10 more (~780 tok)
+- `gameHub.ts` — Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect (~468 tok)
+
+## frontend/src/routes/
+
+- `routes.tsx` — AppRoutes (~546 tok)
 
 ## load-tests/
 
