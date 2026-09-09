@@ -20,7 +20,7 @@ public sealed class Answer
 
     public int ResponseTimeMs { get; set; }
 
-    public DateTime SubmittedAtUtc { get; set; }
+    public DateTime SubmittedAt { get; set; }
 
     public GameSession? GameSession { get; set; }
 

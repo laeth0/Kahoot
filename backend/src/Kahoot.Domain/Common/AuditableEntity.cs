@@ -4,7 +4,7 @@ public abstract class AuditableEntity
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
 
-    public DateTime CreatedAtUtc { get; set; }
+    public DateTime CreatedAt { get; set; }
 
-    public DateTime UpdatedAtUtc { get; set; }
+    public DateTime UpdatedAt { get; set; }
 }

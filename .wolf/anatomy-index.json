@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T07:50:53.190Z",
+    "lastScanned": "2026-09-09T07:54:04.150Z",
     "fileCount": 28,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "bacf92ab22de57541840b8250a06c7eb970a775df5e712a0f0625fa6549fe88b",
-    "storeUpdatedAt": "2026-09-09T07:50:53.204Z",
-    "rootHash": "c3eaf1aeef31f526"
+    "renderedHash": "97e81cbdb84fd644e24dc6ad71622ace9fff65817d2acf9ed5a967659a0e0f8e",
+    "storeUpdatedAt": "2026-09-09T07:54:04.161Z",
+    "rootHash": "08d4cfebfde15cb5"
   },
   "files": {
     "AGENTS.md": {
@@ -57,11 +57,11 @@
     },
     "backend/src/Kahoot.Domain/Common/AuditableEntity.cs": {
       "description": "Class: AuditableEntity",
-      "tokens": 62,
-      "hash": "dec43727a962b0a7",
-      "size": 229,
-      "mtimeMs": 1788939385275.9087,
-      "updatedAt": "2026-09-09T07:36:25.511Z",
+      "tokens": 60,
+      "hash": "96699479f727ae3b",
+      "size": 223,
+      "mtimeMs": 1788940415240.9556,
+      "updatedAt": "2026-09-09T07:53:35.384Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Common/DomainException.cs": {
@@ -84,11 +84,11 @@
     },
     "backend/src/Kahoot.Domain/Hosts/RefreshToken.cs": {
       "description": "Class: RefreshToken",
-      "tokens": 120,
-      "hash": "da91b97a3fb45f59",
-      "size": 449,
-      "mtimeMs": 1788939393459.5332,
-      "updatedAt": "2026-09-09T07:36:33.707Z",
+      "tokens": 118,
+      "hash": "0f2dde8d9b650f4b",
+      "size": 440,
+      "mtimeMs": 1788940420207.993,
+      "updatedAt": "2026-09-09T07:53:40.344Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Quizzes/Quiz.cs": {
@@ -147,29 +147,29 @@
     },
     "backend/src/Kahoot.Domain/Games/GameSession.cs": {
       "description": "Class: GameSession",
-      "tokens": 231,
-      "hash": "8eb6cc2fe075045b",
-      "size": 866,
-      "mtimeMs": 1788939416491.391,
-      "updatedAt": "2026-09-09T07:36:56.702Z",
+      "tokens": 228,
+      "hash": "b3998b1b3db8f0aa",
+      "size": 854,
+      "mtimeMs": 1788940426271.402,
+      "updatedAt": "2026-09-09T07:53:46.406Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Games/Participant.cs": {
       "description": "Class: Participant",
-      "tokens": 189,
-      "hash": "b1d32cf670b93436",
-      "size": 708,
-      "mtimeMs": 1788939419460.0437,
-      "updatedAt": "2026-09-09T07:36:59.687Z",
+      "tokens": 188,
+      "hash": "b090dab668c31aba",
+      "size": 702,
+      "mtimeMs": 1788940431818.9492,
+      "updatedAt": "2026-09-09T07:53:51.991Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Games/Answer.cs": {
       "description": "Class: Answer",
-      "tokens": 189,
-      "hash": "8bd8065b66eb0273",
-      "size": 707,
-      "mtimeMs": 1788939422403.3652,
-      "updatedAt": "2026-09-09T07:37:02.693Z",
+      "tokens": 188,
+      "hash": "c57c4565a665992b",
+      "size": 704,
+      "mtimeMs": 1788940437503.1072,
+      "updatedAt": "2026-09-09T07:53:57.670Z",
       "source": "hook"
     },
     "backend/projectSchema.dbml": {
@@ -255,11 +255,11 @@
     },
     "backend/src/Kahoot.Infrastructure/Persistence/Interceptors/AuditableEntityInterceptor.cs": {
       "description": "Class: AuditableEntityInterceptor",
-      "tokens": 442,
-      "hash": "3224f0cd6fbcaf27",
-      "size": 1655,
-      "mtimeMs": 1788940253011.618,
-      "updatedAt": "2026-09-09T07:50:53.189Z",
+      "tokens": 439,
+      "hash": "c1c203b47ea77cfe",
+      "size": 1646,
+      "mtimeMs": 1788940443987.6704,
+      "updatedAt": "2026-09-09T07:54:04.149Z",
       "source": "hook"
     }
   },

@@ -14,7 +14,7 @@ public sealed class Participant : AuditableEntity
 
     public string? ConnectionId { get; set; }
 
-    public DateTime LastSeenAtUtc { get; set; }
+    public DateTime LastSeenAt { get; set; }
 
     public int TotalScore { get; set; }
 
@@ -22,7 +22,7 @@ public sealed class Participant : AuditableEntity
 
     public bool IsRemoved { get; set; }
 
-    public DateTime? RemovedAtUtc { get; set; }
+    public DateTime? RemovedAt { get; set; }
 
     public GameSession? GameSession { get; set; }
 

@@ -18,13 +18,13 @@ public sealed class GameSession : AuditableEntity
 
     public int? CurrentQuestionIndex { get; set; }
 
-    public DateTime? CurrentQuestionStartedAtUtc { get; set; }
+    public DateTime? CurrentQuestionStartedAt { get; set; }
 
-    public DateTime? CurrentQuestionEndsAtUtc { get; set; }
+    public DateTime? CurrentQuestionEndsAt { get; set; }
 
-    public DateTime? StartedAtUtc { get; set; }
+    public DateTime? StartedAt { get; set; }
 
-    public DateTime? FinishedAtUtc { get; set; }
+    public DateTime? FinishedAt { get; set; }
 
     public Quiz? Quiz { get; set; }
 

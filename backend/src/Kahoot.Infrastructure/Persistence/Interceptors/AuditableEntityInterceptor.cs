@@ -37,12 +37,12 @@ public sealed class AuditableEntityInterceptor(TimeProvider timeProvider) : Save
         {
             if (entry.State is EntityState.Added)
             {
-                entry.Property(e => e.CreatedAtUtc).CurrentValue = nowUtc;
-                entry.Property(e => e.UpdatedAtUtc).CurrentValue = nowUtc;
+                entry.Property(e => e.CreatedAt).CurrentValue = nowUtc;
+                entry.Property(e => e.UpdatedAt).CurrentValue = nowUtc;
             }
             else if (entry.State is EntityState.Modified)
             {
-                entry.Property(e => e.UpdatedAtUtc).CurrentValue = nowUtc;
+                entry.Property(e => e.UpdatedAt).CurrentValue = nowUtc;
             }
         }
     }
