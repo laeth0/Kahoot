@@ -16,6 +16,7 @@ description: chronological action log per session, consolidated weekly
 | 10:03 | Removed .opencode and .cursor folders | .opencode, .cursor | success | ~50 |
 | 10:08 | Scaffolded .NET 10 Clean Architecture backend, configured AGENTS.md libraries, and created Dockerfile | backend/Kahoot.sln, backend/Dockerfile | success | ~400 |
 | 10:11 | Added backend .gitignore, frontend Dockerfile + nginx.conf, and root docker-compose.yml | docker-compose.yml, frontend/Dockerfile, backend/.gitignore | success | ~250 |
+| 10:12 | Removed template files (WeatherForecast*, Kahoot.Api.http, appsettings.Development.json) | backend/src/Kahoot.Api/ | success | ~80 |
 
 ## Session: 2026-09-09 10:05
 

@@ -22,6 +22,7 @@ budget_tokens: 1000
 - **Cleanup:** Removed `.opencode` and `.cursor` directories.
 - **Backend Architecture:** Created .NET 10 Clean Architecture solution (`Kahoot.sln`) with `Domain`, `Application`, `Infrastructure`, and `Api` projects. Installed required stack (`EF Core 10`, `PostgreSQL/Npgsql`, `MediatR`, `FluentValidation`, `Mapster`, `Scrutor`, `Scalar.AspNetCore`, `SignalR`). Added `backend/.gitignore`.
 - **Containerization:** Created `backend/Dockerfile`, `backend/.dockerignore`, `frontend/Dockerfile`, `frontend/nginx.conf`, `frontend/.dockerignore`, and root `docker-compose.yml` (PostgreSQL 17, .NET 10 API, React Vite Nginx). Verified with `docker compose config`.
+- **Backend Cleanup:** Removed template files (`WeatherForecast.cs`, `WeatherForecastController.cs`, `Kahoot.Api.http`, `appsettings.Development.json`) and consolidated settings into `appsettings.json`. Build verified cleanly.
 
 ---
 
