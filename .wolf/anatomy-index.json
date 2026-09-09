@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:18:20.866Z",
+    "lastScanned": "2026-09-09T08:19:11.720Z",
     "fileCount": 48,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "8c70f6021186ba75b18ca32a626236e8cae7180ad618aa494739e89fdf89711c",
-    "storeUpdatedAt": "2026-09-09T08:18:20.881Z",
-    "rootHash": "76e6ae06ec4b40ac"
+    "renderedHash": "63ed5027d5257e2535886a17a38dd9e380d08a103710d2f9a68d9ea6142bb57f",
+    "storeUpdatedAt": "2026-09-09T08:19:11.731Z",
+    "rootHash": "8c1d1c0e6a57326c"
   },
   "files": {
     "AGENTS.md": {
@@ -246,11 +246,11 @@
     },
     "backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs": {
       "description": "Class: KahootDbContextFactory",
-      "tokens": 223,
-      "hash": "d1c86398be895fd5",
-      "size": 836,
-      "mtimeMs": 1788940244304.4656,
-      "updatedAt": "2026-09-09T07:50:44.428Z",
+      "tokens": 524,
+      "hash": "2f76658c570dd70a",
+      "size": 1965,
+      "mtimeMs": 1788941951576.5105,
+      "updatedAt": "2026-09-09T08:19:11.720Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Infrastructure/Persistence/Interceptors/AuditableEntityInterceptor.cs": {

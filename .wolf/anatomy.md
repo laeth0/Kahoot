@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:18:20.866Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:19:11.720Z
 > Files: 48 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -73,7 +73,7 @@
 ## backend/src/Kahoot.Infrastructure/Persistence/
 
 - `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~334 tok)
-- `KahootDbContextFactory.cs` — Class: KahootDbContextFactory (~223 tok)
+- `KahootDbContextFactory.cs` — Class: KahootDbContextFactory (~524 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/Configurations/
 
