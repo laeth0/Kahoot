@@ -14,7 +14,8 @@ budget_tokens: 1000
 
 <!-- Move items here from "🚀 Next phase" when finished. Group by area. -->
 
-- **Frontend:** Installed all required libraries (`axios`, `zod`, `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`, `react-router-dom` v7, and `@microsoft/signalr`). Build verified.
+- **Frontend:** Installed all required libraries (`axios`, `zod`, `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`, `react-router-dom` v7, `@microsoft/signalr`).
+- **Frontend Tooling:** Configured Prettier (`.prettierrc`, `.prettierignore`), `eslint-plugin-simple-import-sort`, `eslint-config-prettier`, and package scripts (`lint`, `lint:fix`, `format`, `format:check`). Lint and build verified cleanly.
 
 ---
 

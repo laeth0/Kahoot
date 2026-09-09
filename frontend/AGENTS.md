@@ -66,8 +66,8 @@ client-rendered application.
   their component and move a large cohesive style map to a colocated styles file when
   that materially improves readability.
 - Use MUI icons and established icon-button patterns. Accessible names for icon-only
-  controls and non-color state indication are specified in *Accessibility (WCAG 2.2
-  Level AA)*.
+  controls and non-color state indication are specified in _Accessibility (WCAG 2.2
+  Level AA)_.
 
 ## Components and Composition
 
@@ -210,7 +210,7 @@ client-rendered application.
 - Keep one authoritative owner for each field value. Avoid duplicating the same form
   value in component state, a form library, and derived state.
 - Use MUI form controls with their supported label, error, helper-text, required, and
-  `autocomplete` APIs. Follow *Accessibility (WCAG 2.2 Level AA)* for label association,
+  `autocomplete` APIs. Follow _Accessibility (WCAG 2.2 Level AA)_ for label association,
   error identification, and error-summary requirements instead of restating them here.
 - Prevent duplicate non-idempotent submissions and represent pending, validation,
   success, and recoverable failure states explicitly.
@@ -307,8 +307,8 @@ Apply this section only when React 19 or a compatible later version is installed
   and metadata through the shared metadata boundary, ensure the destination exposes one
   meaningful primary heading, and move focus intentionally to the main region or its
   heading. Do not move focus for trivial same-page state changes such as opening a
-  filter or switching a tab. See *Accessibility (WCAG 2.2 Level AA)* and *SEO and Search
-  Discoverability*.
+  filter or switching a tab. See _Accessibility (WCAG 2.2 Level AA)_ and _SEO and Search
+  Discoverability_.
 
 ## MUI Responsive Design
 
@@ -326,8 +326,8 @@ Apply this section only when React 19 or a compatible later version is installed
 - Use correctly sized images, modern formats, `srcset`, `sizes`, lazy loading for
   below-the-fold assets, and deliberate font loading through browser, build-tool, MUI,
   and deployment capabilities. Do not introduce `next/image`, `next/font`, or another
-  Next.js-only asset utility. Alternative text and layout-shift rules are in *SEO and
-  Search Discoverability*.
+  Next.js-only asset utility. Alternative text and layout-shift rules are in _SEO and
+  Search Discoverability_.
 
 ## Accessibility (WCAG 2.2 Level AA)
 
@@ -362,7 +362,7 @@ stricter rule.
   sticky headers, drawers, dialogs, or floating controls.
 - **Focus on overlays and navigation.** When a dialog closes, return focus to the
   control that opened it. On route navigation that replaces main content, move focus
-  deliberately (see *Routing Integration*). Do not shift focus for trivial same-page
+  deliberately (see _Routing Integration_). Do not shift focus for trivial same-page
   state changes.
 - **Accessible names.** Every control has a non-empty accessible name — especially icon
   buttons and close, menu, pagination, search, and upload controls. An icon is not a
@@ -408,8 +408,8 @@ stricter rule.
   with sound without an explicit requirement.
 - **Images and icons.** Informative images get descriptive `alt`; decorative images get
   `alt=""`; never omit `alt`. Hide a decorative icon from assistive technology
-  (`aria-hidden`) when its control already has an accessible name. See *SEO and Search
-  Discoverability* for `alt` content quality.
+  (`aria-hidden`) when its control already has an accessible name. See _SEO and Search
+  Discoverability_ for `alt` content quality.
 - **Language.** The document declares a correct `<html lang>`. Mark inline passages in
   another language with `lang` when pronunciation matters.
 - **Accessible authentication.** Do not require users to memorize values, solve
@@ -454,11 +454,11 @@ model.
   bookmarkable; treat query parameters deliberately; do not create multiple indexable
   URLs with identical content without a canonical strategy.
 - **Crawlable navigation.** Internal destination links use React Router `Link` /
-  `NavLink` and render real `<a href>` markup (see *Routing Integration*). Do not build
+  `NavLink` and render real `<a href>` markup (see _Routing Integration_). Do not build
   navigation from click handlers on `Box` / `div`, and do not use `window.location` for
   ordinary internal navigation.
 - **Semantic structure.** Meaningful HTML and heading hierarchy are required for SEO as
-  well as accessibility — follow *Accessibility (WCAG 2.2 Level AA)*. Do not substitute
+  well as accessibility — follow _Accessibility (WCAG 2.2 Level AA)_. Do not substitute
   `Box` / `div` / `span` where a semantic element is required.
 - **Meaningful DOM content.** Important content exists as real rendered text in the DOM.
   Do not place primary content only in CSS-generated content, images, canvas,
@@ -539,7 +539,7 @@ model.
 
 ## Accessibility and SEO Verification
 
-Run these checks in addition to *React Verification* for any page touched by an
+Run these checks in addition to _React Verification_ for any page touched by an
 accessibility or SEO change.
 
 - Keyboard and focus: complete the page with the keyboard alone — every control

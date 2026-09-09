@@ -17,7 +17,6 @@ frontend/
 ├── package.json
 ├── package-lock.json
 ├── README.md
-├── STRUCTURE.md
 ├── vite.config.js
 ├── public/
 └── src/
@@ -25,39 +24,15 @@ frontend/
     ├── index.css
     ├── main.jsx
     ├── api/
-    │   ├── attendanceSession.service.js
-    │   ├── auth.service.js
     │   ├── axiosClient.js
-    │   ├── downloadBlob.js
-    │   ├── faceAttendance.service.js
-    │   ├── notifications.service.js
-    │   ├── studentCourses.service.js
-    │   ├── studentDashboard.service.js
-    │   ├── studentProfile.service.js
-    │   ├── studentWithdrawal.service.js
-    │   ├── teacherAttendance.service.js
-    │   ├── teacherCourses.service.js
-    │   ├── teacherExcuses.service.js
-    │   ├── teacherProfile.service.js
-    │   ├── teacherReports.service.js
-    │   └── teacherStudents.service.js
     ├── components/
-    │   ├── CameraCapture/
-    │   │   └── CameraCapture.jsx
-    │   ├── ExcuseSubmissionDialog/
-    │   │   └── ExcuseSubmissionDialog.jsx
     │   ├── Footer/
     │   │   ├── Footer.jsx
     │   │   └── Footer.module.css
     │   ├── Navbar/
     │   │   ├── Navbar.jsx
     │   │   └── Navbar.module.css
-    │   ├── NotificationBell/
-    │   │   └── NotificationBell.jsx
-    │   └── NotificationPopover/
     ├── constants/
-    │   ├── attendance.js
-    │   ├── notifications.js
     │   ├── roles.js
     │   └── withdrawal.js
     ├── context/
@@ -161,6 +136,7 @@ frontend/
 ## Architectural Breakdown
 
 ### 1. Root Configuration & Tooling
+
 - `Dockerfile` & `.dockerignore`: Container packaging for frontend deployment.
 - `eslint.config.js`: ESLint configuration for code quality.
 - `index.html`: Main HTML entry point.
@@ -169,12 +145,15 @@ frontend/
 - `.env`: Environment variables (API base URL, endpoints).
 
 ### 2. Core Application Entry (`src/`)
+
 - `main.jsx`: Mounts the React application to the DOM and initializes root providers.
 - `App.jsx`: Configures React Router, theme provider, and global context providers.
 - `index.css`: Global base styles and CSS reset.
 
 ### 3. API Services (`src/api/`)
+
 Centralized API communication layer using Axios:
+
 - `axiosClient.js`: Configured Axios instance with request and response interceptors.
 - `auth.service.js`: Authentication endpoints (login, registration, tokens).
 - `attendanceSession.service.js`: Live attendance session management.
@@ -193,7 +172,9 @@ Centralized API communication layer using Axios:
 - `teacherStudents.service.js`: Student roster inspection and course-level enrollment tracking.
 
 ### 4. Shared Components (`src/components/`)
+
 Reusable presentational and functional UI components:
+
 - `CameraCapture/`: Webcam capture interface for face recognition and enrollment.
 - `ExcuseSubmissionDialog/`: Modal dialog for submitting medical or excused absence requests.
 - `Footer/`: Application footer component with CSS module styles.
@@ -202,40 +183,51 @@ Reusable presentational and functional UI components:
 - `NotificationPopover/`: Popover panel rendering notification lists.
 
 ### 5. Constants (`src/constants/`)
+
 Immutable definitions and shared enumeration constants:
+
 - `attendance.js`: Attendance status codes and session states.
 - `notifications.js`: Notification category types and intervals.
 - `roles.js`: System roles (`Student`, `Teacher`, `Admin`).
 - `withdrawal.js`: Withdrawal case statuses and excuse states.
 
 ### 6. State Contexts (`src/context/`)
+
 React Context providers for global application state:
+
 - `AuthContext.jsx`: Manages user authentication state, tokens, and active profile.
 - `NotificationsContext.jsx`: Handles notification polling, real-time updates, and unread counts.
 - `useNotifications.js`: Custom hook providing direct access to the notifications context.
 
 ### 7. Custom Hooks (`src/hooks/`)
+
 Shared hooks encapsulating reusable asynchronous and query patterns:
+
 - `useApi.js`: Generic API invocation wrapper managing loading, error, and data states.
 - `useCourses.js`: Common hook for retrieving course collections.
 - `useTeacherCourseOptions.js`: Formats teacher courses for selector dropdowns.
 
 ### 8. Layouts (`src/layouts/`)
+
 Structural wrapper components for nested routing:
+
 - `RootLayout.jsx`: Top-level layout housing global shell elements.
 - `AuthLayout.jsx`: Centered container layout for authentication screens.
 - `DashboardLayout.jsx` & `DashboardLayout.module.css`: Main dashboard shell with responsive navigation and content viewports.
 
 ### 9. Feature Pages (`src/pages/`)
+
 Feature-scoped pages with dedicated sub-components, CSS modules/styles, and controller hooks:
 
 #### Authentication & General
+
 - `LoginPage/`: User login screen.
 - `RegisterPage/`: Student and teacher onboarding form.
 - `NotFoundPage/`: 404 error page.
 - `PlaceholderPage/`: Temporary fallback page for pending routes.
 
 #### Student Workflows
+
 - `StudentDashboard/`: Student overview displaying attendance summaries and active courses.
 - `StudentCourses/`: Course list with attendance records and excuse actions.
 - `StudentProfile/`: Profile settings and face enrollment dialog.
@@ -243,6 +235,7 @@ Feature-scoped pages with dedicated sub-components, CSS modules/styles, and cont
 - `StudentWithdrawal/`: Withdrawal threshold warnings and excuse submission list.
 
 #### Teacher Workflows
+
 - `TeacherDashboard/`: Summary metrics and attendance trends.
 - `TeacherCourses/`: Course management and enrolled student lists.
 - `TeacherAttendance/`: Live attendance session launcher, QR code display, and roster verification.
@@ -251,14 +244,18 @@ Feature-scoped pages with dedicated sub-components, CSS modules/styles, and cont
 - `TeacherStudents/`: Student attendance monitoring and per-course records.
 
 ### 10. Routing (`src/routes/`)
+
 Route configuration and route guarding:
+
 - `routes.jsx`: Central declarative route definitions for React Router DOM.
 - `ProtectedRoute.jsx`: Role-based route guard redirecting unauthorized users.
 - `roleHelpers.js`: Utilities for checking role authorization and active permissions.
 
 ### 11. Styles & Theme (`src/styles/`, `src/theme/`)
+
 - `styles/tokens.css`: CSS custom properties for spacing, colors, and shadows.
 - `theme/theme.js`: Material-UI theme customization (palette, typography, component overrides).
 
 ### 12. Utilities (`src/utils/`)
+
 - `geolocation.js`: Geolocation capture and radius verification helpers.
