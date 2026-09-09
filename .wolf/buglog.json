@@ -492,6 +492,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T15:23:28.780Z"
+    },
+    {
+      "id": "bug-032",
+      "timestamp": "2026-09-09T15:46:10.392Z",
+      "error_message": "Incorrect value in code",
+      "file": "load-tests/run.sh",
+      "root_cause": "Had '2,26p'",
+      "fix": "Changed to 'NR>1 && /^#/{sub(/^# ?/,\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "sh"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-09-09T15:46:34.453Z"
     }
   ]
 }

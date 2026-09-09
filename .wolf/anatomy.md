@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:44:28.964Z
-> Files: 211 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:46:34.431Z
+> Files: 212 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -398,6 +398,7 @@
 - `docker-compose.railway-sim.yml` — Kahoot backend + Postgres, tuned to approximate ONE small Railway instance: (~777 tok)
 - `README.md` — Project documentation (~4474 tok)
 - `run-all.js` — fs: cooldownSeconds, loadDotenv, parseArgs + 9 more (~2760 tok)
+- `run.sh` — run.sh - one command to load-test the Kahoot backend. (~1192 tok)
 
 ## load-tests/config/
 

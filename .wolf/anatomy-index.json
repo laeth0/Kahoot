@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:44:28.964Z",
-    "fileCount": 211,
+    "lastScanned": "2026-09-09T15:46:34.431Z",
+    "fileCount": 212,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "d8aa5a61cc1abead4f1ebfd52068527988ab32fd70b03c58679c51c4b72e3d4a",
-    "storeUpdatedAt": "2026-09-09T15:44:28.972Z",
-    "rootHash": "35b04a62cc8b2cf4"
+    "renderedHash": "fbea006c38ce12156efa2fba72e209538d9959b7427d1ceda734d3ed0b2ef302",
+    "storeUpdatedAt": "2026-09-09T15:46:34.442Z",
+    "rootHash": "3dba42091847383f"
   },
   "files": {
     "AGENTS.md": {
@@ -2703,6 +2703,15 @@
       "size": 1780,
       "mtimeMs": 1788968497636.6716,
       "updatedAt": "2026-09-09T15:41:37.766Z",
+      "source": "hook"
+    },
+    "load-tests/run.sh": {
+      "description": "run.sh - one command to load-test the Kahoot backend.",
+      "tokens": 1192,
+      "hash": "e9c9c4cd0d4fde44",
+      "size": 4470,
+      "mtimeMs": 1788968794324.89,
+      "updatedAt": "2026-09-09T15:46:34.431Z",
       "source": "hook"
     }
   },
