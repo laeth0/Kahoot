@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { hostGameService, type HostGameStateResponse } from '../api/hostGameService.ts';
+import { normalizeGameStatus } from '../constants/gameStatus.ts';
 import type { GameParticipantResponse, HostQuestionResponse } from '../realtime/events.ts';
 import { invokeJoinAsHost } from '../realtime/gameHub.ts';
 import { useGameHubConnection } from './useGameHubConnection.ts';
@@ -30,7 +31,10 @@ export function useHostGame(gameId: string | undefined) {
       .getState(gameId)
       .then((data) => {
         if (isMounted) {
-          setGameState(data);
+          setGameState({
+            ...data,
+            status: normalizeGameStatus(data.status),
+          });
           const pMap = new Map<string, GameParticipantResponse>();
           data.participants.forEach((p) => pMap.set(p.id, p));
           setParticipantsMap(pMap);

@@ -19,6 +19,7 @@ import { HostGameControls } from '../../components/HostGameControls/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { ParticipantGrid } from '../../components/ParticipantGrid/index.ts';
 import { PlayerCountBadge } from '../../components/PlayerCountBadge/index.ts';
+import { isFinishedStatus, isLobbyStatus } from '../../constants/gameStatus.ts';
 import { useHostGame } from '../../hooks/useHostGame.ts';
 import { GameLayout } from '../../layouts/GameLayout.tsx';
 
@@ -121,8 +122,8 @@ export function HostGamePage() {
     );
   }
 
-  const isLobby = gameState.status === 'Lobby' || gameState.status === 'Created';
-  const isFinished = gameState.status === 'Finished';
+  const isLobby = isLobbyStatus(gameState.status);
+  const isFinished = isFinishedStatus(gameState.status);
 
   return (
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>

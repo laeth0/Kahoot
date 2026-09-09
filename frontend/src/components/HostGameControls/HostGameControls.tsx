@@ -3,7 +3,7 @@ import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import { Box, Button, CircularProgress, Paper, Stack, Tooltip } from '@mui/material';
 import { useState } from 'react';
 
-import type { GameStatus } from '../../constants/gameStatus.ts';
+import { type GameStatus, isFinishedStatus, isLobbyStatus } from '../../constants/gameStatus.ts';
 import { ConfirmDialog } from '../ConfirmDialog/index.ts';
 
 export interface HostGameControlsProps {
@@ -23,7 +23,7 @@ export function HostGameControls({
 }: HostGameControlsProps) {
   const [showEndGameConfirm, setShowEndGameConfirm] = useState(false);
 
-  const canStart = status === 'Lobby' || status === 'Created';
+  const canStart = isLobbyStatus(status);
   const hasEnoughPlayers = participantCount >= 1;
   const isStartDisabled = !canStart || !hasEnoughPlayers || isActionPending;
 
@@ -60,7 +60,7 @@ export function HostGameControls({
             variant="outlined"
             color="error"
             onClick={() => setShowEndGameConfirm(true)}
-            disabled={isActionPending || status === 'Finished'}
+            disabled={isActionPending || isFinishedStatus(status)}
             startIcon={<CancelIcon />}
             sx={{
               fontWeight: 700,
