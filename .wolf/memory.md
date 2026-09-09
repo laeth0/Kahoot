@@ -219,3 +219,27 @@ description: chronological action log per session, consolidated weekly
 | 11:52 | Created backend/src/Kahoot.Application/Games/ShowLeaderboard/ShowLeaderboardCommandHandler.cs | — | ~556 |
 | 11:52 | Created backend/src/Kahoot.Application/Games/EndGame/EndGameCommand.cs | — | ~56 |
 | 11:53 | Created backend/src/Kahoot.Application/Games/EndGame/EndGameCommandHandler.cs | — | ~522 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/JoinGame/JoinGameCommand.cs | — | ~60 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/JoinGame/JoinGameCommandValidator.cs | — | ~174 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/JoinGame/JoinGameCommandHandler.cs | — | ~610 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/RemoveParticipant/RemoveParticipantCommand.cs | — | ~51 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/RemoveParticipant/RemoveParticipantCommandHandler.cs | — | ~446 |
+| 11:53 | Created backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommand.cs | — | ~82 |
+| 11:54 | Created backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandValidator.cs | — | ~132 |
+| 11:54 | Created backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandHandler.cs | — | ~1464 |
+| 11:54 | Created backend/src/Kahoot.Application/Games/Reconnect/ReconnectParticipantCommand.cs | — | ~64 |
+| 11:54 | Created backend/src/Kahoot.Application/Games/Reconnect/ReconnectParticipantCommandHandler.cs | — | ~1052 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetHostGameState/GetHostGameStateQuery.cs | — | ~61 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetHostGameState/GetHostGameStateQueryHandler.cs | — | ~806 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetQuestionResults/GetQuestionResultsQuery.cs | — | ~67 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetQuestionResults/GetQuestionResultsQueryHandler.cs | — | ~537 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetLeaderboard/GetLeaderboardQuery.cs | — | ~59 |
+| 11:55 | Created backend/src/Kahoot.Application/Games/GetLeaderboard/GetLeaderboardQueryHandler.cs | — | ~321 |
+| 11:56 | Edited backend/src/Kahoot.Infrastructure/Persistence/KahootDbContext.cs | modified KahootDbContext() | ~91 |
+| 11:56 | Created backend/src/Kahoot.Infrastructure/Security/TokenHasher.cs | — | ~102 |
+| 11:56 | Created backend/src/Kahoot.Infrastructure/Security/SecureTokenGenerator.cs | — | ~138 |
+| 11:56 | Created backend/src/Kahoot.Infrastructure/Persistence/DbExceptionInterpreter.cs | — | ~228 |
+| 11:57 | Created backend/src/Kahoot.Infrastructure/Games/GamePinGenerator.cs | — | ~290 |
+| 11:57 | Created backend/src/Kahoot.Infrastructure/Authentication/JwtTokenService.cs | — | ~438 |
+| 11:57 | Created backend/src/Kahoot.Infrastructure/DependencyInjection.cs | — | ~631 |
+| 11:57 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+7 lines) | ~118 |

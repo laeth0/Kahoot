@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:53:06.308Z
-> Files: 136 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:57:55.314Z
+> Files: 157 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -20,7 +20,7 @@
 
 ## backend/src/Kahoot.Api/
 
-- `appsettings.json` (~193 tok)
+- `appsettings.json` (~254 tok)
 - `Program.cs` — Class: Program (~502 tok)
 
 ## backend/src/Kahoot.Api/Controllers/
@@ -134,10 +134,41 @@
 - `EndQuestionCommand.cs` — Class: EndQuestionCommand (~60 tok)
 - `EndQuestionCommandHandler.cs` — Class: EndQuestionCommandHandler (~647 tok)
 
+## backend/src/Kahoot.Application/Games/GetHostGameState/
+
+- `GetHostGameStateQuery.cs` — Class: GetHostGameStateQuery (~61 tok)
+- `GetHostGameStateQueryHandler.cs` — Class: GetHostGameStateQueryHandler (~806 tok)
+
+## backend/src/Kahoot.Application/Games/GetLeaderboard/
+
+- `GetLeaderboardQuery.cs` — Class: GetLeaderboardQuery (~59 tok)
+- `GetLeaderboardQueryHandler.cs` — Class: GetLeaderboardQueryHandler (~321 tok)
+
+## backend/src/Kahoot.Application/Games/GetQuestionResults/
+
+- `GetQuestionResultsQuery.cs` — Class: GetQuestionResultsQuery (~67 tok)
+- `GetQuestionResultsQueryHandler.cs` — Class: GetQuestionResultsQueryHandler (~537 tok)
+
+## backend/src/Kahoot.Application/Games/JoinGame/
+
+- `JoinGameCommand.cs` — Class: JoinGameCommand (~60 tok)
+- `JoinGameCommandHandler.cs` — Class: JoinGameCommandHandler (~610 tok)
+- `JoinGameCommandValidator.cs` — Class: JoinGameCommandValidator (~174 tok)
+
 ## backend/src/Kahoot.Application/Games/Leaderboard/
 
 - `ILeaderboardService.cs` — Class: ILeaderboardService (~100 tok)
 - `LeaderboardService.cs` — Class: LeaderboardService (~186 tok)
+
+## backend/src/Kahoot.Application/Games/Reconnect/
+
+- `ReconnectParticipantCommand.cs` — Class: ReconnectParticipantCommand (~64 tok)
+- `ReconnectParticipantCommandHandler.cs` — Class: ReconnectParticipantCommandHandler (~1052 tok)
+
+## backend/src/Kahoot.Application/Games/RemoveParticipant/
+
+- `RemoveParticipantCommand.cs` — Class: RemoveParticipantCommand (~51 tok)
+- `RemoveParticipantCommandHandler.cs` — Class: RemoveParticipantCommandHandler (~446 tok)
 
 ## backend/src/Kahoot.Application/Games/Scoring/
 
@@ -158,6 +189,12 @@
 
 - `StartNextQuestionCommand.cs` — Class: StartNextQuestionCommand (~63 tok)
 - `StartNextQuestionCommandHandler.cs` — Class: StartNextQuestionCommandHandler (~627 tok)
+
+## backend/src/Kahoot.Application/Games/SubmitAnswer/
+
+- `SubmitAnswerCommand.cs` — Class: SubmitAnswerCommand (~82 tok)
+- `SubmitAnswerCommandHandler.cs` — Class: SubmitAnswerCommandHandler (~1464 tok)
+- `SubmitAnswerCommandValidator.cs` — Class: SubmitAnswerCommandValidator (~132 tok)
 
 ## backend/src/Kahoot.Application/Quizzes/Common/
 
@@ -255,11 +292,20 @@
 
 ## backend/src/Kahoot.Infrastructure/
 
-- `DependencyInjection.cs` — Class: DependencyInjection (~520 tok)
+- `DependencyInjection.cs` — Class: DependencyInjection (~631 tok)
+
+## backend/src/Kahoot.Infrastructure/Authentication/
+
+- `JwtTokenService.cs` — Class: JwtTokenService (~438 tok)
+
+## backend/src/Kahoot.Infrastructure/Games/
+
+- `GamePinGenerator.cs` — Class: GamePinGenerator (~290 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/
 
-- `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~334 tok)
+- `DbExceptionInterpreter.cs` — Class: DbExceptionInterpreter (~228 tok)
+- `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~353 tok)
 - `KahootDbContextFactory.cs` — Class: KahootDbContextFactory (~524 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/Configurations/
@@ -280,6 +326,8 @@
 ## backend/src/Kahoot.Infrastructure/Security/
 
 - `BcryptPasswordHasher.cs` — Class: BcryptPasswordHasher (~133 tok)
+- `SecureTokenGenerator.cs` — Class: SecureTokenGenerator (~138 tok)
+- `TokenHasher.cs` — Class: TokenHasher (~102 tok)
 
 ## backend/src/Kahoot.Infrastructure/Startup/
 
