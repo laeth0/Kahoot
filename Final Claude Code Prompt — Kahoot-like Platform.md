@@ -16,7 +16,7 @@ Use:
 
 ## Frontend
 
-- Next.js
+- React
 - TypeScript
 - Responsive UI
 - Mobile-first participant experience
@@ -60,7 +60,7 @@ flowchart TD
     Host["Quiz Host"]
 
     Vercel["Vercel
-    Next.js Frontend"]
+    React Frontend"]
 
     Railway["Railway
     ASP.NET Core
