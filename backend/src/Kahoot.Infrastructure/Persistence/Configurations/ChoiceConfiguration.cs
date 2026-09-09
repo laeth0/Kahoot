@@ -11,11 +11,9 @@ public sealed class ChoiceConfiguration : IEntityTypeConfiguration<Choice>
         builder.HasKey(choice => choice.Id);
         builder.Property(choice => choice.Id).ValueGeneratedNever();
 
-        builder.Property(choice => choice.Text).HasMaxLength(300).IsRequired();
+        builder.Property(choice => choice.Text).HasMaxLength(300);
+        builder.Property(choice => choice.ImageUrl).HasMaxLength(2048);
         builder.Property(choice => choice.IsCorrect).HasDefaultValue(false);
-
-        builder.Property(choice => choice.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(choice => choice.UpdatedAt).HasDefaultValueSql("now()");
 
         builder.HasIndex(choice => new { choice.QuestionId, choice.OrderIndex })
             .IsUnique()

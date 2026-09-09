@@ -15,12 +15,16 @@ budget_tokens: 2000
 - Build the system phase by phase; backend first, and within the backend the domain layer before anything else. Do not jump ahead to Application/Infrastructure/Api unless asked.
 - Roles are **Host** (creates/runs games) and **Participant/Player** (plays). Do NOT rename the entities (kept `Host` / `Participant`). "admin"/"user" is loose conversational wording for the same two roles.
 - **No email anywhere in the system.** Host logs in with **username + password**. Participants never log in — they open a shared link, enter a handle name, and wait for the host to start.
+- **Frontend Theme & Branding:** Strictly **Light Theme only** (`mode: 'light'`). No dark theme switchers or dark mode variants. Branding and color palette are derived directly from the IEEEXtreme Palestine Section logo (`frontend/src/assets/logo.jpeg`): Primary is IEEE Ocean Blue `#00629B`, secondary accent is Radar Cyan `#0284C7`, background canvas is `#F4F8FC`, text is `#09131F`.
 - Requirements are split into `docs/functional-requirements.md` + `docs/non-functional-requirements.md` (living spec, keep synced). `docs/Kahoot-like Platform.md` is the untouched original brief.
 - `backend/projectSchema.dbml`: keep it free of `//` comments (user asked). DBML `Note:` annotations are allowed (they render in dbdiagram).
 
 ## Key Learnings
 
 - **Project:** kahoot
+- **Frontend Theme Configuration:** MUI v9 theme is configured in `frontend/src/theme/` (`palette.ts`, `typography.ts`, `components.ts`, `index.ts`) with tokens in `frontend/src/styles/tokens.css`.
+  - Avoid hardcoding text colors directly into typography variants in `typography.ts` so `contrastText` and `color: inherit` function properly on dark-colored containers.
+  - Pass flex alignment (`alignItems`, `justifyContent`) on `Stack` and font styles (`fontWeight`) on `Typography` via `sx` for strict TypeScript type checking.
 - **Backend layout:** .NET 10 Clean Architecture — `Kahoot.Domain` (pure POCO, no package refs), `Kahoot.Application` (MediatR/FluentValidation/Mapster), `Kahoot.Infrastructure` (EF Core 10 + Npgsql + Scrutor), `Kahoot.Api`. Solution file is `backend/Kahoot.slnx`.
 - **backend/AGENTS.md hard rules:** no comments in C# code; every model/relationship change must update `backend/projectSchema.dbml` AND add a new EF Core migration in the same task; migrations are immutable.
 - **NOT using DDD.** Domain entities are ANEMIC — plain data classes, `public T Prop { get; set; }` only. NO constructors, factory methods, mutation methods, computed properties, validation helpers, guard clauses, or domain constants inside entities. All logic (creation, validation, state transitions, scoring, PIN generation) lives in the `Kahoot.Application` layer services/handlers.
@@ -41,3 +45,4 @@ budget_tokens: 2000
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
+- **[2026-09-09] Frontend Light-Only Theme & Logo Palette:** Configured Material UI theme with palette extracted from `logo.jpeg` (`#00629B` primary, `#0284C7` secondary, `#F4F8FC` canvas, `#09131F` text). Hardcoded light mode only (`mode: 'light'`) to meet user specification. Added typography scale, CSS tokens, and component overrides.

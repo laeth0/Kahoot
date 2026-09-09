@@ -13,9 +13,7 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
 
         builder.Property(quiz => quiz.Title).HasMaxLength(200).IsRequired();
         builder.Property(quiz => quiz.Description).HasMaxLength(1000);
-
-        builder.Property(quiz => quiz.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(quiz => quiz.UpdatedAt).HasDefaultValueSql("now()");
+        builder.Property(quiz => quiz.IsPublished).HasDefaultValue(false);
 
         builder.HasIndex(quiz => quiz.HostId).HasDatabaseName("ix_quiz_host_id");
 

@@ -1,6 +1,6 @@
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure.Persistence;
-using Kahoot.Infrastructure.Persistence.Interceptors;
 using Kahoot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,14 +15,15 @@ public static class DependencyInjection
         string connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<AuditableEntityInterceptor>();
-
-        services.AddDbContext<KahootDbContext>((serviceProvider, options) =>
+        services.AddDbContext<KahootDbContext>(options =>
             options
                 .UseNpgsql(connectionString)
-                .UseSnakeCaseNamingConvention()
-                .AddInterceptors(serviceProvider.GetRequiredService<AuditableEntityInterceptor>()));
+                .UseSnakeCaseNamingConvention());
+
+        services.AddOptions<FileStorageOptions>()
+            .Bind(configuration.GetSection(FileStorageOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.Configure<HostSeedOptions>(configuration.GetSection(HostSeedOptions.SectionName));
 

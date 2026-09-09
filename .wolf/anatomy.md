@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:01:06.265Z
-> Files: 41 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:17:11.969Z
+> Files: 44 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -26,6 +26,12 @@
 
 - `IPasswordHasher.cs` — Class: IPasswordHasher (~47 tok)
 
+## backend/src/Kahoot.Application/Common/Storage/
+
+- `FileStorageOptions.cs` — Class: FileStorageOptions (~213 tok)
+- `IFileStorage.cs` — Class: IFileStorage (~49 tok)
+- `ImageSignature.cs` — Class: ImageSignature (~242 tok)
+
 ## backend/src/Kahoot.Domain/Common/
 
 - `AuditableEntity.cs` — Class: AuditableEntity (~60 tok)
@@ -37,26 +43,26 @@
 
 - `Answer.cs` — Class: Answer (~188 tok)
 - `GameErrors.cs` — Class: GameErrors (~76 tok)
-- `GameSession.cs` — Class: GameSession (~228 tok)
+- `GameSession.cs` — Class: GameSession (~232 tok)
 - `GameStatus.cs` — Class: GameStatus (~42 tok)
 - `GameStatusTransitions.cs` — Class: GameStatusTransitions (~269 tok)
 - `InvalidGameStatusTransitionException.cs` — Class: InvalidGameStatusTransitionException (~114 tok)
-- `Participant.cs` — Class: Participant (~188 tok)
+- `Participant.cs` — Class: Participant (~191 tok)
 
 ## backend/src/Kahoot.Domain/Hosts/
 
-- `Host.cs` — Class: Host (~100 tok)
-- `RefreshToken.cs` — Class: RefreshToken (~118 tok)
+- `Host.cs` — Class: Host (~103 tok)
+- `RefreshToken.cs` — Class: RefreshToken (~106 tok)
 
 ## backend/src/Kahoot.Domain/Quizzes/
 
-- `Choice.cs` — Class: Choice (~88 tok)
-- `Question.cs` — Class: Question (~112 tok)
-- `Quiz.cs` — Class: Quiz (~99 tok)
+- `Choice.cs` — Class: Choice (~100 tok)
+- `Question.cs` — Class: Question (~127 tok)
+- `Quiz.cs` — Class: Quiz (~114 tok)
 
 ## backend/src/Kahoot.Infrastructure/
 
-- `DependencyInjection.cs` — Class: DependencyInjection (~533 tok)
+- `DependencyInjection.cs` — Class: DependencyInjection (~520 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/
 
@@ -66,13 +72,13 @@
 ## backend/src/Kahoot.Infrastructure/Persistence/Configurations/
 
 - `AnswerConfiguration.cs` — Class: AnswerConfiguration (~448 tok)
-- `ChoiceConfiguration.cs` — Class: ChoiceConfiguration (~276 tok)
-- `GameSessionConfiguration.cs` — Class: GameSessionConfiguration (~788 tok)
-- `HostConfiguration.cs` — Class: HostConfiguration (~327 tok)
-- `ParticipantConfiguration.cs` — Class: ParticipantConfiguration (~631 tok)
-- `QuestionConfiguration.cs` — Class: QuestionConfiguration (~508 tok)
-- `QuizConfiguration.cs` — Class: QuizConfiguration (~274 tok)
-- `RefreshTokenConfiguration.cs` — Class: RefreshTokenConfiguration (~266 tok)
+- `ChoiceConfiguration.cs` — Class: ChoiceConfiguration (~247 tok)
+- `GameSessionConfiguration.cs` — Class: GameSessionConfiguration (~743 tok)
+- `HostConfiguration.cs` — Class: HostConfiguration (~285 tok)
+- `ParticipantConfiguration.cs` — Class: ParticipantConfiguration (~582 tok)
+- `QuestionConfiguration.cs` — Class: QuestionConfiguration (~482 tok)
+- `QuizConfiguration.cs` — Class: QuizConfiguration (~252 tok)
+- `RefreshTokenConfiguration.cs` — Class: RefreshTokenConfiguration (~245 tok)
 
 ## backend/src/Kahoot.Infrastructure/Persistence/Interceptors/
 

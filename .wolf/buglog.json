@@ -32,6 +32,54 @@
       "related_bugs": [],
       "occurrences": 3,
       "last_seen": "2026-09-09T07:26:49.601Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-09-09T08:14:57.734Z",
+      "error_message": "Significant refactor of HostConfiguration.cs",
+      "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 6→3 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T08:14:57.734Z"
+    },
+    {
+      "id": "bug-004",
+      "timestamp": "2026-09-09T08:15:26.798Z",
+      "error_message": "Significant refactor of GameSessionConfiguration.cs",
+      "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 6→3 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T08:15:26.798Z"
+    },
+    {
+      "id": "bug-005",
+      "timestamp": "2026-09-09T08:15:33.247Z",
+      "error_message": "Significant refactor of ParticipantConfiguration.cs",
+      "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 7→4 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T08:15:33.247Z"
     }
   ]
 }

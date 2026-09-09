@@ -18,9 +18,6 @@ public sealed class ParticipantConfiguration : IEntityTypeConfiguration<Particip
         builder.Property(participant => participant.TotalScore).HasDefaultValue(0);
         builder.Property(participant => participant.IsRemoved).HasDefaultValue(false);
 
-        builder.Property(participant => participant.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(participant => participant.UpdatedAt).HasDefaultValueSql("now()");
-
         builder.HasIndex(participant => participant.SessionTokenHash)
             .IsUnique()
             .HasDatabaseName("uq_participant_session_token");

@@ -19,6 +19,7 @@ budget_tokens: 1000
 - **Frontend Scaffolding:** Created folder structure per `STRUCTURE.md` (no files created).
 - **Frontend Documentation:** Updated `README.md` with complete directory tree, technology stack, directory responsibilities, and scripts guide. Build, lint, and format verified cleanly.
 - **Frontend Assets:** Moved `logo.jpeg` to `frontend/src/assets/logo.jpeg` (and `frontend/public/logo.jpeg`).
+- **Frontend Light Theme & Colors:** Configured custom MUI light theme derived from `logo.jpeg` (`src/theme/palette.ts`, `typography.ts`, `components.ts`, `index.ts`), design tokens (`src/styles/tokens.css`, `src/index.css`), Google Fonts Inter (`index.html`), and verification showcase in `src/App.tsx`. Enforced light theme only. Verified with lint, prettier, build, and browser testing.
 - **Cleanup:** Removed `.opencode` and `.cursor` directories.
 - **Backend Architecture:** Created .NET 10 Clean Architecture solution (`Kahoot.sln`) with `Domain`, `Application`, `Infrastructure`, and `Api` projects. Installed required stack (`EF Core 10`, `PostgreSQL/Npgsql`, `MediatR`, `FluentValidation`, `Mapster`, `Scrutor`, `Scalar.AspNetCore`, `SignalR`). Added `backend/.gitignore`.
 - **Containerization:** Created `backend/Dockerfile`, `backend/.dockerignore`, `frontend/Dockerfile`, `frontend/nginx.conf`, `frontend/.dockerignore`, and root `docker-compose.yml` (PostgreSQL 17, .NET 10 API, React Vite Nginx). Verified with `docker compose config`.

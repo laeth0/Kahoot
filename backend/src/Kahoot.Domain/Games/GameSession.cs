@@ -1,11 +1,12 @@
-using Kahoot.Domain.Common;
 using Kahoot.Domain.Hosts;
 using Kahoot.Domain.Quizzes;
 
 namespace Kahoot.Domain.Games;
 
-public sealed class GameSession : AuditableEntity
+public sealed class GameSession
 {
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
     public Guid QuizId { get; set; }
 
     public Guid HostId { get; set; }

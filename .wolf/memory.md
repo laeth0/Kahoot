@@ -91,3 +91,23 @@ description: chronological action log per session, consolidated weekly
 | 10:57 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+6 lines) | ~67 |
 | 11:01 | Edited backend/projectSchema.dbml | 4→5 lines | ~74 |
 | 11:01 | Edited backend/projectSchema.dbml | 3→4 lines | ~132 |
+| 11:05 | Split docs into functional-/non-functional-requirements.md (kept original); email removed system-wide, Host now username+password, DateTime props lost the Utc suffix; built Infrastructure persistence (KahootDbContext + 8 IEntityTypeConfiguration + snake_case + xmin shadow token + AuditableEntityInterceptor + BcryptPasswordHasher/IPasswordHasher), startup IHostedLifecycleService pair (migrate then seed bootstrap host), InitialCreate migration. Verified end-to-end vs Postgres 17: migrate+seed, idempotent re-run, skip-when-unconfigured, fail-fast on bad connection. Release build 0 warn; DBML valid. | backend/src/Kahoot.*/**, backend/projectSchema.dbml, docs/*-requirements.md | success | ~14000 |
+| 11:10 | Configured custom Material UI light theme derived from IEEEXtreme Palestine Section logo colors (#00629B IEEE ocean blue, #0284C7 radar cyan, #F4F8FC canvas, #09131F text); created theme/ (palette, typography, components, index), styles/tokens.css, Inter font in index.html, and interactive App.tsx showcase. Verified clean lint, prettier, and build; tested via browser subagent. | frontend/src/theme/**, frontend/src/styles/**, frontend/src/App.tsx, frontend/index.html | success | ~3500 |
+| 11:14 | Created backend/src/Kahoot.Domain/Hosts/Host.cs | — | ~103 |
+| 11:14 | Created backend/src/Kahoot.Domain/Hosts/RefreshToken.cs | — | ~106 |
+| 11:14 | Created backend/src/Kahoot.Domain/Quizzes/Quiz.cs | — | ~114 |
+| 11:14 | Created backend/src/Kahoot.Domain/Quizzes/Question.cs | — | ~127 |
+| 11:14 | Created backend/src/Kahoot.Domain/Quizzes/Choice.cs | — | ~100 |
+| 11:14 | Created backend/src/Kahoot.Domain/Games/GameSession.cs | — | ~232 |
+| 11:14 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~191 |
+| 11:14 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs | 6→3 lines | ~48 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/RefreshTokenConfiguration.cs | 3→2 lines | ~23 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuizConfiguration.cs | 7→5 lines | ~82 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuestionConfiguration.cs | 8→6 lines | ~116 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/ChoiceConfiguration.cs | 7→5 lines | ~80 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs | 6→3 lines | ~19 |
+| 11:15 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs | 7→4 lines | ~65 |
+| 11:15 | Created backend/src/Kahoot.Infrastructure/DependencyInjection.cs | — | ~520 |
+| 11:17 | Created backend/src/Kahoot.Application/Common/Storage/FileStorageOptions.cs | — | ~213 |
+| 11:17 | Created backend/src/Kahoot.Application/Common/Storage/IFileStorage.cs | — | ~49 |
+| 11:17 | Created backend/src/Kahoot.Application/Common/Storage/ImageSignature.cs | — | ~242 |

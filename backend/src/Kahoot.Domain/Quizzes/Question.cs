@@ -1,14 +1,16 @@
-using Kahoot.Domain.Common;
-
 namespace Kahoot.Domain.Quizzes;
 
-public sealed class Question : AuditableEntity
+public sealed class Question
 {
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
     public Guid QuizId { get; set; }
 
     public int OrderIndex { get; set; }
 
     public string Text { get; set; } = null!;
+
+    public string? ImageUrl { get; set; }
 
     public int TimeLimitSeconds { get; set; }
 

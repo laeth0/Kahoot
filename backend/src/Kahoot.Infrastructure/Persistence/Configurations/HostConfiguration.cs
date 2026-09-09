@@ -14,9 +14,6 @@ public sealed class HostConfiguration : IEntityTypeConfiguration<Host>
         builder.Property(host => host.Username).HasMaxLength(64).IsRequired();
         builder.Property(host => host.PasswordHash).HasMaxLength(256).IsRequired();
 
-        builder.Property(host => host.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(host => host.UpdatedAt).HasDefaultValueSql("now()");
-
         builder.HasIndex(host => host.Username).IsUnique().HasDatabaseName("uq_host_username");
 
         builder.HasMany(host => host.Quizzes)

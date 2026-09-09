@@ -20,9 +20,6 @@ public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSess
             .HasDefaultValueSql("'Created'")
             .IsRequired();
 
-        builder.Property(session => session.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(session => session.UpdatedAt).HasDefaultValueSql("now()");
-
         builder.Property<uint>("Version")
             .HasColumnName("xmin")
             .HasColumnType("xid")

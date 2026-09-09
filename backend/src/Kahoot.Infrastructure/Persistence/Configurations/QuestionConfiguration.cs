@@ -17,11 +17,9 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
         builder.Property(question => question.Id).ValueGeneratedNever();
 
         builder.Property(question => question.Text).HasMaxLength(500).IsRequired();
+        builder.Property(question => question.ImageUrl).HasMaxLength(2048);
         builder.Property(question => question.TimeLimitSeconds).HasDefaultValue(DefaultTimeLimitSeconds);
         builder.Property(question => question.Points).HasDefaultValue(DefaultPoints);
-
-        builder.Property(question => question.CreatedAt).HasDefaultValueSql("now()");
-        builder.Property(question => question.UpdatedAt).HasDefaultValueSql("now()");
 
         builder.HasIndex(question => new { question.QuizId, question.OrderIndex })
             .IsUnique()

@@ -1,9 +1,9 @@
-using Kahoot.Domain.Common;
-
 namespace Kahoot.Domain.Games;
 
-public sealed class Participant : AuditableEntity
+public sealed class Participant
 {
+    public Guid Id { get; set; } = Guid.CreateVersion7();
+
     public Guid GameSessionId { get; set; }
 
     public string Nickname { get; set; } = null!;
