@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:47:46.599Z
-> Files: 212 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T16:15:32.899Z
+> Files: 213 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -382,6 +382,7 @@
 
 ## docs/
 
+- `frontend-pages-plan.md` — Frontend Pages Plan (~13623 tok)
 - `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2560 tok)
 - `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~2249 tok)
 - `realtime-protocol.md` — Real-Time Protocol (SignalR) — Kahoot-like Platform (~2669 tok)

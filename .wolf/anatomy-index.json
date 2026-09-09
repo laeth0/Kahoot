@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T15:47:46.599Z",
-    "fileCount": 212,
+    "lastScanned": "2026-09-09T16:15:32.899Z",
+    "fileCount": 213,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "832951166ea81c9bd271e558a146cdd38114be9b89c1d7f787a6aae5dd24035e",
-    "storeUpdatedAt": "2026-09-09T15:47:46.609Z",
-    "rootHash": "a9c4c39c06dd4664"
+    "renderedHash": "688ed8a920aea0535409091ceef9f8835d81313c1789a7d81d0958d4a461b1f6",
+    "storeUpdatedAt": "2026-09-09T16:15:32.920Z",
+    "rootHash": "29ab325074826ae8"
   },
   "files": {
     "AGENTS.md": {
@@ -2712,6 +2712,15 @@
       "size": 4523,
       "mtimeMs": 1788968833214.455,
       "updatedAt": "2026-09-09T15:47:13.320Z",
+      "source": "hook"
+    },
+    "docs/frontend-pages-plan.md": {
+      "description": "Frontend Pages Plan",
+      "tokens": 13623,
+      "hash": "48b5d7fabee5eb00",
+      "size": 55096,
+      "mtimeMs": 1788970532786.708,
+      "updatedAt": "2026-09-09T16:15:32.899Z",
       "source": "hook"
     }
   },
