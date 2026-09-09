@@ -48,3 +48,14 @@ description: chronological action log per session, consolidated weekly
 | 10:32 | Edited backend/src/Kahoot.Domain/Hosts/RefreshToken.cs | modified RefreshToken() | ~46 |
 | 10:32 | Edited backend/src/Kahoot.Domain/Games/GameSession.cs | added 2 condition(s) | ~516 |
 | 10:33 | Built Kahoot.Domain layer (8 entities + GameStatus state machine) and projectSchema.dbml; per user feedback dropped the Entity base class and switched game-state transitions to the Result pattern (Result/Result<T>/Error, GameErrors). Full solution builds clean (Release, 0 warn); DBML validated via @dbml/cli. | backend/src/Kahoot.Domain/**, backend/projectSchema.dbml | success | ~9000 |
+| 10:36 | Created backend/src/Kahoot.Domain/Common/AuditableEntity.cs | — | ~62 |
+| 10:38 | Per user feedback (no DDD): rewrote all 8 Kahoot.Domain entities as anemic data classes (get/set props only), deleted GameStatusTransitions.cs + GameErrors.cs (state machine moves to Application). Kept GameStatus enum + Common/Result.cs. Solution builds clean (Release, 0 warn). | backend/src/Kahoot.Domain/** | success | ~2500 |
+| 10:36 | Created backend/src/Kahoot.Domain/Hosts/Host.cs | — | ~123 |
+| 10:36 | Created backend/src/Kahoot.Domain/Hosts/RefreshToken.cs | — | ~120 |
+| 10:36 | Edited backend/src/Kahoot.Domain/Hosts/Host.cs | 3→3 lines | ~35 |
+| 10:36 | Created backend/src/Kahoot.Domain/Quizzes/Quiz.cs | — | ~99 |
+| 10:36 | Created backend/src/Kahoot.Domain/Quizzes/Question.cs | — | ~112 |
+| 10:36 | Created backend/src/Kahoot.Domain/Quizzes/Choice.cs | — | ~88 |
+| 10:36 | Created backend/src/Kahoot.Domain/Games/GameSession.cs | — | ~231 |
+| 10:36 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~189 |
+| 10:37 | Created backend/src/Kahoot.Domain/Games/Answer.cs | — | ~189 |
