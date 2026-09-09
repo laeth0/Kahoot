@@ -1,5 +1,5 @@
 import AddIcon from '@mui/icons-material/Add';
-import PlayCircleOutlineIcon from '@mui/icons-material/PlayCircleOutline';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SensorsIcon from '@mui/icons-material/Sensors';
 import {
@@ -173,7 +173,7 @@ export function HostDashboard() {
                     variant="contained"
                     color="primary"
                     size="small"
-                    startIcon={<PlayCircleOutlineIcon />}
+                    startIcon={<PlayCircleIcon />}
                     sx={{ fontWeight: 700 }}
                   >
                     Start Game

@@ -119,3 +119,4 @@ description: chronological action log per session, consolidated weekly
 | 11:18 | Created backend/src/Kahoot.Api/Program.cs | — | ~502 |
 | 11:18 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+6 lines) | ~87 |
 | 11:19 | Created backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs | — | ~524 |
+| 11:19 | Created backend/projectSchema.dbml | — | ~2944 |

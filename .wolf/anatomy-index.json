@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:19:11.720Z",
+    "lastScanned": "2026-09-09T08:19:54.046Z",
     "fileCount": 48,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "63ed5027d5257e2535886a17a38dd9e380d08a103710d2f9a68d9ea6142bb57f",
-    "storeUpdatedAt": "2026-09-09T08:19:11.731Z",
-    "rootHash": "8c1d1c0e6a57326c"
+    "renderedHash": "b18cbe47238cb8c6684196adfbdaa3100a966b55f52d35483513af4c93a74209",
+    "storeUpdatedAt": "2026-09-09T08:19:54.061Z",
+    "rootHash": "006bdf705c4e608b"
   },
   "files": {
     "AGENTS.md": {
@@ -173,12 +173,12 @@
       "source": "hook"
     },
     "backend/projectSchema.dbml": {
-      "description": "",
-      "tokens": 2858,
-      "hash": "2f265634ae8248da",
-      "size": 10717,
-      "mtimeMs": 1788940866128.5576,
-      "updatedAt": "2026-09-09T08:01:06.264Z",
+      "description": "Declares xid",
+      "tokens": 2944,
+      "hash": "76136429eac9df68",
+      "size": 11040,
+      "mtimeMs": 1788941993892.7053,
+      "updatedAt": "2026-09-09T08:19:54.045Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Common/Result.cs": {

@@ -1,5 +1,5 @@
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import PersonOutlinedIcon from '@mui/icons-material/PersonOutlined';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import {
@@ -136,7 +136,7 @@ export function LoginPage() {
                   input: {
                     startAdornment: (
                       <InputAdornment position="start">
-                        <PersonOutlineIcon sx={{ color: '#00629b' }} />
+                        <PersonOutlinedIcon sx={{ color: '#00629b' }} />
                       </InputAdornment>
                     ),
                     sx: { minHeight: 48 },
