@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:27:41.816Z
-> Files: 49 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:52:40.852Z
+> Files: 133 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -27,8 +27,73 @@
 
 - `UploadsController.cs` — Controller: UploadsController (~409 tok)
 
+## backend/src/Kahoot.Application/
+
+- `DependencyInjection.cs` — Class: DependencyInjection (~231 tok)
+
+## backend/src/Kahoot.Application/Authentication/Common/
+
+- `AuthenticationErrors.cs` — Class: AuthenticationErrors (~189 tok)
+- `AuthenticationResponse.cs` — Class: AuthenticationResponse (~72 tok)
+- `AuthTokenFactory.cs` — Class: AuthTokenFactory (~321 tok)
+- `JwtOptions.cs` — Class: JwtOptions (~146 tok)
+
+## backend/src/Kahoot.Application/Authentication/Login/
+
+- `LoginCommand.cs` — Class: LoginCommand (~67 tok)
+- `LoginCommandHandler.cs` — Class: LoginCommandHandler (~510 tok)
+- `LoginCommandValidator.cs` — Class: LoginCommandValidator (~95 tok)
+
+## backend/src/Kahoot.Application/Authentication/Logout/
+
+- `LogoutCommand.cs` — Class: LogoutCommand (~44 tok)
+- `LogoutCommandHandler.cs` — Class: LogoutCommandHandler (~241 tok)
+
+## backend/src/Kahoot.Application/Authentication/Refresh/
+
+- `RefreshTokenCommand.cs` — Class: RefreshTokenCommand (~66 tok)
+- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~725 tok)
+- `RefreshTokenCommandValidator.cs` — Class: RefreshTokenCommandValidator (~82 tok)
+
+## backend/src/Kahoot.Application/Authentication/RefreshToken/
+
+- `RefreshTokenCommand.cs` — Class: RefreshTokenCommand (~67 tok)
+- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~739 tok)
+- `RefreshTokenCommandValidator.cs` — Class: RefreshTokenCommandValidator (~84 tok)
+
+## backend/src/Kahoot.Application/Authentication/Register/
+
+- `RegisterHostCommand.cs` — Class: RegisterHostCommand (~69 tok)
+- `RegisterHostCommandHandler.cs` — Class: RegisterHostCommandHandler (~496 tok)
+- `RegisterHostCommandValidator.cs` — Class: RegisterHostCommandValidator (~167 tok)
+
+## backend/src/Kahoot.Application/Common/Abstractions/
+
+- `IApplicationDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~188 tok)
+- `IDbExceptionInterpreter.cs` — Class: IDbExceptionInterpreter (~60 tok)
+- `IGamePinGenerator.cs` — Class: IGamePinGenerator (~45 tok)
+- `IJwtTokenService.cs` — Class: IJwtTokenService (~65 tok)
+- `ISecureTokenGenerator.cs` — Class: ISecureTokenGenerator (~33 tok)
+- `ITokenHasher.cs` — Class: ITokenHasher (~31 tok)
+
+## backend/src/Kahoot.Application/Common/Behaviors/
+
+- `RequestLoggingBehavior.cs` — Class: RequestLoggingBehavior (~256 tok)
+- `ValidationBehavior.cs` — Class: ValidationBehavior (~516 tok)
+
+## backend/src/Kahoot.Application/Common/Errors/
+
+- `SharedErrors.cs` — Class: SharedErrors (~129 tok)
+- `ValidationError.cs` — Class: ValidationError (~63 tok)
+
+## backend/src/Kahoot.Application/Common/Messaging/
+
+- `ICommand.cs` — Class: ICommand (~125 tok)
+- `IQuery.cs` — Class: IQuery (~79 tok)
+
 ## backend/src/Kahoot.Application/Common/Security/
 
+- `ICurrentUser.cs` — Class: ICurrentUser (~38 tok)
 - `IPasswordHasher.cs` — Class: IPasswordHasher (~47 tok)
 
 ## backend/src/Kahoot.Application/Common/Storage/
@@ -39,12 +104,127 @@
 - `ImageSignature.cs` — Class: ImageSignature (~255 tok)
 - `ImageUploadService.cs` — Class: ImageUploadService (~598 tok)
 
+## backend/src/Kahoot.Application/Games/
+
+- `GameStateMachine.cs` — Class: GameStateMachine (~241 tok)
+
+## backend/src/Kahoot.Application/Games/Common/
+
+- `GameContracts.cs` — Class: GameContracts (~682 tok)
+- `GameErrors.cs` — Class: GameErrors (~630 tok)
+- `GameQuestionMapper.cs` — Class: GameQuestionMapper (~524 tok)
+- `GameTime.cs` — Class: GameTime (~56 tok)
+- `HostGameGuard.cs` — Class: HostGameGuard (~260 tok)
+- `LeaderboardBuilder.cs` — Class: LeaderboardBuilder (~584 tok)
+- `QuestionActivation.cs` — Class: QuestionActivation (~358 tok)
+- `QuestionResultsBuilder.cs` — Class: QuestionResultsBuilder (~552 tok)
+
+## backend/src/Kahoot.Application/Games/CreateGame/
+
+- `CreateGameCommand.cs` — Class: CreateGameCommand (~58 tok)
+- `CreateGameCommandHandler.cs` — Class: CreateGameCommandHandler (~652 tok)
+
+## backend/src/Kahoot.Application/Games/EndQuestion/
+
+- `EndQuestionCommand.cs` — Class: EndQuestionCommand (~60 tok)
+- `EndQuestionCommandHandler.cs` — Class: EndQuestionCommandHandler (~647 tok)
+
+## backend/src/Kahoot.Application/Games/Leaderboard/
+
+- `ILeaderboardService.cs` — Class: ILeaderboardService (~100 tok)
+- `LeaderboardService.cs` — Class: LeaderboardService (~186 tok)
+
+## backend/src/Kahoot.Application/Games/Scoring/
+
+- `IScoringService.cs` — Class: IScoringService (~49 tok)
+- `ScoringService.cs` — Class: ScoringService (~219 tok)
+
+## backend/src/Kahoot.Application/Games/ShowLeaderboard/
+
+- `ShowLeaderboardCommand.cs` — Class: ShowLeaderboardCommand (~61 tok)
+
+## backend/src/Kahoot.Application/Games/StartGame/
+
+- `StartGameCommand.cs` — Class: StartGameCommand (~59 tok)
+- `StartGameCommandHandler.cs` — Class: StartGameCommandHandler (~612 tok)
+
+## backend/src/Kahoot.Application/Games/StartNextQuestion/
+
+- `StartNextQuestionCommand.cs` — Class: StartNextQuestionCommand (~63 tok)
+- `StartNextQuestionCommandHandler.cs` — Class: StartNextQuestionCommandHandler (~627 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Common/
+
+- `QuestionValidationRules.cs` — Class: QuestionValidationRules (~401 tok)
+- `QuizContracts.cs` — Class: QuizContracts (~206 tok)
+- `QuizErrors.cs` — Class: QuizErrors (~311 tok)
+
+## backend/src/Kahoot.Application/Quizzes/CreateQuiz/
+
+- `CreateQuizCommand.cs` — Class: CreateQuizCommand (~50 tok)
+- `CreateQuizCommandHandler.cs` — Class: CreateQuizCommandHandler (~283 tok)
+- `CreateQuizCommandValidator.cs` — Class: CreateQuizCommandValidator (~96 tok)
+
+## backend/src/Kahoot.Application/Quizzes/DeleteQuiz/
+
+- `DeleteQuizCommand.cs` — Class: DeleteQuizCommand (~43 tok)
+- `DeleteQuizCommandHandler.cs` — Class: DeleteQuizCommandHandler (~375 tok)
+
+## backend/src/Kahoot.Application/Quizzes/GetQuiz/
+
+- `GetQuizQuery.cs` — Class: GetQuizQuery (~56 tok)
+- `GetQuizQueryHandler.cs` — Class: GetQuizQueryHandler (~595 tok)
+
+## backend/src/Kahoot.Application/Quizzes/ListQuizzes/
+
+- `ListQuizzesQuery.cs` — Class: ListQuizzesQuery (~59 tok)
+- `ListQuizzesQueryHandler.cs` — Class: ListQuizzesQueryHandler (~367 tok)
+
+## backend/src/Kahoot.Application/Quizzes/PublishQuiz/
+
+- `PublishQuizCommand.cs` — Class: PublishQuizCommand (~43 tok)
+- `PublishQuizCommandHandler.cs` — Class: PublishQuizCommandHandler (~596 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Questions/AddQuestion/
+
+- `AddQuestionCommand.cs` — Class: AddQuestionCommand (~92 tok)
+- `AddQuestionCommandHandler.cs` — Class: AddQuestionCommandHandler (~564 tok)
+- `AddQuestionCommandValidator.cs` — Class: AddQuestionCommandValidator (~251 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Questions/Common/
+
+- `QuestionMapping.cs` — Class: QuestionMapping (~178 tok)
+- `QuizEditGuard.cs` — Class: QuizEditGuard (~341 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Questions/DeleteQuestion/
+
+- `DeleteQuestionCommand.cs` — Class: DeleteQuestionCommand (~52 tok)
+- `DeleteQuestionCommandHandler.cs` — Class: DeleteQuestionCommandHandler (~386 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Questions/ReorderQuestions/
+
+- `ReorderQuestionsCommand.cs` — Class: ReorderQuestionsCommand (~59 tok)
+- `ReorderQuestionsCommandHandler.cs` — Class: ReorderQuestionsCommandHandler (~619 tok)
+- `ReorderQuestionsCommandValidator.cs` — Class: ReorderQuestionsCommandValidator (~156 tok)
+
+## backend/src/Kahoot.Application/Quizzes/Questions/UpdateQuestion/
+
+- `UpdateQuestionCommand.cs` — Class: UpdateQuestionCommand (~98 tok)
+- `UpdateQuestionCommandHandler.cs` — Class: UpdateQuestionCommandHandler (~566 tok)
+- `UpdateQuestionCommandValidator.cs` — Class: UpdateQuestionCommandValidator (~270 tok)
+
+## backend/src/Kahoot.Application/Quizzes/UpdateQuiz/
+
+- `UpdateQuizCommand.cs` — Class: UpdateQuizCommand (~52 tok)
+- `UpdateQuizCommandHandler.cs` — Class: UpdateQuizCommandHandler (~428 tok)
+- `UpdateQuizCommandValidator.cs` — Class: UpdateQuizCommandValidator (~111 tok)
+
 ## backend/src/Kahoot.Domain/Common/
 
 - `AuditableEntity.cs` — Class: AuditableEntity (~60 tok)
 - `DomainException.cs` — Class: DomainException (~46 tok)
 - `Entity.cs` — Class: Entity (~49 tok)
-- `Result.cs` — Class: Result (~384 tok)
+- `Result.cs` — Class: Result (~382 tok)
 
 ## backend/src/Kahoot.Domain/Games/
 
