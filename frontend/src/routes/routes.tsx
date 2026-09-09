@@ -4,6 +4,7 @@ import { AuthLayout } from '../layouts/AuthLayout.tsx';
 import { RootLayout } from '../layouts/RootLayout.tsx';
 import { HomePage } from '../pages/HomePage/HomePage.tsx';
 import { HostDashboard } from '../pages/HostDashboard/HostDashboard.tsx';
+import { JoinPage } from '../pages/JoinPage/JoinPage.tsx';
 import { LoginPage } from '../pages/LoginPage/LoginPage.tsx';
 import { NotFoundPage } from '../pages/NotFoundPage/NotFoundPage.tsx';
 import { ProtectedRoute } from './ProtectedRoute.tsx';
@@ -17,6 +18,7 @@ export function AppRoutes() {
       {/* Public Pages with Root Navigation Shell */}
       <Route element={<RootLayout />}>
         <Route index element={<HomePage />} />
+        <Route path="join" element={<JoinPage />} />
       </Route>
 
       {/* Host Authentication Layout */}
@@ -29,6 +31,7 @@ export function AppRoutes() {
         <Route element={<RootLayout />}>
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<HostDashboard />} />
+          <Route path="quizzes" element={<HostDashboard />} />
         </Route>
       </Route>
 

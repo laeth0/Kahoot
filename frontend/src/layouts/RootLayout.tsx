@@ -15,11 +15,20 @@ import {
 import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
 
 import logo from '../assets/logo.jpeg';
+import { AppErrorBoundary } from '../components/ErrorBoundary/index.ts';
 import { useAuth } from '../hooks/useAuth.ts';
+import { useTokenRefresh } from '../hooks/useTokenRefresh.ts';
 
+/**
+ * Root Layout containing standard header navigation, accessible skip link,
+ * error boundary protection, and silent authentication token refresh.
+ */
 export function RootLayout() {
   const { host, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
+
+  // Activate silent access token renewal while the application is active
+  useTokenRefresh();
 
   const handleLogout = async () => {
     await logout();
@@ -51,7 +60,7 @@ export function RootLayout() {
         Skip to main content
       </Box>
 
-      {/* Floating Modern Header */}
+      {/* Modern Header */}
       <AppBar position="sticky" sx={{ bgcolor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
         <Container maxWidth="lg">
           <Toolbar disableGutters sx={{ justifyContent: 'space-between', py: 1.25 }}>
@@ -84,12 +93,13 @@ export function RootLayout() {
               <Box>
                 <Typography
                   variant="h6"
-                  component="h1"
+                  component="span"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 800,
                     lineHeight: 1.2,
                     color: '#09131f',
                     letterSpacing: '-0.02em',
+                    display: 'block',
                   }}
                 >
                   Kahoot Platform
@@ -107,7 +117,7 @@ export function RootLayout() {
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
               <Button
                 component={RouterLink}
-                to="/"
+                to="/join"
                 color="inherit"
                 startIcon={<SportsEsportsIcon />}
                 sx={{
@@ -183,7 +193,9 @@ export function RootLayout() {
           outline: 'none',
         }}
       >
-        <Outlet />
+        <AppErrorBoundary>
+          <Outlet />
+        </AppErrorBoundary>
       </Box>
 
       {/* Footer */}
@@ -203,7 +215,7 @@ export function RootLayout() {
             spacing={2}
           >
             <Typography variant="body2" color="text.secondary">
-              © {new Date().getFullYear()} IEEEXtreme Palestine Section.
+              © {new Date().getFullYear()} IEEEXtreme Palestine Section. All rights reserved.
             </Typography>
             <Stack
               direction="row"

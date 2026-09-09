@@ -1,332 +1,451 @@
 import BoltIcon from '@mui/icons-material/Bolt';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
-import TagIcon from '@mui/icons-material/Tag';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import SecurityIcon from '@mui/icons-material/Security';
+import SpeedIcon from '@mui/icons-material/Speed';
 import {
-  Alert,
   Box,
   Button,
   Card,
   CardContent,
-  CircularProgress,
+  Chip,
   Container,
   Divider,
-  InputAdornment,
+  Grid,
   Paper,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material';
-import { type FormEvent, useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 
-import { gameService } from '../../api/gameService.ts';
 import logo from '../../assets/logo.jpeg';
+import { MetadataManager } from '../../components/MetadataManager/index.ts';
+import { PinEntryForm } from '../../components/PinEntryForm/index.ts';
 
+/**
+ * Public Landing Page: primary entry point for players to enter a PIN,
+ * hosts to access the administration portal, and visitors to understand the platform.
+ */
 export function HomePage() {
-  const [pin, setPin] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [joinSuccess, setJoinSuccess] = useState<string | null>(null);
-
-  const handlePinChange = (value: string) => {
-    // Only allow digits and spaces, max 8 chars
-    const cleaned = value.replace(/[^0-9\s]/g, '').slice(0, 8);
-    setPin(cleaned);
-    if (errorMessage) setErrorMessage(null);
-  };
-
-  const handleNicknameChange = (value: string) => {
-    setNickname(value.slice(0, 30));
-    if (errorMessage) setErrorMessage(null);
-  };
-
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    const rawPin = pin.replace(/\s+/g, '');
-
-    if (!rawPin || rawPin.length < 4) {
-      setErrorMessage('Please enter a valid Game PIN (at least 4 digits)');
-      return;
-    }
-
-    if (!nickname.trim()) {
-      setErrorMessage('Please enter your player nickname to join the game');
-      return;
-    }
-
-    setIsSubmitting(true);
-    setErrorMessage(null);
-
-    try {
-      const result = await gameService.joinGame({
-        pin: rawPin,
-        nickname: nickname.trim(),
-      });
-      setJoinSuccess(
-        `Welcome ${result.nickname}! You joined session #${rawPin}. Waiting for the host to start...`,
-      );
-    } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Could not find active game session with that PIN.';
-      setErrorMessage(msg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
-    <Box
-      sx={{
-        flexGrow: 1,
-        py: { xs: 4, md: 8 },
-        background: 'linear-gradient(180deg, #eef7fc 0%, #f4f8fc 100%)',
-        display: 'flex',
-        alignItems: 'center',
-      }}
-    >
-      <Container maxWidth="md">
-        {/* Main Header / Context */}
-        <Stack spacing={2} sx={{ textAlign: 'center', mb: 4, alignItems: 'center' }}>
-          <Box
-            component="img"
-            src={logo}
-            alt="IEEEXtreme Palestine Section Emblem"
-            sx={{
-              width: 88,
-              height: 88,
-              borderRadius: '50%',
-              objectFit: 'cover',
-              border: '3px solid #00629b',
-              boxShadow:
-                '0 10px 15px -3px rgba(0, 98, 155, 0.2), 0 4px 6px -4px rgba(0, 98, 155, 0.1)',
-            }}
-          />
-          <Typography
-            variant="h2"
-            component="h2"
-            sx={{
-              fontWeight: 800,
-              fontSize: { xs: '2rem', md: '2.5rem' },
-              color: '#09131f',
-              letterSpacing: '-0.03em',
-            }}
-          >
-            Ready to Compete?
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: '#334e68',
-              maxWidth: 540,
-              fontSize: { xs: '0.95rem', md: '1.05rem' },
-            }}
-          >
-            Enter your Game PIN and player handle to join the live IEEEXtreme quiz. No account or
-            registration required!
-          </Typography>
-        </Stack>
+    <>
+      <MetadataManager
+        title="Live Engineering Quizzes & Competitions"
+        description="Join live real-time engineering quizzes hosted by IEEEXtreme Palestine Section. Enter your Game PIN and compete on the live leaderboard without registration."
+      />
 
-        {/* Central Join Card */}
-        <Card
-          elevation={0}
-          sx={{
-            maxWidth: 480,
-            mx: 'auto',
-            borderRadius: 3,
-            border: '1px solid #e2e8f0',
-            boxShadow:
-              '0 20px 25px -5px rgba(9, 19, 31, 0.08), 0 8px 10px -6px rgba(9, 19, 31, 0.04)',
-            overflow: 'visible',
-          }}
-        >
-          <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            {joinSuccess ? (
-              <Stack spacing={3} sx={{ textAlign: 'center', py: 2 }}>
-                <Alert severity="success" sx={{ fontSize: '1rem', fontWeight: 500 }}>
-                  {joinSuccess}
-                </Alert>
-                <Typography variant="body2" sx={{ color: '#334e68' }}>
-                  Keep this window open. Questions will synchronize on your screen as soon as the
-                  host launches the game.
+      <Box
+        sx={{
+          flexGrow: 1,
+          background: 'linear-gradient(180deg, #eef7fc 0%, #f4f8fc 60%, #ffffff 100%)',
+          py: { xs: 4, md: 8 },
+        }}
+      >
+        <Container maxWidth="lg">
+          {/* Hero Section */}
+          <Box component="section" aria-labelledby="hero-title" sx={{ mb: { xs: 6, md: 10 } }}>
+            <Stack spacing={3} sx={{ textAlign: 'center', alignItems: 'center', mb: 5 }}>
+              {/* Live Badge */}
+              <Chip
+                icon={
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: '#059669',
+                      boxShadow: '0 0 0 3px rgba(5, 150, 105, 0.25)',
+                      mr: 0.5,
+                    }}
+                  />
+                }
+                label="IEEEXtreme Palestine Section • Live Arena"
+                variant="outlined"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.85rem',
+                  borderColor: '#bae6fd',
+                  bgcolor: '#ffffff',
+                  color: '#00629b',
+                  py: 1,
+                  px: 0.5,
+                }}
+              />
+
+              {/* Brand Logo */}
+              <Box
+                component="img"
+                src={logo}
+                alt="IEEEXtreme Palestine Section Emblem"
+                sx={{
+                  width: { xs: 72, sm: 84 },
+                  height: { xs: 72, sm: 84 },
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid #00629b',
+                  boxShadow: '0 8px 20px rgba(0, 98, 155, 0.18)',
+                }}
+              />
+
+              {/* Primary Heading */}
+              <Typography
+                id="hero-title"
+                variant="h1"
+                component="h1"
+                sx={{
+                  fontWeight: 800,
+                  fontSize: { xs: '2.1rem', sm: '2.8rem', md: '3.4rem' },
+                  color: '#09131f',
+                  letterSpacing: '-0.03em',
+                  lineHeight: 1.15,
+                  maxWidth: 780,
+                }}
+              >
+                Real-Time Competitive Quizzing for Engineers
+              </Typography>
+
+              {/* Subtitle */}
+              <Typography
+                variant="body1"
+                sx={{
+                  color: '#334e68',
+                  maxWidth: 580,
+                  fontSize: { xs: '1rem', md: '1.15rem' },
+                  lineHeight: 1.6,
+                }}
+              >
+                Jump straight into live technical trivia, algorithms, and speed challenges. No
+                account or sign-up needed for players.
+              </Typography>
+            </Stack>
+
+            {/* Central Action Card */}
+            <Card
+              elevation={0}
+              sx={{
+                maxWidth: 480,
+                mx: 'auto',
+                borderRadius: 3,
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+                boxShadow:
+                  '0 20px 30px -10px rgba(9, 19, 31, 0.08), 0 10px 15px -5px rgba(9, 19, 31, 0.04)',
+                overflow: 'visible',
+              }}
+            >
+              <CardContent sx={{ p: { xs: 3, sm: 4.5 } }}>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#09131f',
+                    mb: 1,
+                    textAlign: 'center',
+                  }}
+                >
+                  Join a Live Game
                 </Typography>
+                <Typography variant="body2" sx={{ color: '#334e68', mb: 3, textAlign: 'center' }}>
+                  Enter the 6-digit PIN shown on the host's screen
+                </Typography>
+
+                {/* Shared PinEntryForm */}
+                <PinEntryForm size="large" buttonText="Continue to Game" />
+
+                <Divider sx={{ my: 3 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                    OR
+                  </Typography>
+                </Divider>
+
+                {/* Secondary Host Login Action */}
                 <Button
+                  component={RouterLink}
+                  to="/login"
+                  fullWidth
                   variant="outlined"
                   color="primary"
-                  onClick={() => {
-                    setJoinSuccess(null);
-                    setPin('');
-                    setNickname('');
+                  size="large"
+                  startIcon={<LockOutlinedIcon />}
+                  sx={{
+                    minHeight: 48,
+                    fontWeight: 600,
+                    borderColor: '#cbd5e1',
+                    color: '#00629b',
+                    '&:hover': {
+                      borderColor: '#00629b',
+                      bgcolor: 'rgba(0, 98, 155, 0.04)',
+                    },
                   }}
-                  sx={{ minHeight: 44 }}
                 >
-                  Join Different Game
+                  Host Sign In / Dashboard
                 </Button>
-              </Stack>
-            ) : (
-              <Box component="form" onSubmit={handleSubmit} noValidate>
-                {errorMessage && (
-                  <Alert severity="error" sx={{ mb: 3 }}>
-                    {errorMessage}
-                  </Alert>
-                )}
+              </CardContent>
+            </Card>
+          </Box>
 
-                <Stack spacing={3}>
-                  {/* Game PIN Field */}
-                  <Box>
-                    <Typography
-                      component="label"
-                      htmlFor="game-pin-input"
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: '#09131f', mb: 1, display: 'block' }}
-                    >
-                      Game PIN
-                    </Typography>
-                    <TextField
-                      id="game-pin-input"
-                      fullWidth
-                      placeholder="e.g. 739 204"
-                      value={pin}
-                      onChange={(e) => handlePinChange(e.target.value)}
-                      required
-                      autoFocus
-                      disabled={isSubmitting}
-                      slotProps={{
-                        input: {
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <TagIcon sx={{ color: '#00629b' }} />
-                            </InputAdornment>
-                          ),
-                          sx: {
-                            fontSize: '1.25rem',
-                            fontWeight: 700,
-                            letterSpacing: '0.08em',
-                            minHeight: 52,
-                          },
-                        },
-                      }}
-                      helperText="Ask the host for the 6-digit game PIN"
-                    />
-                  </Box>
-
-                  {/* Player Nickname Field */}
-                  <Box>
-                    <Typography
-                      component="label"
-                      htmlFor="nickname-input"
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: '#09131f', mb: 1, display: 'block' }}
-                    >
-                      Your Nickname
-                    </Typography>
-                    <TextField
-                      id="nickname-input"
-                      fullWidth
-                      placeholder="e.g. ExtremeCoder"
-                      value={nickname}
-                      onChange={(e) => handleNicknameChange(e.target.value)}
-                      required
-                      disabled={isSubmitting}
-                      slotProps={{
-                        input: {
-                          sx: {
-                            fontWeight: 600,
-                            minHeight: 50,
-                          },
-                        },
-                      }}
-                      helperText="This name will appear on the live leaderboard"
-                    />
-                  </Box>
-
-                  {/* Submit Action */}
-                  <Button
-                    type="submit"
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    size="large"
-                    disabled={isSubmitting}
-                    startIcon={
-                      isSubmitting ? (
-                        <CircularProgress size={20} color="inherit" />
-                      ) : (
-                        <PlayArrowIcon />
-                      )
-                    }
-                    sx={{
-                      minHeight: 50,
-                      fontSize: '1.05rem',
-                      fontWeight: 700,
-                      boxShadow: '0 4px 10px rgba(0, 98, 155, 0.25)',
-                    }}
-                  >
-                    {isSubmitting ? 'Connecting...' : 'Enter Game'}
-                  </Button>
-                </Stack>
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Feature Highlights / Badges */}
-        <Paper
-          elevation={0}
-          sx={{
-            mt: 4,
-            p: 2.5,
-            borderRadius: 2,
-            border: '1px solid #e2e8f0',
-            bgcolor: '#ffffff',
-          }}
-        >
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            divider={<Divider orientation="vertical" flexItem />}
-            spacing={{ xs: 2, sm: 3 }}
-            sx={{ justifyContent: 'space-around', alignItems: 'center' }}
+          {/* "How It Works" 3-Step Guide */}
+          <Box
+            component="section"
+            aria-labelledby="how-it-works-title"
+            sx={{ mb: { xs: 6, md: 10 } }}
           >
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-              <QrCodeScannerIcon sx={{ color: '#00629b' }} />
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Instant Join
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  No registration or sign up needed
-                </Typography>
-              </Box>
-            </Stack>
+            <Typography
+              id="how-it-works-title"
+              variant="h4"
+              component="h2"
+              sx={{
+                fontWeight: 700,
+                textAlign: 'center',
+                color: '#09131f',
+                mb: 1,
+                letterSpacing: '-0.02em',
+              }}
+            >
+              How to Participate
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ textAlign: 'center', color: '#334e68', mb: 5, maxWidth: 500, mx: 'auto' }}
+            >
+              Joining an IEEEXtreme interactive session takes three simple steps.
+            </Typography>
 
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-              <BoltIcon sx={{ color: '#0284c7' }} />
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Live Synchronization
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  Real-time questions & countdowns
-                </Typography>
-              </Box>
-            </Stack>
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3.5,
+                    height: '100%',
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    bgcolor: '#ffffff',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: '0 12px 20px -5px rgba(0, 98, 155, 0.08)',
+                    },
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: '#eef7fc',
+                        color: '#00629b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.25rem',
+                      }}
+                    >
+                      1
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      sx={{ fontWeight: 700, color: '#09131f' }}
+                    >
+                      Get the PIN
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#334e68', lineHeight: 1.6 }}>
+                      Ask your event host or check the projector screen for the unique 6-digit game
+                      PIN.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              </Grid>
 
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-              <LeaderboardIcon sx={{ color: '#059669' }} />
-              <Box>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                  Live Leaderboard
-                </Typography>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  Compete for top scores and badges
-                </Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        </Paper>
-      </Container>
-    </Box>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3.5,
+                    height: '100%',
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    bgcolor: '#ffffff',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: '0 12px 20px -5px rgba(0, 98, 155, 0.08)',
+                    },
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: '#eef7fc',
+                        color: '#00629b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.25rem',
+                      }}
+                    >
+                      2
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      sx={{ fontWeight: 700, color: '#09131f' }}
+                    >
+                      Pick Your Handle
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#334e68', lineHeight: 1.6 }}>
+                      Choose your player nickname. No password or email needed—you are in the lobby
+                      immediately.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 4 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 3.5,
+                    height: '100%',
+                    borderRadius: 3,
+                    border: '1px solid #e2e8f0',
+                    bgcolor: '#ffffff',
+                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                    '&:hover': {
+                      transform: 'translateY(-3px)',
+                      boxShadow: '0 12px 20px -5px rgba(0, 98, 155, 0.08)',
+                    },
+                  }}
+                >
+                  <Stack spacing={2}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: '#eef7fc',
+                        color: '#00629b',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: 800,
+                        fontSize: '1.25rem',
+                      }}
+                    >
+                      3
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      component="h3"
+                      sx={{ fontWeight: 700, color: '#09131f' }}
+                    >
+                      Compete Live
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#334e68', lineHeight: 1.6 }}>
+                      Answer quickly to earn speed multipliers, see real-time distribution charts,
+                      and conquer the podium.
+                    </Typography>
+                  </Stack>
+                </Paper>
+              </Grid>
+            </Grid>
+          </Box>
+
+          {/* Platform Features Grid */}
+          <Box component="section" aria-labelledby="features-title" sx={{ mb: 4 }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 3, sm: 5 },
+                borderRadius: 3,
+                border: '1px solid #e2e8f0',
+                bgcolor: '#ffffff',
+              }}
+            >
+              <Typography
+                id="features-title"
+                variant="h5"
+                component="h2"
+                sx={{
+                  fontWeight: 700,
+                  color: '#09131f',
+                  mb: 3,
+                  textAlign: { xs: 'left', sm: 'center' },
+                }}
+              >
+                Engineered for High-Concurrence Competition
+              </Typography>
+
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                    <BoltIcon sx={{ color: '#00629b', fontSize: 28, mt: 0.25 }} />
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#09131f' }}>
+                        Live Synchronization
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#334e68', mt: 0.5 }}>
+                        Sub-second question delivery powered by SignalR WebSockets.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                    <SpeedIcon sx={{ color: '#0284c7', fontSize: 28, mt: 0.25 }} />
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#09131f' }}>
+                        Dynamic Scoring
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#334e68', mt: 0.5 }}>
+                        Precision point decay based on server-side response times.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                    <LeaderboardIcon sx={{ color: '#059669', fontSize: 28, mt: 0.25 }} />
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#09131f' }}>
+                        Live Standings
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#334e68', mt: 0.5 }}>
+                        Rank updates, delta indicators, and animated podium reveals.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+
+                <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start' }}>
+                    <SecurityIcon sx={{ color: '#00629b', fontSize: 28, mt: 0.25 }} />
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, color: '#09131f' }}>
+                        Host Session Control
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#334e68', mt: 0.5 }}>
+                        Restricted host JWT authorization with live participant management.
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Grid>
+              </Grid>
+            </Paper>
+          </Box>
+        </Container>
+      </Box>
+    </>
   );
 }
 
