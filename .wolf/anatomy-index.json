@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:57:55.314Z",
-    "fileCount": 157,
+    "lastScanned": "2026-09-09T08:59:07.547Z",
+    "fileCount": 158,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "382f27ae95efc8d03086016ba77290b131041a24a1fc8ddc89689fe48e32a306",
-    "storeUpdatedAt": "2026-09-09T08:57:55.331Z",
-    "rootHash": "ed74413f235a1065"
+    "renderedHash": "a0ee6d13adfefd07bb5db0ef5873005ef9c133119ddf1e9a0469acdc6f2516c4",
+    "storeUpdatedAt": "2026-09-09T08:59:07.573Z",
+    "rootHash": "e7d84f2e4bdf0fe1"
   },
   "files": {
     "AGENTS.md": {
@@ -1421,6 +1421,15 @@
       "size": 1639,
       "mtimeMs": 1788944235218.478,
       "updatedAt": "2026-09-09T08:57:15.334Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Api/Common/CurrentUser.cs": {
+      "description": "Class: CurrentUser",
+      "tokens": 170,
+      "hash": "27bbc559844b3b6c",
+      "size": 637,
+      "mtimeMs": 1788944347241.251,
+      "updatedAt": "2026-09-09T08:59:07.546Z",
       "source": "hook"
     }
   },

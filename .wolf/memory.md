@@ -243,3 +243,4 @@ description: chronological action log per session, consolidated weekly
 | 11:57 | Created backend/src/Kahoot.Infrastructure/Authentication/JwtTokenService.cs | — | ~438 |
 | 11:57 | Created backend/src/Kahoot.Infrastructure/DependencyInjection.cs | — | ~631 |
 | 11:57 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+7 lines) | ~118 |
+| 11:59 | Created backend/src/Kahoot.Api/Common/CurrentUser.cs | — | ~170 |

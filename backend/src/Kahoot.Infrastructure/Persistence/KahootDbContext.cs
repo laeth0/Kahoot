@@ -1,3 +1,4 @@
+using Kahoot.Application.Common.Abstractions;
 using Kahoot.Domain.Games;
 using Kahoot.Domain.Hosts;
 using Kahoot.Domain.Quizzes;
@@ -5,7 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Infrastructure.Persistence;
 
-public sealed class KahootDbContext(DbContextOptions<KahootDbContext> options) : DbContext(options)
+public sealed class KahootDbContext(DbContextOptions<KahootDbContext> options)
+    : DbContext(options), IApplicationDbContext
 {
     public DbSet<Host> Hosts => Set<Host>();
 

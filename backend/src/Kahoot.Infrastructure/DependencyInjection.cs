@@ -1,3 +1,5 @@
+using Kahoot.Application.Authentication.Common;
+using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure.Persistence;
@@ -19,6 +21,14 @@ public static class DependencyInjection
             options
                 .UseNpgsql(connectionString)
                 .UseSnakeCaseNamingConvention());
+
+        services.AddScoped<IApplicationDbContext>(serviceProvider =>
+            serviceProvider.GetRequiredService<KahootDbContext>());
+
+        services.AddOptions<JwtOptions>()
+            .Bind(configuration.GetSection(JwtOptions.SectionName))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
 
         services.AddOptions<FileStorageOptions>()
             .Bind(configuration.GetSection(FileStorageOptions.SectionName))
