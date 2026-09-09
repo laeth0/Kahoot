@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /app
 
-COPY Kahoot.sln ./
+COPY *.sln* ./
 COPY src/Kahoot.Domain/Kahoot.Domain.csproj src/Kahoot.Domain/
 COPY src/Kahoot.Application/Kahoot.Application.csproj src/Kahoot.Application/
 COPY src/Kahoot.Infrastructure/Kahoot.Infrastructure.csproj src/Kahoot.Infrastructure/
