@@ -309,3 +309,5 @@ description: chronological action log per session, consolidated weekly
 | 12:49 | Edited backend/src/Kahoot.Api/Program.cs | 6→6 lines | ~64 |
 | 12:49 | Edited backend/src/Kahoot.Api/Program.cs | 7→7 lines | ~63 |
 | 12:50 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | modified AuthController() | ~154 |
+| 12:50 | Edited backend/src/Kahoot.Api/Controllers/GamesController.cs | 6→7 lines | ~52 |
+| 12:50 | Edited backend/src/Kahoot.Api/Controllers/GamesController.cs | 3→4 lines | ~47 |

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:50:05.310Z",
+    "lastScanned": "2026-09-09T09:50:21.295Z",
     "fileCount": 183,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "d5c06dbeedc067a99805425fa33c9d157546b6ef501ddb1193a225e7a77c40a4",
-    "storeUpdatedAt": "2026-09-09T09:50:05.331Z",
-    "rootHash": "a08f093aad653931"
+    "renderedHash": "0fbf47d752cfc1a2973499a553b6156df275865c241f17467cc623727c84f14a",
+    "storeUpdatedAt": "2026-09-09T09:50:21.315Z",
+    "rootHash": "5e133ed254256560"
   },
   "files": {
     "AGENTS.md": {
@@ -1578,11 +1578,11 @@
     },
     "backend/src/Kahoot.Api/Controllers/GamesController.cs": {
       "description": "Class: GamesController",
-      "tokens": 2019,
-      "hash": "5f560154f84e2540",
-      "size": 7570,
-      "mtimeMs": 1788945771263.381,
-      "updatedAt": "2026-09-09T09:22:51.418Z",
+      "tokens": 2046,
+      "hash": "0c77bf23ec79b179",
+      "size": 7671,
+      "mtimeMs": 1788947421037.7,
+      "updatedAt": "2026-09-09T09:50:21.294Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Endpoints/HomePageEndpoint.cs": {

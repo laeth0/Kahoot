@@ -17,6 +17,7 @@ using Kahoot.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Kahoot.Api.Controllers;
 
@@ -169,6 +170,7 @@ public sealed class GamesController(ISender sender, GameNotifier notifier) : Api
 
     [HttpPost("join")]
     [AllowAnonymous]
+    [EnableRateLimiting(RateLimitingExtensions.JoinPolicy)]
     [ProducesResponseType<JoinGameResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
