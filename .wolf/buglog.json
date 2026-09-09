@@ -39,7 +39,7 @@
       "error_message": "Significant refactor of HostConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6→3 lines (2 removed)",
+      "fix": "Rewrote 6â†’3 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -55,7 +55,7 @@
       "error_message": "Significant refactor of GameSessionConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6→3 lines (2 removed)",
+      "fix": "Rewrote 6â†’3 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -71,7 +71,7 @@
       "error_message": "Significant refactor of ParticipantConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7→4 lines (2 removed)",
+      "fix": "Rewrote 7â†’4 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -86,7 +86,7 @@
       "timestamp": "2026-09-09T08:17:43.453Z",
       "error_message": "Missing await",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
-      "root_cause": "Async call without await — returned Promise instead of value",
+      "root_cause": "Async call without await â€” returned Promise instead of value",
       "fix": "Added await to async call",
       "tags": [
         "auto-detected",
@@ -96,6 +96,51 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T08:17:43.453Z"
+    },
+    {
+      "id": "bug-003",
+      "timestamp": "2026-09-09T08:25:17.235939Z",
+      "error_message": "Unable to resolve service for type 'ImageUploadService' while activating UploadsController",
+      "file": "backend/src/Kahoot.Api/Controllers/UploadsController.cs",
+      "root_cause": "Scrutor marker-interface scan registers services AsImplementedInterfaces only; the controller injected the concrete ImageUploadService which is never registered.",
+      "fix": "Added IImageUploadService abstraction; service implements it + ITransientService; controller depends on the interface.",
+      "tags": [
+        "di",
+        "scrutor",
+        "cs"
+      ]
+    },
+    {
+      "id": "bug-008",
+      "timestamp": "2026-09-09T08:25:27.404Z",
+      "error_message": "Wrong reference: ITransientService should be IImageUploadService",
+      "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
+      "root_cause": "Used \"ITransientService\" instead of \"IImageUploadService\"",
+      "fix": "Changed ITransientService → IImageUploadService",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T08:25:27.404Z"
+    },
+    {
+      "id": "bug-009",
+      "timestamp": "2026-09-09T08:25:32.990Z",
+      "error_message": "Wrong reference: ImageUploadService should be IImageUploadService",
+      "file": "backend/src/Kahoot.Api/Controllers/UploadsController.cs",
+      "root_cause": "Used \"ImageUploadService\" instead of \"IImageUploadService\"",
+      "fix": "Changed ImageUploadService → IImageUploadService",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T08:25:32.990Z"
     }
   ]
 }

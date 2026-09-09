@@ -4,7 +4,8 @@ using Microsoft.Extensions.Options;
 
 namespace Kahoot.Application.Common.Storage;
 
-public sealed class ImageUploadService(IFileStorage fileStorage, IOptions<FileStorageOptions> options) : ITransientService
+public sealed class ImageUploadService(IFileStorage fileStorage, IOptions<FileStorageOptions> options)
+    : IImageUploadService, ITransientService
 {
     private static readonly Error EmptyFile = new("Upload.EmptyFile", "The uploaded file is empty.");
     private static readonly Error TooLarge = new("Upload.TooLarge", "The uploaded file exceeds the maximum allowed size.");

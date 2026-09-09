@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:19:54.046Z
-> Files: 48 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:25:32.967Z
+> Files: 49 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -35,8 +35,9 @@
 
 - `FileStorageOptions.cs` — Class: FileStorageOptions (~213 tok)
 - `IFileStorage.cs` — Class: IFileStorage (~49 tok)
+- `IImageUploadService.cs` — Class: IImageUploadService (~75 tok)
 - `ImageSignature.cs` — Class: ImageSignature (~255 tok)
-- `ImageUploadService.cs` — Class: ImageUploadService (~591 tok)
+- `ImageUploadService.cs` — Class: ImageUploadService (~598 tok)
 
 ## backend/src/Kahoot.Domain/Common/
 

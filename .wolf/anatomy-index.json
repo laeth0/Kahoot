@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:19:54.046Z",
-    "fileCount": 48,
+    "lastScanned": "2026-09-09T08:25:32.967Z",
+    "fileCount": 49,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "b18cbe47238cb8c6684196adfbdaa3100a966b55f52d35483513af4c93a74209",
-    "storeUpdatedAt": "2026-09-09T08:19:54.061Z",
-    "rootHash": "006bdf705c4e608b"
+    "renderedHash": "43435d9aeefcfd61d7d348f274241ffa96cbb328df0d8e4b96335fde9c53d4c3",
+    "storeUpdatedAt": "2026-09-09T08:25:32.979Z",
+    "rootHash": "842972a91cbb0df2"
   },
   "files": {
     "AGENTS.md": {
@@ -408,11 +408,11 @@
     },
     "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs": {
       "description": "Class: ImageUploadService",
-      "tokens": 591,
-      "hash": "d871add0bc4e131f",
-      "size": 2214,
-      "mtimeMs": 1788941863253.1711,
-      "updatedAt": "2026-09-09T08:17:43.427Z",
+      "tokens": 598,
+      "hash": "f9c68f7111501e26",
+      "size": 2239,
+      "mtimeMs": 1788942327170.1514,
+      "updatedAt": "2026-09-09T08:25:27.360Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Infrastructure/Storage/LocalFileStorage.cs": {
@@ -427,10 +427,10 @@
     "backend/src/Kahoot.Api/Controllers/UploadsController.cs": {
       "description": "Controller: UploadsController",
       "tokens": 409,
-      "hash": "79b2b153307d9843",
-      "size": 1531,
-      "mtimeMs": 1788941883270.9915,
-      "updatedAt": "2026-09-09T08:18:03.446Z",
+      "hash": "b4c614e1ca49c852",
+      "size": 1532,
+      "mtimeMs": 1788942332809.4631,
+      "updatedAt": "2026-09-09T08:25:32.966Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Program.cs": {
@@ -440,6 +440,15 @@
       "size": 1881,
       "mtimeMs": 1788941894379.8496,
       "updatedAt": "2026-09-09T08:18:14.524Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Common/Storage/IImageUploadService.cs": {
+      "description": "Class: IImageUploadService",
+      "tokens": 75,
+      "hash": "d95779141a794d32",
+      "size": 279,
+      "mtimeMs": 1788942321875.382,
+      "updatedAt": "2026-09-09T08:25:22.191Z",
       "source": "hook"
     }
   },

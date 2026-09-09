@@ -6,7 +6,7 @@ namespace Kahoot.Api.Controllers;
 
 [ApiController]
 [Route("api/uploads")]
-public sealed class UploadsController(ImageUploadService imageUploadService) : ControllerBase
+public sealed class UploadsController(IImageUploadService imageUploadService) : ControllerBase
 {
     [HttpPost("images")]
     [Consumes("multipart/form-data")]
