@@ -141,6 +141,54 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T08:25:32.990Z"
+    },
+    {
+      "id": "bug-010",
+      "timestamp": "2026-09-09T09:19:36.078Z",
+      "error_message": "Significant refactor of AuthenticationErrors.cs",
+      "file": "backend/src/Kahoot.Application/Authentication/Common/AuthenticationErrors.cs",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 7→4 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T09:19:36.078Z"
+    },
+    {
+      "id": "bug-011",
+      "timestamp": "2026-09-09T09:21:28.146Z",
+      "error_message": "Wrong reference: Kahoot should be MediatR",
+      "file": "backend/src/Kahoot.Api/Realtime/GameHub.cs",
+      "root_cause": "Used \"Kahoot\" instead of \"MediatR\"",
+      "fix": "Changed Kahoot → MediatR",
+      "tags": [
+        "auto-detected",
+        "wrong-reference",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T09:21:28.146Z"
+    },
+    {
+      "id": "bug-012",
+      "timestamp": "2026-09-09T09:21:47.930Z",
+      "error_message": "Wrong return value",
+      "file": "backend/src/Kahoot.Api/Controllers/AuthController.cs",
+      "root_cause": "Was returning: ToActionResult(await sender.Send(command, cancella",
+      "fix": "Now returns: ToActionResult(await sender.Send(command, cancella",
+      "tags": [
+        "auto-detected",
+        "return-value",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-09-09T09:21:52.540Z"
     }
   ]
 }

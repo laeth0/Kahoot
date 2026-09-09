@@ -7,9 +7,6 @@ public static class AuthenticationErrors
     public static readonly Error InvalidCredentials =
         new("Auth.InvalidCredentials", "The username or password is incorrect.");
 
-    public static readonly Error UsernameTaken =
-        new("Auth.UsernameTaken", "That username is already registered.");
-
     public static readonly Error InvalidRefreshToken =
         new("Auth.InvalidRefreshToken", "The refresh token is invalid or has expired.");
 

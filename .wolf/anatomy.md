@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:01:13.838Z
-> Files: 159 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:22:22.198Z
+> Files: 174 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -25,11 +25,32 @@
 
 ## backend/src/Kahoot.Api/Common/
 
-- `CurrentUser.cs` — Class: CurrentUser (~170 tok)
+- `ApiControllerBase.cs` — Controller: ApiControllerBase (~365 tok)
+- `ApiErrorMapping.cs` — Class: ApiErrorMapping (~494 tok)
+- `CurrentUser.cs` — Class: CurrentUser (~98 tok)
+- `GlobalExceptionHandler.cs` — Class: GlobalExceptionHandler (~283 tok)
+- `HostClaims.cs` — Class: HostClaims (~104 tok)
+
+## backend/src/Kahoot.Api/Contracts/
+
+- `AuthRequests.cs` — Class: AuthRequests (~59 tok)
+- `CreatedIdResponse.cs` — Class: CreatedIdResponse (~22 tok)
+- `GameRequests.cs` — Class: GameRequests (~42 tok)
+- `QuizRequests.cs` — Class: QuizRequests (~128 tok)
 
 ## backend/src/Kahoot.Api/Controllers/
 
+- `AuthController.cs` — Class: AuthController (~477 tok)
+- `QuizzesController.cs` — Class: QuizzesController (~1666 tok)
 - `UploadsController.cs` — Controller: UploadsController (~409 tok)
+
+## backend/src/Kahoot.Api/Realtime/
+
+- `GameGroups.cs` — Class: GameGroups (~55 tok)
+- `GameHub.cs` — Class: GameHub (~1326 tok)
+- `GameNotifier.cs` — Class: GameNotifier (~405 tok)
+- `IGameClient.cs` — Class: IGameClient (~152 tok)
+- `RealtimeResponse.cs` — Class: RealtimeResponse (~124 tok)
 
 ## backend/src/Kahoot.Application/
 
@@ -37,7 +58,7 @@
 
 ## backend/src/Kahoot.Application/Authentication/Common/
 
-- `AuthenticationErrors.cs` — Class: AuthenticationErrors (~189 tok)
+- `AuthenticationErrors.cs` — Class: AuthenticationErrors (~156 tok)
 - `AuthenticationResponse.cs` — Class: AuthenticationResponse (~72 tok)
 - `AuthTokenFactory.cs` — Class: AuthTokenFactory (~321 tok)
 - `JwtOptions.cs` — Class: JwtOptions (~146 tok)

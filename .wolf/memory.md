@@ -248,3 +248,24 @@ description: chronological action log per session, consolidated weekly
 | 12:01 | Created docs/realtime-protocol.md | — | ~1852 |
 | 12:01 | Edited docs/functional-requirements.md | 5→6 lines | ~212 |
 | 12:05 | Built the full Application layer (MediatR CQRS: 4 auth + 10 quiz/question + 13 game commands/queries, ValidationBehavior + RequestLoggingBehavior, GameStateMachine/ScoringService/LeaderboardService, ports IApplicationDbContext/IJwtTokenService/ITokenHasher/ISecureTokenGenerator/IGamePinGenerator/IDbExceptionInterpreter, ICurrentUser) and Infrastructure impls (JwtTokenService, TokenHasher, SecureTokenGenerator, GamePinGenerator, DbExceptionInterpreter, KahootDbContext:IApplicationDbContext). Wired Kahoot.Api for readiness: CurrentUser via HttpContext, JWT bearer, AddAuthorization, ValidateOnBuild. Added docs/realtime-protocol.md (SignalR event↔command map for the API layer). Release build 0 warn; API boots vs Postgres 17 with ValidateOnBuild → whole App+Infra DI graph resolves. No schema/migration change. | backend/src/Kahoot.Application/**, backend/src/Kahoot.Infrastructure/**, backend/src/Kahoot.Api/{Program.cs,Common/CurrentUser.cs}, docs/realtime-protocol.md | success | ~55000 |
+| 12:19 | Edited backend/src/Kahoot.Application/Authentication/Common/AuthenticationErrors.cs | 7→4 lines | ~51 |
+| 12:19 | Created backend/src/Kahoot.Api/Common/HostClaims.cs | — | ~104 |
+| 12:19 | Created backend/src/Kahoot.Api/Common/CurrentUser.cs | — | ~98 |
+| 12:19 | Created backend/src/Kahoot.Api/Common/ApiErrorMapping.cs | — | ~494 |
+| 12:20 | Created backend/src/Kahoot.Api/Common/ApiControllerBase.cs | — | ~336 |
+| 12:20 | Edited backend/src/Kahoot.Api/Common/ApiControllerBase.cs | StatusCode() → ObjectResult() | ~96 |
+| 12:20 | Created backend/src/Kahoot.Api/Common/GlobalExceptionHandler.cs | — | ~283 |
+| 12:20 | Created backend/src/Kahoot.Api/Contracts/AuthRequests.cs | — | ~59 |
+| 12:20 | Created backend/src/Kahoot.Api/Contracts/QuizRequests.cs | — | ~128 |
+| 12:20 | Created backend/src/Kahoot.Api/Contracts/GameRequests.cs | — | ~42 |
+| 12:20 | Created backend/src/Kahoot.Api/Contracts/CreatedIdResponse.cs | — | ~22 |
+| 12:20 | Created backend/src/Kahoot.Api/Realtime/RealtimeResponse.cs | — | ~124 |
+| 12:20 | Created backend/src/Kahoot.Api/Realtime/GameGroups.cs | — | ~55 |
+| 12:20 | Created backend/src/Kahoot.Api/Realtime/IGameClient.cs | — | ~152 |
+| 12:21 | Created backend/src/Kahoot.Api/Realtime/GameNotifier.cs | — | ~405 |
+| 12:21 | Created backend/src/Kahoot.Api/Realtime/GameHub.cs | — | ~1333 |
+| 12:21 | Edited backend/src/Kahoot.Api/Realtime/GameHub.cs | 3→2 lines | ~12 |
+| 12:21 | Created backend/src/Kahoot.Api/Controllers/AuthController.cs | — | ~468 |
+| 12:21 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | 2→2 lines | ~47 |
+| 12:21 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | 2→2 lines | ~45 |
+| 12:22 | Created backend/src/Kahoot.Api/Controllers/QuizzesController.cs | — | ~1666 |
