@@ -320,3 +320,72 @@ description: chronological action log per session, consolidated weekly
 | 12:57 | Edited docs/functional-requirements.md | 3→3 lines | ~170 |
 | 12:57 | Edited docs/non-functional-requirements.md | modified IP() | ~183 |
 | 13:02 | Edited backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs | modified if() | ~338 |
+
+## Session: 2026-09-09 16:57
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 17:06 | Created load-tests/.gitignore | — | ~49 |
+| 17:07 | Created load-tests/config/environments.js | — | ~605 |
+| 17:07 | Created load-tests/helpers/metrics.js | — | ~893 |
+| 17:08 | Created load-tests/helpers/signalr.js | — | ~3428 |
+| 17:09 | Created load-tests/helpers/rest.js | — | ~1379 |
+| 17:09 | Created load-tests/helpers/testdata.js | — | ~884 |
+| 17:10 | Created load-tests/config/thresholds.js | — | ~639 |
+| 17:10 | Created load-tests/helpers/summary.js | — | ~1235 |
+| 17:10 | Created load-tests/helpers/orchestration.js | — | ~1073 |
+| 17:11 | Created load-tests/scenarios/connections.js | — | ~792 |
+| 17:11 | Created load-tests/scenarios/join-game.js | — | ~1332 |
+| 17:13 | Created load-tests/scenarios/answer-burst.js | — | ~3173 |
+| 17:14 | Created load-tests/scenarios/question-broadcast.js | — | ~2076 |
+| 17:15 | Created load-tests/scenarios/duplicate-answer.js | — | ~2396 |
+| 17:16 | Created load-tests/scenarios/reconnection.js | — | ~2638 |
+| 17:16 | Edited load-tests/helpers/testdata.js | modified provisionPerGameQuizzes() | ~608 |
+| 17:17 | Created load-tests/scenarios/multiple-games.js | — | ~2460 |
+| 17:18 | Created load-tests/scenarios/ramp.js | — | ~1939 |
+| 17:18 | Edited load-tests/scenarios/ramp.js | modified player() | ~311 |
+| 17:18 | Edited load-tests/scenarios/ramp.js | 2→2 lines | ~26 |
+| 17:19 | Created load-tests/scenarios/reconnection-storm.js | — | ~2240 |
+| 17:20 | Created load-tests/scenarios/reconnection-storm.js | — | ~2137 |
+| 17:20 | Created load-tests/scenarios/endurance.js | — | ~2144 |
+| 17:21 | Created load-tests/run-all.js | — | ~1905 |
+| 17:21 | Created load-tests/verify/verify.sql | — | ~1151 |
+| 17:22 | Edited load-tests/verify/verify.sql | expanded (+6 lines) | ~229 |
+| 17:22 | Created load-tests/verify/verify-db.mjs | — | ~464 |
+| 17:23 | Created load-tests/README.md | — | ~3698 |
+| 17:24 | Edited load-tests/helpers/signalr.js | 2→4 lines | ~64 |
+| 17:29 | Edited load-tests/helpers/summary.js | 4→8 lines | ~138 |
+| 17:29 | Edited load-tests/run-all.js | 3→3 lines | ~76 |
+| 17:29 | Edited load-tests/scenarios/answer-burst.js | 20→23 lines | ~244 |
+| 17:34 | Edited load-tests/helpers/rest.js | added 1 import(s) | ~16 |
+| 17:34 | Edited load-tests/helpers/rest.js | added 3 condition(s) | ~278 |
+| 17:34 | Edited load-tests/run-all.js | 3→3 lines | ~74 |
+| 17:35 | Edited load-tests/run-all.js | added error handling | ~823 |
+| 17:35 | Edited load-tests/run-all.js | 5→8 lines | ~46 |
+| 17:35 | Edited load-tests/helpers/orchestration.js | modified integrity() | ~362 |
+| 17:35 | Edited load-tests/helpers/orchestration.js | added 1 condition(s) | ~324 |
+| 17:36 | Edited load-tests/scenarios/answer-burst.js | 4→5 lines | ~33 |
+| 17:36 | Edited load-tests/scenarios/answer-burst.js | modified if() | ~138 |
+| 17:36 | Edited load-tests/scenarios/answer-burst.js | added error handling | ~395 |
+| 17:36 | Edited load-tests/scenarios/answer-burst.js | added 1 condition(s) | ~368 |
+| 17:36 | Edited load-tests/scenarios/answer-burst.js | 2→3 lines | ~53 |
+| 17:37 | Edited load-tests/helpers/metrics.js | added 1 condition(s) | ~206 |
+| 17:37 | Edited load-tests/scenarios/answer-burst.js | modified if() | ~71 |
+| 17:37 | Edited load-tests/scenarios/answer-burst.js | 4→5 lines | ~26 |
+| 17:37 | Edited load-tests/scenarios/answer-burst.js | 7→9 lines | ~137 |
+| 17:51 | Edited load-tests/helpers/rest.js | added 1 condition(s) | ~304 |
+| 17:52 | Edited load-tests/helpers/signalr.js | modified start() | ~352 |
+| 17:53 | Created load-tests/scenarios/connections.js | — | ~1088 |
+| 17:53 | Edited load-tests/run-all.js | expanded (+7 lines) | ~180 |
+| 17:53 | Edited load-tests/run-all.js | added 1 condition(s) | ~149 |
+| 17:53 | Edited load-tests/run-all.js | 3→5 lines | ~52 |
+| 17:57 | Edited load-tests/scenarios/ramp.js | 4→7 lines | ~135 |
+| 18:01 | Edited load-tests/run-all.js | modified cooldownSeconds() | ~66 |
+| 18:02 | Edited load-tests/run-all.js | modified if() | ~54 |
+| 18:09 | Created load-tests/docker-compose.railway-sim.yml | — | ~777 |
+| 18:13 | Edited load-tests/helpers/rest.js | added error handling | ~240 |
+| 18:17 | Edited load-tests/README.md | modified A() | ~1089 |
+| 18:17 | Edited load-tests/README.md | 9→12 lines | ~240 |
+| 18:17 | Edited load-tests/README.md | expanded (+14 lines) | ~320 |
+| 18:17 | Edited load-tests/README.md | 10→11 lines | ~175 |
+| 18:18 | Built k6 load-test suite (load-tests/): 10 scenarios + SignalR JSON-protocol client, run-all.js, verify.sql, docker-compose.railway-sim.yml (Railway-sized stack). Smoke runs PASS; per-IP rate limiter (240+120/30s) forces slow connection ramps from a single IP. Full 500-player acceptance run in progress vs Railway-sim (API 2vCPU/1GiB). | load-tests/** | in progress | ~9000 |

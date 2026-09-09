@@ -236,6 +236,246 @@
         "auth",
         "cs"
       ]
+    },
+    {
+      "id": "bug-016",
+      "timestamp": "2026-09-09T14:22:07.181Z",
+      "error_message": "Significant refactor of verify.sql",
+      "file": "load-tests/verify/verify.sql",
+      "root_cause": "4 lines replaced/restructured",
+      "fix": "Rewrote 8→14 lines (4 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "sql"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:22:07.181Z"
+    },
+    {
+      "id": "bug-017",
+      "timestamp": "2026-09-09T14:29:18.035Z",
+      "error_message": "Incorrect value in code",
+      "file": "load-tests/run-all.js",
+      "root_cause": "Had `\\n─── ${name}  (${k6Bin()} ${args.join('",
+      "fix": "Changed to '-e'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:29:18.036Z"
+    },
+    {
+      "id": "bug-018",
+      "timestamp": "2026-09-09T14:29:36.203Z",
+      "error_message": "Significant refactor of answer-burst.js",
+      "file": "load-tests/scenarios/answer-burst.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 20→23 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:29:36.203Z"
+    },
+    {
+      "id": "bug-019",
+      "timestamp": "2026-09-09T14:34:36.885Z",
+      "error_message": "Missing guard clause",
+      "file": "load-tests/helpers/rest.js",
+      "root_cause": "No early return/throw for edge case: __ENV.HOST_TOKEN",
+      "fix": "Added guard clause: if (__ENV.HOST_TOKEN)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:34:36.885Z"
+    },
+    {
+      "id": "bug-020",
+      "timestamp": "2026-09-09T14:34:48.130Z",
+      "error_message": "Incorrect value in code",
+      "file": "load-tests/run-all.js",
+      "root_cause": "Had `\\n─── ${name}  (${k6Bin()} ${args.join('",
+      "fix": "Changed to `\\n─── ${name}  (k6 run ... ${name}.js)\\n`",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:34:48.130Z"
+    },
+    {
+      "id": "bug-021",
+      "timestamp": "2026-09-09T14:35:06.291Z",
+      "error_message": "Missing error handling in apiBase()",
+      "file": "load-tests/run-all.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block | Also: main().catch((e) => {; console.error(e);",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 2,
+      "last_seen": "2026-09-09T14:35:16.065Z"
+    },
+    {
+      "id": "bug-022",
+      "timestamp": "2026-09-09T14:35:55.430Z",
+      "error_message": "Significant refactor of orchestration.js",
+      "file": "load-tests/helpers/orchestration.js",
+      "root_cause": "8 lines replaced/restructured",
+      "fix": "Rewrote 9→21 lines (8 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:35:55.430Z"
+    },
+    {
+      "id": "bug-023",
+      "timestamp": "2026-09-09T14:36:18.787Z",
+      "error_message": "Missing error handling in answer-burst.js",
+      "file": "load-tests/scenarios/answer-burst.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:36:18.787Z"
+    },
+    {
+      "id": "bug-024",
+      "timestamp": "2026-09-09T14:36:37.850Z",
+      "error_message": "Wrong operator: && should be ||",
+      "file": "load-tests/scenarios/answer-burst.js",
+      "root_cause": "Used \"&&\" instead of \"||\"",
+      "fix": "Changed operator && → ||",
+      "tags": [
+        "auto-detected",
+        "operator-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:36:37.850Z"
+    },
+    {
+      "id": "bug-025",
+      "timestamp": "2026-09-09T14:37:44.828Z",
+      "error_message": "Significant refactor of answer-burst.js",
+      "file": "load-tests/scenarios/answer-burst.js",
+      "root_cause": "3 lines replaced/restructured",
+      "fix": "Rewrote 7→9 lines (3 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:37:44.828Z"
+    },
+    {
+      "id": "bug-026",
+      "timestamp": "2026-09-09T14:51:23.808Z",
+      "error_message": "Missing guard clause",
+      "file": "load-tests/helpers/rest.js",
+      "root_cause": "No early return/throw for edge case: token",
+      "fix": "Added guard clause: if (token)",
+      "tags": [
+        "auto-detected",
+        "guard-clause",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:51:23.808Z"
+    },
+    {
+      "id": "bug-027",
+      "timestamp": "2026-09-09T14:57:47.341Z",
+      "error_message": "Significant refactor of ramp.js",
+      "file": "load-tests/scenarios/ramp.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 4→7 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T14:57:47.341Z"
+    },
+    {
+      "id": "bug-028",
+      "timestamp": "2026-09-09T15:01:54.998Z",
+      "error_message": "Significant refactor of run-all.js",
+      "file": "load-tests/run-all.js",
+      "root_cause": "2 lines replaced/restructured",
+      "fix": "Rewrote 3→5 lines (2 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T15:01:54.998Z"
+    },
+    {
+      "id": "bug-029",
+      "timestamp": "2026-09-09T15:02:15.897Z",
+      "error_message": "Wrong condition in logic",
+      "file": "load-tests/run-all.js",
+      "root_cause": "Condition was: if (i > 0 && COOLDOWN_S > 0)",
+      "fix": "Changed to: if (i > 0 && cd > 0)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T15:02:15.897Z"
+    },
+    {
+      "id": "bug-030",
+      "timestamp": "2026-09-09T15:13:25.622Z",
+      "error_message": "Missing error handling in serverClockSkewMs()",
+      "file": "load-tests/helpers/rest.js",
+      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "fix": "Added try/catch block",
+      "tags": [
+        "auto-detected",
+        "error-handling",
+        "js"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-09T15:13:25.622Z"
     }
   ]
 }

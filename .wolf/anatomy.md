@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T10:02:53.750Z
-> Files: 186 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T15:17:59.734Z
+> Files: 210 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -390,3 +390,42 @@
 - `authService.ts` — Raw contract returned by `POST /api/auth/login` and `/api/auth/refresh`. (~505 tok)
 - `axiosClient.ts` — Centralized Axios client: base URL from configuration, bearer-token injection, (~438 tok)
 - `gameService.ts` — Server game-state values (must match `Kahoot.Domain.Games.GameStatus`). (~270 tok)
+
+## load-tests/
+
+- `.gitignore` — Git ignore rules (~49 tok)
+- `docker-compose.railway-sim.yml` — Kahoot backend + Postgres, tuned to approximate ONE small Railway instance: (~777 tok)
+- `README.md` — Project documentation (~4359 tok)
+- `run-all.js` — fs: cooldownSeconds, loadDotenv, parseArgs + 9 more (~2760 tok)
+
+## load-tests/config/
+
+- `environments.js` — Resolves the target from BASE_URL / SIGNALR_URL. Defaults to the local dev API (~605 tok)
+- `thresholds.js` — Threshold sets derived from non-functional-requirements.md (NFR-1 / NFR-2). (~639 tok)
+
+## load-tests/helpers/
+
+- `metrics.js` — --- SignalR connection lifecycle ---------------------------------------------- (~1006 tok)
+- `orchestration.js` — Director-side helpers: wait for players to be present, run a question cycle, (~1310 tok)
+- `rest.js` — REST helpers for the host-facing API (auth + quiz authoring + game control). (~2013 tok)
+- `signalr.js` — Minimal SignalR client for k6, speaking the real protocol the app uses: (~3599 tok)
+- `summary.js` — Compact, dependency-free end-of-test report. Emits: (~1330 tok)
+- `testdata.js` — Repeatable test-data provisioning, entirely through the public host API (~1475 tok)
+
+## load-tests/scenarios/
+
+- `answer-burst.js` — Scenario 4 — 500-player answer burst (the primary performance test). (~3660 tok)
+- `connections.js` — Scenario 1 — 500 concurrent SignalR connections. (~1088 tok)
+- `duplicate-answer.js` — Scenario 5 — Duplicate-answer concurrency / idempotency. (~2396 tok)
+- `endurance.js` — Scenario 10 — Endurance / soak. (~2144 tok)
+- `join-game.js` — Scenario 2 — 500 unique players join ONE game. (~1332 tok)
+- `multiple-games.js` — Scenario 7 — GAMES x PLAYERS_PER_GAME concurrent games (default 10 x 50 = 500). (~2460 tok)
+- `question-broadcast.js` — Scenario 3 — Question broadcast with 500 connected players + group isolation. (~2076 tok)
+- `ramp.js` — Scenario 8 — Ramp / stress: 50 -> 100 -> 250 -> 500 -> 750 concurrent players. (~2006 tok)
+- `reconnection-storm.js` — Scenario 9 — Reconnection storm. (~2137 tok)
+- `reconnection.js` — Scenario 6 — Reconnection preserves identity and state. (~2638 tok)
+
+## load-tests/verify/
+
+- `verify-db.mjs` — Declares here (~464 tok)
+- `verify.sql` — Out-of-band correctness verification, straight against PostgreSQL. (~1267 tok)

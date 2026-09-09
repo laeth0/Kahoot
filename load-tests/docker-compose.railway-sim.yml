@@ -1,0 +1,75 @@
+# Kahoot backend + Postgres, tuned to approximate ONE small Railway instance:
+#   * a single backend replica (deploy.replicas defaults to 1)
+#   * CPU + memory caps on both the API and the database
+#   * ASPNETCORE_ENVIRONMENT=Production (as Railway runs it)
+#   * Postgres NOT published on the host (Railway's DB isn't on your localhost)
+#
+# This is a self-contained stack (it does NOT extend ../docker-compose.yml) so it
+# can pick its own DB port strategy and resource limits. The application image is
+# the same one ../docker-compose.yml builds (../backend/Dockerfile).
+#
+# Run from the repo root:
+#   docker compose -f load-tests/docker-compose.railway-sim.yml up -d --build
+#
+# Tune the "instance size" with env vars (defaults model a small paid Railway box):
+#   API_CPUS=1 API_MEM=512m DB_CPUS=1 DB_MEM=512m \
+#     docker compose -f load-tests/docker-compose.railway-sim.yml up -d --build
+#
+# NOTE ON RATE LIMITING: every k6 VU reaches the container through the Docker
+# gateway, so the API's per-IP limiter sees them as ONE client — exactly the
+# single-origin constraint the load tests already pace around. Real Railway sees
+# 500 distinct player IPs. See load-tests/README.md.
+
+name: kahoot-railway-sim
+
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: kahoot
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - railway_sim_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d kahoot']
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '${DB_CPUS:-1.0}'
+          memory: '${DB_MEM:-1g}'
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: 'http://+:8080'
+      ConnectionStrings__DefaultConnection: 'Host=db;Port=5432;Database=kahoot;Username=postgres;Password=postgres'
+      # On real Railway these come from the project's Variables, not the image.
+      Jwt__SigningKey: '${JWT_SIGNING_KEY:-railway-sim-signing-key-change-me-min-32-characters}'
+      Seeding__Host__Username: '${HOST_USERNAME:-admin}'
+      Seeding__Host__Password: '${HOST_PASSWORD:-admin}'
+      Cors__AllowedOrigins__0: 'http://localhost:3000'
+      Cors__AllowedOrigins__1: 'http://localhost:5173'
+    ports:
+      - '${API_PORT:-5000}:8080'
+    depends_on:
+      db:
+        condition: service_healthy
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: '${API_CPUS:-2.0}'
+          memory: '${API_MEM:-1g}'
+
+volumes:
+  railway_sim_pgdata:

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T10:02:53.750Z",
-    "fileCount": 186,
+    "lastScanned": "2026-09-09T15:17:59.734Z",
+    "fileCount": 210,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "4ea95db78e01f82f781b9e7edfd3a9a092358ab9dbd42b2d7a462892cda4e7f6",
-    "storeUpdatedAt": "2026-09-09T10:02:53.764Z",
-    "rootHash": "d907e9fa44685bf2"
+    "renderedHash": "dd1f7967048cdaf13ecb79f7e9be553e4edeae544a0008c56a98f4914ce48e22",
+    "storeUpdatedAt": "2026-09-09T15:17:59.742Z",
+    "rootHash": "1067e6b777873be7"
   },
   "files": {
     "AGENTS.md": {
@@ -1719,6 +1719,981 @@
       "size": 943,
       "mtimeMs": 1788947663396.2175,
       "updatedAt": "2026-09-09T09:54:23.506Z",
+      "source": "hook"
+    },
+    "load-tests/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 49,
+      "hash": "68f3a52363dee57a",
+      "size": 185,
+      "mtimeMs": 1788962802996.7441,
+      "updatedAt": "2026-09-09T14:06:43.201Z",
+      "source": "hook"
+    },
+    "load-tests/config/environments.js": {
+      "description": "Resolves the target from BASE_URL / SIGNALR_URL. Defaults to the local dev API",
+      "tokens": 605,
+      "hash": "83c36b1917cf17e1",
+      "size": 2119,
+      "mtimeMs": 1788962835061.2026,
+      "updatedAt": "2026-09-09T14:07:15.172Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "resolveEnv",
+          "kind": "fn",
+          "startLine": 6,
+          "endLine": 28,
+          "tokens": 262
+        },
+        {
+          "name": "assertLoadAllowed",
+          "kind": "fn",
+          "startLine": 29,
+          "endLine": 46,
+          "tokens": 191
+        },
+        {
+          "name": "hostCredentials",
+          "kind": "fn",
+          "startLine": 47,
+          "endLine": 53,
+          "tokens": 42
+        },
+        {
+          "name": "intEnv",
+          "kind": "fn",
+          "startLine": 54,
+          "endLine": 58,
+          "tokens": 38
+        }
+      ]
+    },
+    "load-tests/helpers/metrics.js": {
+      "description": "--- SignalR connection lifecycle ----------------------------------------------",
+      "tokens": 1006,
+      "hash": "4cf66c05b958ae6e",
+      "size": 3520,
+      "mtimeMs": 1788964639606.2964,
+      "updatedAt": "2026-09-09T14:37:19.788Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "bumpUnexpected",
+          "kind": "fn",
+          "startLine": 46,
+          "endLine": 49,
+          "tokens": 55
+        },
+        {
+          "name": "noUnexpected",
+          "kind": "fn",
+          "startLine": 50,
+          "endLine": 56,
+          "tokens": 77
+        },
+        {
+          "name": "recordJoinFailure",
+          "kind": "fn",
+          "startLine": 57,
+          "endLine": 61,
+          "tokens": 56
+        }
+      ]
+    },
+    "load-tests/helpers/signalr.js": {
+      "description": "Minimal SignalR client for k6, speaking the real protocol the app uses:",
+      "tokens": 3599,
+      "hash": "42bc773632975af1",
+      "size": 12602,
+      "mtimeMs": 1788965563488.8896,
+      "updatedAt": "2026-09-09T14:52:43.609Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "delay",
+          "kind": "fn",
+          "startLine": 35,
+          "endLine": 39,
+          "tokens": 46
+        },
+        {
+          "name": "waitFor",
+          "kind": "fn",
+          "startLine": 40,
+          "endLine": 49,
+          "tokens": 78
+        },
+        {
+          "name": "toWsUrl",
+          "kind": "fn",
+          "startLine": 50,
+          "endLine": 53,
+          "tokens": 30
+        },
+        {
+          "name": "SignalRClient",
+          "kind": "class",
+          "startLine": 54,
+          "endLine": 350,
+          "tokens": 2698
+        },
+        {
+          "name": "connectAndJoin",
+          "kind": "fn",
+          "startLine": 351,
+          "endLine": 362,
+          "tokens": 124
+        },
+        {
+          "name": "JoinError",
+          "kind": "class",
+          "startLine": 363,
+          "endLine": 369,
+          "tokens": 34
+        },
+        {
+          "name": "bytesToString",
+          "kind": "fn",
+          "startLine": 370,
+          "endLine": 376,
+          "tokens": 50
+        },
+        {
+          "name": "safe",
+          "kind": "fn",
+          "startLine": 377,
+          "endLine": 384,
+          "tokens": 39
+        }
+      ]
+    },
+    "load-tests/helpers/rest.js": {
+      "description": "REST helpers for the host-facing API (auth + quiz authoring + game control).",
+      "tokens": 2013,
+      "hash": "42eeef7138cfb07c",
+      "size": 7047,
+      "mtimeMs": 1788966805440.5818,
+      "updatedAt": "2026-09-09T15:13:25.597Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "api",
+          "kind": "fn",
+          "startLine": 15,
+          "endLine": 37,
+          "tokens": 286
+        },
+        {
+          "name": "serverClockSkewMs",
+          "kind": "fn",
+          "startLine": 38,
+          "endLine": 50,
+          "tokens": 116
+        },
+        {
+          "name": "expectStatus",
+          "kind": "fn",
+          "startLine": 51,
+          "endLine": 63,
+          "tokens": 152
+        },
+        {
+          "name": "login",
+          "kind": "fn",
+          "startLine": 64,
+          "endLine": 84,
+          "tokens": 211
+        },
+        {
+          "name": "createQuiz",
+          "kind": "fn",
+          "startLine": 85,
+          "endLine": 91,
+          "tokens": 101
+        },
+        {
+          "name": "addQuestion",
+          "kind": "fn",
+          "startLine": 92,
+          "endLine": 97,
+          "tokens": 77
+        },
+        {
+          "name": "publishQuiz",
+          "kind": "fn",
+          "startLine": 98,
+          "endLine": 102,
+          "tokens": 61
+        },
+        {
+          "name": "getQuiz",
+          "kind": "fn",
+          "startLine": 103,
+          "endLine": 108,
+          "tokens": 64
+        },
+        {
+          "name": "createGame",
+          "kind": "fn",
+          "startLine": 109,
+          "endLine": 115,
+          "tokens": 86
+        },
+        {
+          "name": "getHostState",
+          "kind": "fn",
+          "startLine": 116,
+          "endLine": 121,
+          "tokens": 62
+        },
+        {
+          "name": "getQuestionResults",
+          "kind": "fn",
+          "startLine": 122,
+          "endLine": 129,
+          "tokens": 80
+        },
+        {
+          "name": "getLeaderboard",
+          "kind": "fn",
+          "startLine": 130,
+          "endLine": 137,
+          "tokens": 70
+        },
+        {
+          "name": "gameControl",
+          "kind": "fn",
+          "startLine": 138,
+          "endLine": 146,
+          "tokens": 87
+        },
+        {
+          "name": "startGame",
+          "kind": "fn",
+          "startLine": 147,
+          "endLine": 147,
+          "tokens": 22
+        },
+        {
+          "name": "advance",
+          "kind": "fn",
+          "startLine": 148,
+          "endLine": 148,
+          "tokens": 22
+        },
+        {
+          "name": "endQuestion",
+          "kind": "fn",
+          "startLine": 149,
+          "endLine": 149,
+          "tokens": 25
+        },
+        {
+          "name": "showLeaderboard",
+          "kind": "fn",
+          "startLine": 150,
+          "endLine": 150,
+          "tokens": 26
+        },
+        {
+          "name": "endGame",
+          "kind": "fn",
+          "startLine": 151,
+          "endLine": 152,
+          "tokens": 22
+        },
+        {
+          "name": "removeParticipant",
+          "kind": "fn",
+          "startLine": 153,
+          "endLine": 163,
+          "tokens": 125
+        },
+        {
+          "name": "restJoin",
+          "kind": "fn",
+          "startLine": 164,
+          "endLine": 171,
+          "tokens": 76
+        },
+        {
+          "name": "safeJson",
+          "kind": "fn",
+          "startLine": 172,
+          "endLine": 179,
+          "tokens": 30
+        }
+      ]
+    },
+    "load-tests/helpers/testdata.js": {
+      "description": "Repeatable test-data provisioning, entirely through the public host API",
+      "tokens": 1475,
+      "hash": "1fd285b98ba3c118",
+      "size": 5162,
+      "mtimeMs": 1788963396096.0342,
+      "updatedAt": "2026-09-09T14:16:36.195Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "provisionGames",
+          "kind": "fn",
+          "startLine": 23,
+          "endLine": 91,
+          "tokens": 632
+        },
+        {
+          "name": "provisionPerGameQuizzes",
+          "kind": "fn",
+          "startLine": 92,
+          "endLine": 142,
+          "tokens": 550
+        },
+        {
+          "name": "uniqueNickname",
+          "kind": "fn",
+          "startLine": 143,
+          "endLine": 147,
+          "tokens": 64
+        },
+        {
+          "name": "clamp",
+          "kind": "fn",
+          "startLine": 148,
+          "endLine": 151,
+          "tokens": 20
+        }
+      ]
+    },
+    "load-tests/config/thresholds.js": {
+      "description": "Threshold sets derived from non-functional-requirements.md (NFR-1 / NFR-2).",
+      "tokens": 639,
+      "hash": "e7ece3062de3cf69",
+      "size": 2240,
+      "mtimeMs": 1788963005695.146,
+      "updatedAt": "2026-09-09T14:10:05.791Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "apiThresholds",
+          "kind": "fn",
+          "startLine": 6,
+          "endLine": 15,
+          "tokens": 80
+        },
+        {
+          "name": "answerThresholds",
+          "kind": "fn",
+          "startLine": 16,
+          "endLine": 25,
+          "tokens": 106
+        },
+        {
+          "name": "correctnessThresholds",
+          "kind": "fn",
+          "startLine": 26,
+          "endLine": 39,
+          "tokens": 135
+        },
+        {
+          "name": "connectionThresholds",
+          "kind": "fn",
+          "startLine": 40,
+          "endLine": 46,
+          "tokens": 57
+        },
+        {
+          "name": "questionDeliveryThresholds",
+          "kind": "fn",
+          "startLine": 47,
+          "endLine": 54,
+          "tokens": 72
+        },
+        {
+          "name": "reconnectionThresholds",
+          "kind": "fn",
+          "startLine": 55,
+          "endLine": 62,
+          "tokens": 53
+        },
+        {
+          "name": "mergeThresholds",
+          "kind": "fn",
+          "startLine": 63,
+          "endLine": 72,
+          "tokens": 56
+        }
+      ]
+    },
+    "load-tests/helpers/summary.js": {
+      "description": "Compact, dependency-free end-of-test report. Emits:",
+      "tokens": 1330,
+      "hash": "e0555c22bf1bdad1",
+      "size": 4654,
+      "mtimeMs": 1788964150832.368,
+      "updatedAt": "2026-09-09T14:29:10.962Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "n",
+          "kind": "fn",
+          "startLine": 7,
+          "endLine": 13,
+          "tokens": 54
+        },
+        {
+          "name": "ms",
+          "kind": "fn",
+          "startLine": 14,
+          "endLine": 17,
+          "tokens": 26
+        },
+        {
+          "name": "makeHandleSummary",
+          "kind": "fn",
+          "startLine": 18,
+          "endLine": 86,
+          "tokens": 1024
+        },
+        {
+          "name": "thresholdReport",
+          "kind": "fn",
+          "startLine": 87,
+          "endLine": 100,
+          "tokens": 133
+        }
+      ]
+    },
+    "load-tests/helpers/orchestration.js": {
+      "description": "Director-side helpers: wait for players to be present, run a question cycle,",
+      "tokens": 1310,
+      "hash": "562cfc4c02bd93be",
+      "size": 4587,
+      "mtimeMs": 1788964555234.745,
+      "updatedAt": "2026-09-09T14:35:55.399Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "waitForParticipantCount",
+          "kind": "fn",
+          "startLine": 16,
+          "endLine": 34,
+          "tokens": 215
+        },
+        {
+          "name": "verifyClosedQuestion",
+          "kind": "fn",
+          "startLine": 35,
+          "endLine": 100,
+          "tokens": 948
+        }
+      ]
+    },
+    "load-tests/scenarios/connections.js": {
+      "description": "Scenario 1 — 500 concurrent SignalR connections.",
+      "tokens": 1088,
+      "hash": "780f614714a592c6",
+      "size": 3809,
+      "mtimeMs": 1788965586505.7866,
+      "updatedAt": "2026-09-09T14:53:06.622Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 56,
+          "endLine": 106,
+          "tokens": 373
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 107,
+          "endLine": 114,
+          "tokens": 66
+        }
+      ]
+    },
+    "load-tests/scenarios/join-game.js": {
+      "description": "Scenario 2 — 500 unique players join ONE game.",
+      "tokens": 1332,
+      "hash": "1685d1c538f4e3c4",
+      "size": 4663,
+      "mtimeMs": 1788963098982.1626,
+      "updatedAt": "2026-09-09T14:11:39.081Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 57,
+          "endLine": 114,
+          "tokens": 482
+        },
+        {
+          "name": "teardown",
+          "kind": "fn",
+          "startLine": 115,
+          "endLine": 145,
+          "tokens": 314
+        }
+      ]
+    },
+    "load-tests/scenarios/answer-burst.js": {
+      "description": "Scenario 4 — 500-player answer burst (the primary performance test).",
+      "tokens": 3660,
+      "hash": "98aa8a434a9d2d26",
+      "size": 12820,
+      "mtimeMs": 1788964664641.388,
+      "updatedAt": "2026-09-09T14:37:44.800Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 98,
+          "endLine": 113,
+          "tokens": 129
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 114,
+          "endLine": 258,
+          "tokens": 1456
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 259,
+          "endLine": 326,
+          "tokens": 711
+        },
+        {
+          "name": "teardown",
+          "kind": "fn",
+          "startLine": 327,
+          "endLine": 335,
+          "tokens": 70
+        },
+        {
+          "name": "ranksContiguous",
+          "kind": "fn",
+          "startLine": 336,
+          "endLine": 344,
+          "tokens": 76
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 345,
+          "endLine": 352,
+          "tokens": 66
+        }
+      ]
+    },
+    "load-tests/scenarios/question-broadcast.js": {
+      "description": "Scenario 3 — Question broadcast with 500 connected players + group isolation.",
+      "tokens": 2076,
+      "hash": "6ec2f9a8ce9f02ab",
+      "size": 7267,
+      "mtimeMs": 1788963252228.9841,
+      "updatedAt": "2026-09-09T14:14:12.338Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 72,
+          "endLine": 86,
+          "tokens": 104
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 87,
+          "endLine": 175,
+          "tokens": 837
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 176,
+          "endLine": 204,
+          "tokens": 283
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 205,
+          "endLine": 212,
+          "tokens": 67
+        }
+      ]
+    },
+    "load-tests/scenarios/duplicate-answer.js": {
+      "description": "Scenario 5 — Duplicate-answer concurrency / idempotency.",
+      "tokens": 2396,
+      "hash": "1948caf0e2041a2e",
+      "size": 8392,
+      "mtimeMs": 1788963306303.705,
+      "updatedAt": "2026-09-09T14:15:06.406Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 76,
+          "endLine": 84,
+          "tokens": 91
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 85,
+          "endLine": 212,
+          "tokens": 1088
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 213,
+          "endLine": 241,
+          "tokens": 289
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 242,
+          "endLine": 249,
+          "tokens": 67
+        }
+      ]
+    },
+    "load-tests/scenarios/reconnection.js": {
+      "description": "Scenario 6 — Reconnection preserves identity and state.",
+      "tokens": 2638,
+      "hash": "14905edf085622f9",
+      "size": 9233,
+      "mtimeMs": 1788963366692.1543,
+      "updatedAt": "2026-09-09T14:16:06.815Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 77,
+          "endLine": 85,
+          "tokens": 90
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 86,
+          "endLine": 221,
+          "tokens": 1222
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 222,
+          "endLine": 260,
+          "tokens": 343
+        },
+        {
+          "name": "teardown",
+          "kind": "fn",
+          "startLine": 261,
+          "endLine": 269,
+          "tokens": 70
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 270,
+          "endLine": 277,
+          "tokens": 66
+        }
+      ]
+    },
+    "load-tests/scenarios/multiple-games.js": {
+      "description": "Scenario 7 — GAMES x PLAYERS_PER_GAME concurrent games (default 10 x 50 = 500).",
+      "tokens": 2460,
+      "hash": "3cb782a05170b8b8",
+      "size": 8610,
+      "mtimeMs": 1788963434169.851,
+      "updatedAt": "2026-09-09T14:17:14.289Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 73,
+          "endLine": 81,
+          "tokens": 78
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 82,
+          "endLine": 172,
+          "tokens": 838
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 173,
+          "endLine": 232,
+          "tokens": 680
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 233,
+          "endLine": 240,
+          "tokens": 66
+        }
+      ]
+    },
+    "load-tests/scenarios/ramp.js": {
+      "description": "Scenario 8 — Ramp / stress: 50 -> 100 -> 250 -> 500 -> 750 concurrent players.",
+      "tokens": 2006,
+      "hash": "8af82f4f4e462d69",
+      "size": 7021,
+      "mtimeMs": 1788965867179.9458,
+      "updatedAt": "2026-09-09T14:57:47.314Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "loadBucket",
+          "kind": "fn",
+          "startLine": 50,
+          "endLine": 90,
+          "tokens": 337
+        },
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 91,
+          "endLine": 103,
+          "tokens": 144
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 104,
+          "endLine": 167,
+          "tokens": 570
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 168,
+          "endLine": 205,
+          "tokens": 290
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 206,
+          "endLine": 213,
+          "tokens": 63
+        }
+      ]
+    },
+    "load-tests/scenarios/reconnection-storm.js": {
+      "description": "Scenario 9 — Reconnection storm.",
+      "tokens": 2137,
+      "hash": "cee170bde1b62c70",
+      "size": 7479,
+      "mtimeMs": 1788963600612.9897,
+      "updatedAt": "2026-09-09T14:20:00.744Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 70,
+          "endLine": 78,
+          "tokens": 78
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 79,
+          "endLine": 161,
+          "tokens": 776
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 162,
+          "endLine": 216,
+          "tokens": 506
+        },
+        {
+          "name": "durationSeconds",
+          "kind": "fn",
+          "startLine": 217,
+          "endLine": 224,
+          "tokens": 67
+        }
+      ]
+    },
+    "load-tests/scenarios/endurance.js": {
+      "description": "Scenario 10 — Endurance / soak.",
+      "tokens": 2144,
+      "hash": "9dac673a3fbaddc4",
+      "size": 7510,
+      "mtimeMs": 1788963646369.0576,
+      "updatedAt": "2026-09-09T14:20:46.577Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "setup",
+          "kind": "fn",
+          "startLine": 80,
+          "endLine": 93,
+          "tokens": 149
+        },
+        {
+          "name": "player",
+          "kind": "fn",
+          "startLine": 94,
+          "endLine": 188,
+          "tokens": 844
+        },
+        {
+          "name": "director",
+          "kind": "fn",
+          "startLine": 189,
+          "endLine": 226,
+          "tokens": 335
+        }
+      ]
+    },
+    "load-tests/run-all.js": {
+      "description": "fs: cooldownSeconds, loadDotenv, parseArgs + 9 more",
+      "tokens": 2760,
+      "hash": "96f4c364ead0ea55",
+      "size": 9666,
+      "mtimeMs": 1788966135684.266,
+      "updatedAt": "2026-09-09T15:02:15.865Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "sleep",
+          "kind": "fn",
+          "startLine": 30,
+          "endLine": 48,
+          "tokens": 191
+        },
+        {
+          "name": "cooldownSeconds",
+          "kind": "fn",
+          "startLine": 49,
+          "endLine": 65,
+          "tokens": 145
+        },
+        {
+          "name": "loadDotenv",
+          "kind": "fn",
+          "startLine": 66,
+          "endLine": 79,
+          "tokens": 142
+        },
+        {
+          "name": "parseArgs",
+          "kind": "fn",
+          "startLine": 80,
+          "endLine": 95,
+          "tokens": 112
+        },
+        {
+          "name": "k6Bin",
+          "kind": "fn",
+          "startLine": 96,
+          "endLine": 99,
+          "tokens": 17
+        },
+        {
+          "name": "runScenario",
+          "kind": "fn",
+          "startLine": 100,
+          "endLine": 131,
+          "tokens": 330
+        },
+        {
+          "name": "metric",
+          "kind": "fn",
+          "startLine": 132,
+          "endLine": 137,
+          "tokens": 60
+        },
+        {
+          "name": "failedThresholds",
+          "kind": "fn",
+          "startLine": 138,
+          "endLine": 150,
+          "tokens": 103
+        },
+        {
+          "name": "apiBase",
+          "kind": "fn",
+          "startLine": 151,
+          "endLine": 159,
+          "tokens": 132
+        },
+        {
+          "name": "makeTokenProvider",
+          "kind": "fn",
+          "startLine": 160,
+          "endLine": 196,
+          "tokens": 416
+        },
+        {
+          "name": "main",
+          "kind": "fn",
+          "startLine": 197,
+          "endLine": 268,
+          "tokens": 820
+        }
+      ]
+    },
+    "load-tests/verify/verify.sql": {
+      "description": "Out-of-band correctness verification, straight against PostgreSQL.",
+      "tokens": 1267,
+      "hash": "48f7b0165071e6c1",
+      "size": 4750,
+      "mtimeMs": 1788963727059.5037,
+      "updatedAt": "2026-09-09T14:22:07.161Z",
+      "source": "hook"
+    },
+    "load-tests/verify/verify-db.mjs": {
+      "description": "Declares here",
+      "tokens": 464,
+      "hash": "527b1c1ecad2637f",
+      "size": 1739,
+      "mtimeMs": 1788963738714.0857,
+      "updatedAt": "2026-09-09T14:22:18.815Z",
+      "source": "hook"
+    },
+    "load-tests/README.md": {
+      "description": "Project documentation",
+      "tokens": 4359,
+      "hash": "49682e19e4d82f28",
+      "size": 17559,
+      "mtimeMs": 1788967079643.7727,
+      "updatedAt": "2026-09-09T15:17:59.733Z",
+      "source": "hook"
+    },
+    "load-tests/docker-compose.railway-sim.yml": {
+      "description": "Kahoot backend + Postgres, tuned to approximate ONE small Railway instance:",
+      "tokens": 777,
+      "hash": "9e787387ef6493ad",
+      "size": 2719,
+      "mtimeMs": 1788966541441.8196,
+      "updatedAt": "2026-09-09T15:09:01.555Z",
       "source": "hook"
     }
   },
