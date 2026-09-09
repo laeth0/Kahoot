@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:46:04.647Z
-> Files: 182 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:48:03.464Z
+> Files: 183 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -30,6 +30,7 @@
 - `CurrentUser.cs` — Class: CurrentUser (~98 tok)
 - `GlobalExceptionHandler.cs` — Class: GlobalExceptionHandler (~283 tok)
 - `HostClaims.cs` — Class: HostClaims (~104 tok)
+- `RateLimitingExtensions.cs` — Class: RateLimitingExtensions (~563 tok)
 
 ## backend/src/Kahoot.Api/Contracts/
 
@@ -82,7 +83,7 @@
 ## backend/src/Kahoot.Application/Authentication/Refresh/
 
 - `RefreshTokenCommand.cs` — Class: RefreshTokenCommand (~66 tok)
-- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~963 tok)
+- `RefreshTokenCommandHandler.cs` — Class: RefreshTokenCommandHandler (~957 tok)
 - `RefreshTokenCommandValidator.cs` — Class: RefreshTokenCommandValidator (~82 tok)
 
 ## backend/src/Kahoot.Application/Authentication/RefreshToken/
@@ -144,7 +145,7 @@
 - `GameErrors.cs` — Class: GameErrors (~674 tok)
 - `GameQuestionMapper.cs` — Class: GameQuestionMapper (~524 tok)
 - `GameTime.cs` — Class: GameTime (~56 tok)
-- `HostGameGuard.cs` — Class: HostGameGuard (~260 tok)
+- `HostGameGuard.cs` — Class: HostGameGuard (~422 tok)
 - `LeaderboardBuilder.cs` — Class: LeaderboardBuilder (~584 tok)
 - `QuestionActivation.cs` — Class: QuestionActivation (~314 tok)
 - `QuestionResultsBuilder.cs` — Class: QuestionResultsBuilder (~552 tok)
@@ -172,7 +173,7 @@
 ## backend/src/Kahoot.Application/Games/GetLeaderboard/
 
 - `GetLeaderboardQuery.cs` — Class: GetLeaderboardQuery (~59 tok)
-- `GetLeaderboardQueryHandler.cs` — Class: GetLeaderboardQueryHandler (~321 tok)
+- `GetLeaderboardQueryHandler.cs` — Class: GetLeaderboardQueryHandler (~254 tok)
 
 ## backend/src/Kahoot.Application/Games/GetQuestionResults/
 
@@ -232,7 +233,7 @@
 ## backend/src/Kahoot.Application/Games/SubmitAnswer/
 
 - `SubmitAnswerCommand.cs` — Class: SubmitAnswerCommand (~82 tok)
-- `SubmitAnswerCommandHandler.cs` — Class: SubmitAnswerCommandHandler (~1464 tok)
+- `SubmitAnswerCommandHandler.cs` — Class: SubmitAnswerCommandHandler (~1590 tok)
 - `SubmitAnswerCommandValidator.cs` — Class: SubmitAnswerCommandValidator (~132 tok)
 
 ## backend/src/Kahoot.Application/Quizzes/Common/

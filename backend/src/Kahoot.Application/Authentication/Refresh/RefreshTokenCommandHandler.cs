@@ -32,7 +32,7 @@ internal sealed class RefreshTokenCommandHandler(
                 token.HostId,
                 token.ExpiresAt,
                 token.RevokedAt,
-                Username = token.Host!.Username
+                token.Host!.Username
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -86,8 +86,8 @@ internal sealed class RefreshTokenCommandHandler(
         return Result.Success(response);
     }
 
-    private async Task RevokeChainAsync(Guid hostId, DateTimeOffset now, CancellationToken cancellationToken) =>
-        await dbContext.RefreshTokens
+    private Task RevokeChainAsync(Guid hostId, DateTimeOffset now, CancellationToken cancellationToken) =>
+        dbContext.RefreshTokens
             .Where(token => token.HostId == hostId && token.RevokedAt == null)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(token => token.RevokedAt, now.UtcDateTime),

@@ -107,9 +107,25 @@ internal sealed class SubmitAnswerCommandHandler(
             SubmittedAt = now.UtcDateTime
         };
 
+        dbContext.Answers.Add(answer);
+
+        if (pointsAwarded <= 0)
+        {
+            try
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+            }
+            catch (DbUpdateException exception)
+                when (dbExceptionInterpreter.IsUniqueViolation(exception, "uq_answer_participant_question"))
+            {
+                return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: true));
+            }
+
+            return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: false));
+        }
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        dbContext.Answers.Add(answer);
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
@@ -121,16 +137,13 @@ internal sealed class SubmitAnswerCommandHandler(
             return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: true));
         }
 
-        if (pointsAwarded > 0)
-        {
-            await dbContext.Participants
-                .Where(participant => participant.Id == snapshot.Participant.Id)
-                .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(
-                        participant => participant.TotalScore,
-                        participant => participant.TotalScore + pointsAwarded),
-                    cancellationToken);
-        }
+        await dbContext.Participants
+            .Where(participant => participant.Id == snapshot.Participant.Id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    participant => participant.TotalScore,
+                    participant => participant.TotalScore + pointsAwarded),
+                cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 

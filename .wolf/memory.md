@@ -299,3 +299,9 @@ description: chronological action log per session, consolidated weekly
 | 12:45 | Edited backend/src/Kahoot.Application/Authentication/Common/AuthTokenFactory.cs | modified Issue() | ~324 |
 | 12:45 | Edited backend/src/Kahoot.Application/Authentication/Login/LoginCommandHandler.cs | 7→8 lines | ~85 |
 | 12:46 | Created backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs | — | ~963 |
+| 12:46 | Edited backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs | 8→8 lines | ~59 |
+| 12:46 | Edited backend/src/Kahoot.Application/Authentication/Refresh/RefreshTokenCommandHandler.cs | 6→6 lines | ~101 |
+| 12:46 | Edited backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandHandler.cs | modified if() | ~441 |
+| 12:47 | Edited backend/src/Kahoot.Application/Games/Common/HostGameGuard.cs | added 1 condition(s) | ~351 |
+| 12:47 | Created backend/src/Kahoot.Application/Games/GetLeaderboard/GetLeaderboardQueryHandler.cs | — | ~254 |
+| 12:48 | Created backend/src/Kahoot.Api/Common/RateLimitingExtensions.cs | — | ~563 |
