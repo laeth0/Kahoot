@@ -269,3 +269,6 @@ description: chronological action log per session, consolidated weekly
 | 12:21 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | 2→2 lines | ~47 |
 | 12:21 | Edited backend/src/Kahoot.Api/Controllers/AuthController.cs | 2→2 lines | ~45 |
 | 12:22 | Created backend/src/Kahoot.Api/Controllers/QuizzesController.cs | — | ~1666 |
+| 12:22 | Created backend/src/Kahoot.Api/Controllers/GamesController.cs | — | ~2019 |
+| 12:23 | Edited backend/src/Kahoot.Api/Controllers/UploadsController.cs | modified UploadsController() | ~87 |
+| 12:23 | Created backend/src/Kahoot.Api/Program.cs | — | ~1075 |

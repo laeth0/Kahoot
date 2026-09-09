@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T09:22:22.198Z",
-    "fileCount": 174,
+    "lastScanned": "2026-09-09T09:23:35.137Z",
+    "fileCount": 175,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "d776cec6005b5fc156f1d96afc8789319e8544c5ed553b6f8e495b07d2218bba",
-    "storeUpdatedAt": "2026-09-09T09:22:22.220Z",
-    "rootHash": "dedd21aef4dc8c4d"
+    "renderedHash": "11e3706fc3f14714768c6804767649135d9c1c33fc5e8e2c36fd809614111ac0",
+    "storeUpdatedAt": "2026-09-09T09:23:35.152Z",
+    "rootHash": "5ee43d98000e08b3"
   },
   "files": {
     "AGENTS.md": {
@@ -426,20 +426,20 @@
     },
     "backend/src/Kahoot.Api/Controllers/UploadsController.cs": {
       "description": "Controller: UploadsController",
-      "tokens": 409,
-      "hash": "b4c614e1ca49c852",
-      "size": 1532,
-      "mtimeMs": 1788942332809.4631,
-      "updatedAt": "2026-09-09T08:25:32.966Z",
+      "tokens": 423,
+      "hash": "4fc197ed512d3869",
+      "size": 1586,
+      "mtimeMs": 1788945781715.92,
+      "updatedAt": "2026-09-09T09:23:01.852Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Program.cs": {
       "description": "Class: Program",
-      "tokens": 870,
-      "hash": "b131264c66e614ec",
-      "size": 3261,
-      "mtimeMs": 1788944365739.966,
-      "updatedAt": "2026-09-09T08:59:25.918Z",
+      "tokens": 1075,
+      "hash": "4e8115ca357da0a1",
+      "size": 4030,
+      "mtimeMs": 1788945814980.5232,
+      "updatedAt": "2026-09-09T09:23:35.137Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Storage/IImageUploadService.cs": {
@@ -1574,6 +1574,15 @@
       "size": 6245,
       "mtimeMs": 1788945742020.745,
       "updatedAt": "2026-09-09T09:22:22.196Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Api/Controllers/GamesController.cs": {
+      "description": "Class: GamesController",
+      "tokens": 2019,
+      "hash": "5f560154f84e2540",
+      "size": 7570,
+      "mtimeMs": 1788945771263.381,
+      "updatedAt": "2026-09-09T09:22:51.418Z",
       "source": "hook"
     }
   },

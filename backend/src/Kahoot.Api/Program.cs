@@ -1,5 +1,6 @@
 using System.Text;
 using Kahoot.Api.Common;
+using Kahoot.Api.Realtime;
 using Kahoot.Application;
 using Kahoot.Application.Authentication.Common;
 using Kahoot.Application.Common.Security;
@@ -12,6 +13,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
+const string gameHubPath = "/hubs/game";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseDefaultServiceProvider((_, options) =>
@@ -23,9 +26,13 @@ builder.Host.UseDefaultServiceProvider((_, options) =>
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<GameNotifier>();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
                  ?? throw new InvalidOperationException("The 'Jwt' configuration section is missing.");
@@ -45,6 +52,21 @@ builder.Services
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
             ClockSkew = TimeSpan.FromSeconds(30)
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                string? accessToken = context.Request.Query["access_token"];
+
+                if (!string.IsNullOrEmpty(accessToken)
+                    && context.HttpContext.Request.Path.StartsWithSegments(gameHubPath))
+                {
+                    context.Token = accessToken;
+                }
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -76,6 +98,8 @@ builder.Services.Configure<FormOptions>(options =>
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -101,6 +125,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<GameHub>(gameHubPath);
 app.MapHealthChecks("/health");
 
 app.Run();

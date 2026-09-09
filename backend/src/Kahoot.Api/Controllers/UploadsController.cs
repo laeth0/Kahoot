@@ -1,10 +1,12 @@
 using Kahoot.Application.Common.Storage;
 using Kahoot.Domain.Common;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kahoot.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/uploads")]
 public sealed class UploadsController(IImageUploadService imageUploadService) : ControllerBase
 {
