@@ -20,6 +20,7 @@ budget_tokens: 1000
 - **Frontend Documentation:** Updated `README.md` with complete directory tree, technology stack, directory responsibilities, and scripts guide. Build, lint, and format verified cleanly.
 - **Frontend Assets:** Moved `logo.jpeg` to `frontend/src/assets/logo.jpeg` (and `frontend/public/logo.jpeg`).
 - **Cleanup:** Removed `.opencode` and `.cursor` directories.
+- **Backend Architecture:** Created .NET 10 Clean Architecture solution (`Kahoot.sln`) with `Domain`, `Application`, `Infrastructure`, and `Api` projects. Installed required stack (`EF Core 10`, `PostgreSQL/Npgsql`, `MediatR`, `FluentValidation`, `Mapster`, `Scrutor`, `Scalar.AspNetCore`, `SignalR`). Added production multi-stage `Dockerfile` and `backend/README.md`. Build verified with 0 errors.
 
 ---
 
