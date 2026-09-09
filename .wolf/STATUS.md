@@ -14,7 +14,7 @@ budget_tokens: 1000
 
 <!-- Move items here from "🚀 Next phase" when finished. Group by area. -->
 
-- **Frontend:** Installed `axios`, `zod`, `@mui/material`, `@emotion/react`, `@emotion/styled`, and `@mui/icons-material`. Build verified.
+- **Frontend:** Installed all required libraries (`axios`, `zod`, `@mui/material`, `@emotion/react`, `@emotion/styled`, `@mui/icons-material`, `react-router-dom` v7, and `@microsoft/signalr`). Build verified.
 
 ---
 
