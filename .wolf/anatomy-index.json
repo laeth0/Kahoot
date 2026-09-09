@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T08:59:07.547Z",
+    "lastScanned": "2026-09-09T08:59:25.919Z",
     "fileCount": 158,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "a0ee6d13adfefd07bb5db0ef5873005ef9c133119ddf1e9a0469acdc6f2516c4",
-    "storeUpdatedAt": "2026-09-09T08:59:07.573Z",
-    "rootHash": "e7d84f2e4bdf0fe1"
+    "renderedHash": "c19213535f3b6df94f8501c551cba48bb5e29558cc642a92797e75f38046443c",
+    "storeUpdatedAt": "2026-09-09T08:59:25.934Z",
+    "rootHash": "6ef3933f34e3a929"
   },
   "files": {
     "AGENTS.md": {
@@ -435,11 +435,11 @@
     },
     "backend/src/Kahoot.Api/Program.cs": {
       "description": "Class: Program",
-      "tokens": 502,
-      "hash": "e3dc9694af33838a",
-      "size": 1881,
-      "mtimeMs": 1788941894379.8496,
-      "updatedAt": "2026-09-09T08:18:14.524Z",
+      "tokens": 870,
+      "hash": "b131264c66e614ec",
+      "size": 3261,
+      "mtimeMs": 1788944365739.966,
+      "updatedAt": "2026-09-09T08:59:25.918Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Storage/IImageUploadService.cs": {

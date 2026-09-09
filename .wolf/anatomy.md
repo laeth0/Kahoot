@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:59:07.547Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T08:59:25.919Z
 > Files: 158 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -21,7 +21,7 @@
 ## backend/src/Kahoot.Api/
 
 - `appsettings.json` (~254 tok)
-- `Program.cs` — Class: Program (~502 tok)
+- `Program.cs` — Class: Program (~870 tok)
 
 ## backend/src/Kahoot.Api/Common/
 
