@@ -59,3 +59,4 @@ description: chronological action log per session, consolidated weekly
 | 10:36 | Created backend/src/Kahoot.Domain/Games/GameSession.cs | — | ~231 |
 | 10:36 | Created backend/src/Kahoot.Domain/Games/Participant.cs | — | ~189 |
 | 10:37 | Created backend/src/Kahoot.Domain/Games/Answer.cs | — | ~189 |
+| 10:46 | Created docs/functional-requirements.md | — | ~1976 |

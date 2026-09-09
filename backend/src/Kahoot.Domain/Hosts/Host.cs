@@ -5,9 +5,7 @@ namespace Kahoot.Domain.Hosts;
 
 public sealed class Host : AuditableEntity
 {
-    public string Email { get; set; } = null!;
-
-    public string DisplayName { get; set; } = null!;
+    public string Username { get; set; } = null!;
 
     public string PasswordHash { get; set; } = null!;
 

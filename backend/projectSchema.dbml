@@ -1,16 +1,3 @@
-// =============================================================================
-// KAHOOT-LIKE PLATFORM - DATABASE SCHEMA (DBML)
-// =============================================================================
-// Documentation: https://dbml.dbdiagram.io/docs/
-// Visualize at: https://dbdiagram.io/
-// VS Code: Install "dbdiagram" / "DBML" extension to preview
-// -----------------------------------------------------------------------------
-// Source of truth for the physical PostgreSQL schema produced by the
-// Kahoot.Domain entities plus the EF Core model configuration. Per
-// backend/AGENTS.md this file MUST be updated on every domain/model change,
-// in the same task as the matching EF Core migration.
-// =============================================================================
-
 Project KahootPlatform {
   database_type: 'PostgreSQL'
   Note: '''
@@ -25,23 +12,17 @@ Project KahootPlatform {
     naming convention.
   - The server is authoritative: deadlines, correctness, scores, game state and
     "already answered" are decided from these rows and server time only.
+
+  game_status is the server-authoritative game state machine. Allowed transitions:
+    Created         -> Lobby
+    Lobby           -> QuestionActive | Finished
+    QuestionActive  -> QuestionResults | Finished
+    QuestionResults -> Leaderboard | Finished
+    Leaderboard     -> QuestionActive | Finished
+    Finished        -> (terminal)
+  Any other transition is rejected by the application layer. Persisted as text.
   '''
 }
-
-// =============================================================================
-// ENUMS
-// =============================================================================
-
-// Server-authoritative game state machine. Allowed transitions:
-//   Created         -> Lobby
-//   Lobby           -> QuestionActive | Finished
-//   QuestionActive  -> QuestionResults | Finished
-//   QuestionResults -> Leaderboard | Finished
-//   Leaderboard     -> QuestionActive | Finished
-//   Finished        -> (terminal)
-// Any other transition is rejected server-side
-// (Kahoot.Domain.Games.GameStatusTransitions -> InvalidGameStatusTransitionException).
-// Persisted as text via EF Core HasConversion<string>().
 
 Enum game_status {
   Created
@@ -52,23 +33,18 @@ Enum game_status {
   Finished
 }
 
-// =============================================================================
-// HOST / AUTH
-// =============================================================================
-
 Table hosts {
   id uuid [pk]
-  email varchar(256) [not null, unique, note: 'Stored trimmed + lower-cased; case-insensitive login identity']
-  display_name varchar(100) [not null]
-  password_hash varchar(256) [not null, note: 'Argon2/BCrypt hash only; never a plaintext or reversible value']
+  username varchar(64) [not null, unique, note: 'Login identity, case-insensitive (stored lower-cased). No email is used anywhere in the system']
+  password_hash varchar(256) [not null, note: 'BCrypt hash (work factor >= 12). Never plaintext or a reversible value']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
 
   indexes {
-    email [unique, name: 'uq_host_email']
+    username [unique, name: 'uq_host_username']
   }
 
-  Note: 'Owns quizzes and game sessions. Not hard-deleted while any game_session references it (game_sessions.host_id is ON DELETE RESTRICT).'
+  Note: 'Owns quizzes and game sessions. Not hard-deleted while any game_session references it (game_sessions.host_id is ON DELETE RESTRICT). A bootstrap host is created by the startup seeder.'
 }
 
 Table refresh_tokens {
@@ -77,7 +53,7 @@ Table refresh_tokens {
   token_hash varchar(128) [not null, unique, note: 'SHA-256 hex of the opaque refresh token; the raw token is returned to the client once and never stored']
   expires_at timestamptz [not null]
   revoked_at timestamptz [null, note: 'Set on rotation or logout. Active when revoked_at IS NULL AND now() < expires_at']
-  replaced_by_token_id uuid [null, ref: > refresh_tokens.id, note: 'Rotation chain: the token that superseded this one']
+  replaced_by_token_id uuid [null, ref: > refresh_tokens.id, note: 'Rotation chain: the token that superseded this one. Reuse of a rotated token revokes the chain']
   created_at timestamptz [not null, default: `now()`]
 
   indexes {
@@ -85,12 +61,8 @@ Table refresh_tokens {
     host_id [name: 'ix_refresh_token_host_id']
   }
 
-  Note: 'Host session persistence for JWT refresh-token rotation. DESIGN DECISION - see notes at end of file.'
+  Note: 'Host session persistence for JWT refresh-token rotation with reuse detection.'
 }
-
-// =============================================================================
-// QUIZ AUTHORING
-// =============================================================================
 
 Table quizzes {
   id uuid [pk]
@@ -112,7 +84,7 @@ Table questions {
   quiz_id uuid [not null, ref: > quizzes.id, note: 'ON DELETE CASCADE']
   order_index int [not null, note: '0-based position within the quiz']
   text varchar(500) [not null]
-  time_limit_seconds int [not null, default: 20, note: 'CHECK between 5 and 300 (Question.MinTimeLimitSeconds / MaxTimeLimitSeconds)']
+  time_limit_seconds int [not null, default: 20, note: 'CHECK between 5 and 300']
   points int [not null, default: 1000, note: 'Base points before the speed factor. CHECK >= 0']
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
@@ -139,12 +111,8 @@ Table choices {
     question_id [name: 'ix_choice_question_id']
   }
 
-  Note: 'is_correct lives here but is never serialized to participant clients before the question is revealed.'
+  Note: 'is_correct lives here but is never serialized to player clients before the question is revealed.'
 }
-
-// =============================================================================
-// LIVE GAME
-// =============================================================================
 
 Table game_sessions {
   id uuid [pk]
@@ -172,8 +140,8 @@ Table game_sessions {
   Note: '''
   Optimistic concurrency: EF Core uses the PostgreSQL system column xmin as the
   concurrency token (UseXminAsConcurrencyToken) - no explicit column. Concurrent
-  state transitions (e.g. host double-click "Next") fail with a concurrency
-  exception and are resolved idempotently.
+  state transitions (host double-click "Next") fail with a concurrency exception
+  and are resolved idempotently.
 
   CHECK ck_game_session_question_window:
     current_question_ends_at IS NULL OR current_question_started_at IS NULL
@@ -184,9 +152,9 @@ Table game_sessions {
 Table participants {
   id uuid [pk]
   game_session_id uuid [not null, ref: > game_sessions.id, note: 'ON DELETE CASCADE']
-  nickname varchar(30) [not null, note: 'Display nickname as entered']
+  nickname varchar(30) [not null, note: 'Handle name as entered']
   nickname_normalized varchar(30) [not null, note: 'Trimmed + lower-cased; used for case-insensitive uniqueness']
-  session_token_hash varchar(128) [not null, unique, note: 'SHA-256 hex of the participant reconnection token. This is participant identity on reconnect - NOT the SignalR connection id']
+  session_token_hash varchar(128) [not null, unique, note: 'SHA-256 hex of the player reconnection token. This is player identity on reconnect - NOT the SignalR connection id']
   connection_id varchar(128) [null, note: 'Current SignalR connection id; NULL when disconnected. Transient, never identity']
   last_seen_at timestamptz [not null, note: 'Updated on connect / disconnect / heartbeat for the reconnection window']
   total_score int [not null, default: 0, note: 'Running server-calculated score. CHECK >= 0. Denormalized so the leaderboard is not recomputed from answers on every request']
@@ -199,9 +167,9 @@ Table participants {
   indexes {
     session_token_hash [unique, name: 'uq_participant_session_token']
     (game_session_id, nickname_normalized) [unique, name: 'uq_participant_game_nickname', note: 'PARTIAL UNIQUE WHERE is_removed = false']
-    game_session_id [name: 'ix_participant_game_session_id', note: 'Lobby / participant list']
+    game_session_id [name: 'ix_participant_game_session_id', note: 'Lobby / player list']
     (game_session_id, total_score) [name: 'ix_participant_game_score', note: 'Leaderboard ordering (query sorts total_score DESC)']
-    connection_id [name: 'ix_participant_connection_id', note: 'Resolve the participant on a SignalR disconnect']
+    connection_id [name: 'ix_participant_connection_id', note: 'Resolve the player on a SignalR disconnect']
   }
 
   Note: 'Connectivity is derived: connected == connection_id IS NOT NULL (no redundant boolean).'
@@ -211,7 +179,7 @@ Table answers {
   id uuid [pk]
   game_session_id uuid [not null, ref: > game_sessions.id, note: 'ON DELETE CASCADE']
   question_id uuid [not null, ref: > questions.id, note: 'ON DELETE RESTRICT']
-  participant_id uuid [not null, ref: > participants.id, note: 'ON DELETE RESTRICT - participants are soft-removed, never hard-deleted']
+  participant_id uuid [not null, ref: > participants.id, note: 'ON DELETE RESTRICT - players are soft-removed, never hard-deleted']
   selected_choice_id uuid [not null, ref: > choices.id, note: 'ON DELETE RESTRICT. An answer row always records a selected choice']
   is_correct boolean [not null, note: 'Server-evaluated at submission']
   points_awarded int [not null, default: 0, note: 'Server-calculated final points for this answer. CHECK >= 0']
@@ -219,9 +187,9 @@ Table answers {
   submitted_at timestamptz [not null, note: 'Server receive time; the only timestamp trusted for deadline evaluation']
 
   indexes {
-    (game_session_id, question_id, participant_id) [unique, name: 'uq_answer_participant_question', note: 'FINAL integrity boundary: one accepted answer per (game, question, participant). A duplicate insert raises a unique violation that the application maps to an idempotent "already answered" response']
+    (game_session_id, question_id, participant_id) [unique, name: 'uq_answer_participant_question', note: 'FINAL integrity boundary: one accepted answer per (game, question, player). A duplicate insert raises a unique violation that the application maps to an idempotent already-answered response']
     (game_session_id, question_id) [name: 'ix_answer_game_question', note: 'Response count and per-choice aggregation when a question closes']
-    participant_id [name: 'ix_answer_participant_id', note: 'answer history for one participant, for the results screen']
+    participant_id [name: 'ix_answer_participant_id', note: 'answer history for one player, for the results screen']
     selected_choice_id [name: 'ix_answer_selected_choice_id', note: 'FK integrity checks and per-choice statistics']
   }
 
@@ -234,28 +202,3 @@ Table answers {
   Late or duplicate submissions create neither a row nor a score.
   '''
 }
-
-// =============================================================================
-// DESIGN DECISIONS / NOTES
-// =============================================================================
-// 1. refresh_tokens is included to implement "Host register/login" securely
-//    (JWT access token + rotating refresh token, hashed at rest). It is the one
-//    entity added beyond the spec's list (Host, Quiz, Question, Choice,
-//    GameSession, Participant, Answer). Remove it if a different auth strategy
-//    is chosen.
-// 2. Question/Choice content is referenced directly by answers rather than
-//    snapshotted into the game. Historical correctness is preserved instead by
-//    (a) answers.is_correct / points_awarded being frozen at submission time and
-//    (b) ON DELETE RESTRICT from game_sessions -> quizzes/questions. Editing a
-//    quiz that has a running session is blocked in the application layer.
-// 3. PIN uniqueness is scoped to non-finished sessions (partial unique index) so
-//    the short numeric space can be reused.
-// 4. Leaderboard is not persisted as its own table: participants.total_score is
-//    maintained incrementally and participants.last_rank caches the standings
-//    computed when a question closes.
-// 5. CHECK constraints (ck_question_time_limit 5..300, ck_question_points >= 0,
-//    ck_participant_total_score >= 0, ck_answer_points_awarded >= 0,
-//    ck_answer_response_time_ms >= 0, ck_game_session_question_window) and the
-//    two partial unique indexes are created in EF Core model configuration /
-//    migration, not expressible in DBML.
-// =============================================================================

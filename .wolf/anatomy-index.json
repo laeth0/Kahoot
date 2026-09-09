@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T07:37:02.694Z",
-    "fileCount": 21,
+    "lastScanned": "2026-09-09T07:50:53.190Z",
+    "fileCount": 28,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "243d361f627d3fe8fe2054325bee760c3dfc762de96eeda4b7f33ae27279da93",
-    "storeUpdatedAt": "2026-09-09T07:37:02.718Z",
-    "rootHash": "b13f6a95ef54ea65"
+    "renderedHash": "bacf92ab22de57541840b8250a06c7eb970a775df5e712a0f0625fa6549fe88b",
+    "storeUpdatedAt": "2026-09-09T07:50:53.204Z",
+    "rootHash": "c3eaf1aeef31f526"
   },
   "files": {
     "AGENTS.md": {
@@ -75,11 +75,11 @@
     },
     "backend/src/Kahoot.Domain/Hosts/Host.cs": {
       "description": "Class: Host",
-      "tokens": 113,
-      "hash": "17c7afdfb0ab98fc",
-      "size": 423,
-      "mtimeMs": 1788939401489.5283,
-      "updatedAt": "2026-09-09T07:36:41.711Z",
+      "tokens": 100,
+      "hash": "3023912f994a714e",
+      "size": 372,
+      "mtimeMs": 1788940004233.383,
+      "updatedAt": "2026-09-09T07:46:44.376Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Hosts/RefreshToken.cs": {
@@ -173,12 +173,12 @@
       "source": "hook"
     },
     "backend/projectSchema.dbml": {
-      "description": "=============================================================================",
-      "tokens": 3671,
-      "hash": "be6f1f11a4d6712d",
-      "size": 13763,
-      "mtimeMs": 1788938809379.127,
-      "updatedAt": "2026-09-09T07:26:49.571Z",
+      "description": "",
+      "tokens": 2791,
+      "hash": "07f07cda9bad7dff",
+      "size": 10466,
+      "mtimeMs": 1788940051630.399,
+      "updatedAt": "2026-09-09T07:47:31.796Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Domain/Common/Result.cs": {
@@ -197,6 +197,69 @@
       "size": 282,
       "mtimeMs": 1788939143509.405,
       "updatedAt": "2026-09-09T07:32:23.684Z",
+      "source": "hook"
+    },
+    "docs/functional-requirements.md": {
+      "description": "Functional Requirements — Kahoot-like Platform",
+      "tokens": 1852,
+      "hash": "b89b50aa3e57b4e4",
+      "size": 7438,
+      "mtimeMs": 1788939960487.353,
+      "updatedAt": "2026-09-09T07:46:00.602Z",
+      "source": "hook"
+    },
+    "docs/non-functional-requirements.md": {
+      "description": "Non-Functional Requirements — Kahoot-like Platform",
+      "tokens": 1919,
+      "hash": "bfbdce664d4cb5fe",
+      "size": 7687,
+      "mtimeMs": 1788939999128.334,
+      "updatedAt": "2026-09-09T07:46:39.236Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Application/Common/Security/IPasswordHasher.cs": {
+      "description": "Class: IPasswordHasher",
+      "tokens": 47,
+      "hash": "a6dcfe1f9de02879",
+      "size": 174,
+      "mtimeMs": 1788940211807.684,
+      "updatedAt": "2026-09-09T07:50:11.964Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Security/BcryptPasswordHasher.cs": {
+      "description": "Class: BcryptPasswordHasher",
+      "tokens": 133,
+      "hash": "97cd90af422c0bc5",
+      "size": 496,
+      "mtimeMs": 1788940214308.0525,
+      "updatedAt": "2026-09-09T07:50:14.469Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/KahootDbContext.cs": {
+      "description": "DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer",
+      "tokens": 334,
+      "hash": "ae59cefb60af5fb1",
+      "size": 1249,
+      "mtimeMs": 1788940222268.9954,
+      "updatedAt": "2026-09-09T07:50:22.454Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs": {
+      "description": "Class: KahootDbContextFactory",
+      "tokens": 223,
+      "hash": "d1c86398be895fd5",
+      "size": 836,
+      "mtimeMs": 1788940244304.4656,
+      "updatedAt": "2026-09-09T07:50:44.428Z",
+      "source": "hook"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Interceptors/AuditableEntityInterceptor.cs": {
+      "description": "Class: AuditableEntityInterceptor",
+      "tokens": 442,
+      "hash": "3224f0cd6fbcaf27",
+      "size": 1655,
+      "mtimeMs": 1788940253011.618,
+      "updatedAt": "2026-09-09T07:50:53.189Z",
       "source": "hook"
     }
   },

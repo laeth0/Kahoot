@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:37:02.694Z
-> Files: 21 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:46:00.603Z
+> Files: 22 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -45,3 +45,7 @@
 - `Choice.cs` — Class: Choice (~88 tok)
 - `Question.cs` — Class: Question (~112 tok)
 - `Quiz.cs` — Class: Quiz (~99 tok)
+
+## docs/
+
+- `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~1852 tok)
