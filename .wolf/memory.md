@@ -41,3 +41,10 @@ description: chronological action log per session, consolidated weekly
 | 10:26 | Edited backend/projectSchema.dbml | inline fix | ~22 |
 | 10:26 | Edited backend/projectSchema.dbml | inline fix | ~41 |
 | 10:26 | Edited backend/projectSchema.dbml | inline fix | ~33 |
+| 10:32 | Created backend/src/Kahoot.Domain/Common/Result.cs | — | ~384 |
+| 10:32 | Created backend/src/Kahoot.Domain/Games/GameErrors.cs | — | ~76 |
+| 10:32 | Created backend/src/Kahoot.Domain/Common/AuditableEntity.cs | — | ~68 |
+| 10:32 | Edited backend/src/Kahoot.Domain/Games/Answer.cs | modified Answer() | ~51 |
+| 10:32 | Edited backend/src/Kahoot.Domain/Hosts/RefreshToken.cs | modified RefreshToken() | ~46 |
+| 10:32 | Edited backend/src/Kahoot.Domain/Games/GameSession.cs | added 2 condition(s) | ~516 |
+| 10:33 | Built Kahoot.Domain layer (8 entities + GameStatus state machine) and projectSchema.dbml; per user feedback dropped the Entity base class and switched game-state transitions to the Result pattern (Result/Result<T>/Error, GameErrors). Full solution builds clean (Release, 0 warn); DBML validated via @dbml/cli. | backend/src/Kahoot.Domain/**, backend/projectSchema.dbml | success | ~9000 |

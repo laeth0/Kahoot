@@ -1,10 +1,11 @@
-using Kahoot.Domain.Common;
 using Kahoot.Domain.Quizzes;
 
 namespace Kahoot.Domain.Games;
 
-public sealed class Answer : Entity
+public sealed class Answer
 {
+    public Guid Id { get; private set; } = Guid.CreateVersion7();
+
     private Answer()
     {
     }

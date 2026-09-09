@@ -59,9 +59,9 @@ public sealed class GameSession : AuditableEntity
         return new GameSession(quizId, hostId, pin);
     }
 
-    public void OpenLobby() => TransitionTo(GameStatus.Lobby);
+    public Result OpenLobby() => TransitionTo(GameStatus.Lobby);
 
-    public void StartQuestion(Guid questionId, int questionIndex, int timeLimitSeconds, DateTime nowUtc)
+    public Result StartQuestion(Guid questionId, int questionIndex, int timeLimitSeconds, DateTime nowUtc)
     {
         if (questionIndex < 0)
         {
@@ -73,23 +73,36 @@ public sealed class GameSession : AuditableEntity
             throw new ArgumentOutOfRangeException(nameof(timeLimitSeconds), timeLimitSeconds, "Time limit must be positive.");
         }
 
-        TransitionTo(GameStatus.QuestionActive);
+        var transition = TransitionTo(GameStatus.QuestionActive);
+        if (transition.IsFailure)
+        {
+            return transition;
+        }
 
         CurrentQuestionId = questionId;
         CurrentQuestionIndex = questionIndex;
         CurrentQuestionStartedAtUtc = nowUtc;
         CurrentQuestionEndsAtUtc = nowUtc.AddSeconds(timeLimitSeconds);
         StartedAtUtc ??= nowUtc;
+
+        return Result.Success();
     }
 
-    public void EndQuestion() => TransitionTo(GameStatus.QuestionResults);
+    public Result EndQuestion() => TransitionTo(GameStatus.QuestionResults);
 
-    public void ShowLeaderboard() => TransitionTo(GameStatus.Leaderboard);
+    public Result ShowLeaderboard() => TransitionTo(GameStatus.Leaderboard);
 
-    public void Finish(DateTime nowUtc)
+    public Result Finish(DateTime nowUtc)
     {
-        TransitionTo(GameStatus.Finished);
+        var transition = TransitionTo(GameStatus.Finished);
+        if (transition.IsFailure)
+        {
+            return transition;
+        }
+
         FinishedAtUtc = nowUtc;
+
+        return Result.Success();
     }
 
     public bool IsAcceptingAnswersFor(Guid questionId, DateTime nowUtc) =>
@@ -98,13 +111,15 @@ public sealed class GameSession : AuditableEntity
         && CurrentQuestionEndsAtUtc is { } endsAtUtc
         && nowUtc <= endsAtUtc;
 
-    private void TransitionTo(GameStatus target)
+    private Result TransitionTo(GameStatus target)
     {
         if (!GameStatusTransitions.IsAllowed(Status, target))
         {
-            throw new InvalidGameStatusTransitionException(Status, target);
+            return Result.Failure(GameErrors.InvalidStatusTransition(Status, target));
         }
 
         Status = target;
+
+        return Result.Success();
     }
 }
