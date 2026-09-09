@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:27:17.771Z
-> Files: 175 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T09:32:01.140Z
+> Files: 176 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -21,7 +21,7 @@
 ## backend/src/Kahoot.Api/
 
 - `appsettings.json` (~254 tok)
-- `Program.cs` — Class: Program (~1075 tok)
+- `Program.cs` — Class: Program (~1095 tok)
 
 ## backend/src/Kahoot.Api/Common/
 
@@ -44,6 +44,10 @@
 - `GamesController.cs` — Class: GamesController (~2019 tok)
 - `QuizzesController.cs` — Class: QuizzesController (~1666 tok)
 - `UploadsController.cs` — Controller: UploadsController (~423 tok)
+
+## backend/src/Kahoot.Api/Endpoints/
+
+- `HomePageEndpoint.cs` — Class: HomePageEndpoint (~1493 tok)
 
 ## backend/src/Kahoot.Api/Realtime/
 

@@ -1,5 +1,6 @@
 using System.Text;
 using Kahoot.Api.Common;
+using Kahoot.Api.Endpoints;
 using Kahoot.Api.Realtime;
 using Kahoot.Application;
 using Kahoot.Application.Authentication.Common;
@@ -99,6 +100,7 @@ builder.Services.Configure<FormOptions>(options =>
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseStatusCodePages();
 
 if (app.Environment.IsDevelopment())
 {
@@ -124,6 +126,7 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapHomePage();
 app.MapControllers();
 app.MapHub<GameHub>(gameHubPath);
 app.MapHealthChecks("/health");

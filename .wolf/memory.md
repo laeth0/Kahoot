@@ -274,3 +274,7 @@ description: chronological action log per session, consolidated weekly
 | 12:23 | Created backend/src/Kahoot.Api/Program.cs | — | ~1075 |
 | 12:26 | Created docs/realtime-protocol.md | — | ~2407 |
 | 12:27 | Edited docs/functional-requirements.md | 6→7 lines | ~323 |
+| 12:31 | Created backend/src/Kahoot.Api/Endpoints/HomePageEndpoint.cs | — | ~1493 |
+| 12:31 | Edited backend/src/Kahoot.Api/Program.cs | 3→4 lines | ~27 |
+| 12:31 | Edited backend/src/Kahoot.Api/Program.cs | 5→6 lines | ~32 |
+| 12:32 | Edited backend/src/Kahoot.Api/Program.cs | 5→6 lines | ~32 |
