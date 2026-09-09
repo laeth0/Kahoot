@@ -48,7 +48,7 @@ export function HostGamePage() {
   if (isLoading) {
     return (
       <GameLayout>
-        <MetadataManager title="Loading Live Session... - Kahoot" noIndex />
+        <MetadataManager title="Loading Live Session... - Kahoot" noindex />
         <Box
           sx={{
             display: 'flex',
@@ -74,7 +74,7 @@ export function HostGamePage() {
   if (error || !gameState) {
     return (
       <GameLayout>
-        <MetadataManager title="Game Session Error - Kahoot" noIndex />
+        <MetadataManager title="Game Session Error - Kahoot" noindex />
         <Box sx={{ maxWidth: 560, mx: 'auto', mt: 8 }}>
           <Card
             sx={{
@@ -126,7 +126,7 @@ export function HostGamePage() {
 
   return (
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
-      <MetadataManager title={`${pageTitle} - Kahoot`} noIndex />
+      <MetadataManager title={`${pageTitle} - Kahoot`} noindex />
 
       <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 8 }}>
         <ConnectionStatusBanner status={hubConnectionStatus} onRetry={retryHub} />
@@ -134,7 +134,7 @@ export function HostGamePage() {
         <Box sx={{ mb: 3 }}>
           <GamePhaseIndicator
             status={gameState.status}
-            currentQuestionIndex={gameState.currentQuestionIndex}
+            currentQuestionIndex={gameState.currentQuestionIndex ?? undefined}
             totalQuestions={gameState.totalQuestions}
           />
         </Box>

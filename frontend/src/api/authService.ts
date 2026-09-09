@@ -50,6 +50,10 @@ export const authService = {
     return toAuthResponse(response.data);
   },
 
+  getAccessToken(): string | null {
+    return localStorage.getItem('kahoot_host_token');
+  },
+
   async logout(refreshToken?: string | null): Promise<void> {
     try {
       if (refreshToken) {

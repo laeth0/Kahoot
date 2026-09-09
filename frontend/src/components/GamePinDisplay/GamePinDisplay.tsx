@@ -1,4 +1,4 @@
-import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LinkIcon from '@mui/icons-material/Link';
 import {
@@ -254,7 +254,7 @@ export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
           onClose={() => setToastMessage(null)}
           severity="success"
           variant="filled"
-          icon={<CheckCircleOutlineIcon fontSize="inherit" />}
+          icon={<CheckCircleIcon fontSize="inherit" />}
           sx={{ width: '100%', borderRadius: 2, fontWeight: 600 }}
         >
           {toastMessage}

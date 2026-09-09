@@ -1,4 +1,4 @@
-import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import SearchIcon from '@mui/icons-material/Search';
 import { Box, Card, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import { useMemo, useState } from 'react';
@@ -111,7 +111,7 @@ export function ParticipantGrid({
               mb: 2,
             }}
           >
-            <PeopleOutlineIcon sx={{ fontSize: 48 }} />
+            <PeopleAltIcon sx={{ fontSize: 48 }} />
           </Box>
           <Typography variant="h5" sx={{ fontWeight: 800, color: '#09131F', mb: 1 }}>
             Waiting for players to join...

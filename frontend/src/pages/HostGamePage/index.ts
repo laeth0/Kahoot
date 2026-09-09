@@ -1,2 +1,2 @@
 export { HostGamePage } from './HostGamePage.tsx';
-export default HostGamePage;
+export { default } from './HostGamePage.tsx';
