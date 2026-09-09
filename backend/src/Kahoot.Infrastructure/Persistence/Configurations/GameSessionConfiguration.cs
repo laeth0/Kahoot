@@ -23,7 +23,11 @@ public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSess
         builder.Property(session => session.CreatedAt).HasDefaultValueSql("now()");
         builder.Property(session => session.UpdatedAt).HasDefaultValueSql("now()");
 
-        builder.UseXminAsConcurrencyToken();
+        builder.Property<uint>("Version")
+            .HasColumnName("xmin")
+            .HasColumnType("xid")
+            .ValueGeneratedOnAddOrUpdate()
+            .IsConcurrencyToken();
 
         builder.HasIndex(session => session.Pin)
             .IsUnique()

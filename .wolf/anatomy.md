@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:54:53.741Z
-> Files: 34 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T07:57:33.480Z
+> Files: 41 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -17,6 +17,10 @@
 ## backend/
 
 - `projectSchema.dbml` (~2791 tok)
+
+## backend/src/Kahoot.Api/
+
+- `appsettings.json` (~135 tok)
 
 ## backend/src/Kahoot.Application/Common/Security/
 
@@ -50,6 +54,10 @@
 - `Question.cs` — Class: Question (~112 tok)
 - `Quiz.cs` — Class: Quiz (~99 tok)
 
+## backend/src/Kahoot.Infrastructure/
+
+- `DependencyInjection.cs` — Class: DependencyInjection (~533 tok)
+
 ## backend/src/Kahoot.Infrastructure/Persistence/
 
 - `KahootDbContext.cs` — DbContext: Host, RefreshToken, Quiz, Question, Choice, GameSession, Participant, Answer (~334 tok)
@@ -57,9 +65,11 @@
 
 ## backend/src/Kahoot.Infrastructure/Persistence/Configurations/
 
+- `AnswerConfiguration.cs` — Class: AnswerConfiguration (~448 tok)
 - `ChoiceConfiguration.cs` — Class: ChoiceConfiguration (~276 tok)
-- `GameSessionConfiguration.cs` — Class: GameSessionConfiguration (~750 tok)
+- `GameSessionConfiguration.cs` — Class: GameSessionConfiguration (~788 tok)
 - `HostConfiguration.cs` — Class: HostConfiguration (~327 tok)
+- `ParticipantConfiguration.cs` — Class: ParticipantConfiguration (~631 tok)
 - `QuestionConfiguration.cs` — Class: QuestionConfiguration (~508 tok)
 - `QuizConfiguration.cs` — Class: QuizConfiguration (~274 tok)
 - `RefreshTokenConfiguration.cs` — Class: RefreshTokenConfiguration (~266 tok)
@@ -71,6 +81,12 @@
 ## backend/src/Kahoot.Infrastructure/Security/
 
 - `BcryptPasswordHasher.cs` — Class: BcryptPasswordHasher (~133 tok)
+
+## backend/src/Kahoot.Infrastructure/Startup/
+
+- `DatabaseMigrationHostedService.cs` — Class: DatabaseMigrationHostedService (~465 tok)
+- `DatabaseSeederHostedService.cs` — Class: DatabaseSeederHostedService (~623 tok)
+- `HostSeedOptions.cs` — Class: HostSeedOptions (~91 tok)
 
 ## docs/
 

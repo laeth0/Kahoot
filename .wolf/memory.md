@@ -81,3 +81,11 @@ description: chronological action log per session, consolidated weekly
 | 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuestionConfiguration.cs | — | ~508 |
 | 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/ChoiceConfiguration.cs | — | ~276 |
 | 10:54 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs | — | ~750 |
+| 10:55 | Edited backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs | 1→5 lines | ~51 |
+| 10:55 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs | — | ~631 |
+| 10:55 | Created backend/src/Kahoot.Infrastructure/Persistence/Configurations/AnswerConfiguration.cs | — | ~448 |
+| 10:56 | Created backend/src/Kahoot.Infrastructure/Startup/HostSeedOptions.cs | — | ~91 |
+| 10:57 | Created backend/src/Kahoot.Infrastructure/Startup/DatabaseMigrationHostedService.cs | — | ~465 |
+| 10:57 | Created backend/src/Kahoot.Infrastructure/Startup/DatabaseSeederHostedService.cs | — | ~623 |
+| 10:57 | Created backend/src/Kahoot.Infrastructure/DependencyInjection.cs | — | ~533 |
+| 10:57 | Edited backend/src/Kahoot.Api/appsettings.json | expanded (+6 lines) | ~67 |
