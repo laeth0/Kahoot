@@ -57,7 +57,7 @@ services:
       dockerfile: Dockerfile
       args:
         VITE_API_URL: http://localhost:5000/api
-        VITE_SIGNALR_URL: http://localhost:5000/hubs/game
+        VITE_SIGNALR_URL: http://localhost:5000
     container_name: kahoot-frontend
     restart: unless-stopped
     ports:

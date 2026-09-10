@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-09T19:07:03.406Z
-> Files: 266 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T06:48:54.702Z
+> Files: 267 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -11,7 +11,7 @@
 
 - `AGENTS.md` — OpenWolf (~75 tok)
 - `CLAUDE.md` — OpenWolf (~99 tok)
-- `docker-compose.yml` — Docker Compose services (~509 tok)
+- `docker-compose.yml` — Docker Compose services (~540 tok)
 - `Final Claude Code Prompt — Kahoot-like Platform.md` — 1. Required Technology Stack (~7074 tok)
 - `GEMINI.md` — OpenWolf (~75 tok)
 - `prompt2.md` — Claude Code Prompt — Finish the Platform: Remaining Phases, Full Compatibility, Zero Comments, Beaut (~5778 tok)
@@ -387,6 +387,10 @@
 - `functional-requirements.md` — Functional Requirements — Kahoot-like Platform (~2560 tok)
 - `non-functional-requirements.md` — Non-Functional Requirements — Kahoot-like Platform (~2249 tok)
 - `realtime-protocol.md` — Real-Time Protocol (SignalR) — Kahoot-like Platform (~2669 tok)
+
+## frontend/
+
+- `Dockerfile` — Docker container definition (~117 tok)
 
 ## frontend/src/api/
 

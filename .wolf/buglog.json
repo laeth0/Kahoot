@@ -39,7 +39,7 @@
       "error_message": "Significant refactor of HostConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6â†’3 lines (2 removed)",
+      "fix": "Rewrote 6\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21223 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -55,7 +55,7 @@
       "error_message": "Significant refactor of GameSessionConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6â†’3 lines (2 removed)",
+      "fix": "Rewrote 6\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21223 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -71,7 +71,7 @@
       "error_message": "Significant refactor of ParticipantConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7â†’4 lines (2 removed)",
+      "fix": "Rewrote 7\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21224 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -86,7 +86,7 @@
       "timestamp": "2026-09-09T08:17:43.453Z",
       "error_message": "Missing await",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
-      "root_cause": "Async call without await â€” returned Promise instead of value",
+      "root_cause": "Async call without await \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c returned Promise instead of value",
       "fix": "Added await to async call",
       "tags": [
         "auto-detected",
@@ -116,7 +116,7 @@
       "error_message": "Wrong reference: ITransientService should be IImageUploadService",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
       "root_cause": "Used \"ITransientService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ITransientService → IImageUploadService",
+      "fix": "Changed ITransientService \u00e2\u2020\u2019 IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -132,7 +132,7 @@
       "error_message": "Wrong reference: ImageUploadService should be IImageUploadService",
       "file": "backend/src/Kahoot.Api/Controllers/UploadsController.cs",
       "root_cause": "Used \"ImageUploadService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ImageUploadService → IImageUploadService",
+      "fix": "Changed ImageUploadService \u00e2\u2020\u2019 IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -148,7 +148,7 @@
       "error_message": "Significant refactor of AuthenticationErrors.cs",
       "file": "backend/src/Kahoot.Application/Authentication/Common/AuthenticationErrors.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7→4 lines (2 removed)",
+      "fix": "Rewrote 7\u00e2\u2020\u20194 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -164,7 +164,7 @@
       "error_message": "Wrong reference: Kahoot should be MediatR",
       "file": "backend/src/Kahoot.Api/Realtime/GameHub.cs",
       "root_cause": "Used \"Kahoot\" instead of \"MediatR\"",
-      "fix": "Changed Kahoot → MediatR",
+      "fix": "Changed Kahoot \u00e2\u2020\u2019 MediatR",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -196,7 +196,7 @@
       "error_message": "Wrong reference: IReadOnlyDictionary should be Dictionary",
       "file": "backend/src/Kahoot.Application/Games/GameStateMachine.cs",
       "root_cause": "Used \"IReadOnlyDictionary\" instead of \"Dictionary\"",
-      "fix": "Changed IReadOnlyDictionary → Dictionary",
+      "fix": "Changed IReadOnlyDictionary \u00e2\u2020\u2019 Dictionary",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -243,7 +243,7 @@
       "error_message": "Significant refactor of verify.sql",
       "file": "load-tests/verify/verify.sql",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 8→14 lines (4 removed)",
+      "fix": "Rewrote 8\u00e2\u2020\u201914 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -258,7 +258,7 @@
       "timestamp": "2026-09-09T14:29:18.035Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\n─── ${name}  (${k6Bin()} ${args.join('",
+      "root_cause": "Had `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (${k6Bin()} ${args.join('",
       "fix": "Changed to '-e'",
       "tags": [
         "auto-detected",
@@ -275,7 +275,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 20→23 lines (3 removed)",
+      "fix": "Rewrote 20\u00e2\u2020\u201923 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -306,8 +306,8 @@
       "timestamp": "2026-09-09T14:34:48.130Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\n─── ${name}  (${k6Bin()} ${args.join('",
-      "fix": "Changed to `\\n─── ${name}  (k6 run ... ${name}.js)\\n`",
+      "root_cause": "Had `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (${k6Bin()} ${args.join('",
+      "fix": "Changed to `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (k6 run ... ${name}.js)\\n`",
       "tags": [
         "auto-detected",
         "wrong-value",
@@ -322,7 +322,7 @@
       "timestamp": "2026-09-09T14:35:06.291Z",
       "error_message": "Missing error handling in apiBase()",
       "file": "load-tests/run-all.js",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
       "fix": "Added try/catch block | Also: main().catch((e) => {; console.error(e);",
       "tags": [
         "auto-detected",
@@ -339,7 +339,7 @@
       "error_message": "Significant refactor of orchestration.js",
       "file": "load-tests/helpers/orchestration.js",
       "root_cause": "8 lines replaced/restructured",
-      "fix": "Rewrote 9→21 lines (8 removed)",
+      "fix": "Rewrote 9\u00e2\u2020\u201921 lines (8 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -354,7 +354,7 @@
       "timestamp": "2026-09-09T14:36:18.787Z",
       "error_message": "Missing error handling in answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -371,7 +371,7 @@
       "error_message": "Wrong operator: && should be ||",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "Used \"&&\" instead of \"||\"",
-      "fix": "Changed operator && → ||",
+      "fix": "Changed operator && \u00e2\u2020\u2019 ||",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -387,7 +387,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 7→9 lines (3 removed)",
+      "fix": "Rewrote 7\u00e2\u2020\u20199 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -419,7 +419,7 @@
       "error_message": "Significant refactor of ramp.js",
       "file": "load-tests/scenarios/ramp.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 4→7 lines (2 removed)",
+      "fix": "Rewrote 4\u00e2\u2020\u20197 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -435,7 +435,7 @@
       "error_message": "Significant refactor of run-all.js",
       "file": "load-tests/run-all.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3→5 lines (2 removed)",
+      "fix": "Rewrote 3\u00e2\u2020\u20195 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -466,7 +466,7 @@
       "timestamp": "2026-09-09T15:13:25.622Z",
       "error_message": "Missing error handling in serverClockSkewMs()",
       "file": "load-tests/helpers/rest.js",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -483,7 +483,7 @@
       "error_message": "Significant refactor of verify-db.mjs",
       "file": "load-tests/verify/verify-db.mjs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6→9 lines (2 removed)",
+      "fix": "Rewrote 6\u00e2\u2020\u20199 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -515,7 +515,7 @@
       "error_message": "Wrong operator: || should be >>",
       "file": "load-tests/run.sh",
       "root_cause": "Used \"||\" instead of \">>\"",
-      "fix": "Changed operator || → >>",
+      "fix": "Changed operator || \u00e2\u2020\u2019 >>",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -547,7 +547,7 @@
       "error_message": "Wrong reference: activeSessionToken should be sessionToken",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "Used \"activeSessionToken\" instead of \"sessionToken\"",
-      "fix": "Changed activeSessionToken → sessionToken",
+      "fix": "Changed activeSessionToken \u00e2\u2020\u2019 sessionToken",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -579,7 +579,7 @@
       "error_message": "Wrong reference: RemoveCircleOutlineIcon should be PersonRemoveIcon",
       "file": "frontend/src/components/KickedNotice/KickedNotice.tsx",
       "root_cause": "Used \"RemoveCircleOutlineIcon\" instead of \"PersonRemoveIcon\"",
-      "fix": "Changed RemoveCircleOutlineIcon → PersonRemoveIcon",
+      "fix": "Changed RemoveCircleOutlineIcon \u00e2\u2020\u2019 PersonRemoveIcon",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -675,7 +675,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "7 lines replaced/restructured",
-      "fix": "Rewrote 13→8 lines (7 removed)",
+      "fix": "Rewrote 13\u00e2\u2020\u20198 lines (7 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -690,7 +690,7 @@
       "timestamp": "2026-09-09T18:33:37.406Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -707,7 +707,7 @@
       "error_message": "Significant refactor of PlayerGamePage.tsx",
       "file": "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 21→64 lines (5 removed)",
+      "fix": "Rewrote 21\u00e2\u2020\u201964 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -738,8 +738,8 @@
       "timestamp": "2026-09-09T18:50:08.087Z",
       "error_message": "CSS fix: rank",
       "file": "frontend/src/components/GameFinishedScreen/GameFinishedScreen.tsx",
-      "root_cause": "rank: number): string { → number | null",
-      "fix": "Changed rank: number): string { → number | null",
+      "root_cause": "rank: number): string { \u00e2\u2020\u2019 number | null",
+      "fix": "Changed rank: number): string { \u00e2\u2020\u2019 number | null",
       "tags": [
         "auto-detected",
         "style-fix",
@@ -755,7 +755,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 13→16 lines (2 removed)",
+      "fix": "Rewrote 13\u00e2\u2020\u201916 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -786,7 +786,7 @@
       "timestamp": "2026-09-09T18:51:38.532Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling — exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -796,6 +796,25 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-09T18:51:38.532Z"
+    },
+    {
+      "id": "bug-051",
+      "timestamp": "2026-09-10T06:51:06.430450Z",
+      "error_message": "Host game page shows \"Live Connection Lost\" modal immediately; SignalR connection.start() rejects (negotiate 404) in the Docker Compose deployment",
+      "file": "docker-compose.yml",
+      "root_cause": "VITE_SIGNALR_URL build arg in docker-compose.yml and frontend/Dockerfile was set to http://localhost:5000/hubs/game (full hub URL). gameHub.ts contract expects a host-only origin and appends /hubs/game itself, so the client negotiated against http://localhost:5000/hubs/game/hubs/game which 404s. Only reproduced in the container build; npm run dev / local dist fall through to the http://localhost:5000 default and work.",
+      "fix": "Set VITE_SIGNALR_URL=http://localhost:5000 (origin only, no path) in docker-compose.yml and frontend/Dockerfile, matching the frontend/.env.example contract and the VITE_API_URL fallback logic in gameHub.ts. Verified the rebuilt bundle resolves the hub base to http://localhost:5000 and appends /hubs/game once.",
+      "tags": [
+        "signalr",
+        "docker",
+        "env-config",
+        "frontend",
+        "realtime",
+        "contract-mismatch"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T06:51:06.430450Z"
     }
   ]
 }

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-09T19:07:03.406Z",
-    "fileCount": 266,
+    "lastScanned": "2026-09-10T06:48:54.702Z",
+    "fileCount": 267,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "4359ea2b5d8fc05e6e9ef290830ac05953dfca8b784ebce850f6840382759bb2",
-    "storeUpdatedAt": "2026-09-09T19:07:03.432Z",
-    "rootHash": "237124442e8b479d"
+    "renderedHash": "9e6f83dd33fed366899f4152c79aba5035111bfd704ca8008a03263a05f4b45f",
+    "storeUpdatedAt": "2026-09-10T06:48:54.719Z",
+    "rootHash": "1f784288d9f6c1f4"
   },
   "files": {
     "AGENTS.md": {
@@ -2714,11 +2714,11 @@
     },
     "docker-compose.yml": {
       "description": "Docker Compose services",
-      "tokens": 509,
-      "hash": "949893ed0606cb20",
-      "size": 1780,
-      "mtimeMs": 1788968497636.6716,
-      "updatedAt": "2026-09-09T15:41:37.766Z",
+      "tokens": 540,
+      "hash": "c1042e764e476c69",
+      "size": 1888,
+      "mtimeMs": 1789022932862.4163,
+      "updatedAt": "2026-09-10T06:48:53.039Z",
       "source": "hook"
     },
     "load-tests/run.sh": {
@@ -3987,6 +3987,15 @@
       "size": 23269,
       "mtimeMs": 1788980823211.3745,
       "updatedAt": "2026-09-09T19:07:03.404Z",
+      "source": "hook"
+    },
+    "frontend/Dockerfile": {
+      "description": "Docker container definition",
+      "tokens": 117,
+      "hash": "b664a0b630931b4a",
+      "size": 438,
+      "mtimeMs": 1789022934517.9514,
+      "updatedAt": "2026-09-10T06:48:54.701Z",
       "source": "hook"
     }
   },

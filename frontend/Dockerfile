@@ -2,7 +2,7 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 ARG VITE_API_URL=http://localhost:5000/api
-ARG VITE_SIGNALR_URL=http://localhost:5000/hubs/game
+ARG VITE_SIGNALR_URL=http://localhost:5000
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_SIGNALR_URL=$VITE_SIGNALR_URL
 
