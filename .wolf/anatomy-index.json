@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T07:46:12.164Z",
+    "lastScanned": "2026-09-10T07:47:34.870Z",
     "fileCount": 273,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "7d15aa3409bb00eb8ab132c6176348591fbf74a52768a26eccea85c9656032ab",
-    "storeUpdatedAt": "2026-09-10T07:46:12.183Z",
-    "rootHash": "511ee2b201dba49a"
+    "renderedHash": "768769db29b051160114e4f17fbc3114c04d9cd9b56294bcad654aa7727c1a55",
+    "storeUpdatedAt": "2026-09-10T07:47:34.902Z",
+    "rootHash": "132d0bc6f3aa83f0"
   },
   "files": {
     "AGENTS.md": {
@@ -3714,11 +3714,11 @@
     },
     "frontend/src/pages/HostGamePage/HostQuestionView.tsx": {
       "description": "HostQuestionView",
-      "tokens": 831,
-      "hash": "e3d06578cbade889",
-      "size": 2909,
-      "mtimeMs": 1789024324224.762,
-      "updatedAt": "2026-09-10T07:12:04.364Z",
+      "tokens": 818,
+      "hash": "04febe097b7c5039",
+      "size": 2864,
+      "mtimeMs": 1789026454698.0757,
+      "updatedAt": "2026-09-10T07:47:34.869Z",
       "source": "hook",
       "symbols": [
         {
@@ -3733,7 +3733,7 @@
           "kind": "fn",
           "startLine": 19,
           "endLine": 93,
-          "tokens": 628
+          "tokens": 615
         }
       ]
     },

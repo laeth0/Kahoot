@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:46:12.164Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:47:34.870Z
 > Files: 273 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -505,7 +505,7 @@
 
 - `HostGamePage.tsx` — HostGamePage (~3509 tok)
 - `HostLeaderboardView.tsx` — HostLeaderboardView (~621 tok)
-- `HostQuestionView.tsx` — HostQuestionView (~831 tok)
+- `HostQuestionView.tsx` — HostQuestionView (~818 tok)
 
 ## frontend/src/pages/JoinPage/
 
