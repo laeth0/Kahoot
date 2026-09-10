@@ -642,3 +642,4 @@ description: chronological action log per session, consolidated weekly
 | 10:44 | Edited backend/src/Kahoot.Api/appsettings.json | 6→6 lines | ~35 |
 | 10:46 | Edited frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx | "e.g. Sara_Engineer" → "Laeth Nueirat" | ~13 |
 | 10:47 | Edited frontend/src/pages/HostGamePage/HostQuestionView.tsx | 3→3 lines | ~25 |
+| 10:49 | Edited frontend/src/components/HostGameControls/HostGameControls.tsx | added 1 condition(s) | ~447 |

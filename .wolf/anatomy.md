@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:47:34.870Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:49:30.307Z
 > Files: 273 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -431,7 +431,7 @@
 
 ## frontend/src/components/HostGameControls/
 
-- `HostGameControls.tsx` — primaryButtonSx (~1922 tok)
+- `HostGameControls.tsx` — primaryButtonSx (~1875 tok)
 
 ## frontend/src/components/KickedNotice/
 

@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T07:47:34.870Z",
+    "lastScanned": "2026-09-10T07:49:30.307Z",
     "fileCount": 273,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "768769db29b051160114e4f17fbc3114c04d9cd9b56294bcad654aa7727c1a55",
-    "storeUpdatedAt": "2026-09-10T07:47:34.902Z",
-    "rootHash": "132d0bc6f3aa83f0"
+    "renderedHash": "500f218d4eef5fe2fc6b855d09a5abe9126b9899aadd9a20a6483db849a51e8f",
+    "storeUpdatedAt": "2026-09-10T07:49:30.317Z",
+    "rootHash": "33c603ed2c2358f5"
   },
   "files": {
     "AGENTS.md": {
@@ -3564,11 +3564,11 @@
     },
     "frontend/src/components/HostGameControls/HostGameControls.tsx": {
       "description": "primaryButtonSx",
-      "tokens": 1922,
-      "hash": "0c852b9461659d51",
-      "size": 6735,
-      "mtimeMs": 1789025172782.7769,
-      "updatedAt": "2026-09-10T07:26:12.897Z",
+      "tokens": 1875,
+      "hash": "d66f29c07b385af9",
+      "size": 6568,
+      "mtimeMs": 1789026570205.0051,
+      "updatedAt": "2026-09-10T07:49:30.306Z",
       "source": "hook",
       "symbols": [
         {
@@ -3582,8 +3582,8 @@
           "name": "HostGameControls",
           "kind": "fn",
           "startLine": 35,
-          "endLine": 227,
-          "tokens": 1578
+          "endLine": 223,
+          "tokens": 1531
         }
       ]
     },

@@ -101,13 +101,20 @@ export function HostGameControls({
     }
 
     if (phase === 'QuestionResults' || phase === 'Leaderboard') {
+      const showLeaderboardButton = phase === 'QuestionResults' && Boolean(onShowLeaderboard);
+      const showNextQuestionButton = hasNextQuestion && Boolean(onNextQuestion);
+
+      if (!showLeaderboardButton && !showNextQuestionButton) {
+        return null;
+      }
+
       return (
         <Stack
           direction={{ xs: 'column', sm: 'row' }}
           spacing={1.5}
           sx={{ width: { xs: '100%', sm: 'auto' }, alignItems: 'center' }}
         >
-          {phase === 'QuestionResults' && onShowLeaderboard && (
+          {showLeaderboardButton && (
             <Button
               variant="outlined"
               color="primary"
@@ -126,29 +133,18 @@ export function HostGameControls({
               Show Leaderboard
             </Button>
           )}
-          <Tooltip
-            title={
-              hasNextQuestion
-                ? ''
-                : 'That was the last question — show the leaderboard or end the game.'
-            }
-            arrow
-            placement="top"
-            disableHoverListener={hasNextQuestion}
-          >
-            <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
-              <Button
-                variant="contained"
-                color="primary"
-                disabled={isActionPending || !onNextQuestion || !hasNextQuestion}
-                onClick={onNextQuestion}
-                startIcon={isActionPending ? pendingIcon : <ArrowForwardIcon />}
-                sx={primaryButtonSx}
-              >
-                {isActionPending ? 'Loading…' : 'Next Question'}
-              </Button>
-            </Box>
-          </Tooltip>
+          {showNextQuestionButton && (
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={isActionPending}
+              onClick={onNextQuestion}
+              startIcon={isActionPending ? pendingIcon : <ArrowForwardIcon />}
+              sx={primaryButtonSx}
+            >
+              {isActionPending ? 'Loading…' : 'Next Question'}
+            </Button>
+          )}
         </Stack>
       );
     }
