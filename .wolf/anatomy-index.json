@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T07:26:21.419Z",
-    "fileCount": 272,
+    "lastScanned": "2026-09-10T07:33:06.545Z",
+    "fileCount": 273,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "19d6dd29b8f9685432861f96372cf6a667a0216506c5509f9d46f660e1037b71",
-    "storeUpdatedAt": "2026-09-10T07:26:21.434Z",
-    "rootHash": "0e1578befeebacc6"
+    "renderedHash": "05c03a2368212f7e24d6da66d4daea70f1efc9ec6a607c80beb2acd12b15227d",
+    "storeUpdatedAt": "2026-09-10T07:33:06.563Z",
+    "rootHash": "9b6c2efe4d1d186d"
   },
   "files": {
     "AGENTS.md": {
@@ -4120,6 +4120,24 @@
       "mtimeMs": 1789025081363.8577,
       "updatedAt": "2026-09-10T07:24:41.485Z",
       "source": "hook"
+    },
+    "frontend/src/layouts/RootLayout.tsx": {
+      "description": "RootLayout",
+      "tokens": 1830,
+      "hash": "f785d9c6749f2168",
+      "size": 6404,
+      "mtimeMs": 1789025586399.428,
+      "updatedAt": "2026-09-10T07:33:06.544Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "RootLayout",
+          "kind": "fn",
+          "startLine": 22,
+          "endLine": 218,
+          "tokens": 1648
+        }
+      ]
     }
   },
   "preamble": [

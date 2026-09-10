@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:26:21.419Z
-> Files: 272 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:33:06.545Z
+> Files: 273 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -496,6 +496,10 @@
 - `usePlayerGame.ts` — Exports AnswerState, PlayerState, usePlayerGame (~2978 tok)
 - `useServerCountdown.ts` — Exports CountdownState, ServerCountdownOptions, useServerCountdown (~819 tok)
 - `useSessionToken.ts` — Exports PlayerSession, getSession, saveSession, clearSession + 4 more (~844 tok)
+
+## frontend/src/layouts/
+
+- `RootLayout.tsx` — RootLayout (~1830 tok)
 
 ## frontend/src/pages/HostGamePage/
 

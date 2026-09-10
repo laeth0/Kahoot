@@ -2,17 +2,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import PersonIcon from '@mui/icons-material/Person';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-import {
-  AppBar,
-  Box,
-  Button,
-  Chip,
-  Container,
-  Divider,
-  Stack,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { AppBar, Box, Button, Chip, Container, Stack, Toolbar, Typography } from '@mui/material';
 import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
 
 import logo from '../assets/logo.jpeg';
@@ -208,21 +198,6 @@ export function RootLayout() {
             <Typography variant="body2" color="text.secondary">
               © {new Date().getFullYear()} IEEEXtreme Palestine Section. All rights reserved.
             </Typography>
-            <Stack
-              direction="row"
-              spacing={2}
-              divider={<Divider orientation="vertical" flexItem />}
-            >
-              <Typography variant="caption" color="text.secondary">
-                Light Theme Active
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                WCAG 2.2 AA Compliant
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                React 19 & MUI v9
-              </Typography>
-            </Stack>
           </Stack>
         </Container>
       </Box>
