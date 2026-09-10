@@ -75,6 +75,28 @@ export function GameLayout({
         flexDirection: 'column',
       }}
     >
+      <Box
+        component="a"
+        href="#main-content"
+        sx={{
+          position: 'absolute',
+          top: -999,
+          left: 16,
+          zIndex: 9999,
+          p: 1.5,
+          bgcolor: 'primary.main',
+          color: '#ffffff',
+          borderRadius: 1,
+          fontWeight: 600,
+          textDecoration: 'none',
+          '&:focus': {
+            top: 16,
+          },
+        }}
+      >
+        Skip to main content
+      </Box>
+
       <AppBar
         position="sticky"
         elevation={0}
@@ -175,7 +197,7 @@ export function GameLayout({
         </Container>
       </AppBar>
 
-      <Box component="main" sx={{ flexGrow: 1, py: { xs: 2.5, md: 4 } }}>
+      <Box component="main" id="main-content" sx={{ flexGrow: 1, py: { xs: 2.5, md: 4 } }}>
         <Container maxWidth="xl">{children}</Container>
       </Box>
 

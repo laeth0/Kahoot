@@ -2,7 +2,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import SyncIcon from '@mui/icons-material/Sync';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 
 import type { HubConnectionStatus } from '../../hooks/useGameHubConnection.ts';
 
@@ -20,14 +20,92 @@ export function ConnectionStatusBanner({ status, onRetry }: ConnectionStatusBann
   const isConnecting = status === 'connecting';
   const isDisconnected = status === 'disconnected';
 
+  if (isDisconnected) {
+    return (
+      <Box
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="disconnected-modal-title"
+        aria-describedby="disconnected-modal-desc"
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          zIndex: 1400,
+          bgcolor: 'rgba(9, 19, 31, 0.65)',
+          backdropFilter: 'blur(4px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          p: 3,
+        }}
+      >
+        <Paper
+          elevation={6}
+          sx={{
+            maxWidth: 480,
+            width: '100%',
+            p: { xs: 3, sm: 4 },
+            borderRadius: 4,
+            border: '2px solid #EF4444',
+            textAlign: 'center',
+            bgcolor: '#FFFFFF',
+          }}
+        >
+          <Box
+            sx={{
+              width: 64,
+              height: 64,
+              borderRadius: '50%',
+              bgcolor: '#FEE2E2',
+              color: '#DC2626',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              mb: 2.5,
+            }}
+          >
+            <WifiOffIcon sx={{ fontSize: 36 }} />
+          </Box>
+          <Typography
+            id="disconnected-modal-title"
+            variant="h5"
+            component="h2"
+            sx={{ fontWeight: 800, color: '#09131F', mb: 1 }}
+          >
+            Live Connection Lost
+          </Typography>
+          <Typography
+            id="disconnected-modal-desc"
+            variant="body1"
+            sx={{ color: '#486581', mb: 3.5, lineHeight: 1.6 }}
+          >
+            Real-time connection to the live game server was dropped. Countdowns are paused. Tap
+            reconnect to restore your live session.
+          </Typography>
+          {onRetry && (
+            <Button
+              variant="contained"
+              color="error"
+              size="large"
+              fullWidth
+              onClick={onRetry}
+              startIcon={<RefreshIcon />}
+              sx={{ minHeight: 48, fontWeight: 700, borderRadius: 2 }}
+            >
+              Reconnect Now
+            </Button>
+          )}
+        </Paper>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ width: '100%', mb: 2 }}>
       <Alert
-        severity={isDisconnected ? 'error' : 'warning'}
+        severity="warning"
         icon={
-          isDisconnected ? (
-            <WifiOffIcon fontSize="inherit" />
-          ) : isReconnecting ? (
+          isReconnecting ? (
             <SyncIcon
               fontSize="inherit"
               sx={{
@@ -36,25 +114,14 @@ export function ConnectionStatusBanner({ status, onRetry }: ConnectionStatusBann
                   '0%': { transform: 'rotate(0deg)' },
                   '100%': { transform: 'rotate(360deg)' },
                 },
+                '@media (prefers-reduced-motion: reduce)': {
+                  animation: 'none',
+                },
               }}
             />
           ) : (
             <WarningAmberIcon fontSize="inherit" />
           )
-        }
-        action={
-          isDisconnected && onRetry ? (
-            <Button
-              color="inherit"
-              size="small"
-              variant="outlined"
-              onClick={onRetry}
-              startIcon={<RefreshIcon />}
-              sx={{ fontWeight: 600, textTransform: 'none' }}
-            >
-              Reconnect
-            </Button>
-          ) : null
         }
         sx={{
           alignItems: 'center',
@@ -68,7 +135,6 @@ export function ConnectionStatusBanner({ status, onRetry }: ConnectionStatusBann
           <Typography variant="body2" sx={{ fontWeight: 600 }}>
             {isConnecting && 'Connecting to real-time game hub...'}
             {isReconnecting && 'Connection interrupted. Reconnecting to live game hub...'}
-            {isDisconnected && 'Disconnected from live game hub. Real-time updates paused.'}
           </Typography>
         </Stack>
       </Alert>

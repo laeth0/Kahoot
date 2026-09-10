@@ -38,10 +38,23 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
-  const [formError, setFormError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(() => {
+    if (
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem('kahoot_session_expired') === 'true'
+    ) {
+      sessionStorage.removeItem('kahoot_session_expired');
+      return 'Your session has expired. Please sign in again.';
+    }
+    return null;
+  });
 
+  const queryParams = new URLSearchParams(location.search);
+  const returnUrl = queryParams.get('returnUrl');
   const from =
-    (location.state as { from?: { pathname: string } })?.from?.pathname || '/host/dashboard';
+    returnUrl ||
+    (location.state as { from?: { pathname: string } })?.from?.pathname ||
+    '/host/dashboard';
 
   useEffect(() => {
     if (isAuthenticated) {

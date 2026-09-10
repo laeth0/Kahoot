@@ -57,10 +57,30 @@ export function usePlayerGame(gameId: string | undefined) {
   const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
   const [scoreBeforeQuestion, setScoreBeforeQuestion] = useState(0);
   const [rankDelta, setRankDelta] = useState<number | null>(null);
+  const [liveAnnouncement, setLiveAnnouncement] = useState<{
+    message: string;
+    politeness: 'polite' | 'assertive';
+  } | null>(null);
 
   const liveRef = useRef<LiveRefs>({ participantId: null, totalScore: 0, rank: null });
   const rankBeforeQuestionRef = useRef<number | null>(null);
   const submitInFlightRef = useRef(false);
+  const prevHubStatusRef = useRef(hubStatus);
+
+  useEffect(() => {
+    if (prevHubStatusRef.current === 'connected' && hubStatus === 'reconnecting') {
+      setLiveAnnouncement({
+        message: 'Connection interrupted. Reconnecting to live game...',
+        politeness: 'polite',
+      });
+    } else if (prevHubStatusRef.current === 'reconnecting' && hubStatus === 'connected') {
+      setLiveAnnouncement({
+        message: 'Reconnected to live game.',
+        politeness: 'polite',
+      });
+    }
+    prevHubStatusRef.current = hubStatus;
+  }, [hubStatus]);
 
   useEffect(() => {
     liveRef.current = {
@@ -105,17 +125,26 @@ export function usePlayerGame(gameId: string | undefined) {
 
     const handleKicked = () => {
       setIsKicked(true);
+      setLiveAnnouncement({ message: 'You were removed from the game.', politeness: 'assertive' });
       connection.stop().catch(() => {});
     };
 
     const hydrate = async () => {
       try {
+        const jitter = Math.floor(Math.random() * 300);
+        if (jitter > 0) {
+          await new Promise((resolve) => setTimeout(resolve, jitter));
+        }
+        if (!active) {
+          return;
+        }
         const response = await invokeReconnect(connection, sessionToken);
         if (!active) {
           return;
         }
         if (response.success && response.data) {
           applyState(response.data);
+          setLiveAnnouncement({ message: 'Connected to game session.', politeness: 'polite' });
           return;
         }
         const code = response.error?.code;
@@ -123,8 +152,14 @@ export function usePlayerGame(gameId: string | undefined) {
           handleKicked();
           return;
         }
-        if (code === INVALID_SESSION_CODE) {
+        if (
+          code === INVALID_SESSION_CODE ||
+          code === 'Game.NotFound' ||
+          code === 'Game.InvalidPin'
+        ) {
           clear();
+          setPlayerState((previous) => (previous ? { ...previous, status: 'Finished' } : null));
+          setHydrateError('This game session has ended or is no longer available.');
           return;
         }
         setHydrateError(getFriendlyErrorMessage(code, 'Unable to rejoin the game.'));
@@ -146,6 +181,7 @@ export function usePlayerGame(gameId: string | undefined) {
         handleKicked();
         return;
       }
+      setLiveAnnouncement({ message: 'A player was removed.', politeness: 'polite' });
       setPlayerState((previous) =>
         previous
           ? { ...previous, participantCount: Math.max(1, previous.participantCount - 1) }
@@ -160,6 +196,7 @@ export function usePlayerGame(gameId: string | undefined) {
       setRankDelta(null);
       setSelectedChoiceId(null);
       setAnswerState('idle');
+      setLiveAnnouncement({ message: 'Question started.', politeness: 'polite' });
       setPlayerState((previous) =>
         previous
           ? {
@@ -175,6 +212,7 @@ export function usePlayerGame(gameId: string | undefined) {
 
     const handleQuestionEnded = (results: QuestionResultsResponse) => {
       setAnswerState('idle');
+      setLiveAnnouncement({ message: 'Results are in.', politeness: 'polite' });
       setPlayerState((previous) =>
         previous ? { ...previous, status: 'QuestionResults', lastResults: results } : previous,
       );
@@ -200,10 +238,12 @@ export function usePlayerGame(gameId: string | undefined) {
     };
 
     const handleLeaderboardUpdated = (board: LeaderboardResponse) => {
+      setLiveAnnouncement({ message: 'Leaderboard updated.', politeness: 'polite' });
       foldLeaderboard(board, 'Leaderboard');
     };
 
     const handleGameEnded = (board: LeaderboardResponse) => {
+      setLiveAnnouncement({ message: 'Game finished. Final results ready.', politeness: 'polite' });
       foldLeaderboard(board, 'Finished');
     };
 
@@ -240,6 +280,7 @@ export function usePlayerGame(gameId: string | undefined) {
       try {
         const response = await invokeSubmitAnswer(connection, activeQuestionId, choiceId);
         if (response.success && response.data?.accepted) {
+          setLiveAnnouncement({ message: 'Answer accepted.', politeness: 'polite' });
           setAnswerState(response.data.alreadyAnswered ? 'alreadyAnswered' : 'accepted');
           setPlayerState((previous) =>
             previous ? { ...previous, alreadyAnswered: true } : previous,
@@ -307,6 +348,7 @@ export function usePlayerGame(gameId: string | undefined) {
     selectedChoiceId,
     pointsThisQuestion,
     rankDelta,
+    liveAnnouncement,
   };
 }
 

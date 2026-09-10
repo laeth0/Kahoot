@@ -23,10 +23,13 @@ export function createGameHubConnection(requireHostAuth = false): HubConnection 
     })
     .withAutomaticReconnect({
       nextRetryDelayInMilliseconds: (retryContext) => {
-        if (retryContext.previousRetryCount === 0) return 0;
-        if (retryContext.previousRetryCount < 3) return 2000;
-        if (retryContext.previousRetryCount < 10) return 5000;
-        return 10000;
+        const count = retryContext.previousRetryCount;
+        if (count === 0) return 0;
+        const jitter = Math.floor(Math.random() * 1000);
+        if (count < 3) return 1500 + jitter;
+        if (count < 8) return 3500 + jitter;
+        if (count < 15) return 7000 + jitter;
+        return 12000 + jitter;
       },
     })
     .configureLogging(LogLevel.Warning);

@@ -11,11 +11,13 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { hostGameService } from '../../api/hostGameService.ts';
 import { ConnectionStatusBanner } from '../../components/ConnectionStatusBanner/index.ts';
+import { AppErrorBoundary } from '../../components/ErrorBoundary/index.ts';
+import { LiveRegion } from '../../components/Feedback/index.ts';
 import { GamePhaseIndicator } from '../../components/GamePhaseIndicator/index.ts';
 import { GamePinDisplay } from '../../components/GamePinDisplay/index.ts';
 import { HostGameControls } from '../../components/HostGameControls/index.ts';
@@ -38,13 +40,18 @@ import { HostQuestionView } from './HostQuestionView.tsx';
 
 export function HostGamePage() {
   const { gameId } = useParams<{ gameId: string }>();
-  return <HostGameSession key={gameId ?? 'none'} gameId={gameId} />;
+  return (
+    <AppErrorBoundary key={gameId ?? 'none'}>
+      <HostGameSession key={gameId ?? 'none'} gameId={gameId} />
+    </AppErrorBoundary>
+  );
 }
 
 function HostGameSession({ gameId }: { gameId: string | undefined }) {
   const navigate = useNavigate();
   const location = useLocation();
   const quizId = (location.state as { quizId?: string } | null)?.quizId ?? null;
+  const mainRegionRef = useRef<HTMLElement | null>(null);
 
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [newSessionError, setNewSessionError] = useState<string | null>(null);
@@ -69,7 +76,21 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     showLeaderboard,
     endGame,
     removeParticipant,
+    liveAnnouncement,
   } = useHostGame(gameId);
+
+  const prevStatusRef = useRef(gameState?.status);
+
+  useEffect(() => {
+    if (gameState?.status && gameState.status !== prevStatusRef.current) {
+      prevStatusRef.current = gameState.status;
+      const heading = mainRegionRef.current?.querySelector('h1');
+      if (heading instanceof HTMLElement) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus();
+      }
+    }
+  }, [gameState?.status]);
 
   const handleStartNewSession = async () => {
     if (!quizId || isCreatingNew) {
@@ -178,7 +199,8 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
       <MetadataManager title={`${gameState.quizTitle} - Host - Kahoot`} noindex />
 
-      <Box sx={{ maxWidth: 1400, mx: 'auto', pb: 8 }}>
+      <Box ref={mainRegionRef} sx={{ maxWidth: 1400, mx: 'auto', pb: 8 }}>
+        <LiveRegion message={liveAnnouncement?.message} politeness={liveAnnouncement?.politeness} />
         <ConnectionStatusBanner status={hubConnectionStatus} onRetry={retryHub} />
 
         <Box sx={{ mb: 3 }}>

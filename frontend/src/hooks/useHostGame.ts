@@ -41,6 +41,10 @@ export function useHostGame(gameId: string | undefined) {
   const [actionError, setActionError] = useState<string | null>(null);
   const [isActionPending, setIsActionPending] = useState<boolean>(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [liveAnnouncement, setLiveAnnouncement] = useState<{
+    message: string;
+    politeness: 'polite' | 'assertive';
+  } | null>(null);
 
   const pendingJoinQueueRef = useRef<GameParticipantResponse[]>([]);
   const flushTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -48,6 +52,22 @@ export function useHostGame(gameId: string | undefined) {
   const actionInFlightRef = useRef(false);
 
   const { connection, status: hubConnectionStatus, retry: retryHub } = useGameHubConnection(true);
+  const prevHubStatusRef = useRef(hubConnectionStatus);
+
+  useEffect(() => {
+    if (prevHubStatusRef.current === 'connected' && hubConnectionStatus === 'reconnecting') {
+      setLiveAnnouncement({
+        message: 'Connection interrupted. Reconnecting to game hub...',
+        politeness: 'polite',
+      });
+    } else if (prevHubStatusRef.current === 'reconnecting' && hubConnectionStatus === 'connected') {
+      setLiveAnnouncement({
+        message: 'Reconnected to game hub.',
+        politeness: 'polite',
+      });
+    }
+    prevHubStatusRef.current = hubConnectionStatus;
+  }, [hubConnectionStatus]);
 
   useEffect(() => {
     if (!gameId) {
@@ -102,26 +122,33 @@ export function useHostGame(gameId: string | undefined) {
     const wasSubscribedBefore = hasSubscribedRef.current;
     hasSubscribedRef.current = true;
 
-    invokeJoinAsHost(connection, gameId)
-      .then((response) => {
-        if (!isSubscribed) {
-          return;
-        }
-        if (!response.success) {
-          setError(response.error?.description || 'Failed to authorize as game host.');
-          return;
-        }
-        if (wasSubscribedBefore) {
-          setRefreshTrigger((value) => value + 1);
-        }
-      })
-      .catch((err) => {
-        if (isSubscribed) {
-          setError(describeError(err, 'Failed to join game hub as host.'));
-        }
-      });
+    const jitter = wasSubscribedBefore ? Math.floor(Math.random() * 250) : 0;
+    const subscribeTimer = setTimeout(() => {
+      invokeJoinAsHost(connection, gameId)
+        .then((response) => {
+          if (!isSubscribed) {
+            return;
+          }
+          if (!response.success) {
+            setError(response.error?.description || 'Failed to authorize as game host.');
+            return;
+          }
+          if (wasSubscribedBefore) {
+            setRefreshTrigger((value) => value + 1);
+          }
+        })
+        .catch((err) => {
+          if (isSubscribed) {
+            setError(describeError(err, 'Failed to join game hub as host.'));
+          }
+        });
+    }, jitter);
 
     const handleParticipantJoined = (participant: GameParticipantResponse) => {
+      setLiveAnnouncement({
+        message: `Player ${participant.nickname} joined.`,
+        politeness: 'polite',
+      });
       pendingJoinQueueRef.current.push(participant);
       if (!flushTimeoutRef.current) {
         flushTimeoutRef.current = setTimeout(() => {
@@ -132,6 +159,10 @@ export function useHostGame(gameId: string | undefined) {
     };
 
     const handleParticipantLeft = (participantId: string) => {
+      setLiveAnnouncement({
+        message: 'A player disconnected.',
+        politeness: 'polite',
+      });
       setParticipantsMap((previous) => {
         const existing = previous.get(participantId);
         if (!existing) {
@@ -144,6 +175,10 @@ export function useHostGame(gameId: string | undefined) {
     };
 
     const handleParticipantRemoved = (participantId: string) => {
+      setLiveAnnouncement({
+        message: 'A player was removed.',
+        politeness: 'polite',
+      });
       setParticipantsMap((previous) => {
         if (!previous.has(participantId)) {
           return previous;
@@ -159,6 +194,10 @@ export function useHostGame(gameId: string | undefined) {
       setCurrentQuestion(payload);
       setQuestionResults(null);
       saveHostQuestion(gameId, payload);
+      setLiveAnnouncement({
+        message: `Question ${payload.questionIndex} started.`,
+        politeness: 'polite',
+      });
       setGameState((previous) =>
         previous
           ? {
@@ -175,6 +214,10 @@ export function useHostGame(gameId: string | undefined) {
 
     const handleQuestionEnded = (payload: QuestionResultsResponse) => {
       setQuestionResults(payload);
+      setLiveAnnouncement({
+        message: 'Question ended. Results are in.',
+        politeness: 'polite',
+      });
       setGameState((previous) =>
         previous ? { ...previous, status: 'QuestionResults' } : previous,
       );
@@ -182,11 +225,19 @@ export function useHostGame(gameId: string | undefined) {
 
     const handleLeaderboardUpdated = (payload: LeaderboardResponse) => {
       setLeaderboard(payload);
+      setLiveAnnouncement({
+        message: 'Leaderboard updated.',
+        politeness: 'polite',
+      });
       setGameState((previous) => (previous ? { ...previous, status: 'Leaderboard' } : previous));
     };
 
     const handleGameEnded = (payload: LeaderboardResponse) => {
       setLeaderboard(payload);
+      setLiveAnnouncement({
+        message: 'Game session finished. Final results ready.',
+        politeness: 'polite',
+      });
       setGameState((previous) => (previous ? { ...previous, status: 'Finished' } : previous));
     };
 
@@ -200,6 +251,7 @@ export function useHostGame(gameId: string | undefined) {
 
     return () => {
       isSubscribed = false;
+      clearTimeout(subscribeTimer);
       connection.off('ParticipantJoined', handleParticipantJoined);
       connection.off('ParticipantLeft', handleParticipantLeft);
       connection.off('ParticipantRemoved', handleParticipantRemoved);
@@ -403,6 +455,7 @@ export function useHostGame(gameId: string | undefined) {
     showLeaderboard,
     endGame,
     removeParticipant,
+    liveAnnouncement,
   };
 }
 

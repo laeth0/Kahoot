@@ -1,11 +1,12 @@
 import SearchOffIcon from '@mui/icons-material/SearchOff';
 import SportsScoreIcon from '@mui/icons-material/SportsScore';
 import { Box, Button, Container, Paper, Stack, Typography } from '@mui/material';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { ConnectionStatusBanner } from '../../components/ConnectionStatusBanner/index.ts';
-import { LoadingState } from '../../components/Feedback/index.ts';
+import { AppErrorBoundary } from '../../components/ErrorBoundary/index.ts';
+import { LiveRegion, LoadingState } from '../../components/Feedback/index.ts';
 import { GameFinishedScreen } from '../../components/GameFinishedScreen/index.ts';
 import { KickedNotice } from '../../components/KickedNotice/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
@@ -80,11 +81,16 @@ function NoticeCard({ icon, title, body, accent = false, actionLabel, onAction }
 
 export function PlayerGamePage() {
   const { gameId } = useParams<{ gameId: string }>();
-  return <PlayerGameSession key={gameId ?? 'none'} gameId={gameId} />;
+  return (
+    <AppErrorBoundary key={gameId ?? 'none'}>
+      <PlayerGameSession key={gameId ?? 'none'} gameId={gameId} />
+    </AppErrorBoundary>
+  );
 }
 
 function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
   const navigate = useNavigate();
+  const mainRegionRef = useRef<HTMLElement | null>(null);
 
   const {
     playerState,
@@ -99,7 +105,21 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
     selectedChoiceId,
     pointsThisQuestion,
     rankDelta,
+    liveAnnouncement,
   } = usePlayerGame(gameId);
+
+  const prevStatusRef = useRef(playerState?.status);
+
+  useEffect(() => {
+    if (playerState?.status && playerState.status !== prevStatusRef.current) {
+      prevStatusRef.current = playerState.status;
+      const heading = mainRegionRef.current?.querySelector('h1');
+      if (heading instanceof HTMLElement) {
+        heading.setAttribute('tabindex', '-1');
+        heading.focus();
+      }
+    }
+  }, [playerState?.status]);
 
   const goHome = () => navigate('/');
 
@@ -209,6 +229,7 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
 
   return (
     <Box
+      ref={mainRegionRef}
       component="main"
       sx={{
         minHeight: '100dvh',
@@ -221,6 +242,7 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
       }}
     >
       <MetadataManager title="Live Game - Kahoot" noindex />
+      <LiveRegion message={liveAnnouncement?.message} politeness={liveAnnouncement?.politeness} />
 
       <Container
         maxWidth={false}

@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Allow: /join
+Allow: /login
+Disallow: /play/
+Disallow: /host/
+Disallow: /api/
+
+Sitemap: /sitemap.xml
