@@ -12,7 +12,7 @@ internal static class GameQuestionMapper
         DateTimeOffset endsAt)
     {
         Choice[] ordered = [.. question.Choices.OrderBy(choice => choice.OrderIndex)];
-        Guid correctChoiceId = ordered.First(choice => choice.IsCorrect).Id;
+        IReadOnlyList<Guid> correctChoiceIds = [.. ordered.Where(choice => choice.IsCorrect).Select(choice => choice.Id)];
 
         PlayerQuestionResponse player = new(
             question.Id,
@@ -33,7 +33,7 @@ internal static class GameQuestionMapper
             question.TimeLimitSeconds,
             startedAt,
             endsAt,
-            correctChoiceId,
+            correctChoiceIds,
             [.. ordered.Select(choice => new HostChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl, choice.IsCorrect))]);
 
         return new QuestionStartedResponse(host, player);

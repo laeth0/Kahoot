@@ -81,12 +81,12 @@ the Application response records (`Kahoot.Application.Games.Common`).
 | `ParticipantLeft` | host | hub disconnect | `Guid participantId` |
 | `ParticipantRemoved` | players + host | `RemoveParticipantCommand` | `Guid participantId` |
 | `QuestionStarted` | players | `StartGameCommand` / `StartNextQuestionCommand` | `PlayerQuestionResponse` (**no correct answer**) |
-| `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceId`) |
+| `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceIds`) |
 | `QuestionEnded` | players + host | `EndQuestionCommand` | `QuestionResultsResponse` |
 | `LeaderboardUpdated` | players + host | `ShowLeaderboardCommand` | `LeaderboardResponse` |
 | `GameEnded` | players + host | `EndGameCommand` | `LeaderboardResponse` (final) |
 
-**Players never receive `correctChoiceId` or per-choice `isCorrect` before the
+**Players never receive `correctChoiceIds` or per-choice `isCorrect` before the
 question is closed** — the players group only ever gets `PlayerQuestionResponse`
 for `QuestionStarted`; `HostQuestionResponse` goes solely to the host group.
 

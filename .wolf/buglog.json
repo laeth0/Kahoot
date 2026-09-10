@@ -39,7 +39,7 @@
       "error_message": "Significant refactor of HostConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21223 lines (2 removed)",
+      "fix": "Rewrote 6أ¢â€ â€™3 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -55,7 +55,7 @@
       "error_message": "Significant refactor of GameSessionConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21223 lines (2 removed)",
+      "fix": "Rewrote 6أ¢â€ â€™3 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -71,7 +71,7 @@
       "error_message": "Significant refactor of ParticipantConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21224 lines (2 removed)",
+      "fix": "Rewrote 7أ¢â€ â€™4 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -86,7 +86,7 @@
       "timestamp": "2026-09-09T08:17:43.453Z",
       "error_message": "Missing await",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
-      "root_cause": "Async call without await \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c returned Promise instead of value",
+      "root_cause": "Async call without await أ¢â‚¬â€‌ returned Promise instead of value",
       "fix": "Added await to async call",
       "tags": [
         "auto-detected",
@@ -116,7 +116,7 @@
       "error_message": "Wrong reference: ITransientService should be IImageUploadService",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
       "root_cause": "Used \"ITransientService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ITransientService \u00e2\u2020\u2019 IImageUploadService",
+      "fix": "Changed ITransientService â†’ IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -132,7 +132,7 @@
       "error_message": "Wrong reference: ImageUploadService should be IImageUploadService",
       "file": "backend/src/Kahoot.Api/Controllers/UploadsController.cs",
       "root_cause": "Used \"ImageUploadService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ImageUploadService \u00e2\u2020\u2019 IImageUploadService",
+      "fix": "Changed ImageUploadService â†’ IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -148,7 +148,7 @@
       "error_message": "Significant refactor of AuthenticationErrors.cs",
       "file": "backend/src/Kahoot.Application/Authentication/Common/AuthenticationErrors.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7\u00e2\u2020\u20194 lines (2 removed)",
+      "fix": "Rewrote 7â†’4 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -164,7 +164,7 @@
       "error_message": "Wrong reference: Kahoot should be MediatR",
       "file": "backend/src/Kahoot.Api/Realtime/GameHub.cs",
       "root_cause": "Used \"Kahoot\" instead of \"MediatR\"",
-      "fix": "Changed Kahoot \u00e2\u2020\u2019 MediatR",
+      "fix": "Changed Kahoot â†’ MediatR",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -196,7 +196,7 @@
       "error_message": "Wrong reference: IReadOnlyDictionary should be Dictionary",
       "file": "backend/src/Kahoot.Application/Games/GameStateMachine.cs",
       "root_cause": "Used \"IReadOnlyDictionary\" instead of \"Dictionary\"",
-      "fix": "Changed IReadOnlyDictionary \u00e2\u2020\u2019 Dictionary",
+      "fix": "Changed IReadOnlyDictionary â†’ Dictionary",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -243,7 +243,7 @@
       "error_message": "Significant refactor of verify.sql",
       "file": "load-tests/verify/verify.sql",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 8\u00e2\u2020\u201914 lines (4 removed)",
+      "fix": "Rewrote 8â†’14 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -258,7 +258,7 @@
       "timestamp": "2026-09-09T14:29:18.035Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (${k6Bin()} ${args.join('",
+      "root_cause": "Had `\\nâ”€â”€â”€ ${name}  (${k6Bin()} ${args.join('",
       "fix": "Changed to '-e'",
       "tags": [
         "auto-detected",
@@ -275,7 +275,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 20\u00e2\u2020\u201923 lines (3 removed)",
+      "fix": "Rewrote 20â†’23 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -306,8 +306,8 @@
       "timestamp": "2026-09-09T14:34:48.130Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (${k6Bin()} ${args.join('",
-      "fix": "Changed to `\\n\u00e2\u201d\u20ac\u00e2\u201d\u20ac\u00e2\u201d\u20ac ${name}  (k6 run ... ${name}.js)\\n`",
+      "root_cause": "Had `\\nâ”€â”€â”€ ${name}  (${k6Bin()} ${args.join('",
+      "fix": "Changed to `\\nâ”€â”€â”€ ${name}  (k6 run ... ${name}.js)\\n`",
       "tags": [
         "auto-detected",
         "wrong-value",
@@ -322,7 +322,7 @@
       "timestamp": "2026-09-09T14:35:06.291Z",
       "error_message": "Missing error handling in apiBase()",
       "file": "load-tests/run-all.js",
-      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
       "fix": "Added try/catch block | Also: main().catch((e) => {; console.error(e);",
       "tags": [
         "auto-detected",
@@ -339,7 +339,7 @@
       "error_message": "Significant refactor of orchestration.js",
       "file": "load-tests/helpers/orchestration.js",
       "root_cause": "8 lines replaced/restructured",
-      "fix": "Rewrote 9\u00e2\u2020\u201921 lines (8 removed)",
+      "fix": "Rewrote 9â†’21 lines (8 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -354,7 +354,7 @@
       "timestamp": "2026-09-09T14:36:18.787Z",
       "error_message": "Missing error handling in answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
-      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -371,7 +371,7 @@
       "error_message": "Wrong operator: && should be ||",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "Used \"&&\" instead of \"||\"",
-      "fix": "Changed operator && \u00e2\u2020\u2019 ||",
+      "fix": "Changed operator && â†’ ||",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -387,7 +387,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 7\u00e2\u2020\u20199 lines (3 removed)",
+      "fix": "Rewrote 7â†’9 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -419,7 +419,7 @@
       "error_message": "Significant refactor of ramp.js",
       "file": "load-tests/scenarios/ramp.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 4\u00e2\u2020\u20197 lines (2 removed)",
+      "fix": "Rewrote 4â†’7 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -435,7 +435,7 @@
       "error_message": "Significant refactor of run-all.js",
       "file": "load-tests/run-all.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3\u00e2\u2020\u20195 lines (2 removed)",
+      "fix": "Rewrote 3â†’5 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -466,7 +466,7 @@
       "timestamp": "2026-09-09T15:13:25.622Z",
       "error_message": "Missing error handling in serverClockSkewMs()",
       "file": "load-tests/helpers/rest.js",
-      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -483,7 +483,7 @@
       "error_message": "Significant refactor of verify-db.mjs",
       "file": "load-tests/verify/verify-db.mjs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6\u00e2\u2020\u20199 lines (2 removed)",
+      "fix": "Rewrote 6â†’9 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -515,7 +515,7 @@
       "error_message": "Wrong operator: || should be >>",
       "file": "load-tests/run.sh",
       "root_cause": "Used \"||\" instead of \">>\"",
-      "fix": "Changed operator || \u00e2\u2020\u2019 >>",
+      "fix": "Changed operator || â†’ >>",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -547,7 +547,7 @@
       "error_message": "Wrong reference: activeSessionToken should be sessionToken",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "Used \"activeSessionToken\" instead of \"sessionToken\"",
-      "fix": "Changed activeSessionToken \u00e2\u2020\u2019 sessionToken",
+      "fix": "Changed activeSessionToken â†’ sessionToken",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -579,7 +579,7 @@
       "error_message": "Wrong reference: RemoveCircleOutlineIcon should be PersonRemoveIcon",
       "file": "frontend/src/components/KickedNotice/KickedNotice.tsx",
       "root_cause": "Used \"RemoveCircleOutlineIcon\" instead of \"PersonRemoveIcon\"",
-      "fix": "Changed RemoveCircleOutlineIcon \u00e2\u2020\u2019 PersonRemoveIcon",
+      "fix": "Changed RemoveCircleOutlineIcon â†’ PersonRemoveIcon",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -675,7 +675,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "7 lines replaced/restructured",
-      "fix": "Rewrote 13\u00e2\u2020\u20198 lines (7 removed)",
+      "fix": "Rewrote 13â†’8 lines (7 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -690,7 +690,7 @@
       "timestamp": "2026-09-09T18:33:37.406Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -707,7 +707,7 @@
       "error_message": "Significant refactor of PlayerGamePage.tsx",
       "file": "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 21\u00e2\u2020\u201964 lines (5 removed)",
+      "fix": "Rewrote 21â†’64 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -738,8 +738,8 @@
       "timestamp": "2026-09-09T18:50:08.087Z",
       "error_message": "CSS fix: rank",
       "file": "frontend/src/components/GameFinishedScreen/GameFinishedScreen.tsx",
-      "root_cause": "rank: number): string { \u00e2\u2020\u2019 number | null",
-      "fix": "Changed rank: number): string { \u00e2\u2020\u2019 number | null",
+      "root_cause": "rank: number): string { â†’ number | null",
+      "fix": "Changed rank: number): string { â†’ number | null",
       "tags": [
         "auto-detected",
         "style-fix",
@@ -755,7 +755,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 13\u00e2\u2020\u201916 lines (2 removed)",
+      "fix": "Rewrote 13â†’16 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -786,7 +786,7 @@
       "timestamp": "2026-09-09T18:51:38.532Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling \u00e2\u20ac\u201d exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -815,6 +815,134 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-10T06:51:06.430450Z"
+    },
+    {
+      "id": "bug-052",
+      "timestamp": "2026-09-10T07:10:30.761Z",
+      "error_message": "Incorrect value in code",
+      "file": "backend/src/Kahoot.Application/Quizzes/Common/QuestionValidationRules.cs",
+      "root_cause": "Had \"Exactly one choice must be marked correct.\"",
+      "fix": "Changed to \"At least one choice must be marked correct.\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:10:30.761Z"
+    },
+    {
+      "id": "bug-053",
+      "timestamp": "2026-09-10T07:11:59.155Z",
+      "error_message": "Null/undefined access in ChoiceGrid.tsx",
+      "file": "frontend/src/components/ChoiceGrid/ChoiceGrid.tsx",
+      "root_cause": "Property access on potentially null/undefined value",
+      "fix": "Added null safety (optional chaining or null check)",
+      "tags": [
+        "auto-detected",
+        "null-safety",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:11:59.155Z"
+    },
+    {
+      "id": "bug-054",
+      "timestamp": "2026-09-10T07:12:27.032Z",
+      "error_message": "CSS fix: isCorrect",
+      "file": "frontend/src/components/QuestionForm/QuestionFormDialog.tsx",
+      "root_cause": "isCorrect: i === index, → !c.isCorrect",
+      "fix": "Changed isCorrect: i === index, → !c.isCorrect",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:12:27.033Z"
+    },
+    {
+      "id": "bug-055",
+      "timestamp": "2026-09-10T07:12:32.535Z",
+      "error_message": "Wrong condition in logic",
+      "file": "frontend/src/components/QuestionForm/QuestionFormDialog.tsx",
+      "root_cause": "Condition was: if (correctCount !== 1)",
+      "fix": "Changed to: if (correctCount < 1)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:12:32.535Z"
+    },
+    {
+      "id": "bug-056",
+      "timestamp": "2026-09-10T07:13:55.332Z",
+      "error_message": "CSS fix: input",
+      "file": "frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx",
+      "root_cause": "input: { 'aria-label': `Mark choice ${letter → { 'aria-label': `Toggle choice ${letter",
+      "fix": "Changed input: { 'aria-label': `Mark choice ${letter → { 'aria-label': `Toggle choice ${letter",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:13:55.332Z"
+    },
+    {
+      "id": "bug-057",
+      "timestamp": "2026-09-10T07:14:11.347Z",
+      "error_message": "Wrong condition in logic",
+      "file": "frontend/src/components/PublishChecklist/checklistUtils.ts",
+      "root_cause": "Condition was: if (correctCount !== 1)",
+      "fix": "Changed to: if (correctCount < 1)",
+      "tags": [
+        "auto-detected",
+        "logic-fix",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:14:11.347Z"
+    },
+    {
+      "id": "bug-058",
+      "timestamp": "2026-09-10T07:14:16.214Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/PublishChecklist/checklistUtils.ts",
+      "root_cause": "Had 'one-correct'",
+      "fix": "Changed to 'has-correct'",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:14:16.214Z"
+    },
+    {
+      "id": "bug-059",
+      "timestamp": "2026-09-10T07:16:18.948Z",
+      "error_message": "Incorrect value in code",
+      "file": "backend/src/Kahoot.Application/Quizzes/Common/QuizErrors.cs",
+      "root_cause": "Had \"The quiz needs at least one question, and every q",
+      "fix": "Changed to \"The quiz needs at least one question, and every q",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "cs"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:16:18.948Z"
     }
   ]
 }

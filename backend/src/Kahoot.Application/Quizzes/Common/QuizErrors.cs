@@ -17,7 +17,7 @@ public static class QuizErrors
         new("Quiz.HasSessions", "The quiz cannot be deleted because it has been used to run a game.");
 
     public static readonly Error NotPublishable =
-        new("Quiz.NotPublishable", "The quiz needs at least one question, and every question needs 2-6 choices with exactly one correct answer.");
+        new("Quiz.NotPublishable", "The quiz needs at least one question, and every question needs 2-6 choices with at least one correct answer.");
 
     public static readonly Error ConcurrentModification =
         new("Quiz.ConcurrentModification", "The quiz was modified concurrently. Please retry.");

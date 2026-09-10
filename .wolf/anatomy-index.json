@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T06:48:54.702Z",
-    "fileCount": 267,
+    "lastScanned": "2026-09-10T07:16:18.921Z",
+    "fileCount": 271,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "9e6f83dd33fed366899f4152c79aba5035111bfd704ca8008a03263a05f4b45f",
-    "storeUpdatedAt": "2026-09-10T06:48:54.719Z",
-    "rootHash": "1f784288d9f6c1f4"
+    "renderedHash": "daf492ce22d04fb251a889c63b0b28c6198aff816faa267381179b364e5f09a8",
+    "storeUpdatedAt": "2026-09-10T07:16:18.936Z",
+    "rootHash": "727702365ad47199"
   },
   "files": {
     "AGENTS.md": {
@@ -202,10 +202,10 @@
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
       "tokens": 2560,
-      "hash": "6eacf746eb851df8",
-      "size": 10273,
-      "mtimeMs": 1788947852146.3892,
-      "updatedAt": "2026-09-09T09:57:32.327Z",
+      "hash": "3e184f8c0e54cb8d",
+      "size": 10275,
+      "mtimeMs": 1789024493855.8457,
+      "updatedAt": "2026-09-10T07:14:54.018Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
@@ -795,20 +795,20 @@
     },
     "backend/src/Kahoot.Application/Quizzes/Common/QuizErrors.cs": {
       "description": "Class: QuizErrors",
-      "tokens": 311,
-      "hash": "a0aefa4a544105a2",
-      "size": 1166,
-      "mtimeMs": 1788943372926.0227,
-      "updatedAt": "2026-09-09T08:42:53.099Z",
+      "tokens": 312,
+      "hash": "aac76d207eaf15b7",
+      "size": 1167,
+      "mtimeMs": 1789024578737.5315,
+      "updatedAt": "2026-09-10T07:16:18.921Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Quizzes/Common/QuestionValidationRules.cs": {
       "description": "Class: QuestionValidationRules",
-      "tokens": 401,
-      "hash": "e322b14762771053",
-      "size": 1503,
-      "mtimeMs": 1788943381771.2542,
-      "updatedAt": "2026-09-09T08:43:01.945Z",
+      "tokens": 400,
+      "hash": "a8856418bf00c35b",
+      "size": 1497,
+      "mtimeMs": 1789024230542.7039,
+      "updatedAt": "2026-09-10T07:10:30.738Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Quizzes/CreateQuiz/CreateQuizCommand.cs": {
@@ -894,11 +894,11 @@
     },
     "backend/src/Kahoot.Application/Quizzes/PublishQuiz/PublishQuizCommandHandler.cs": {
       "description": "Class: PublishQuizCommandHandler",
-      "tokens": 596,
-      "hash": "a8b0110d20087514",
-      "size": 2232,
-      "mtimeMs": 1788943452858.191,
-      "updatedAt": "2026-09-09T08:44:12.999Z",
+      "tokens": 593,
+      "hash": "6b8bb7f85aaf7634",
+      "size": 2223,
+      "mtimeMs": 1789024238397.708,
+      "updatedAt": "2026-09-10T07:10:38.537Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Quizzes/Questions/AddQuestion/AddQuestionCommand.cs": {
@@ -1056,11 +1056,11 @@
     },
     "backend/src/Kahoot.Application/Games/Common/GameContracts.cs": {
       "description": "Class: GameContracts",
-      "tokens": 705,
-      "hash": "18b7a26d8e1445af",
-      "size": 2643,
-      "mtimeMs": 1788947106591.8296,
-      "updatedAt": "2026-09-09T09:45:06.795Z",
+      "tokens": 714,
+      "hash": "273e56c699b539da",
+      "size": 2675,
+      "mtimeMs": 1789024249367.4304,
+      "updatedAt": "2026-09-10T07:10:49.523Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/Common/GameErrors.cs": {
@@ -1083,11 +1083,11 @@
     },
     "backend/src/Kahoot.Application/Games/Common/GameQuestionMapper.cs": {
       "description": "Class: GameQuestionMapper",
-      "tokens": 524,
-      "hash": "22bd36db39b78e40",
-      "size": 1962,
-      "mtimeMs": 1788943784545.0854,
-      "updatedAt": "2026-09-09T08:49:44.669Z",
+      "tokens": 536,
+      "hash": "ba92be8c51595b6e",
+      "size": 2009,
+      "mtimeMs": 1789024259881.9504,
+      "updatedAt": "2026-09-10T07:11:00.043Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/CreateGame/CreateGameCommand.cs": {
@@ -1164,11 +1164,11 @@
     },
     "backend/src/Kahoot.Application/Games/Common/QuestionResultsBuilder.cs": {
       "description": "Class: QuestionResultsBuilder",
-      "tokens": 552,
-      "hash": "225b6d58bf3e8f58",
-      "size": 2069,
-      "mtimeMs": 1788943910385.6855,
-      "updatedAt": "2026-09-09T08:51:50.635Z",
+      "tokens": 560,
+      "hash": "afe986303847efc0",
+      "size": 2099,
+      "mtimeMs": 1789024267057.051,
+      "updatedAt": "2026-09-10T07:11:07.221Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/EndQuestion/EndQuestionCommand.cs": {
@@ -1299,11 +1299,11 @@
     },
     "backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandHandler.cs": {
       "description": "Class: SubmitAnswerCommandHandler",
-      "tokens": 1590,
-      "hash": "4af1a57061eb0d1f",
-      "size": 5960,
-      "mtimeMs": 1788947212754.2454,
-      "updatedAt": "2026-09-09T09:46:52.928Z",
+      "tokens": 1570,
+      "hash": "238da5ae2541aa38",
+      "size": 5884,
+      "mtimeMs": 1789024281821.628,
+      "updatedAt": "2026-09-10T07:11:21.967Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/Reconnect/ReconnectParticipantCommand.cs": {
@@ -1435,10 +1435,10 @@
     "docs/realtime-protocol.md": {
       "description": "Real-Time Protocol (SignalR) — Kahoot-like Platform",
       "tokens": 2669,
-      "hash": "d4b66145d49b6e8a",
-      "size": 10738,
-      "mtimeMs": 1788947844876.2078,
-      "updatedAt": "2026-09-09T09:57:24.993Z",
+      "hash": "795572b22f2f16bd",
+      "size": 10740,
+      "mtimeMs": 1789024481803.6199,
+      "updatedAt": "2026-09-10T07:14:41.918Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Common/HostClaims.cs": {
@@ -2815,11 +2815,11 @@
     },
     "frontend/src/realtime/events.ts": {
       "description": "Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 11 more",
-      "tokens": 806,
-      "hash": "02cdb873163600de",
-      "size": 2818,
-      "mtimeMs": 1788977974992.1697,
-      "updatedAt": "2026-09-09T18:19:35.110Z",
+      "tokens": 807,
+      "hash": "55707c5272a6b361",
+      "size": 2824,
+      "mtimeMs": 1789024306612.7534,
+      "updatedAt": "2026-09-10T07:11:46.734Z",
       "source": "hook",
       "symbols": [
         {
@@ -2855,7 +2855,7 @@
           "kind": "section",
           "startLine": 32,
           "endLine": 44,
-          "tokens": 82
+          "tokens": 83
         },
         {
           "name": "ChoiceResultResponse",
@@ -2869,7 +2869,7 @@
           "kind": "section",
           "startLine": 52,
           "endLine": 60,
-          "tokens": 59
+          "tokens": 60
         },
         {
           "name": "AnswerAckResponse",
@@ -3396,11 +3396,11 @@
     },
     "frontend/src/components/ChoiceGrid/ChoiceGrid.tsx": {
       "description": "ChoiceGrid",
-      "tokens": 566,
-      "hash": "597e0389b86f57f3",
-      "size": 1981,
-      "mtimeMs": 1788978139313.1814,
-      "updatedAt": "2026-09-09T18:22:19.419Z",
+      "tokens": 582,
+      "hash": "b27e15bf82e7cccf",
+      "size": 2034,
+      "mtimeMs": 1789024319008.1155,
+      "updatedAt": "2026-09-10T07:11:59.133Z",
       "source": "hook",
       "symbols": [
         {
@@ -3415,14 +3415,14 @@
           "kind": "section",
           "startLine": 11,
           "endLine": 20,
-          "tokens": 78
+          "tokens": 82
         },
         {
           "name": "ChoiceGrid",
           "kind": "fn",
           "startLine": 21,
           "endLine": 79,
-          "tokens": 428
+          "tokens": 440
         }
       ]
     },
@@ -3689,11 +3689,11 @@
     },
     "frontend/src/pages/PlayerGamePage/PlayerResultsView.tsx": {
       "description": "PlayerResultsView",
-      "tokens": 854,
-      "hash": "957249bee0557d59",
-      "size": 2989,
-      "mtimeMs": 1788978883590.4297,
-      "updatedAt": "2026-09-09T18:34:43.744Z",
+      "tokens": 862,
+      "hash": "5333f59ef13c309e",
+      "size": 3015,
+      "mtimeMs": 1789024336300.963,
+      "updatedAt": "2026-09-10T07:12:16.421Z",
       "source": "hook",
       "symbols": [
         {
@@ -3708,17 +3708,17 @@
           "kind": "fn",
           "startLine": 16,
           "endLine": 94,
-          "tokens": 690
+          "tokens": 698
         }
       ]
     },
     "frontend/src/pages/HostGamePage/HostQuestionView.tsx": {
       "description": "HostQuestionView",
-      "tokens": 830,
-      "hash": "06eb2c8d31b6e43d",
-      "size": 2907,
-      "mtimeMs": 1788978942478.6367,
-      "updatedAt": "2026-09-09T18:35:42.649Z",
+      "tokens": 831,
+      "hash": "e3d06578cbade889",
+      "size": 2909,
+      "mtimeMs": 1789024324224.762,
+      "updatedAt": "2026-09-10T07:12:04.364Z",
       "source": "hook",
       "symbols": [
         {
@@ -3997,6 +3997,120 @@
       "mtimeMs": 1789022934517.9514,
       "updatedAt": "2026-09-10T06:48:54.701Z",
       "source": "hook"
+    },
+    "frontend/src/components/QuestionForm/QuestionFormDialog.tsx": {
+      "description": "DEFAULT_CHOICES — renders form, modal",
+      "tokens": 3390,
+      "hash": "4bae846d8b8d1aa7",
+      "size": 11865,
+      "mtimeMs": 1789024365717.6997,
+      "updatedAt": "2026-09-10T07:12:45.971Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "QuestionFormDialogProps",
+          "kind": "section",
+          "startLine": 33,
+          "endLine": 54,
+          "tokens": 199
+        },
+        {
+          "name": "QuestionFormContentProps",
+          "kind": "section",
+          "startLine": 55,
+          "endLine": 61,
+          "tokens": 53
+        },
+        {
+          "name": "QuestionFormContent",
+          "kind": "fn",
+          "startLine": 62,
+          "endLine": 353,
+          "tokens": 2665
+        },
+        {
+          "name": "QuestionFormDialog",
+          "kind": "fn",
+          "startLine": 354,
+          "endLine": 394,
+          "tokens": 247
+        }
+      ]
+    },
+    "frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx": {
+      "description": "CHOICE_LETTERS — renders form",
+      "tokens": 1392,
+      "hash": "aebb137ff1755257",
+      "size": 4871,
+      "mtimeMs": 1789024435170.74,
+      "updatedAt": "2026-09-10T07:13:55.293Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ChoiceEditorRowProps",
+          "kind": "section",
+          "startLine": 19,
+          "endLine": 31,
+          "tokens": 106
+        },
+        {
+          "name": "ChoiceEditorRow",
+          "kind": "fn",
+          "startLine": 32,
+          "endLine": 170,
+          "tokens": 1142
+        }
+      ]
+    },
+    "frontend/src/components/PublishChecklist/checklistUtils.ts": {
+      "description": "Exports ChecklistItem, evaluateQuizPublishCriteria",
+      "tokens": 642,
+      "hash": "03d8667c975a218e",
+      "size": 2245,
+      "mtimeMs": 1789024456078.5154,
+      "updatedAt": "2026-09-10T07:14:16.190Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ChecklistItem",
+          "kind": "section",
+          "startLine": 3,
+          "endLine": 9,
+          "tokens": 34
+        },
+        {
+          "name": "evaluateQuizPublishCriteria",
+          "kind": "fn",
+          "startLine": 10,
+          "endLine": 81,
+          "tokens": 589
+        }
+      ]
+    },
+    "frontend/src/components/ReorderableQuestionList/ReorderableQuestionList.tsx": {
+      "description": "ReorderableQuestionList",
+      "tokens": 3004,
+      "hash": "ecde12ef1fbe38ab",
+      "size": 10511,
+      "mtimeMs": 1789024472051.497,
+      "updatedAt": "2026-09-10T07:14:32.174Z",
+      "source": "hook",
+      "symbols": [
+        {
+          "name": "ReorderableQuestionListProps",
+          "kind": "section",
+          "startLine": 23,
+          "endLine": 31,
+          "tokens": 79
+        },
+        {
+          "name": "ReorderableQuestionList",
+          "kind": "fn",
+          "startLine": 32,
+          "endLine": 297,
+          "tokens": 2718
+        }
+      ]
     }
   },
   "preamble": [

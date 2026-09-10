@@ -38,10 +38,8 @@ internal sealed class SubmitAnswerCommandHandler(
                     {
                         question.Points,
                         question.TimeLimitSeconds,
-                        CorrectChoiceId = question.Choices
-                            .Where(choice => choice.IsCorrect)
-                            .Select(choice => choice.Id)
-                            .FirstOrDefault(),
+                        SelectedChoiceIsCorrect = question.Choices
+                            .Any(choice => choice.Id == command.SelectedChoiceId && choice.IsCorrect),
                         SelectedChoiceExists = question.Choices.Any(choice => choice.Id == command.SelectedChoiceId)
                     })
                     .FirstOrDefault()
@@ -88,7 +86,7 @@ internal sealed class SubmitAnswerCommandHandler(
         }
 
         int responseTimeMs = Math.Max(0, (int)(now.UtcDateTime - startedAt).TotalMilliseconds);
-        bool isCorrect = command.SelectedChoiceId == snapshot.Question.CorrectChoiceId;
+        bool isCorrect = snapshot.Question.SelectedChoiceIsCorrect;
         int pointsAwarded = scoringService.CalculateScore(
             isCorrect,
             TimeSpan.FromMilliseconds(responseTimeMs),

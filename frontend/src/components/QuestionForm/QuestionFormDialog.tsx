@@ -91,13 +91,8 @@ function QuestionFormContent({
     if (validationError) setValidationError(null);
   };
 
-  const handleMarkCorrect = (index: number) => {
-    setChoices((prev) =>
-      prev.map((c, i) => ({
-        ...c,
-        isCorrect: i === index,
-      })),
-    );
+  const handleToggleCorrect = (index: number) => {
+    setChoices((prev) => prev.map((c, i) => (i === index ? { ...c, isCorrect: !c.isCorrect } : c)));
     if (validationError) setValidationError(null);
   };
 
@@ -136,8 +131,8 @@ function QuestionFormContent({
     }
 
     const correctCount = choices.filter((c) => c.isCorrect).length;
-    if (correctCount !== 1) {
-      setValidationError('Exactly one choice must be marked as correct.');
+    if (correctCount < 1) {
+      setValidationError('Mark at least one choice as correct.');
       return;
     }
 
@@ -290,7 +285,7 @@ function QuestionFormContent({
                     Answer Choices ({choices.length}/6)
                   </Typography>
                   <Typography variant="caption" sx={{ color: '#334e68' }}>
-                    Mark exactly one radio button as the correct answer
+                    Tick every choice that should count as a correct answer
                   </Typography>
                 </Box>
 
@@ -316,7 +311,7 @@ function QuestionFormContent({
                       choice={choice}
                       onChange={(updated) => handleChoiceChange(index, updated)}
                       onRemove={() => handleRemoveChoice(index)}
-                      onMarkCorrect={() => handleMarkCorrect(index)}
+                      onToggleCorrect={() => handleToggleCorrect(index)}
                       canRemove={choices.length > 2}
                       disabled={isSaving}
                     />

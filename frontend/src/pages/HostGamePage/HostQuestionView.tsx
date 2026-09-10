@@ -77,7 +77,7 @@ export function HostQuestionView({
         </Box>
 
         {question ? (
-          <ChoiceGrid choices={question.choices} correctChoiceId={question.correctChoiceId} />
+          <ChoiceGrid choices={question.choices} correctChoiceIds={question.correctChoiceIds} />
         ) : (
           <Typography sx={{ textAlign: 'center', color: '#64748B', fontWeight: 600 }}>
             Reload lost the question text. Answer counts are still live — end the question to see

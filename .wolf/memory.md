@@ -586,3 +586,36 @@ description: chronological action log per session, consolidated weekly
 |------|--------|---------|---------|--------|
 | 09:48 | Edited docker-compose.yml | 2→2 lines | ~28 |
 | 09:48 | Edited frontend/Dockerfile | 2→2 lines | ~23 |
+| 10:10 | Edited backend/src/Kahoot.Application/Quizzes/Common/QuestionValidationRules.cs | Count() → Any() | ~38 |
+| 10:10 | Edited backend/src/Kahoot.Application/Quizzes/PublishQuiz/PublishQuizCommandHandler.cs | Count() → Any() | ~128 |
+| 10:10 | Edited backend/src/Kahoot.Application/Games/Common/GameContracts.cs | 4→4 lines | ~39 |
+| 10:10 | Edited backend/src/Kahoot.Application/Games/Common/GameContracts.cs | 7→7 lines | ~61 |
+| 10:10 | Edited backend/src/Kahoot.Application/Games/Common/GameQuestionMapper.cs | 2→2 lines | ~56 |
+| 10:11 | Edited backend/src/Kahoot.Application/Games/Common/GameQuestionMapper.cs | 4→4 lines | ~59 |
+| 10:11 | Edited backend/src/Kahoot.Application/Games/Common/QuestionResultsBuilder.cs | 7→7 lines | ~75 |
+| 10:11 | Edited backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandHandler.cs | 7→5 lines | ~101 |
+| 10:11 | Edited backend/src/Kahoot.Application/Games/SubmitAnswer/SubmitAnswerCommandHandler.cs | 2→2 lines | ~44 |
+| 10:11 | Edited frontend/src/realtime/events.ts | 6→6 lines | ~38 |
+| 10:11 | Edited frontend/src/realtime/events.ts | 8→8 lines | ~60 |
+| 10:11 | Edited frontend/src/components/ChoiceGrid/ChoiceGrid.tsx | modified ChoiceGrid() | ~142 |
+| 10:11 | Edited frontend/src/components/ChoiceGrid/ChoiceGrid.tsx | added optional chaining | ~54 |
+| 10:12 | Edited frontend/src/pages/HostGamePage/HostQuestionView.tsx | inline fix | ~28 |
+| 10:12 | Edited frontend/src/pages/PlayerGamePage/PlayerResultsView.tsx | 2→2 lines | ~42 |
+| 10:12 | Edited frontend/src/pages/PlayerGamePage/PlayerResultsView.tsx | 7→7 lines | ~64 |
+| 10:12 | Edited frontend/src/components/QuestionForm/QuestionFormDialog.tsx | 9→4 lines | ~60 |
+| 10:12 | Edited frontend/src/components/QuestionForm/QuestionFormDialog.tsx | modified if() | ~52 |
+| 10:12 | Edited frontend/src/components/QuestionForm/QuestionFormDialog.tsx | 3→3 lines | ~52 |
+| 10:12 | Edited frontend/src/components/QuestionForm/QuestionFormDialog.tsx | handleMarkCorrect() → handleToggleCorrect() | ~78 |
+| 10:13 | Edited frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx | 13→14 lines | ~102 |
+| 10:13 | Edited frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx | CSS: onToggleCorrect | ~42 |
+| 10:13 | Edited frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx | 6→6 lines | ~30 |
+| 10:13 | Edited frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx | CSS: m | ~349 |
+| 10:14 | Edited frontend/src/components/PublishChecklist/checklistUtils.ts | modified if() | ~41 |
+| 10:14 | Edited frontend/src/components/PublishChecklist/checklistUtils.ts | 2→2 lines | ~26 |
+| 10:14 | Edited frontend/src/components/ReorderableQuestionList/ReorderableQuestionList.tsx | inline fix | ~20 |
+| 10:14 | Edited frontend/src/components/ReorderableQuestionList/ReorderableQuestionList.tsx | CSS: answers | ~376 |
+| 10:14 | Edited docs/realtime-protocol.md | inline fix | ~27 |
+| 10:14 | Edited docs/realtime-protocol.md | 2→2 lines | ~43 |
+| 10:14 | Edited docs/functional-requirements.md | inline fix | ~21 |
+| 10:14 | Edited docs/functional-requirements.md | inline fix | ~52 |
+| 10:16 | Edited backend/src/Kahoot.Application/Quizzes/Common/QuizErrors.cs | inline fix | ~40 |

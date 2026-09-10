@@ -18,8 +18,8 @@ public static class QuestionValidationRules
             .NotNull()
             .Must(choices => choices.Count is >= MinChoices and <= MaxChoices)
             .WithMessage($"A question must have between {MinChoices} and {MaxChoices} choices.")
-            .Must(choices => choices.Count(choice => choice.IsCorrect) == 1)
-            .WithMessage("Exactly one choice must be marked correct.");
+            .Must(choices => choices.Any(choice => choice.IsCorrect))
+            .WithMessage("At least one choice must be marked correct.");
 }
 
 public sealed class ChoiceInputValidator : AbstractValidator<ChoiceInput>

@@ -83,7 +83,7 @@ export function ReorderableQuestionList({
       {sortedQuestions.map((q, index) => {
         const isFirst = index === 0;
         const isLast = index === sortedQuestions.length - 1;
-        const correctChoice = q.choices.find((c) => c.isCorrect);
+        const correctChoices = q.choices.filter((c) => c.isCorrect);
 
         return (
           <Card
@@ -190,7 +190,7 @@ export function ReorderableQuestionList({
                       {q.text}
                     </Typography>
 
-                    {correctChoice && (
+                    {correctChoices.length > 0 && (
                       <Stack
                         direction="row"
                         spacing={1}
@@ -214,7 +214,8 @@ export function ReorderableQuestionList({
                             whiteSpace: 'nowrap',
                           }}
                         >
-                          Correct: {correctChoice.text || '(Image answer)'}
+                          {correctChoices.length > 1 ? 'Correct answers: ' : 'Correct: '}
+                          {correctChoices.map((c) => c.text || '(Image answer)').join(', ')}
                         </Typography>
                       </Stack>
                     )}

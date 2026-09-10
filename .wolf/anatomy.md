@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T06:48:54.702Z
-> Files: 267 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:16:18.921Z
+> Files: 271 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -143,14 +143,14 @@
 
 ## backend/src/Kahoot.Application/Games/Common/
 
-- `GameContracts.cs` — Class: GameContracts (~705 tok)
+- `GameContracts.cs` — Class: GameContracts (~714 tok)
 - `GameErrors.cs` — Class: GameErrors (~674 tok)
-- `GameQuestionMapper.cs` — Class: GameQuestionMapper (~524 tok)
+- `GameQuestionMapper.cs` — Class: GameQuestionMapper (~536 tok)
 - `GameTime.cs` — Class: GameTime (~56 tok)
 - `HostGameGuard.cs` — Class: HostGameGuard (~422 tok)
 - `LeaderboardBuilder.cs` — Class: LeaderboardBuilder (~584 tok)
 - `QuestionActivation.cs` — Class: QuestionActivation (~314 tok)
-- `QuestionResultsBuilder.cs` — Class: QuestionResultsBuilder (~552 tok)
+- `QuestionResultsBuilder.cs` — Class: QuestionResultsBuilder (~560 tok)
 
 ## backend/src/Kahoot.Application/Games/CreateGame/
 
@@ -235,14 +235,14 @@
 ## backend/src/Kahoot.Application/Games/SubmitAnswer/
 
 - `SubmitAnswerCommand.cs` — Class: SubmitAnswerCommand (~82 tok)
-- `SubmitAnswerCommandHandler.cs` — Class: SubmitAnswerCommandHandler (~1590 tok)
+- `SubmitAnswerCommandHandler.cs` — Class: SubmitAnswerCommandHandler (~1570 tok)
 - `SubmitAnswerCommandValidator.cs` — Class: SubmitAnswerCommandValidator (~132 tok)
 
 ## backend/src/Kahoot.Application/Quizzes/Common/
 
-- `QuestionValidationRules.cs` — Class: QuestionValidationRules (~401 tok)
+- `QuestionValidationRules.cs` — Class: QuestionValidationRules (~400 tok)
 - `QuizContracts.cs` — Class: QuizContracts (~206 tok)
-- `QuizErrors.cs` — Class: QuizErrors (~311 tok)
+- `QuizErrors.cs` — Class: QuizErrors (~312 tok)
 
 ## backend/src/Kahoot.Application/Quizzes/CreateQuiz/
 
@@ -268,7 +268,7 @@
 ## backend/src/Kahoot.Application/Quizzes/PublishQuiz/
 
 - `PublishQuizCommand.cs` — Class: PublishQuizCommand (~43 tok)
-- `PublishQuizCommandHandler.cs` — Class: PublishQuizCommandHandler (~596 tok)
+- `PublishQuizCommandHandler.cs` — Class: PublishQuizCommandHandler (~593 tok)
 
 ## backend/src/Kahoot.Application/Quizzes/Questions/AddQuestion/
 
@@ -410,10 +410,14 @@
 - `AnsweredCounter.tsx` — AnsweredCounter (~698 tok)
 - `index.ts` (~26 tok)
 
+## frontend/src/components/ChoiceEditorRow/
+
+- `ChoiceEditorRow.tsx` — CHOICE_LETTERS — renders form (~1392 tok)
+
 ## frontend/src/components/ChoiceGrid/
 
 - `ChoiceButton.tsx` — ChoiceButton (~1109 tok)
-- `ChoiceGrid.tsx` — ChoiceGrid (~566 tok)
+- `ChoiceGrid.tsx` — ChoiceGrid (~582 tok)
 - `ChoiceShape.tsx` — ChoiceShape (~249 tok)
 - `choiceVisuals.ts` — Exports CHOICE_LETTERS, CHOICE_COLORS, choiceLetter, choiceColor (~119 tok)
 - `choiceVisuals.tsx` — CHOICE_LETTERS (~307 tok)
@@ -448,6 +452,14 @@
 - `index.ts` (~23 tok)
 - `PodiumView.tsx` — MEDALS (~864 tok)
 
+## frontend/src/components/PublishChecklist/
+
+- `checklistUtils.ts` — Exports ChecklistItem, evaluateQuizPublishCriteria (~642 tok)
+
+## frontend/src/components/QuestionForm/
+
+- `QuestionFormDialog.tsx` — DEFAULT_CHOICES — renders form, modal (~3390 tok)
+
 ## frontend/src/components/QuestionMedia/
 
 - `index.ts` (~24 tok)
@@ -457,6 +469,10 @@
 
 - `index.ts` (~28 tok)
 - `QuestionResultsChart.tsx` — QuestionResultsChart (~982 tok)
+
+## frontend/src/components/ReorderableQuestionList/
+
+- `ReorderableQuestionList.tsx` — ReorderableQuestionList (~3004 tok)
 
 ## frontend/src/components/ServerCountdown/
 
@@ -484,7 +500,7 @@
 
 - `HostGamePage.tsx` — HostGamePage (~3220 tok)
 - `HostLeaderboardView.tsx` — HostLeaderboardView (~621 tok)
-- `HostQuestionView.tsx` — HostQuestionView (~830 tok)
+- `HostQuestionView.tsx` — HostQuestionView (~831 tok)
 
 ## frontend/src/pages/JoinPage/
 
@@ -496,7 +512,7 @@
 - `PlayerGamePage.tsx` — NoticeCard (~1994 tok)
 - `PlayerLeaderboardView.tsx` — PlayerLeaderboardView (~1028 tok)
 - `PlayerQuestionView.tsx` — PlayerQuestionView (~853 tok)
-- `PlayerResultsView.tsx` — PlayerResultsView (~854 tok)
+- `PlayerResultsView.tsx` — PlayerResultsView (~862 tok)
 
 ## frontend/src/pages/QuizEditorPage/
 
@@ -508,7 +524,7 @@
 
 ## frontend/src/realtime/
 
-- `events.ts` — Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 11 more (~806 tok)
+- `events.ts` — Exports GameStatus, RealtimeError, RealtimeResponse, GameParticipantResponse + 11 more (~807 tok)
 - `gameHub.ts` — Exports createGameHubConnection, invokeJoinAsHost, invokeReconnect, invokeSubmitAnswer (~564 tok)
 
 ## frontend/src/routes/

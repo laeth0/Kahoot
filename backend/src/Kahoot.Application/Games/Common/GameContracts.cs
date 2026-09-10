@@ -34,7 +34,7 @@ public sealed record HostQuestionResponse(
     int TimeLimitSeconds,
     DateTimeOffset StartedAt,
     DateTimeOffset EndsAt,
-    Guid CorrectChoiceId,
+    IReadOnlyList<Guid> CorrectChoiceIds,
     IReadOnlyList<HostChoiceResponse> Choices);
 
 public sealed record QuestionStartedResponse(HostQuestionResponse Host, PlayerQuestionResponse Player);
@@ -46,7 +46,7 @@ public sealed record ChoiceResultResponse(Guid ChoiceId, string? Text, int Answe
 public sealed record QuestionResultsResponse(
     Guid QuestionId,
     int QuestionIndex,
-    Guid CorrectChoiceId,
+    IReadOnlyList<Guid> CorrectChoiceIds,
     int ParticipantCount,
     int AnswerCount,
     IReadOnlyList<ChoiceResultResponse> Choices);

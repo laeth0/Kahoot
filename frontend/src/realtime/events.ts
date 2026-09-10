@@ -38,7 +38,7 @@ export interface HostQuestionResponse {
   timeLimitSeconds: number;
   startedAt: string;
   endsAt: string;
-  correctChoiceId: string;
+  correctChoiceIds: string[];
   choices: HostChoiceResponse[];
 }
 
@@ -52,7 +52,7 @@ export interface ChoiceResultResponse {
 export interface QuestionResultsResponse {
   questionId: string;
   questionIndex: number;
-  correctChoiceId: string;
+  correctChoiceIds: string[];
   participantCount: number;
   answerCount: number;
   choices: ChoiceResultResponse[];

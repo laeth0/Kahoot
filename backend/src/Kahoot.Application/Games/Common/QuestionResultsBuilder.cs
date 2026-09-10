@@ -49,7 +49,7 @@ internal static class QuestionResultsBuilder
         return new QuestionResultsResponse(
             questionId,
             questionIndex,
-            choices.First(choice => choice.IsCorrect).Id,
+            [.. choices.Where(choice => choice.IsCorrect).Select(choice => choice.Id)],
             participantCount,
             countByChoice.Values.Sum(),
             choiceResults);

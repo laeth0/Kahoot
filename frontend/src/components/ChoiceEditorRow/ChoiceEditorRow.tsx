@@ -1,11 +1,12 @@
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import {
   Box,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   Paper,
-  Radio,
   Stack,
   TextField,
   Tooltip,
@@ -20,7 +21,7 @@ export interface ChoiceEditorRowProps {
   choice: ChoiceInput;
   onChange: (updated: ChoiceInput) => void;
   onRemove: () => void;
-  onMarkCorrect: () => void;
+  onToggleCorrect: () => void;
   canRemove: boolean;
   disabled?: boolean;
 }
@@ -33,7 +34,7 @@ export function ChoiceEditorRow({
   choice,
   onChange,
   onRemove,
-  onMarkCorrect,
+  onToggleCorrect,
   canRemove,
   disabled = false,
 }: ChoiceEditorRowProps) {
@@ -89,38 +90,35 @@ export function ChoiceEditorRow({
               {letter}
             </Box>
 
-            <Tooltip title="Mark as the single correct answer">
-              <Stack
-                direction="row"
-                spacing={0.5}
-                onClick={disabled ? undefined : onMarkCorrect}
-                sx={{
-                  cursor: disabled ? 'default' : 'pointer',
-                  alignItems: 'center',
-                  userSelect: 'none',
-                }}
-              >
-                <Radio
-                  checked={choice.isCorrect}
-                  onChange={onMarkCorrect}
-                  disabled={disabled}
-                  icon={<RadioButtonUncheckedIcon sx={{ fontSize: 20 }} />}
-                  checkedIcon={<CheckCircleIcon sx={{ fontSize: 20, color: '#059669' }} />}
-                  size="small"
-                  slotProps={{
-                    input: { 'aria-label': `Mark choice ${letter} as correct` },
-                  }}
-                />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: choice.isCorrect ? '#059669' : '#334e68',
-                  }}
-                >
-                  {choice.isCorrect ? 'Correct Answer' : 'Mark Correct'}
-                </Typography>
-              </Stack>
+            <Tooltip title="Toggle whether this choice counts as a correct answer">
+              <FormControlLabel
+                disabled={disabled}
+                sx={{ m: 0, userSelect: 'none' }}
+                control={
+                  <Checkbox
+                    checked={choice.isCorrect}
+                    onChange={onToggleCorrect}
+                    disabled={disabled}
+                    icon={<CheckBoxOutlineBlankIcon sx={{ fontSize: 20 }} />}
+                    checkedIcon={<CheckCircleIcon sx={{ fontSize: 20, color: '#059669' }} />}
+                    size="small"
+                    slotProps={{
+                      input: { 'aria-label': `Toggle choice ${letter} as a correct answer` },
+                    }}
+                  />
+                }
+                label={
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontWeight: 700,
+                      color: choice.isCorrect ? '#059669' : '#334e68',
+                    }}
+                  >
+                    {choice.isCorrect ? 'Correct Answer' : 'Mark Correct'}
+                  </Typography>
+                }
+              />
             </Tooltip>
           </Stack>
 

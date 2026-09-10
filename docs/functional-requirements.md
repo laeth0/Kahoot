@@ -18,7 +18,7 @@ A host can:
 
 - Log in with a **username and password** (see FR-2).
 - Create, edit, and delete quizzes.
-- Create questions, add 2–6 answer options, mark exactly one option correct.
+- Create questions, add 2–6 answer options, mark one or more options correct.
 - Configure per-question duration and points.
 - Start a live game from a quiz and receive a short unique game **PIN**.
 - Share a join link / PIN with players.
@@ -84,7 +84,7 @@ A player:
 
 ### FR-3.2 Publish validation
 
-- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and exactly one correct choice, and every choice has text or an image.
+- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and at least one correct choice, and every choice has text or an image.
 
 ---
 

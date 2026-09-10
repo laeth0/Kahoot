@@ -21,7 +21,7 @@ export function PlayerResultsView({
   pointsThisQuestion,
 }: PlayerResultsViewProps) {
   const answered = selectedChoiceId !== null;
-  const correct = answered && selectedChoiceId === results.correctChoiceId;
+  const correct = selectedChoiceId !== null && results.correctChoiceIds.includes(selectedChoiceId);
 
   const counts: Record<string, number> = {};
   results.choices.forEach((choice) => {
@@ -80,7 +80,7 @@ export function PlayerResultsView({
       {question && question.choices.length > 0 && (
         <ChoiceGrid
           choices={question.choices}
-          correctChoiceId={results.correctChoiceId}
+          correctChoiceIds={results.correctChoiceIds}
           revealDistribution
           counts={counts}
           selectedChoiceId={selectedChoiceId}

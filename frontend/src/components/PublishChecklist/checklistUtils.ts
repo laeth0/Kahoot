@@ -26,7 +26,7 @@ export function evaluateQuizPublishCriteria(questions: QuestionResponse[]): {
     }
 
     const correctCount = q.choices.filter((c) => c.isCorrect).length;
-    if (correctCount !== 1) {
+    if (correctCount < 1) {
       failingCorrectCount.push(qNum);
     }
 
@@ -55,8 +55,8 @@ export function evaluateQuizPublishCriteria(questions: QuestionResponse[]): {
       failingQuestions: failingChoiceCount,
     },
     {
-      id: 'one-correct',
-      label: 'Exactly one correct choice marked per question',
+      id: 'has-correct',
+      label: 'At least one correct choice marked per question',
       passed: hasQuestions && failingCorrectCount.length === 0,
       failingQuestions: failingCorrectCount,
     },
