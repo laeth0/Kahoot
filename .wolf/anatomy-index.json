@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T07:33:06.545Z",
+    "lastScanned": "2026-09-10T07:46:12.164Z",
     "fileCount": 273,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "05c03a2368212f7e24d6da66d4daea70f1efc9ec6a607c80beb2acd12b15227d",
-    "storeUpdatedAt": "2026-09-10T07:33:06.563Z",
-    "rootHash": "9b6c2efe4d1d186d"
+    "renderedHash": "7d15aa3409bb00eb8ab132c6176348591fbf74a52768a26eccea85c9656032ab",
+    "storeUpdatedAt": "2026-09-10T07:46:12.183Z",
+    "rootHash": "511ee2b201dba49a"
   },
   "files": {
     "AGENTS.md": {
@@ -372,11 +372,11 @@
     },
     "backend/src/Kahoot.Api/appsettings.json": {
       "description": "",
-      "tokens": 254,
-      "hash": "df93336d53fef8d0",
-      "size": 888,
-      "mtimeMs": 1788944275061.4644,
-      "updatedAt": "2026-09-09T08:57:55.313Z",
+      "tokens": 262,
+      "hash": "3f89a447aaf64aa0",
+      "size": 916,
+      "mtimeMs": 1789026269397.9827,
+      "updatedAt": "2026-09-10T07:44:29.511Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Common/Storage/FileStorageOptions.cs": {
@@ -2981,11 +2981,11 @@
     },
     "frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx": {
       "description": "NicknameEntryForm",
-      "tokens": 1728,
-      "hash": "691c39f9edbc86c3",
-      "size": 6047,
-      "mtimeMs": 1788976680971.0369,
-      "updatedAt": "2026-09-09T17:58:01.076Z",
+      "tokens": 1752,
+      "hash": "c98c82c1919672ad",
+      "size": 6132,
+      "mtimeMs": 1789026372003.7021,
+      "updatedAt": "2026-09-10T07:46:12.163Z",
       "source": "hook",
       "symbols": [
         {
@@ -2999,8 +2999,8 @@
           "name": "NicknameEntryForm",
           "kind": "fn",
           "startLine": 30,
-          "endLine": 195,
-          "tokens": 1512
+          "endLine": 200,
+          "tokens": 1536
         }
       ]
     },

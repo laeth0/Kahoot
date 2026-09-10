@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:33:06.545Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:46:12.164Z
 > Files: 273 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -22,7 +22,7 @@
 
 ## backend/src/Kahoot.Api/
 
-- `appsettings.json` (~254 tok)
+- `appsettings.json` (~262 tok)
 - `Program.cs` — Class: Program (~1363 tok)
 
 ## backend/src/Kahoot.Api/Common/
@@ -446,7 +446,7 @@
 ## frontend/src/components/NicknameEntryForm/
 
 - `index.ts` (~27 tok)
-- `NicknameEntryForm.tsx` — NicknameEntryForm (~1728 tok)
+- `NicknameEntryForm.tsx` — NicknameEntryForm (~1752 tok)
 
 ## frontend/src/components/PodiumView/
 

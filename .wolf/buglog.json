@@ -995,6 +995,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-10T07:33:00.731Z"
+    },
+    {
+      "id": "bug-063",
+      "timestamp": "2026-09-10T07:46:12.196Z",
+      "error_message": "Incorrect value in code",
+      "file": "frontend/src/components/NicknameEntryForm/NicknameEntryForm.tsx",
+      "root_cause": "Had \"e.g. Sara_Engineer\"",
+      "fix": "Changed to \"Laeth Nueirat\"",
+      "tags": [
+        "auto-detected",
+        "wrong-value",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:46:12.196Z"
     }
   ]
 }

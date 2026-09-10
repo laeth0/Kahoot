@@ -126,7 +126,7 @@ export function NicknameEntryForm({
               <TextField
                 id="nickname-input"
                 fullWidth
-                placeholder="e.g. Sara_Engineer"
+                placeholder="Laeth Nueirat"
                 value={nickname}
                 onChange={(event) => handleChange(event.target.value)}
                 required
