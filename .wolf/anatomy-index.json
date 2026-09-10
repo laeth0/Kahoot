@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T07:16:18.921Z",
-    "fileCount": 271,
+    "lastScanned": "2026-09-10T07:26:21.419Z",
+    "fileCount": 272,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "daf492ce22d04fb251a889c63b0b28c6198aff816faa267381179b364e5f09a8",
-    "storeUpdatedAt": "2026-09-10T07:16:18.936Z",
-    "rootHash": "727702365ad47199"
+    "renderedHash": "19d6dd29b8f9685432861f96372cf6a667a0216506c5509f9d46f660e1037b71",
+    "storeUpdatedAt": "2026-09-10T07:26:21.434Z",
+    "rootHash": "0e1578befeebacc6"
   },
   "files": {
     "AGENTS.md": {
@@ -201,11 +201,11 @@
     },
     "docs/functional-requirements.md": {
       "description": "Functional Requirements — Kahoot-like Platform",
-      "tokens": 2560,
-      "hash": "3e184f8c0e54cb8d",
-      "size": 10275,
-      "mtimeMs": 1789024493855.8457,
-      "updatedAt": "2026-09-10T07:14:54.018Z",
+      "tokens": 2741,
+      "hash": "16a788a5a52a8556",
+      "size": 11003,
+      "mtimeMs": 1789025068085.9048,
+      "updatedAt": "2026-09-10T07:24:28.250Z",
       "source": "hook"
     },
     "docs/non-functional-requirements.md": {
@@ -570,11 +570,11 @@
     },
     "backend/src/Kahoot.Application/Games/GameStateMachine.cs": {
       "description": "Class: GameStateMachine",
-      "tokens": 387,
-      "hash": "471c7a69e5e5d8ba",
-      "size": 1451,
-      "mtimeMs": 1788946934559.3694,
-      "updatedAt": "2026-09-09T09:42:14.730Z",
+      "tokens": 399,
+      "hash": "f839c67eacddd3d2",
+      "size": 1496,
+      "mtimeMs": 1789025021009.8958,
+      "updatedAt": "2026-09-10T07:23:41.169Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Application/Games/Scoring/IScoringService.cs": {
@@ -1434,11 +1434,11 @@
     },
     "docs/realtime-protocol.md": {
       "description": "Real-Time Protocol (SignalR) — Kahoot-like Platform",
-      "tokens": 2669,
-      "hash": "795572b22f2f16bd",
-      "size": 10740,
-      "mtimeMs": 1789024481803.6199,
-      "updatedAt": "2026-09-10T07:14:41.918Z",
+      "tokens": 2717,
+      "hash": "8bb4f1b92e4f7902",
+      "size": 10932,
+      "mtimeMs": 1789025074233.502,
+      "updatedAt": "2026-09-10T07:24:34.393Z",
       "source": "hook"
     },
     "backend/src/Kahoot.Api/Common/HostClaims.cs": {
@@ -3564,26 +3564,26 @@
     },
     "frontend/src/components/HostGameControls/HostGameControls.tsx": {
       "description": "primaryButtonSx",
-      "tokens": 1768,
-      "hash": "edfc14c219273a4d",
-      "size": 6194,
-      "mtimeMs": 1788978236339.0981,
-      "updatedAt": "2026-09-09T18:23:56.466Z",
+      "tokens": 1922,
+      "hash": "0c852b9461659d51",
+      "size": 6735,
+      "mtimeMs": 1789025172782.7769,
+      "updatedAt": "2026-09-10T07:26:12.897Z",
       "source": "hook",
       "symbols": [
         {
           "name": "HostGameControlsProps",
           "kind": "section",
           "startLine": 12,
-          "endLine": 33,
-          "tokens": 168
+          "endLine": 34,
+          "tokens": 176
         },
         {
           "name": "HostGameControls",
           "kind": "fn",
-          "startLine": 34,
-          "endLine": 210,
-          "tokens": 1432
+          "startLine": 35,
+          "endLine": 227,
+          "tokens": 1578
         }
       ]
     },
@@ -3630,11 +3630,11 @@
     },
     "frontend/src/hooks/useHostGame.ts": {
       "description": "Exports useHostGame",
-      "tokens": 3616,
-      "hash": "8e67f93f9da30b86",
-      "size": 12655,
-      "mtimeMs": 1788979898266.4724,
-      "updatedAt": "2026-09-09T18:51:38.494Z",
+      "tokens": 4168,
+      "hash": "6b174053ae322c4a",
+      "size": 14587,
+      "mtimeMs": 1789025141242.8496,
+      "updatedAt": "2026-09-10T07:25:41.370Z",
       "source": "hook",
       "symbols": [
         {
@@ -3648,8 +3648,8 @@
           "name": "useHostGame",
           "kind": "fn",
           "startLine": 29,
-          "endLine": 410,
-          "tokens": 3329
+          "endLine": 468,
+          "tokens": 3881
         }
       ]
     },
@@ -3764,26 +3764,26 @@
     },
     "frontend/src/pages/HostGamePage/HostGamePage.tsx": {
       "description": "HostGamePage",
-      "tokens": 3220,
-      "hash": "7c06044b889bdbb2",
-      "size": 11277,
-      "mtimeMs": 1788979992865.6477,
-      "updatedAt": "2026-09-09T18:53:13.000Z",
+      "tokens": 3509,
+      "hash": "e4c13a5f518035c0",
+      "size": 12291,
+      "mtimeMs": 1789025181270.652,
+      "updatedAt": "2026-09-10T07:26:21.419Z",
       "source": "hook",
       "symbols": [
         {
           "name": "HostGamePage",
           "kind": "fn",
-          "startLine": 39,
-          "endLine": 43,
-          "tokens": 46
+          "startLine": 41,
+          "endLine": 49,
+          "tokens": 69
         },
         {
           "name": "HostGameSession",
           "kind": "fn",
-          "startLine": 44,
-          "endLine": 342,
-          "tokens": 2720
+          "startLine": 50,
+          "endLine": 364,
+          "tokens": 2941
         }
       ]
     },
@@ -4111,6 +4111,15 @@
           "tokens": 2718
         }
       ]
+    },
+    "docs/Kahoot-like-Platform.md": {
+      "description": "1. Required Technology Stack",
+      "tokens": 7146,
+      "hash": "df082dcd9c021bcd",
+      "size": 28725,
+      "mtimeMs": 1789025081363.8577,
+      "updatedAt": "2026-09-10T07:24:41.485Z",
+      "source": "hook"
     }
   },
   "preamble": [

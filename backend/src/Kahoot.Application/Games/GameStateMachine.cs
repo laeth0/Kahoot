@@ -23,7 +23,8 @@ public static class GameStateMachine
             [GameTransition.StartFirstQuestion] = new([GameStatus.Lobby], GameStatus.QuestionActive),
             [GameTransition.RevealQuestionResults] = new([GameStatus.QuestionActive], GameStatus.QuestionResults),
             [GameTransition.ShowLeaderboard] = new([GameStatus.QuestionResults], GameStatus.Leaderboard),
-            [GameTransition.AdvanceToNextQuestion] = new([GameStatus.Leaderboard], GameStatus.QuestionActive),
+            [GameTransition.AdvanceToNextQuestion] = new(
+                [GameStatus.QuestionResults, GameStatus.Leaderboard], GameStatus.QuestionActive),
             [GameTransition.EndGame] = new(
                 [GameStatus.Lobby, GameStatus.QuestionActive, GameStatus.QuestionResults, GameStatus.Leaderboard],
                 GameStatus.Finished)

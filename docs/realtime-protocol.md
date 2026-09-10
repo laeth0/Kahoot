@@ -120,7 +120,7 @@ Auth: `host` = valid host JWT (`Authorize`); `none` = anonymous.
 | `GET /api/games/{id}/questions/{questionId}/results` | host | `GetQuestionResultsQuery` | | 200 `QuestionResultsResponse` |
 | `GET /api/games/{id}/leaderboard` | host | `GetLeaderboardQuery` | | 200 `LeaderboardResponse` |
 | `POST /api/games/{id}/start` | host | `StartGameCommand` | broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
-| `POST /api/games/{id}/advance` | host | `StartNextQuestionCommand` | double-click safe; broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
+| `POST /api/games/{id}/advance` | host | `StartNextQuestionCommand` | valid from `QuestionResults` or `Leaderboard` (leaderboard optional); idempotent re-entry while `QuestionActive`; `xmin` concurrency-guarded; `409 Game.NoMoreQuestions` past the last question; broadcasts `QuestionStarted` / `QuestionStartedForHost` | 200 `QuestionStartedResponse` |
 | `POST /api/games/{id}/end-question` | host | `EndQuestionCommand` | early-closes window; broadcasts `QuestionEnded` | 200 `QuestionResultsResponse` |
 | `POST /api/games/{id}/leaderboard` | host | `ShowLeaderboardCommand` | persists ranks; broadcasts `LeaderboardUpdated` | 200 `LeaderboardResponse` |
 | `POST /api/games/{id}/end` | host | `EndGameCommand` | broadcasts `GameEnded` | 200 `LeaderboardResponse` |

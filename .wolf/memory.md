@@ -619,3 +619,15 @@ description: chronological action log per session, consolidated weekly
 | 10:14 | Edited docs/functional-requirements.md | inline fix | ~21 |
 | 10:14 | Edited docs/functional-requirements.md | inline fix | ~52 |
 | 10:16 | Edited backend/src/Kahoot.Application/Quizzes/Common/QuizErrors.cs | inline fix | ~40 |
+| 10:23 | Edited backend/src/Kahoot.Application/Games/GameStateMachine.cs | 2→3 lines | ~70 |
+| 10:24 | Edited docs/functional-requirements.md | modified transitions() | ~360 |
+| 10:24 | Edited docs/realtime-protocol.md | inline fix | ~95 |
+| 10:24 | Edited docs/Kahoot-like-Platform.md | 16→21 lines | ~113 |
+| 10:25 | Edited frontend/src/hooks/useHostGame.ts | added 1 condition(s) | ~300 |
+| 10:25 | Edited frontend/src/hooks/useHostGame.ts | reduced (-15 lines) | ~70 |
+| 10:25 | Edited frontend/src/hooks/useHostGame.ts | inline fix | ~28 |
+| 10:25 | Edited frontend/src/hooks/useHostGame.ts | modified if() | ~238 |
+| 10:25 | Edited frontend/src/components/HostGameControls/HostGameControls.tsx | 11→12 lines | ~117 |
+| 10:26 | Edited frontend/src/components/HostGameControls/HostGameControls.tsx | 8→9 lines | ~54 |
+| 10:26 | Edited frontend/src/components/HostGameControls/HostGameControls.tsx | CSS: width, xs, sm | ~248 |
+| 10:26 | Edited frontend/src/pages/HostGamePage/HostGamePage.tsx | 19→23 lines | ~211 |

@@ -169,6 +169,9 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
   const status = gameState.status;
   const isFinished = isFinishedStatus(status);
   const paused = hubConnectionStatus !== 'connected';
+  const hasNextQuestion =
+    gameState.currentQuestionIndex == null ||
+    gameState.currentQuestionIndex < gameState.totalQuestions - 1;
 
   const controls = (
     <Box sx={{ mt: 5 }}>
@@ -177,6 +180,7 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
         participantCount={participantCount}
         isActionPending={isActionPending}
         actionError={actionError}
+        hasNextQuestion={hasNextQuestion}
         onStartGame={startGame}
         onEndGame={endGame}
         onEndQuestion={endQuestion}

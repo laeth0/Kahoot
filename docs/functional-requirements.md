@@ -93,7 +93,7 @@ A player:
 Game state is modelled explicitly, not with ad-hoc boolean flags.
 
 ```
-CREATED → LOBBY → QUESTION_ACTIVE → QUESTION_RESULTS → LEADERBOARD → QUESTION_ACTIVE → … → FINISHED
+CREATED → LOBBY → QUESTION_ACTIVE → QUESTION_RESULTS → [LEADERBOARD] → QUESTION_ACTIVE → … → FINISHED
 ```
 
 Allowed transitions (all others are rejected server-side):
@@ -103,10 +103,18 @@ Allowed transitions (all others are rejected server-side):
 | CREATED | LOBBY |
 | LOBBY | QUESTION_ACTIVE, FINISHED |
 | QUESTION_ACTIVE | QUESTION_RESULTS, FINISHED |
-| QUESTION_RESULTS | LEADERBOARD, FINISHED |
+| QUESTION_RESULTS | QUESTION_ACTIVE, LEADERBOARD, FINISHED |
 | LEADERBOARD | QUESTION_ACTIVE, FINISHED |
 | FINISHED | (terminal) |
 
+- The leaderboard is optional. From `QUESTION_RESULTS` the host may advance straight
+  to the next `QUESTION_ACTIVE`, or first go to `LEADERBOARD` and advance from there;
+  `QUESTION_RESULTS → QUESTION_ACTIVE` and `LEADERBOARD → QUESTION_ACTIVE` are both valid.
+- Advancing past the last question is rejected with `Game.NoMoreQuestions` and does not
+  change state; the host ends the game (`→ FINISHED`) from `QUESTION_RESULTS` or `LEADERBOARD`.
+- `advance` is idempotent: a repeated call while already `QUESTION_ACTIVE` re-broadcasts the
+  current question without starting another; concurrent calls are serialised by an optimistic
+  concurrency token and the loser gets `Game.ConcurrentModification`.
 - Invalid transitions (e.g. `FINISHED → QUESTION_ACTIVE`) return a meaningful error and do not change state.
 - The state machine lives in the application layer (`Kahoot.Application`), not in the domain entities.
 

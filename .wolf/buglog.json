@@ -39,7 +39,7 @@
       "error_message": "Significant refactor of HostConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/HostConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6أ¢â€ â€™3 lines (2 removed)",
+      "fix": "Rewrote 6\u0637\u00a3\u0622\u00a2\u0623\u00a2\u00e2\u201a\u00ac\u0622\u00a0\u0623\u00a2\u00e2\u201a\u00ac\u00e2\u201e\u00a23 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -55,7 +55,7 @@
       "error_message": "Significant refactor of GameSessionConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameSessionConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6أ¢â€ â€™3 lines (2 removed)",
+      "fix": "Rewrote 6\u0637\u00a3\u0622\u00a2\u0623\u00a2\u00e2\u201a\u00ac\u0622\u00a0\u0623\u00a2\u00e2\u201a\u00ac\u00e2\u201e\u00a23 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -71,7 +71,7 @@
       "error_message": "Significant refactor of ParticipantConfiguration.cs",
       "file": "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7أ¢â€ â€™4 lines (2 removed)",
+      "fix": "Rewrote 7\u0637\u00a3\u0622\u00a2\u0623\u00a2\u00e2\u201a\u00ac\u0622\u00a0\u0623\u00a2\u00e2\u201a\u00ac\u00e2\u201e\u00a24 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -86,7 +86,7 @@
       "timestamp": "2026-09-09T08:17:43.453Z",
       "error_message": "Missing await",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
-      "root_cause": "Async call without await أ¢â‚¬â€‌ returned Promise instead of value",
+      "root_cause": "Async call without await \u0637\u00a3\u0622\u00a2\u0623\u00a2\u00e2\u20ac\u0691\u0622\u00ac\u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u0152 returned Promise instead of value",
       "fix": "Added await to async call",
       "tags": [
         "auto-detected",
@@ -116,7 +116,7 @@
       "error_message": "Wrong reference: ITransientService should be IImageUploadService",
       "file": "backend/src/Kahoot.Application/Common/Storage/ImageUploadService.cs",
       "root_cause": "Used \"ITransientService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ITransientService â†’ IImageUploadService",
+      "fix": "Changed ITransientService \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -132,7 +132,7 @@
       "error_message": "Wrong reference: ImageUploadService should be IImageUploadService",
       "file": "backend/src/Kahoot.Api/Controllers/UploadsController.cs",
       "root_cause": "Used \"ImageUploadService\" instead of \"IImageUploadService\"",
-      "fix": "Changed ImageUploadService â†’ IImageUploadService",
+      "fix": "Changed ImageUploadService \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 IImageUploadService",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -148,7 +148,7 @@
       "error_message": "Significant refactor of AuthenticationErrors.cs",
       "file": "backend/src/Kahoot.Application/Authentication/Common/AuthenticationErrors.cs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 7â†’4 lines (2 removed)",
+      "fix": "Rewrote 7\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21224 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -164,7 +164,7 @@
       "error_message": "Wrong reference: Kahoot should be MediatR",
       "file": "backend/src/Kahoot.Api/Realtime/GameHub.cs",
       "root_cause": "Used \"Kahoot\" instead of \"MediatR\"",
-      "fix": "Changed Kahoot â†’ MediatR",
+      "fix": "Changed Kahoot \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 MediatR",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -196,7 +196,7 @@
       "error_message": "Wrong reference: IReadOnlyDictionary should be Dictionary",
       "file": "backend/src/Kahoot.Application/Games/GameStateMachine.cs",
       "root_cause": "Used \"IReadOnlyDictionary\" instead of \"Dictionary\"",
-      "fix": "Changed IReadOnlyDictionary â†’ Dictionary",
+      "fix": "Changed IReadOnlyDictionary \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 Dictionary",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -243,7 +243,7 @@
       "error_message": "Significant refactor of verify.sql",
       "file": "load-tests/verify/verify.sql",
       "root_cause": "4 lines replaced/restructured",
-      "fix": "Rewrote 8â†’14 lines (4 removed)",
+      "fix": "Rewrote 8\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u212214 lines (4 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -258,7 +258,7 @@
       "timestamp": "2026-09-09T14:29:18.035Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\nâ”€â”€â”€ ${name}  (${k6Bin()} ${args.join('",
+      "root_cause": "Had `\\n\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac ${name}  (${k6Bin()} ${args.join('",
       "fix": "Changed to '-e'",
       "tags": [
         "auto-detected",
@@ -275,7 +275,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 20â†’23 lines (3 removed)",
+      "fix": "Rewrote 20\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u212223 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -306,8 +306,8 @@
       "timestamp": "2026-09-09T14:34:48.130Z",
       "error_message": "Incorrect value in code",
       "file": "load-tests/run-all.js",
-      "root_cause": "Had `\\nâ”€â”€â”€ ${name}  (${k6Bin()} ${args.join('",
-      "fix": "Changed to `\\nâ”€â”€â”€ ${name}  (k6 run ... ${name}.js)\\n`",
+      "root_cause": "Had `\\n\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac ${name}  (${k6Bin()} ${args.join('",
+      "fix": "Changed to `\\n\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac\u0623\u00a2\u00e2\u20ac\u200c\u00e2\u201a\u00ac ${name}  (k6 run ... ${name}.js)\\n`",
       "tags": [
         "auto-detected",
         "wrong-value",
@@ -322,7 +322,7 @@
       "timestamp": "2026-09-09T14:35:06.291Z",
       "error_message": "Missing error handling in apiBase()",
       "file": "load-tests/run-all.js",
-      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c exceptions would propagate uncaught",
       "fix": "Added try/catch block | Also: main().catch((e) => {; console.error(e);",
       "tags": [
         "auto-detected",
@@ -339,7 +339,7 @@
       "error_message": "Significant refactor of orchestration.js",
       "file": "load-tests/helpers/orchestration.js",
       "root_cause": "8 lines replaced/restructured",
-      "fix": "Rewrote 9â†’21 lines (8 removed)",
+      "fix": "Rewrote 9\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u212221 lines (8 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -354,7 +354,7 @@
       "timestamp": "2026-09-09T14:36:18.787Z",
       "error_message": "Missing error handling in answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
-      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -371,7 +371,7 @@
       "error_message": "Wrong operator: && should be ||",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "Used \"&&\" instead of \"||\"",
-      "fix": "Changed operator && â†’ ||",
+      "fix": "Changed operator && \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 ||",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -387,7 +387,7 @@
       "error_message": "Significant refactor of answer-burst.js",
       "file": "load-tests/scenarios/answer-burst.js",
       "root_cause": "3 lines replaced/restructured",
-      "fix": "Rewrote 7â†’9 lines (3 removed)",
+      "fix": "Rewrote 7\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21229 lines (3 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -419,7 +419,7 @@
       "error_message": "Significant refactor of ramp.js",
       "file": "load-tests/scenarios/ramp.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 4â†’7 lines (2 removed)",
+      "fix": "Rewrote 4\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21227 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -435,7 +435,7 @@
       "error_message": "Significant refactor of run-all.js",
       "file": "load-tests/run-all.js",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 3â†’5 lines (2 removed)",
+      "fix": "Rewrote 3\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21225 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -466,7 +466,7 @@
       "timestamp": "2026-09-09T15:13:25.622Z",
       "error_message": "Missing error handling in serverClockSkewMs()",
       "file": "load-tests/helpers/rest.js",
-      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -483,7 +483,7 @@
       "error_message": "Significant refactor of verify-db.mjs",
       "file": "load-tests/verify/verify-db.mjs",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 6â†’9 lines (2 removed)",
+      "fix": "Rewrote 6\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21229 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -515,7 +515,7 @@
       "error_message": "Wrong operator: || should be >>",
       "file": "load-tests/run.sh",
       "root_cause": "Used \"||\" instead of \">>\"",
-      "fix": "Changed operator || â†’ >>",
+      "fix": "Changed operator || \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 >>",
       "tags": [
         "auto-detected",
         "operator-fix",
@@ -547,7 +547,7 @@
       "error_message": "Wrong reference: activeSessionToken should be sessionToken",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "Used \"activeSessionToken\" instead of \"sessionToken\"",
-      "fix": "Changed activeSessionToken â†’ sessionToken",
+      "fix": "Changed activeSessionToken \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 sessionToken",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -579,7 +579,7 @@
       "error_message": "Wrong reference: RemoveCircleOutlineIcon should be PersonRemoveIcon",
       "file": "frontend/src/components/KickedNotice/KickedNotice.tsx",
       "root_cause": "Used \"RemoveCircleOutlineIcon\" instead of \"PersonRemoveIcon\"",
-      "fix": "Changed RemoveCircleOutlineIcon â†’ PersonRemoveIcon",
+      "fix": "Changed RemoveCircleOutlineIcon \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 PersonRemoveIcon",
       "tags": [
         "auto-detected",
         "wrong-reference",
@@ -675,7 +675,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "7 lines replaced/restructured",
-      "fix": "Rewrote 13â†’8 lines (7 removed)",
+      "fix": "Rewrote 13\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u21228 lines (7 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -690,7 +690,7 @@
       "timestamp": "2026-09-09T18:33:37.406Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -707,7 +707,7 @@
       "error_message": "Significant refactor of PlayerGamePage.tsx",
       "file": "frontend/src/pages/PlayerGamePage/PlayerGamePage.tsx",
       "root_cause": "5 lines replaced/restructured",
-      "fix": "Rewrote 21â†’64 lines (5 removed)",
+      "fix": "Rewrote 21\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u212264 lines (5 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -738,8 +738,8 @@
       "timestamp": "2026-09-09T18:50:08.087Z",
       "error_message": "CSS fix: rank",
       "file": "frontend/src/components/GameFinishedScreen/GameFinishedScreen.tsx",
-      "root_cause": "rank: number): string { â†’ number | null",
-      "fix": "Changed rank: number): string { â†’ number | null",
+      "root_cause": "rank: number): string { \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 number | null",
+      "fix": "Changed rank: number): string { \u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u2122 number | null",
       "tags": [
         "auto-detected",
         "style-fix",
@@ -755,7 +755,7 @@
       "error_message": "Significant refactor of usePlayerGame.ts",
       "file": "frontend/src/hooks/usePlayerGame.ts",
       "root_cause": "2 lines replaced/restructured",
-      "fix": "Rewrote 13â†’16 lines (2 removed)",
+      "fix": "Rewrote 13\u0623\u00a2\u00e2\u20ac\u00a0\u00e2\u20ac\u212216 lines (2 removed)",
       "tags": [
         "auto-detected",
         "refactor",
@@ -786,7 +786,7 @@
       "timestamp": "2026-09-09T18:51:38.532Z",
       "error_message": "Missing error handling in useHostGame.ts",
       "file": "frontend/src/hooks/useHostGame.ts",
-      "root_cause": "Code path had no error handling â€” exceptions would propagate uncaught",
+      "root_cause": "Code path had no error handling \u0623\u00a2\u00e2\u201a\u00ac\u00e2\u20ac\u200c exceptions would propagate uncaught",
       "fix": "Added try/catch block",
       "tags": [
         "auto-detected",
@@ -853,8 +853,8 @@
       "timestamp": "2026-09-10T07:12:27.032Z",
       "error_message": "CSS fix: isCorrect",
       "file": "frontend/src/components/QuestionForm/QuestionFormDialog.tsx",
-      "root_cause": "isCorrect: i === index, → !c.isCorrect",
-      "fix": "Changed isCorrect: i === index, → !c.isCorrect",
+      "root_cause": "isCorrect: i === index, \u00e2\u2020\u2019 !c.isCorrect",
+      "fix": "Changed isCorrect: i === index, \u00e2\u2020\u2019 !c.isCorrect",
       "tags": [
         "auto-detected",
         "style-fix",
@@ -885,8 +885,8 @@
       "timestamp": "2026-09-10T07:13:55.332Z",
       "error_message": "CSS fix: input",
       "file": "frontend/src/components/ChoiceEditorRow/ChoiceEditorRow.tsx",
-      "root_cause": "input: { 'aria-label': `Mark choice ${letter → { 'aria-label': `Toggle choice ${letter",
-      "fix": "Changed input: { 'aria-label': `Mark choice ${letter → { 'aria-label': `Toggle choice ${letter",
+      "root_cause": "input: { 'aria-label': `Mark choice ${letter \u00e2\u2020\u2019 { 'aria-label': `Toggle choice ${letter",
+      "fix": "Changed input: { 'aria-label': `Mark choice ${letter \u00e2\u2020\u2019 { 'aria-label': `Toggle choice ${letter",
       "tags": [
         "auto-detected",
         "style-fix",
@@ -943,6 +943,42 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-10T07:16:18.948Z"
+    },
+    {
+      "id": "bug-060",
+      "timestamp": "2026-09-10T07:25:20.756Z",
+      "error_message": "Significant refactor of useHostGame.ts",
+      "file": "frontend/src/hooks/useHostGame.ts",
+      "root_cause": "16 lines replaced/restructured",
+      "fix": "Rewrote 22\u00e2\u2020\u20197 lines (16 removed)",
+      "tags": [
+        "auto-detected",
+        "refactor",
+        "ts"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:25:20.756Z"
+    },
+    {
+      "id": "bug-061",
+      "timestamp": "2026-09-10T07:29:09.781791Z",
+      "error_message": "POST /api/games/{id}/advance -> 409 Game.InvalidStateTransition (\"That action is not available for the current game state\") when clicking Next Question from QUESTION_RESULTS",
+      "file": "backend/src/Kahoot.Application/Games/GameStateMachine.cs",
+      "root_cause": "GameTransition.AdvanceToNextQuestion allowed only From=[Leaderboard], forcing QUESTION_RESULTS -> LEADERBOARD -> QUESTION_ACTIVE. Skipping the (optional) leaderboard was impossible; StartNextQuestionCommandHandler CanFire check rejected the advance and the error mapped to HTTP 409.",
+      "fix": "Added GameStatus.QuestionResults to the AdvanceToNextQuestion.From set so both QUESTION_RESULTS -> QUESTION_ACTIVE and LEADERBOARD -> QUESTION_ACTIVE are valid. Handler already had xmin optimistic-concurrency + QuestionActive idempotent re-entry + NoMoreQuestions past the last question; unchanged. Frontend: useHostGame now optimistically applies the QuestionStarted REST response (status+window sync, not only the SignalR event) via a shared applyQuestionStarted; HostGameControls disables Next Question with a tooltip on the final question (hasNextQuestion from currentQuestionIndex vs totalQuestions). Docs updated (FR-4 table, realtime-protocol advance row, design-doc state diagram).",
+      "tags": [
+        "state-machine",
+        "game-lifecycle",
+        "signalr",
+        "concurrency",
+        "frontend",
+        "backend",
+        "409"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:29:09.781791Z"
     }
   ]
 }

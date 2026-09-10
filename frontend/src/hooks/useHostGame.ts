@@ -113,6 +113,30 @@ export function useHostGame(gameId: string | undefined) {
     });
   }, []);
 
+  const applyQuestionStarted = useCallback(
+    (host: HostQuestionResponse) => {
+      setActionError(null);
+      setCurrentQuestion(host);
+      setQuestionResults(null);
+      if (gameId) {
+        saveHostQuestion(gameId, host);
+      }
+      setGameState((previous) =>
+        previous
+          ? {
+              ...previous,
+              status: 'QuestionActive',
+              currentQuestionIndex: host.questionIndex,
+              currentQuestionStartedAt: host.startedAt,
+              currentQuestionEndsAt: host.endsAt,
+              answeredCount: 0,
+            }
+          : previous,
+      );
+    },
+    [gameId],
+  );
+
   useEffect(() => {
     if (!connection || hubConnectionStatus !== 'connected' || !gameId) {
       return;
@@ -190,26 +214,11 @@ export function useHostGame(gameId: string | undefined) {
     };
 
     const handleQuestionStarted = (payload: HostQuestionResponse) => {
-      setActionError(null);
-      setCurrentQuestion(payload);
-      setQuestionResults(null);
-      saveHostQuestion(gameId, payload);
+      applyQuestionStarted(payload);
       setLiveAnnouncement({
         message: `Question ${payload.questionIndex} started.`,
         politeness: 'polite',
       });
-      setGameState((previous) =>
-        previous
-          ? {
-              ...previous,
-              status: 'QuestionActive',
-              currentQuestionIndex: payload.questionIndex,
-              currentQuestionStartedAt: payload.startedAt,
-              currentQuestionEndsAt: payload.endsAt,
-              answeredCount: 0,
-            }
-          : previous,
-      );
     };
 
     const handleQuestionEnded = (payload: QuestionResultsResponse) => {
@@ -264,7 +273,7 @@ export function useHostGame(gameId: string | undefined) {
         flushTimeoutRef.current = null;
       }
     };
-  }, [connection, hubConnectionStatus, gameId, flushJoinedParticipants]);
+  }, [connection, hubConnectionStatus, gameId, flushJoinedParticipants, applyQuestionStarted]);
 
   useEffect(() => {
     if (!gameId || normalizeGameStatus(gameState?.status ?? 'Lobby') !== 'QuestionActive') {
@@ -358,11 +367,9 @@ export function useHostGame(gameId: string | undefined) {
       'Failed to start the game.',
     );
     if (result && typeof result === 'object' && 'host' in result) {
-      const host = (result as { host: HostQuestionResponse }).host;
-      setCurrentQuestion(host);
-      saveHostQuestion(gameId, host);
+      applyQuestionStarted((result as { host: HostQuestionResponse }).host);
     }
-  }, [gameId, runAction]);
+  }, [gameId, runAction, applyQuestionStarted]);
 
   const advanceQuestion = useCallback(async () => {
     if (!gameId) {
@@ -373,11 +380,9 @@ export function useHostGame(gameId: string | undefined) {
       'Failed to load the next question.',
     );
     if (result && typeof result === 'object' && 'host' in result) {
-      const host = (result as { host: HostQuestionResponse }).host;
-      setCurrentQuestion(host);
-      saveHostQuestion(gameId, host);
+      applyQuestionStarted((result as { host: HostQuestionResponse }).host);
     }
-  }, [gameId, runAction]);
+  }, [gameId, runAction, applyQuestionStarted]);
 
   const endQuestion = useCallback(async () => {
     if (!gameId) {

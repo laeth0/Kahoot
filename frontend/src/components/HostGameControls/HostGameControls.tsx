@@ -14,6 +14,7 @@ export interface HostGameControlsProps {
   participantCount: number;
   isActionPending?: boolean;
   actionError?: string | null;
+  hasNextQuestion?: boolean;
   onStartGame: () => Promise<void> | void;
   onEndGame: () => Promise<void> | void;
   onEndQuestion?: () => Promise<void> | void;
@@ -36,6 +37,7 @@ export function HostGameControls({
   participantCount,
   isActionPending = false,
   actionError = null,
+  hasNextQuestion = true,
   onStartGame,
   onEndGame,
   onEndQuestion,
@@ -124,16 +126,29 @@ export function HostGameControls({
               Show Leaderboard
             </Button>
           )}
-          <Button
-            variant="contained"
-            color="primary"
-            disabled={isActionPending || !onNextQuestion}
-            onClick={onNextQuestion}
-            startIcon={isActionPending ? pendingIcon : <ArrowForwardIcon />}
-            sx={primaryButtonSx}
+          <Tooltip
+            title={
+              hasNextQuestion
+                ? ''
+                : 'That was the last question — show the leaderboard or end the game.'
+            }
+            arrow
+            placement="top"
+            disableHoverListener={hasNextQuestion}
           >
-            {isActionPending ? 'Loading…' : 'Next Question'}
-          </Button>
+            <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={isActionPending || !onNextQuestion || !hasNextQuestion}
+                onClick={onNextQuestion}
+                startIcon={isActionPending ? pendingIcon : <ArrowForwardIcon />}
+                sx={primaryButtonSx}
+              >
+                {isActionPending ? 'Loading…' : 'Next Question'}
+              </Button>
+            </Box>
+          </Tooltip>
         </Stack>
       );
     }
