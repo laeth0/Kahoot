@@ -111,7 +111,6 @@ budget_tokens: 1000
   - **Performance & Code-Splitting (`routes.tsx`):** Split route pages with `React.lazy()` and `<Suspense>` fallback, eliminating Vite large chunk warnings and reducing individual page chunk sizes below 50KB.
   - **SEO & Metadata:** Enhanced `MetadataManager.tsx` to manage Open Graph (`og:*`), Twitter Card (`twitter:*`), canonical URLs, and `noindex` attributes. Generated `frontend/public/robots.txt` and `frontend/public/sitemap.xml`.
   - **Docker Compose Configuration:** Configured build args (`VITE_API_URL`, `VITE_SIGNALR_URL`) in `frontend/Dockerfile` and `docker-compose.yml`.
-  - **Documentation Created:** Comprehensive `docs/architecture.md` with Mermaid diagrams and `docs/final-report.md` covering architecture, schemas, protocols, concurrency, and scaling strategy.
   - **Quality Gates:** 0 ESLint errors (`eslint .`), 100% Prettier compliant (`prettier --check .`), 0 TypeScript compiler errors (`tsc -b && vite build`), clean .NET build (`dotnet build backend/Kahoot.slnx`).
 
 ---
