@@ -1011,6 +1011,22 @@
       "related_bugs": [],
       "occurrences": 1,
       "last_seen": "2026-09-10T07:46:12.196Z"
+    },
+    {
+      "id": "bug-064",
+      "timestamp": "2026-09-10T07:54:35.557Z",
+      "error_message": "CSS fix: color",
+      "file": "frontend/src/layouts/RootLayout.tsx",
+      "root_cause": "color: '#334e68', fontWeight: 500, display: 'block' → '#09131f',",
+      "fix": "Changed color: '#334e68', fontWeight: 500, display: 'block' → '#09131f',",
+      "tags": [
+        "auto-detected",
+        "style-fix",
+        "tsx"
+      ],
+      "related_bugs": [],
+      "occurrences": 1,
+      "last_seen": "2026-09-10T07:54:35.557Z"
     }
   ]
 }

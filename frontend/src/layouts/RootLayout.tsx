@@ -73,27 +73,19 @@ export function RootLayout() {
                   boxShadow: '0 2px 4px rgba(0, 98, 155, 0.15)',
                 }}
               />
-              <Box>
-                <Typography
-                  variant="h6"
-                  component="span"
-                  sx={{
-                    fontWeight: 800,
-                    lineHeight: 1.2,
-                    color: '#09131f',
-                    letterSpacing: '-0.02em',
-                    display: 'block',
-                  }}
-                >
-                  Kahoot Platform
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: '#334e68', fontWeight: 500, display: 'block' }}
-                >
-                  IEEEXtreme Palestine Section
-                </Typography>
-              </Box>
+              <Typography
+                variant="h6"
+                component="span"
+                sx={{
+                  fontWeight: 800,
+                  lineHeight: 1.2,
+                  color: '#09131f',
+                  letterSpacing: '-0.02em',
+                  display: 'block',
+                }}
+              >
+                IEEEXtreme Palestine Section
+              </Typography>
             </Stack>
 
             <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>

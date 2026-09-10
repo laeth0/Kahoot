@@ -1,6 +1,6 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:49:30.307Z
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:54:35.521Z
 > Files: 273 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
@@ -499,7 +499,7 @@
 
 ## frontend/src/layouts/
 
-- `RootLayout.tsx` — RootLayout (~1830 tok)
+- `RootLayout.tsx` — RootLayout (~1742 tok)
 
 ## frontend/src/pages/HostGamePage/
 
