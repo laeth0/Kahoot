@@ -644,3 +644,4 @@ description: chronological action log per session, consolidated weekly
 | 10:47 | Edited frontend/src/pages/HostGamePage/HostQuestionView.tsx | 3→3 lines | ~25 |
 | 10:49 | Edited frontend/src/components/HostGameControls/HostGameControls.tsx | added 1 condition(s) | ~447 |
 | 10:54 | Edited frontend/src/layouts/RootLayout.tsx | reduced (-8 lines) | ~116 |
+| 20:15 | Edited frontend/.gitignore | 4→8 lines | ~17 |

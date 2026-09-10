@@ -1,7 +1,7 @@
 # anatomy.md
 
-> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T07:54:35.521Z
-> Files: 273 tracked | Anatomy hits: 0 | Misses: 0
+> Auto-maintained by OpenWolf. Last scanned: 2026-09-10T17:15:08.389Z
+> Files: 274 tracked | Anatomy hits: 0 | Misses: 0
 
 > Project structure index. Auto-maintained by OpenWolf hooks and daemon.
 > Run `openwolf scan` to generate, or wait for the first Claude Code session.
@@ -391,6 +391,7 @@
 
 ## frontend/
 
+- `.gitignore` — Git ignore rules (~75 tok)
 - `Dockerfile` — Docker container definition (~117 tok)
 
 ## frontend/src/api/
