@@ -55,3 +55,13 @@ export function intEnv(name, dflt) {
   const v = Number(__ENV[name]);
   return Number.isFinite(v) && v > 0 ? Math.floor(v) : dflt;
 }
+
+export function hostsOverride() {
+  const h = __ENV.RESOLVE_HOST;
+  const ip = __ENV.RESOLVE_IP;
+  if (h && ip) {
+    return { [h]: ip };
+  }
+  return undefined;
+}
+

@@ -12,7 +12,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, showLeaderboard, advance, endGame } from '../helpers/rest.js';
@@ -50,6 +50,7 @@ for (const l of LEVELS) {
 }
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

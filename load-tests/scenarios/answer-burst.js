@@ -19,8 +19,7 @@
 //   k6 run -e ALLOW_LOAD_TEST=true -e BASE_URL=... -e SIGNALR_URL=... \
 //     load-tests/scenarios/answer-burst.js
 
-import { check } from 'k6';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, showLeaderboard, endGame, getHostState } from '../helpers/rest.js';
@@ -62,6 +61,7 @@ const DIRECTOR_MAX = `${durationSeconds(JOIN_RAMP) + SETTLE + 60 + TIME_LIMIT + 
 const PLAYER_HOLD = durationSeconds(JOIN_RAMP) + SETTLE + 40 + TIME_LIMIT;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

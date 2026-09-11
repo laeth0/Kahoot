@@ -140,6 +140,9 @@ function runScenario(name, passthrough) {
     'RAMP_STEP_HOLD',
     'RAMP_QUESTIONS',
     'RAMP_QUESTION_SECONDS',
+    'RAMP_JOIN_RAMP',
+    'RESOLVE_HOST',
+    'RESOLVE_IP',
   ];
   const envFlags = [];
   for (const k of forwardKeys) {
@@ -192,6 +195,41 @@ function apiBase() {
   return /\/api$/.test(raw) ? raw : `${raw}/api`;
 }
 
+async function autoDetectTunnel() {
+  try {
+    const res = await fetch('http://127.0.0.1:20241/quicktunnel', { signal: AbortSignal.timeout(1500) });
+    if (res.ok) {
+      const data = await res.json();
+      if (data && data.hostname) {
+        process.env.BASE_URL = `https://${data.hostname}/api`;
+        process.env.SIGNALR_URL = `https://${data.hostname}`;
+        console.log(`[run-all] Auto-detected active Cloudflare Tunnel: ${data.hostname}`);
+      }
+    }
+  } catch (_) {
+    // cloudflared metrics not running, keep .env values
+  }
+
+  const rawBase = process.env.BASE_URL || '';
+  const m = /https?:\/\/([^/:]+)/.exec(rawBase);
+  if (m && m[1].endsWith('.trycloudflare.com')) {
+    const host = m[1];
+    try {
+      const dns = require('node:dns');
+      const resolver = new dns.Resolver();
+      resolver.setServers(['1.1.1.1', '8.8.8.8']);
+      const addrs = await new Promise((res, rej) => resolver.resolve4(host, (err, a) => err ? rej(err) : res(a)));
+      if (addrs && addrs.length > 0) {
+        process.env.RESOLVE_HOST = host;
+        process.env.RESOLVE_IP = addrs[0];
+        console.log(`[run-all] Resolved ${host} -> ${addrs[0]}`);
+      }
+    } catch (e) {
+      console.warn(`[run-all] Could not resolve ${host} via public DNS:`, e.message);
+    }
+  }
+}
+
 // One login for the whole suite, then /auth/refresh when the 15-min access token
 // nears expiry. Keeps total /auth/* calls well under the 10-per-5-min limit that
 // a per-scenario login would blow. Returns { token, hostId } or null on failure
@@ -205,15 +243,29 @@ async function makeTokenProvider() {
   let state = null; // { access, refresh, issuedAt }
 
   async function post(path, body) {
-    const r = await fetch(`${base}${path}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
-      body: JSON.stringify(body),
-    });
-    return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };
+    try {
+      const r = await fetch(`${base}${path}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        body: JSON.stringify(body),
+      });
+      return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };
+    } catch (err) {
+      if (base.includes('.trycloudflare.com') || !base.includes('localhost')) {
+        try {
+          const r = await fetch(`http://localhost:3000/api${path}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+          return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };
+        } catch (_) {}
+      }
+      throw err;
+    }
   }
 
   return async function getToken() {
@@ -238,6 +290,7 @@ async function makeTokenProvider() {
 
 async function main() {
   loadDotenv();
+  await autoDetectTunnel();
   const { scenarios, passthrough } = parseArgs(process.argv.slice(2));
 
   const heavy = scenarios.some((s) => s !== 'duplicate-answer'); // essentially all
