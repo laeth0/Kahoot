@@ -42,7 +42,7 @@ const RECONNECT_PLAYERS = Math.min(PLAYERS, intEnv('RECONNECT_PLAYERS', 100));
 const TIME_LIMIT = Math.min(300, Math.max(30, intEnv('ANSWER_TIME_LIMIT', 120)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const RECONNECT_AFTER_MS = intEnv('RECONNECT_AFTER_MS', 4000);
-const HOLD = durationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
+const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
 
 export const options = {
   hosts: hostsOverride(),
@@ -64,7 +64,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${HOLD + 60}s`,
+      maxDuration: `${TOTAL_HOLD_DURATION_SECONDS + 60}s`,
     },
   },
   thresholds: mergeThresholds(reconnectionThresholds(), {
@@ -77,37 +77,42 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS);
-  const p = provisionGames(env, { questions: 1, timeLimitSeconds: TIME_LIMIT, points: 1000, games: 1 });
-  return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken, question: p.firstQuestion };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, {
+    questions: 1,
+    timeLimitSeconds: TIME_LIMIT,
+    points: 1000,
+    games: 1,
+  });
+  return {
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+    question: provisionedGame.firstQuestion,
+  };
 }
-
-let done = false;
 
 export async function player(data) {
   const { env, pin, question } = data;
-  if (done) {
-    await delay(3000);
-    return;
-  }
-  done = true;
-
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
   const isReconnector = exec.vu.idInTest <= RECONNECT_PLAYERS;
-  let c1;
-  let recvAt = 0;
-  let qid = question.questionId;
+
+  let initialConnection;
+  let questionReceivedTimestampMs = 0;
+  let targetQuestionId = question.questionId;
 
   try {
-    c1 = new SignalRClient(env);
-    c1.on('QuestionStarted', (q) => {
-      if (!recvAt) {
-        recvAt = Date.now();
-        if (q && q.questionId) qid = q.questionId;
+    initialConnection = new SignalRClient(env);
+    initialConnection.on('QuestionStarted', (questionEvent) => {
+      if (!questionReceivedTimestampMs) {
+        questionReceivedTimestampMs = Date.now();
+        if (questionEvent && questionEvent.questionId) targetQuestionId = questionEvent.questionId;
       }
     });
-    await c1.start();
-  } catch (e) {
+    await initialConnection.start();
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('recon:connect');
     return;
@@ -116,123 +121,135 @@ export async function player(data) {
   let sessionToken;
   let participantId;
   try {
-    const res = await c1.invoke('JoinGame', pin, uniqueNickname('r'));
-    if (!res || res.success !== true) {
-      recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'recon:join');
-      c1.close();
+    const joinResult = await initialConnection.invoke('JoinGame', pin, uniqueNickname('r'));
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, 'recon:join');
+      initialConnection.close();
       return;
     }
-    sessionToken = res.data.sessionToken;
-    participantId = res.data.participantId;
+    sessionToken = joinResult.data.sessionToken;
+    participantId = joinResult.data.participantId;
     playersJoined.add(1);
     noUnexpected();
-  } catch (e) {
+  } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('recon:join:exception');
-    c1.close();
+    initialConnection.close();
     return;
   }
 
   // Wait for the question, then answer (correct).
-  const deadline = Date.now() + HOLD * 1000;
-  while (!recvAt && Date.now() < deadline && !c1.closed) await delay(50);
-  if (recvAt) {
+  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !initialConnection.closed) {
+    await delay(50);
+  }
+  if (questionReceivedTimestampMs) {
     try {
-      const ack = await c1.invoke('SubmitAnswer', qid, question.correctChoiceId);
+      const submissionAck = await initialConnection.invoke('SubmitAnswer', targetQuestionId, question.correctChoiceId);
       answersSubmitted.add(1);
-      if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
+      if (submissionAck && submissionAck.success === true && submissionAck.data && submissionAck.data.accepted === true) {
         answersAccepted.add(1);
         noUnexpected();
       } else {
         bumpUnexpected('recon:submit');
       }
-    } catch (e) {
+    } catch (submissionException) {
       bumpUnexpected('recon:submit:exception');
     }
   }
 
   if (!isReconnector) {
-    while (Date.now() < deadline && !c1.closed) await delay(1000);
-    c1.close();
+    while (Date.now() < holdDeadlineTimestampMs && !initialConnection.closed) {
+      await delay(1000);
+    }
+    initialConnection.close();
     return;
   }
 
   // --- Reconnection under test ---
   await delay(RECONNECT_AFTER_MS);
-  c1.close();
-  await delay(300 + Math.random() * 700); // brief outage
+  initialConnection.close();
+  await delay(300 + Math.random() * 700); // brief outage simulation
 
   let firstScore = null;
-  for (let attempt = 1; attempt <= 2; attempt += 1) {
-    const c2 = new SignalRClient(env);
-    let rc;
-    const t0 = Date.now();
+  for (let attemptNumber = 1; attemptNumber <= 2; attemptNumber += 1) {
+    const reconnectedConnection = new SignalRClient(env);
+    let reconnectResponse;
+    const reconnectionStartTimeMs = Date.now();
     try {
-      await c2.start();
-      rc = await c2.invoke('Reconnect', sessionToken);
-    } catch (e) {
-      reconnectionFailures.add(1, { attempt: String(attempt), reason: 'exception' });
+      await reconnectedConnection.start();
+      reconnectResponse = await reconnectedConnection.invoke('Reconnect', sessionToken);
+    } catch (reconnectionException) {
+      reconnectionFailures.add(1, { attempt: String(attemptNumber), reason: 'exception' });
       bumpUnexpected('recon:reconnect:exception');
       try {
-        c2.close();
+        reconnectedConnection.close();
       } catch (_) {
         /* ignore */
       }
       continue;
     }
-    reconnectionDuration.add(Date.now() - t0);
+    reconnectionDuration.add(Date.now() - reconnectionStartTimeMs);
 
-    if (!rc || rc.success !== true || !rc.data) {
-      reconnectionFailures.add(1, { attempt: String(attempt), reason: rc && rc.error ? rc.error.code : 'no-data' });
+    if (!reconnectResponse || reconnectResponse.success !== true || !reconnectResponse.data) {
+      const failureReason = reconnectResponse && reconnectResponse.error ? reconnectResponse.error.code : 'no-data';
+      reconnectionFailures.add(1, { attempt: String(attemptNumber), reason: failureReason });
       bumpUnexpected('recon:reconnect:failed');
-      c2.close();
+      reconnectedConnection.close();
       continue;
     }
 
-    const d = rc.data;
-    if (d.participantId !== participantId) {
+    const reconnectData = reconnectResponse.data;
+    if (reconnectData.participantId !== participantId) {
       duplicateParticipants.add(1, { where: 'reconnect' });
-      reconnectionFailures.add(1, { attempt: String(attempt), reason: 'identity-changed' });
+      reconnectionFailures.add(1, { attempt: String(attemptNumber), reason: 'identity-changed' });
     }
-    if (attempt === 1) firstScore = d.totalScore;
-    else if (d.totalScore !== firstScore) {
+    if (attemptNumber === 1) {
+      firstScore = reconnectData.totalScore;
+    } else if (reconnectData.totalScore !== firstScore) {
       inconsistentGameState.add(1, { where: 'reconnect:score-drift' });
     }
 
-    check(d, {
-      'reconnect restored same participant id': (x) => x.participantId === participantId,
-      'reconnect restored game status': (x) =>
-        (typeof x.status === 'string' && x.status.length > 0) ||
-        (typeof x.status === 'number' && x.status >= 0 && x.status <= 5),
-      'reconnect restored current question': (x) => !!x.currentQuestion && !!x.currentQuestion.endsAt,
-      'reconnect preserved answered flag': (x) => x.alreadyAnsweredCurrentQuestion === true,
-      'reconnect preserved a non-negative score': (x) => x.totalScore >= 0 && x.totalScore <= data.question.points,
-      'reconnect current question has no correct answer': (x) =>
-        !x.currentQuestion ||
-        (x.currentQuestion.correctChoiceId === undefined &&
-          !(x.currentQuestion.choices || []).some((c) => 'isCorrect' in c)),
+    check(reconnectData, {
+      'reconnect restored same participant id': (dataContext) => dataContext.participantId === participantId,
+      'reconnect restored game status': (dataContext) =>
+        (typeof dataContext.status === 'string' && dataContext.status.length > 0) ||
+        (typeof dataContext.status === 'number' && dataContext.status >= 0 && dataContext.status <= 5),
+      'reconnect restored current question': (dataContext) =>
+        !!dataContext.currentQuestion && !!dataContext.currentQuestion.endsAt,
+      'reconnect preserved answered flag': (dataContext) => dataContext.alreadyAnsweredCurrentQuestion === true,
+      'reconnect preserved a non-negative score': (dataContext) =>
+        dataContext.totalScore >= 0 && dataContext.totalScore <= data.question.points,
+      'reconnect current question has no correct answer': (dataContext) =>
+        !dataContext.currentQuestion ||
+        (dataContext.currentQuestion.correctChoiceId === undefined &&
+          !(dataContext.currentQuestion.choices || []).some((choice) => 'isCorrect' in choice)),
     });
 
-    const lingerUntil = Math.min(deadline, Date.now() + 2000);
-    while (Date.now() < lingerUntil && !c2.closed) await delay(500);
-    c2.close();
+    const lingerUntil = Math.min(holdDeadlineTimestampMs, Date.now() + 2000);
+    while (Date.now() < lingerUntil && !reconnectedConnection.closed) {
+      await delay(500);
+    }
+    reconnectedConnection.close();
     await delay(400);
   }
 
-  while (Date.now() < deadline) await delay(1000);
+  while (Date.now() < holdDeadlineTimestampMs) {
+    await delay(1000);
+  }
 }
 
 export async function director(data) {
   const { env, hostToken, gameId, question } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  const pre = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + 90) * 1000,
+  const lobbyState = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 90) * 1000,
     minFraction: 0.95,
     intervalMs: 2000,
   });
-  const present = pre.participants.length;
-  console.log(`[reconnection] starting question with ${present}/${PLAYERS} players`);
+  const presentParticipantCount = lobbyState.participants.length;
+  console.log(`[reconnection] starting question with ${presentParticipantCount}/${PLAYERS} players`);
 
   startGame(env, hostToken, gameId);
 
@@ -240,18 +257,18 @@ export async function director(data) {
   await delay((question.timeLimitSeconds + 20) * 1000);
   endQuestion(env, hostToken, gameId);
 
-  const { results, state } = verifyClosedQuestion(env, hostToken, gameId, question, present, 'reconnection');
+  const { results, state } = verifyClosedQuestion(env, hostToken, gameId, question, presentParticipantCount, 'reconnection');
   console.log(
-    `[reconnection] participants after churn: ${state.participants.length} (must be ${present}); ` +
+    `[reconnection] participants after churn: ${state.participants.length} (must be ${presentParticipantCount}); ` +
       `answerCount=${results.answerCount}`,
   );
   check(
     state,
     {
-      [`participant count unchanged (${present}, not ${present + RECONNECT_PLAYERS})`]: (s) =>
-        s.participants.length === present,
+      [`participant count unchanged (${presentParticipantCount}, not ${presentParticipantCount + RECONNECT_PLAYERS})`]: (hostState) =>
+        hostState.participants.length === presentParticipantCount,
     },
-    tags,
+    directorTags,
   );
 
   try {
@@ -263,17 +280,17 @@ export async function director(data) {
 
 export function teardown(data) {
   try {
-    const s = getHostState(data.env, data.hostToken, data.gameId);
-    console.log(`[reconnection] final participants=${s.participants.length} status=${s.status}`);
+    const finalHostState = getHostState(data.env, data.hostToken, data.gameId);
+    console.log(`[reconnection] final participants=${finalHostState.participants.length} status=${finalHostState.status}`);
   } catch (_) {
     /* ignore */
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 90;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 90;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('reconnection');

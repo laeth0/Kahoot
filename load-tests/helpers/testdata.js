@@ -32,16 +32,16 @@ export function provisionGames(env, options = {}) {
 
   const quizId = createQuiz(env, token, `${options.titlePrefix || 'LoadTest'} ${stamp}`, 'k6 load-test quiz');
 
-  for (let q = 0; q < questionCount; q += 1) {
+  for (let questionIndex = 0; questionIndex < questionCount; questionIndex += 1) {
     addQuestion(env, token, quizId, {
-      text: `Load-test question ${q + 1} (${stamp})`,
+      text: `Load-test question ${questionIndex + 1} (${stamp})`,
       imageUrl: null,
       timeLimitSeconds,
       points,
-      choices: CHOICE_LABELS.map((label, idx) => ({
+      choices: CHOICE_LABELS.map((label, choiceIndex) => ({
         text: `Choice ${label}`,
         imageUrl: null,
-        isCorrect: idx === 0, // "Choice A" is always the correct one
+        isCorrect: choiceIndex === 0, // "Choice A" is always the correct one
       })),
     });
   }
@@ -52,22 +52,22 @@ export function provisionGames(env, options = {}) {
   const questions = quiz.questions
     .slice()
     .sort((a, b) => a.orderIndex - b.orderIndex)
-    .map((qq) => {
-      const correct = qq.choices.find((c) => c.isCorrect);
-      const wrong = qq.choices.find((c) => !c.isCorrect);
+    .map((questionItem) => {
+      const correctChoice = questionItem.choices.find((choice) => choice.isCorrect);
+      const wrongChoice = questionItem.choices.find((choice) => !choice.isCorrect);
       return {
-        questionId: qq.id,
-        orderIndex: qq.orderIndex,
-        timeLimitSeconds: qq.timeLimitSeconds,
-        points: qq.points,
-        correctChoiceId: correct.id,
-        wrongChoiceId: wrong ? wrong.id : correct.id,
-        choiceIds: qq.choices.map((c) => c.id),
+        questionId: questionItem.id,
+        orderIndex: questionItem.orderIndex,
+        timeLimitSeconds: questionItem.timeLimitSeconds,
+        points: questionItem.points,
+        correctChoiceId: correctChoice.id,
+        wrongChoiceId: wrongChoice ? wrongChoice.id : correctChoice.id,
+        choiceIds: questionItem.choices.map((choice) => choice.id),
       };
     });
 
   const games = [];
-  for (let g = 0; g < gameCount; g += 1) {
+  for (let gameIndex = 0; gameIndex < gameCount; gameIndex += 1) {
     const game = createGame(env, token, quizId);
     games.push({ gameId: game.gameId, pin: game.pin });
   }
@@ -101,18 +101,18 @@ export function provisionPerGameQuizzes(env, options = {}) {
   const { token, hostId } = login(env, hostCredentials());
   const games = [];
 
-  for (let i = 0; i < count; i += 1) {
-    const quizId = createQuiz(env, token, `Isolation ${i + 1} ${stamp}`, `k6 isolation quiz ${i + 1}`);
-    for (let q = 0; q < questionsPerQuiz; q += 1) {
+  for (let gameIndex = 0; gameIndex < count; gameIndex += 1) {
+    const quizId = createQuiz(env, token, `Isolation ${gameIndex + 1} ${stamp}`, `k6 isolation quiz ${gameIndex + 1}`);
+    for (let questionIndex = 0; questionIndex < questionsPerQuiz; questionIndex += 1) {
       addQuestion(env, token, quizId, {
-        text: `Game ${i + 1} question ${q + 1} (${stamp})`,
+        text: `Game ${gameIndex + 1} question ${questionIndex + 1} (${stamp})`,
         imageUrl: null,
         timeLimitSeconds,
         points,
-        choices: CHOICE_LABELS.map((label, idx) => ({
-          text: `G${i + 1} Choice ${label}`,
+        choices: CHOICE_LABELS.map((label, choiceIndex) => ({
+          text: `G${gameIndex + 1} Choice ${label}`,
           imageUrl: null,
-          isCorrect: idx === 0,
+          isCorrect: choiceIndex === 0,
         })),
       });
     }
@@ -121,20 +121,20 @@ export function provisionPerGameQuizzes(env, options = {}) {
     const questions = quiz.questions
       .slice()
       .sort((a, b) => a.orderIndex - b.orderIndex)
-      .map((qq) => {
-        const correct = qq.choices.find((c) => c.isCorrect);
-        const wrong = qq.choices.find((c) => !c.isCorrect);
+      .map((questionItem) => {
+        const correctChoice = questionItem.choices.find((choice) => choice.isCorrect);
+        const wrongChoice = questionItem.choices.find((choice) => !choice.isCorrect);
         return {
-          questionId: qq.id,
-          orderIndex: qq.orderIndex,
-          points: qq.points,
-          timeLimitSeconds: qq.timeLimitSeconds,
-          correctChoiceId: correct.id,
-          wrongChoiceId: wrong ? wrong.id : correct.id,
+          questionId: questionItem.id,
+          orderIndex: questionItem.orderIndex,
+          points: questionItem.points,
+          timeLimitSeconds: questionItem.timeLimitSeconds,
+          correctChoiceId: correctChoice.id,
+          wrongChoiceId: wrongChoice ? wrongChoice.id : correctChoice.id,
         };
       });
     const game = createGame(env, token, quizId);
-    games.push({ index: i, quizId, gameId: game.gameId, pin: game.pin, questions, firstQuestion: questions[0] });
+    games.push({ index: gameIndex, quizId, gameId: game.gameId, pin: game.pin, questions, firstQuestion: questions[0] });
   }
 
   return { hostToken: token, hostId, stamp, games, clockSkewMs: serverClockSkewMs(env) };
@@ -143,10 +143,10 @@ export function provisionPerGameQuizzes(env, options = {}) {
 // Globally-unique, deterministic, validator-safe nickname
 // (`^[\p{L}\p{N} _.\-]+$`, length 2..30). idInTest is unique across all VUs.
 export function uniqueNickname(prefix) {
-  const p = (prefix || __ENV.RUN_ID || 'p').replace(/[^\p{L}\p{N}_.\-]/gu, '').slice(0, 10) || 'p';
-  return `${p}-${exec.vu.idInTest}-${exec.vu.iterationInScenario}`.slice(0, 30);
+  const sanitizedPrefix = (prefix || __ENV.RUN_ID || 'p').replace(/[^\p{L}\p{N}_.\-]/gu, '').slice(0, 10) || 'p';
+  return `${sanitizedPrefix}-${exec.vu.idInTest}-${exec.vu.iterationInScenario}`.slice(0, 30);
 }
 
-function clamp(v, lo, hi) {
-  return Math.max(lo, Math.min(hi, v));
+function clamp(value, minimum, maximum) {
+  return Math.max(minimum, Math.min(maximum, value));
 }

@@ -50,8 +50,8 @@ export function verifyClosedQuestion(env, token, gameId, question, expected, tag
   const results = getQuestionResults(env, token, gameId, question.questionId);
   const state = getHostState(env, token, gameId);
 
-  const perChoiceSum = results.choices.reduce((s, c) => s + c.answerCount, 0);
-  const activePlayers = state.participants.filter((p) => !p.isRemoved).length;
+  const perChoiceSum = results.choices.reduce((runningSum, choiceOption) => runningSum + choiceOption.answerCount, 0);
+  const activePlayers = state.participants.filter((participant) => !participant.isRemoved).length;
 
   // 1. State-integrity ("no corrupted game state"): the two independent
   //    server-side counts and the per-choice breakdown must all agree. A
@@ -76,31 +76,31 @@ export function verifyClosedQuestion(env, token, gameId, question, expected, tag
   // 3. No duplicate scores: for a correct answer the award is in
   //    [ceil(points/2), points]. A score above `points` after ONE question means
   //    it was applied more than once.
-  let overScored = 0;
-  for (const p of state.participants) {
-    if (p.totalScore > question.points) overScored += 1;
-    if (p.totalScore < 0) overScored += 1;
+  let overScoredCount = 0;
+  for (const participant of state.participants) {
+    if (participant.totalScore > question.points) overScoredCount += 1;
+    if (participant.totalScore < 0) overScoredCount += 1;
   }
-  if (overScored > 0) duplicateScoreViolations.add(overScored, { where: tag });
+  if (overScoredCount > 0) duplicateScoreViolations.add(overScoredCount, { where: tag });
 
   // 4. Participant roster stable (no phantom/duplicate players).
-  const ids = new Set(state.participants.map((p) => p.id));
-  if (ids.size !== state.participants.length) {
-    duplicateParticipants.add(state.participants.length - ids.size, { where: tag });
+  const participantIds = new Set(state.participants.map((participant) => participant.id));
+  if (participantIds.size !== state.participants.length) {
+    duplicateParticipants.add(state.participants.length - participantIds.size, { where: tag });
   }
 
   const attritionGrace = Math.max(1, Math.ceil(expected * 0.1));
   const missing = expected - results.answerCount;
 
   check(
-    { results, state, overScored, perChoiceSum, expected, activePlayers, missing, attritionGrace },
+    { results, state, overScoredCount, perChoiceSum, expected, activePlayers, missing, attritionGrace },
     {
-      [`[${tag}] answerCount within reasonable attrition of players present (${expected})`]: (x) =>
-        x.missing <= x.attritionGrace,
-      [`[${tag}] answerCount <= active players (no duplicates)`]: (x) => x.results.answerCount <= x.activePlayers,
-      [`[${tag}] per-choice counts sum to total`]: (x) => x.perChoiceSum === x.results.answerCount,
-      [`[${tag}] host answeredCount matches results`]: (x) => x.state.answeredCount === x.results.answerCount,
-      [`[${tag}] no score above question points`]: (x) => x.overScored === 0,
+      [`[${tag}] answerCount within reasonable attrition of players present (${expected})`]: (context) =>
+        context.missing <= context.attritionGrace,
+      [`[${tag}] answerCount <= active players (no duplicates)`]: (context) => context.results.answerCount <= context.activePlayers,
+      [`[${tag}] per-choice counts sum to total`]: (context) => context.perChoiceSum === context.results.answerCount,
+      [`[${tag}] host answeredCount matches results`]: (context) => context.state.answeredCount === context.results.answerCount,
+      [`[${tag}] no score above question points`]: (context) => context.overScoredCount === 0,
     },
   );
 

@@ -38,7 +38,7 @@ const TIME_LIMIT = Math.min(300, Math.max(5, intEnv('ANSWER_TIME_LIMIT', 60)));
 const CLOCK_SKEW_MS = Number(__ENV.CLOCK_SKEW_MS || 0);
 const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.98);
 
-const HOLD = durationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
+const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
 
 export const options = {
   hosts: hostsOverride(),
@@ -60,7 +60,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${HOLD + 60}s`,
+      maxDuration: `${TOTAL_HOLD_DURATION_SECONDS + 60}s`,
     },
   },
   thresholds: mergeThresholds(questionDeliveryThresholds(), {
@@ -72,128 +72,135 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS + ISOLATION_PLAYERS);
-  const p = provisionGames(env, { questions: 1, timeLimitSeconds: TIME_LIMIT, points: 1000, games: 2 });
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS + ISOLATION_PLAYERS);
+  const provisionedGames = provisionGames(environmentConfig, {
+    questions: 1,
+    timeLimitSeconds: TIME_LIMIT,
+    points: 1000,
+    games: 2,
+  });
   return {
-    env,
-    hostToken: p.hostToken,
-    gameA: p.games[0],
-    gameB: p.games[1],
-    question: p.questions[0],
+    env: environmentConfig,
+    hostToken: provisionedGames.hostToken,
+    gameA: provisionedGames.games[0],
+    gameB: provisionedGames.games[1],
+    question: provisionedGames.questions[0],
   };
 }
 
-let done = false;
-
 export async function player(data) {
   const { env, gameA, gameB } = data;
-  if (done) {
-    await delay(3000);
-    return;
-  }
-  done = true;
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
   // First ISOLATION_PLAYERS VUs are the game-B control group.
-  const isControl = exec.vu.idInTest <= ISOLATION_PLAYERS;
-  const target = isControl ? gameB : gameA;
+  const isControlGroupParticipant = exec.vu.idInTest <= ISOLATION_PLAYERS;
+  const targetGame = isControlGroupParticipant ? gameB : gameA;
 
-  let client;
-  let recvAt = 0;
-  let payload = null;
-  let leaked = false;
+  let signalrClient;
+  let questionReceivedTimestampMs = 0;
+  let receivedQuestionPayload = null;
+  let hasIsolationLeaked = false;
 
   try {
-    client = new SignalRClient(env);
-    const flag = (name) => (args) => {
-      if (isControl) {
-        if (name !== 'GameEnded' || (args && args.gameId === gameA.gameId)) {
-          leaked = true;
-          sessionIsolationViolations.add(1, { event: name });
+    signalrClient = new SignalRClient(env);
+    const registerEventListener = (eventName) => (eventArgs) => {
+      if (isControlGroupParticipant) {
+        if (eventName !== 'GameEnded' || (eventArgs && eventArgs.gameId === gameA.gameId)) {
+          hasIsolationLeaked = true;
+          sessionIsolationViolations.add(1, { event: eventName });
         }
-      } else if (name === 'QuestionStarted' && !recvAt) {
-        recvAt = Date.now();
-        payload = args;
+      } else if (eventName === 'QuestionStarted' && !questionReceivedTimestampMs) {
+        questionReceivedTimestampMs = Date.now();
+        receivedQuestionPayload = eventArgs;
       }
     };
-    client.on('QuestionStarted', flag('QuestionStarted'));
-    client.on('QuestionStartedForHost', flag('QuestionStartedForHost'));
-    client.on('QuestionEnded', flag('QuestionEnded'));
-    client.on('LeaderboardUpdated', flag('LeaderboardUpdated'));
-    client.on('GameEnded', flag('GameEnded'));
-    await client.start();
-  } catch (e) {
+    signalrClient.on('QuestionStarted', registerEventListener('QuestionStarted'));
+    signalrClient.on('QuestionStartedForHost', registerEventListener('QuestionStartedForHost'));
+    signalrClient.on('QuestionEnded', registerEventListener('QuestionEnded'));
+    signalrClient.on('LeaderboardUpdated', registerEventListener('LeaderboardUpdated'));
+    signalrClient.on('GameEnded', registerEventListener('GameEnded'));
+    await signalrClient.start();
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('broadcast:connect');
     return;
   }
 
   try {
-    const res = await client.invoke('JoinGame', target.pin, uniqueNickname(isControl ? 'ctl' : 'a'));
-    if (!res || res.success !== true) {
-      const code = res && res.error ? res.error.code : 'no-response';
-      recordJoinFailure(code, `broadcast:join:${code}`);
-      client.close();
+    const nickname = uniqueNickname(isControlGroupParticipant ? 'ctl' : 'a');
+    const joinResult = await signalrClient.invoke('JoinGame', targetGame.pin, nickname);
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, `broadcast:join:${errorCode}`);
+      signalrClient.close();
       return;
     }
-    playersJoined.add(1, { group: isControl ? 'B' : 'A' });
+    playersJoined.add(1, { group: isControlGroupParticipant ? 'B' : 'A' });
     noUnexpected();
-  } catch (e) {
+  } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('broadcast:join:exception');
-    client.close();
+    signalrClient.close();
     return;
   }
 
-  const deadline = Date.now() + HOLD * 1000;
-  while (Date.now() < deadline && !client.closed) {
-    if (!isControl && recvAt) break;
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+    if (!isControlGroupParticipant && questionReceivedTimestampMs) {
+      break;
+    }
     await delay(50);
   }
 
-  if (isControl) {
-    check(null, { 'control-group player received NO game-A event': () => !leaked });
-  } else if (recvAt) {
-    if (payload && payload.endsAt) {
-      const skew = Number.isFinite(data.clockSkewMs) ? data.clockSkewMs : CLOCK_SKEW_MS;
-      const serverStart = Date.parse(payload.endsAt) - data.question.timeLimitSeconds * 1000;
-      const deliveryMs = recvAt - serverStart - skew;
-      if (deliveryMs > -2000 && deliveryMs < 60000) questionDeliveryDuration.add(Math.max(1, deliveryMs));
+  if (isControlGroupParticipant) {
+    check(null, { 'control-group player received NO game-A event': () => !hasIsolationLeaked });
+  } else if (questionReceivedTimestampMs) {
+    if (receivedQuestionPayload && receivedQuestionPayload.endsAt) {
+      const clockSkew = Number.isFinite(data.clockSkewMs) ? data.clockSkewMs : CLOCK_SKEW_MS;
+      const serverStartTimestamp = Date.parse(receivedQuestionPayload.endsAt) - data.question.timeLimitSeconds * 1000;
+      const deliveryLatencyMs = questionReceivedTimestampMs - serverStartTimestamp - clockSkew;
+      if (deliveryLatencyMs > -2000 && deliveryLatencyMs < 60000) {
+        questionDeliveryDuration.add(Math.max(1, deliveryLatencyMs));
+      }
     }
     questionDelivered.add(1);
-    check(payload, {
-      'received QuestionStarted': (q) => !!q,
-      'no correct answer in player payload': (q) =>
-        q && q.correctChoiceId === undefined && !(q.choices || []).some((c) => 'isCorrect' in c),
+    check(receivedQuestionPayload, {
+      'received QuestionStarted': (payload) => !!payload,
+      'no correct answer in player payload': (payload) =>
+        payload && payload.correctChoiceId === undefined && !(payload.choices || []).some((choice) => 'isCorrect' in choice),
     });
-    // linger so we can still catch an isolation leak arriving late
-    const lingerUntil = Math.min(deadline, Date.now() + 8000);
-    while (Date.now() < lingerUntil && !client.closed) await delay(500);
   } else {
     questionDeliveryFailures.add(1);
     check(null, { 'received QuestionStarted': () => false });
   }
 
-  client.close();
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+    await delay(1000);
+  }
+  signalrClient.close();
 }
 
 export async function director(data) {
   const { env, hostToken, gameA } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  const pre = await waitForParticipantCount(env, hostToken, gameA.gameId, PLAYERS, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + 75) * 1000,
+  const lobbyState = await waitForParticipantCount(env, hostToken, gameA.gameId, PLAYERS, {
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 75) * 1000,
     minFraction: READY_FRACTION,
     intervalMs: 2000,
   });
-  console.log(`[question-broadcast] starting with ${pre.participants.length}/${PLAYERS} game-A players`);
-  check(pre, {
-    [`>= ${Math.ceil(PLAYERS * READY_FRACTION)} game-A players present`]: (s) =>
-      s.participants.length >= Math.ceil(PLAYERS * READY_FRACTION),
-  }, tags);
+  console.log(`[question-broadcast] starting with ${lobbyState.participants.length}/${PLAYERS} game-A players`);
+  check(
+    lobbyState,
+    {
+      [`>= ${Math.ceil(PLAYERS * READY_FRACTION)} game-A players present`]: (state) =>
+        state.participants.length >= Math.ceil(PLAYERS * READY_FRACTION),
+    },
+    directorTags,
+  );
 
-  const started = startGame(env, hostToken, gameA.gameId);
-  check(started, { 'question started': (s) => !!s && !!s.player }, tags);
+  const startGameResult = startGame(env, hostToken, gameA.gameId);
+  check(startGameResult, { 'question started': (res) => !!res && !!res.player }, directorTags);
 
   await delay((data.question.timeLimitSeconds + 10) * 1000);
   endQuestion(env, hostToken, gameA.gameId);
@@ -202,14 +209,14 @@ export async function director(data) {
     endGame(env, hostToken, gameA.gameId);
     endGame(env, hostToken, data.gameB.gameId);
   } catch (_) {
-    /* best-effort */
+    /* best-effort cleanup */
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 90;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 90;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('question-broadcast');

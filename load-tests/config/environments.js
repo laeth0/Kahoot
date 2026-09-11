@@ -46,21 +46,21 @@ export function assertLoadAllowed(env, peakVus) {
 
 export function hostCredentials() {
   return {
-    username: __ENV.HOST_USERNAME || 'admin',
-    password: __ENV.HOST_PASSWORD || 'admin',
+    username: __ENV.HOST_USERNAME || 'IEEEXtreme Section',
+    password: __ENV.HOST_PASSWORD || 'IEEEXtreme@123456789',
   };
 }
 
-export function intEnv(name, dflt) {
-  const v = Number(__ENV[name]);
-  return Number.isFinite(v) && v > 0 ? Math.floor(v) : dflt;
+export function intEnv(environmentVariableName, fallbackDefaultValue) {
+  const parsedValue = Number(__ENV[environmentVariableName]);
+  return Number.isFinite(parsedValue) && parsedValue > 0 ? Math.floor(parsedValue) : fallbackDefaultValue;
 }
 
 export function hostsOverride() {
-  const h = __ENV.RESOLVE_HOST;
-  const ip = __ENV.RESOLVE_IP;
-  if (h && ip) {
-    return { [h]: ip };
+  const resolveHost = __ENV.RESOLVE_HOST;
+  const resolvedIpAddress = __ENV.RESOLVE_IP;
+  if (resolveHost && resolvedIpAddress) {
+    return { [resolveHost]: resolvedIpAddress };
   }
   return undefined;
 }

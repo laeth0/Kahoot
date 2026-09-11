@@ -37,14 +37,14 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const MINUTES = Math.max(1, intEnv('ENDURANCE_MINUTES', 10));
+const DURATION_MINUTES = Math.max(1, intEnv('ENDURANCE_MINUTES', 10));
 const PLAYERS = intEnv('ENDURANCE_PLAYERS', 200);
-const Q_LEN = Math.min(300, Math.max(8, intEnv('ENDURANCE_QUESTION_SECONDS', 15)));
-const GAP = intEnv('ENDURANCE_GAP_SECONDS', 8);
-const PERIOD = Q_LEN + GAP;
-const RUN_S = MINUTES * 60;
-const Q_COUNT = Math.min(120, Math.ceil(RUN_S / PERIOD) + 3);
-const HALF_MS = (RUN_S / 2) * 1000;
+const QUESTION_DURATION_SECONDS = Math.min(300, Math.max(8, intEnv('ENDURANCE_QUESTION_SECONDS', 15)));
+const QUESTION_GAP_SECONDS = intEnv('ENDURANCE_GAP_SECONDS', 8);
+const QUESTION_CYCLE_PERIOD_SECONDS = QUESTION_DURATION_SECONDS + QUESTION_GAP_SECONDS;
+const TOTAL_RUN_SECONDS = DURATION_MINUTES * 60;
+const REQUIRED_QUESTIONS_COUNT = Math.min(120, Math.ceil(TOTAL_RUN_SECONDS / QUESTION_CYCLE_PERIOD_SECONDS) + 3);
+const HALF_RUN_DURATION_MS = (TOTAL_RUN_SECONDS / 2) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -55,7 +55,7 @@ export const options = {
       startVUs: 0,
       stages: [
         { duration: '60s', target: PLAYERS },
-        { duration: `${RUN_S}s`, target: PLAYERS },
+        { duration: `${TOTAL_RUN_SECONDS}s`, target: PLAYERS },
         { duration: '15s', target: 0 },
       ],
       gracefulRampDown: '20s',
@@ -66,7 +66,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${RUN_S + 180}s`,
+      maxDuration: `${TOTAL_RUN_SECONDS + 180}s`,
     },
   },
   thresholds: {
@@ -81,112 +81,127 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS);
-  const p = provisionGames(env, { questions: Q_COUNT, timeLimitSeconds: Q_LEN, points: 1000, games: 1 });
-  console.log(`[endurance] ${MINUTES} min, ${PLAYERS} players, ${p.questions.length} questions, period ${PERIOD}s`);
-  return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken, questions: p.questions };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, {
+    questions: REQUIRED_QUESTIONS_COUNT,
+    timeLimitSeconds: QUESTION_DURATION_SECONDS,
+    points: 1000,
+    games: 1,
+  });
+  console.log(
+    `[endurance] ${DURATION_MINUTES} min, ${PLAYERS} players, ${provisionedGame.questions.length} questions, period ${QUESTION_CYCLE_PERIOD_SECONDS}s`,
+  );
+  return {
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+    questions: provisionedGame.questions,
+  };
 }
 
-let joinState = 'pending';
-let client = null;
-let currentQ = null;
-let answeredQ = null;
-let sessionToken = null;
-let disconnects = 0;
-
 export async function player(data) {
-  const { env, pin } = data;
+  const { env, pin, questions } = data;
 
-  if (joinState === 'pending') {
-    client = new SignalRClient(env, {
-      onClose: () => {
-        disconnects += 1;
-        signalrUnexpectedDisconnects.add(1);
-      },
-    });
-    client.on('QuestionStarted', (q) => {
-      if (q && q.questionId) currentQ = q.questionId;
-    });
-    try {
-      await client.start();
-      const res = await client.invoke('JoinGame', pin, uniqueNickname('e'));
-      if (!res || res.success !== true) {
-        recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'endurance:join');
-        client.close();
-        joinState = 'failed';
-        return;
-      }
-      sessionToken = res.data.sessionToken;
-      playersJoined.add(1);
-      noUnexpected();
-      joinState = 'ok';
-    } catch (e) {
-      playerJoinFailures.add(1, { reason: 'connect' });
-      bumpUnexpected('endurance:connect');
-      joinState = 'failed';
+  let signalrClient = null;
+  let currentQuestionId = null;
+  let answeredQuestionId = null;
+  let sessionToken = null;
+
+  signalrClient = new SignalRClient(env, {
+    onClose: () => {
+      signalrUnexpectedDisconnects.add(1);
+    },
+  });
+  signalrClient.on('QuestionStarted', (questionEvent) => {
+    if (questionEvent && questionEvent.questionId) {
+      currentQuestionId = questionEvent.questionId;
+    }
+  });
+
+  try {
+    await signalrClient.start();
+    const joinResponse = await signalrClient.invoke('JoinGame', pin, uniqueNickname('e'));
+    if (!joinResponse || joinResponse.success !== true) {
+      const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
+      recordJoinFailure(errorCode, 'endurance:join');
+      signalrClient.close();
       return;
     }
-  }
-
-  if (joinState !== 'ok') {
-    await delay(3000);
+    sessionToken = joinResponse.data.sessionToken;
+    playersJoined.add(1);
+    noUnexpected();
+  } catch (connectionError) {
+    playerJoinFailures.add(1, { reason: 'connect' });
+    bumpUnexpected('endurance:connect');
     return;
   }
 
-  // Self-heal a dropped connection (this is a soak test — drops over hours matter).
-  if (!client || client.closed) {
-    const c = new SignalRClient(env, {
-      onClose: () => {
-        signalrUnexpectedDisconnects.add(1);
-      },
-    });
-    c.on('QuestionStarted', (q) => {
-      if (q && q.questionId) currentQ = q.questionId;
-    });
-    try {
-      await c.start();
-      const rc = await c.invoke('Reconnect', sessionToken);
-      if (!rc || rc.success !== true) {
-        reconnectionFailures.add(1, { where: 'endurance' });
-        bumpUnexpected('endurance:reconnect');
-      }
-      client = c;
-    } catch (e) {
-      reconnectionFailures.add(1, { where: 'endurance:exception' });
-      bumpUnexpected('endurance:reconnect:exception');
-      await delay(2000);
-      return;
-    }
-  }
-
-  if (currentQ && currentQ !== answeredQ) {
-    answeredQ = currentQ;
-    const q = data.questions.find((x) => x.questionId === currentQ);
-    if (q) {
-      const half = exec.instance.currentTestRunDuration < 60000 + HALF_MS ? 'first' : 'second';
-      const t0 = Date.now();
-      try {
-        const ack = await client.invoke('SubmitAnswer', currentQ, q.correctChoiceId);
-        answerSubmissionDuration.add(Date.now() - t0, { half });
-        answersSubmitted.add(1, { half });
-        if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-          answersAccepted.add(1, { half });
-          noUnexpected();
-        } else if (ack && ack.success === false && ack.error) {
-          answersRejected.add(1, { code: ack.error.code });
-        } else {
-          unexpectedAnswerFailures.add(1, { half });
-          bumpUnexpected('endurance:submit:malformed');
+  // Persistent session loop for the entire endurance duration
+  const testEndDurationMs = (TOTAL_RUN_SECONDS + 60) * 1000;
+  while (exec.instance.currentTestRunDuration < testEndDurationMs) {
+    // Reconnect if the connection was unexpectedly dropped
+    if (!signalrClient || signalrClient.closed) {
+      const recoveredClient = new SignalRClient(env, {
+        onClose: () => {
+          signalrUnexpectedDisconnects.add(1);
+        },
+      });
+      recoveredClient.on('QuestionStarted', (questionEvent) => {
+        if (questionEvent && questionEvent.questionId) {
+          currentQuestionId = questionEvent.questionId;
         }
-      } catch (e) {
-        unexpectedAnswerFailures.add(1, { half });
-        bumpUnexpected('endurance:submit:exception');
+      });
+      try {
+        await recoveredClient.start();
+        const reconnectResult = await recoveredClient.invoke('Reconnect', sessionToken);
+        if (!reconnectResult || reconnectResult.success !== true) {
+          reconnectionFailures.add(1, { where: 'endurance' });
+          bumpUnexpected('endurance:reconnect');
+        }
+        signalrClient = recoveredClient;
+      } catch (reconnectException) {
+        reconnectionFailures.add(1, { where: 'endurance:exception' });
+        bumpUnexpected('endurance:reconnect:exception');
+        await delay(2000);
+        continue;
       }
     }
+
+    // Submit an answer when a new question starts
+    if (currentQuestionId && currentQuestionId !== answeredQuestionId) {
+      answeredQuestionId = currentQuestionId;
+      const targetQuestion = questions.find((q) => q.questionId === currentQuestionId);
+      if (targetQuestion) {
+        const testHalf = exec.instance.currentTestRunDuration < 60000 + HALF_RUN_DURATION_MS ? 'first' : 'second';
+        const submissionStartTimeMs = Date.now();
+        try {
+          const submissionAck = await signalrClient.invoke('SubmitAnswer', currentQuestionId, targetQuestion.correctChoiceId);
+          answerSubmissionDuration.add(Date.now() - submissionStartTimeMs, { half: testHalf });
+          answersSubmitted.add(1, { half: testHalf });
+          if (submissionAck && submissionAck.success === true && submissionAck.data && submissionAck.data.accepted === true) {
+            answersAccepted.add(1, { half: testHalf });
+            noUnexpected();
+          } else if (submissionAck && submissionAck.success === false && submissionAck.error) {
+            answersRejected.add(1, { code: submissionAck.error.code });
+          } else {
+            unexpectedAnswerFailures.add(1, { half: testHalf });
+            bumpUnexpected('endurance:submit:malformed');
+          }
+        } catch (submissionException) {
+          unexpectedAnswerFailures.add(1, { half: testHalf });
+          bumpUnexpected('endurance:submit:exception');
+        }
+      }
+    }
+
+    await delay(500);
   }
 
-  await delay(1000);
+  if (signalrClient) {
+    signalrClient.close();
+  }
 }
 
 export async function director(data) {
@@ -198,31 +213,36 @@ export async function director(data) {
     intervalMs: 1500,
   });
 
-  let started = false;
-  let cycles = 0;
-  const stopAt = RUN_S * 1000 + 70000;
-  for (let i = 0; i < questions.length; i += 1) {
-    if (exec.instance.currentTestRunDuration > stopAt) break;
+  let hasStarted = false;
+  let completedCycles = 0;
+  const stopAtTestDurationMs = TOTAL_RUN_SECONDS * 1000 + 70000;
+
+  for (let questionIndex = 0; questionIndex < questions.length; questionIndex += 1) {
+    if (exec.instance.currentTestRunDuration > stopAtTestDurationMs) break;
     try {
-      if (!started) {
+      if (!hasStarted) {
         startGame(env, hostToken, gameId);
-        started = true;
+        hasStarted = true;
       } else {
         advance(env, hostToken, gameId);
       }
-      await delay((questions[i].timeLimitSeconds + 3) * 1000);
+      await delay((questions[questionIndex].timeLimitSeconds + 3) * 1000);
       endQuestion(env, hostToken, gameId);
       showLeaderboard(env, hostToken, gameId);
-      cycles += 1;
-      await delay(Math.max(1000, (GAP - 3) * 1000));
-    } catch (e) {
-      console.log(`[endurance] director stop at cycle ${cycles}: ${e}`);
+      completedCycles += 1;
+      await delay(Math.max(1000, (QUESTION_GAP_SECONDS - 3) * 1000));
+    } catch (directorException) {
+      console.log(`[endurance] director stop at cycle ${completedCycles}: ${directorException}`);
       break;
     }
   }
 
-  console.log(`[endurance] completed ${cycles} question cycles`);
-  check({ cycles }, { 'ran a realistic number of question cycles': (x) => x.cycles >= Math.min(3, questions.length) });
+  console.log(`[endurance] completed ${completedCycles} question cycles`);
+  check(
+    { completedCycles },
+    { 'ran a realistic number of question cycles': (ctx) => ctx.completedCycles >= Math.min(3, questions.length) },
+  );
+
   try {
     endGame(env, hostToken, gameId);
   } catch (_) {

@@ -13,9 +13,8 @@
 
 import { check } from 'k6';
 import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
-import { SignalRClient, delay, JoinError } from '../helpers/signalr.js';
-import { provisionGames } from '../helpers/testdata.js';
-import { uniqueNickname } from '../helpers/testdata.js';
+import { SignalRClient, delay } from '../helpers/signalr.js';
+import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { getHostState, endGame } from '../helpers/rest.js';
 import { makeHandleSummary } from '../helpers/summary.js';
 import {
@@ -31,6 +30,7 @@ import {
 const PLAYERS = intEnv('PLAYERS', 500);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '120s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 45);
+const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + HOLD_SECONDS + 20;
 
 export const options = {
   hosts: hostsOverride(),
@@ -57,28 +57,27 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS);
-  const provisioned = provisionGames(env, { questions: 1, timeLimitSeconds: 60, games: 1 });
-  return { env, gameId: provisioned.gameId, pin: provisioned.pin, hostToken: provisioned.hostToken };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, { questions: 1, timeLimitSeconds: 60, games: 1 });
+  return {
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+  };
 }
-
-let joined = false;
 
 export default async function (data) {
   const { env, pin } = data;
-  if (joined) {
-    await delay(2000);
-    return;
-  }
-  joined = true;
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
-  let client;
-  const t0 = Date.now();
+  let signalrClient;
+  const joinStartTimeMs = Date.now();
   try {
-    client = new SignalRClient(env);
-    await client.start();
-  } catch (e) {
+    signalrClient = new SignalRClient(env);
+    await signalrClient.start();
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('join:connect');
     check(null, { 'player joined': () => false });
@@ -86,53 +85,54 @@ export default async function (data) {
   }
 
   try {
-    const nickname = uniqueNickname('p');
-    const res = await client.invoke('JoinGame', pin, nickname);
-    if (!res || res.success !== true) {
-      const code = res && res.error ? res.error.code : 'no-response';
-      recordJoinFailure(code, `join:${code}`);
+    const playerNickname = uniqueNickname('p');
+    const joinResult = await signalrClient.invoke('JoinGame', pin, playerNickname);
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, `join:${errorCode}`);
       check(null, { 'player joined': () => false });
     } else {
-      playerJoinDuration.add(Date.now() - t0);
+      playerJoinDuration.add(Date.now() - joinStartTimeMs);
       playersJoined.add(1);
       noUnexpected();
-      check(res.data, {
-        'player joined': (d) => !!d && !!d.participantId,
-        'server issued a session token': (d) => typeof d.sessionToken === 'string' && d.sessionToken.length > 0,
+      check(joinResult.data, {
+        'player joined': (participantInfo) => !!participantInfo && !!participantInfo.participantId,
+        'server issued a session token': (participantInfo) =>
+          typeof participantInfo.sessionToken === 'string' && participantInfo.sessionToken.length > 0,
       });
     }
-  } catch (e) {
+  } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('join:exception');
   }
 
-  const deadline = Date.now() + HOLD_SECONDS * 1000;
-  while (Date.now() < deadline && !client.closed) {
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
     await delay(1000);
   }
-  client.close();
+  signalrClient.close();
 }
 
 export function teardown(data) {
   const { env, hostToken, gameId } = data;
-  const state = getHostState(env, hostToken, gameId);
+  const hostState = getHostState(env, hostToken, gameId);
 
-  const ids = new Set(state.participants.map((p) => p.id));
-  const nicks = new Set(state.participants.map((p) => p.nickname.toLowerCase()));
-  const dupIds = state.participants.length - ids.size;
-  const dupNicks = state.participants.length - nicks.size;
-  if (dupIds > 0) duplicateParticipants.add(dupIds, { where: 'teardown:ids' });
-  if (dupNicks > 0) duplicateParticipants.add(dupNicks, { where: 'teardown:nicknames' });
+  const uniqueParticipantIds = new Set(hostState.participants.map((participant) => participant.id));
+  const uniqueNicknames = new Set(hostState.participants.map((participant) => participant.nickname.toLowerCase()));
+  const duplicateIdCount = hostState.participants.length - uniqueParticipantIds.size;
+  const duplicateNicknameCount = hostState.participants.length - uniqueNicknames.size;
 
-  check(state, {
-    [`host sees exactly ${PLAYERS} participants`]: (s) => s.participants.length === PLAYERS,
-    'no duplicate participant ids': () => dupIds === 0,
-    'no duplicate nicknames': () => dupNicks === 0,
+  if (duplicateIdCount > 0) duplicateParticipants.add(duplicateIdCount, { where: 'teardown:ids' });
+  if (duplicateNicknameCount > 0) duplicateParticipants.add(duplicateNicknameCount, { where: 'teardown:nicknames' });
+
+  check(hostState, {
+    [`host sees exactly ${PLAYERS} participants`]: (state) => state.participants.length === PLAYERS,
+    'no duplicate participant ids': () => duplicateIdCount === 0,
+    'no duplicate nicknames': () => duplicateNicknameCount === 0,
   });
 
   console.log(
-    `[join-game] host reports ${state.participants.length}/${PLAYERS} participants, ` +
-      `dupIds=${dupIds} dupNicks=${dupNicks}`,
+    `[join-game] host reports ${hostState.participants.length}/${PLAYERS} participants, ` +
+      `duplicateIds=${duplicateIdCount} duplicateNicknames=${duplicateNicknameCount}`,
   );
 
   try {
@@ -140,6 +140,12 @@ export function teardown(data) {
   } catch (_) {
     /* best-effort cleanup */
   }
+}
+
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 120;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('join-game');

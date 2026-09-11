@@ -19,6 +19,7 @@
 //   k6 run -e ALLOW_LOAD_TEST=true -e BASE_URL=... -e SIGNALR_URL=... \
 //     load-tests/scenarios/answer-burst.js
 
+import { check } from 'k6';
 import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
@@ -54,11 +55,11 @@ const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.90);
 const CLOCK_SKEW_MS = Number(__ENV.CLOCK_SKEW_MS || 0);
 // Slack after the join ramp for the director's readiness poll + post-question
 // drain + state verification. Lower it for quick dev runs.
-const SETTLE = intEnv('SETTLE_SECONDS', 60);
+const SETTLE_SECONDS = intEnv('SETTLE_SECONDS', 60);
 
 // director must outlive: join ramp + readiness poll + question + drain
-const DIRECTOR_MAX = `${durationSeconds(JOIN_RAMP) + SETTLE + 60 + TIME_LIMIT + 60}s`;
-const PLAYER_HOLD = durationSeconds(JOIN_RAMP) + SETTLE + 40 + TIME_LIMIT;
+const DIRECTOR_MAX_DURATION = `${parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 60 + TIME_LIMIT + 60}s`;
+const PLAYER_HOLD_SECONDS = parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 40 + TIME_LIMIT;
 
 export const options = {
   hosts: hostsOverride(),
@@ -69,7 +70,7 @@ export const options = {
       startVUs: 0,
       stages: [
         { duration: JOIN_RAMP, target: PLAYERS },
-        { duration: `${SETTLE + 40 + TIME_LIMIT}s`, target: PLAYERS },
+        { duration: `${SETTLE_SECONDS + 40 + TIME_LIMIT}s`, target: PLAYERS },
         { duration: '10s', target: 0 },
       ],
       gracefulRampDown: '30s',
@@ -81,7 +82,7 @@ export const options = {
       vus: 1,
       iterations: 1,
       startTime: '0s',
-      maxDuration: DIRECTOR_MAX,
+      maxDuration: DIRECTOR_MAX_DURATION,
     },
   },
   thresholds: mergeThresholds(answerThresholds(), {
@@ -96,227 +97,220 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS);
-  const p = provisionGames(env, { questions: 1, timeLimitSeconds: TIME_LIMIT, points: 1000, games: 1 });
-  console.log(`[answer-burst] game ${p.gameId} pin ${p.pin} question ${p.firstQuestion.questionId}`);
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, {
+    questions: 1,
+    timeLimitSeconds: TIME_LIMIT,
+    points: 1000,
+    games: 1,
+  });
+  console.log(`[answer-burst] game ${provisionedGame.gameId} pin ${provisionedGame.pin} question ${provisionedGame.firstQuestion.questionId}`);
   return {
-    env,
-    gameId: p.gameId,
-    pin: p.pin,
-    hostToken: p.hostToken,
-    question: p.firstQuestion,
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+    question: provisionedGame.firstQuestion,
   };
 }
 
-let submittedThisVu = false;
-
 export async function player(data) {
   const { env, pin, question } = data;
-  if (submittedThisVu) {
-    await delay(3000);
-    return;
-  }
-  submittedThisVu = true;
+  const holdDeadlineTimestampMs = Date.now() + PLAYER_HOLD_SECONDS * 1000;
 
-  let client;
-  let questionRecvAt = 0;
+  let signalrClient;
+  let questionReceivedTimestampMs = 0;
   let questionPayload = null;
 
   try {
-    client = new SignalRClient(env, {
+    signalrClient = new SignalRClient(env, {
       onClose: () => {
-        /* tracked via client.closed */
+        /* tracked via signalrClient.closed */
       },
     });
-    client.on('QuestionStarted', (q) => {
-      if (!questionRecvAt) {
-        questionRecvAt = Date.now();
-        questionPayload = q;
+    signalrClient.on('QuestionStarted', (receivedQuestion) => {
+      if (!questionReceivedTimestampMs) {
+        questionReceivedTimestampMs = Date.now();
+        questionPayload = receivedQuestion;
       }
     });
-    await client.start();
-  } catch (e) {
+    await signalrClient.start();
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('burst:connect');
     return;
   }
 
   // Join the lobby.
-  let sessionToken = null;
+  let playerSessionToken = null;
   try {
-    const res = await client.invoke('JoinGame', pin, uniqueNickname('b'));
-    if (!res || res.success !== true) {
-      const code = res && res.error ? res.error.code : 'no-response';
-      recordJoinFailure(code, `burst:join:${code}`);
-      client.close();
+    const joinResponse = await signalrClient.invoke('JoinGame', pin, uniqueNickname('b'));
+    if (!joinResponse || joinResponse.success !== true) {
+      const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
+      recordJoinFailure(errorCode, `burst:join:${errorCode}`);
+      signalrClient.close();
       return;
     }
-    sessionToken = res.data.sessionToken;
+    playerSessionToken = joinResponse.data.sessionToken;
     playersJoined.add(1);
     noUnexpected();
-  } catch (e) {
+  } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('burst:join:exception');
-    client.close();
+    signalrClient.close();
     return;
   }
 
   // Wait for the QuestionStarted broadcast.
-  const waitDeadline = Date.now() + PLAYER_HOLD * 1000;
-  while (!questionRecvAt && Date.now() < waitDeadline && !client.closed) {
+  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
     await delay(50);
   }
 
-  if (!questionRecvAt) {
+  if (!questionReceivedTimestampMs) {
     questionDeliveryFailures.add(1);
     check(null, { 'received QuestionStarted': () => false });
-    client.close();
+    signalrClient.close();
     return;
   }
 
   // Approx end-to-end delivery latency (server clock -> client clock).
-  // startedAt ~= endsAt - timeLimit. Assumes reasonably synced clocks; correct
-  // with -e CLOCK_SKEW_MS. On localhost this is accurate to a few ms.
   if (questionPayload && questionPayload.endsAt) {
-    const skew = Number.isFinite(data.clockSkewMs) ? data.clockSkewMs : CLOCK_SKEW_MS;
-    const serverStart = Date.parse(questionPayload.endsAt) - question.timeLimitSeconds * 1000;
-    const deliveryMs = questionRecvAt - serverStart - skew;
-    // clamp small negatives from the ~1 s Date-header resolution to 1 ms
-    if (deliveryMs > -2000 && deliveryMs < 60000) questionDeliveryDuration.add(Math.max(1, deliveryMs));
+    const clockSkew = Number.isFinite(data.clockSkewMs) ? data.clockSkewMs : CLOCK_SKEW_MS;
+    const serverStartTimestamp = Date.parse(questionPayload.endsAt) - question.timeLimitSeconds * 1000;
+    const deliveryLatencyMs = questionReceivedTimestampMs - serverStartTimestamp - clockSkew;
+    if (deliveryLatencyMs > -2000 && deliveryLatencyMs < 60000) {
+      questionDeliveryDuration.add(Math.max(1, deliveryLatencyMs));
+    }
   }
   questionDelivered.add(1);
   check(questionPayload, {
-    'QuestionStarted has no correct answer leaked': (q) =>
-      !q || (q.correctChoiceId === undefined && !(q.choices || []).some((c) => 'isCorrect' in c)),
+    'QuestionStarted has no correct answer leaked': (payload) =>
+      !payload || (payload.correctChoiceId === undefined && !(payload.choices || []).some((choice) => 'isCorrect' in choice)),
   });
 
-  // The burst: submit immediately.
-  const wrong = Math.random() < WRONG_FRACTION;
-  const choiceId = wrong ? question.wrongChoiceId : question.correctChoiceId;
-  const qid = (questionPayload && questionPayload.questionId) || question.questionId;
+  // The burst: submit answer immediately.
+  const isWrongAnswer = Math.random() < WRONG_FRACTION;
+  const choiceIdToSubmit = isWrongAnswer ? question.wrongChoiceId : question.correctChoiceId;
+  const activeQuestionId = (questionPayload && questionPayload.questionId) || question.questionId;
 
-  const a0 = Date.now();
+  const submissionStartTimeMs = Date.now();
   try {
-    const ack = await client.invoke('SubmitAnswer', qid, choiceId);
-    const dur = Date.now() - a0;
+    const submissionAck = await signalrClient.invoke('SubmitAnswer', activeQuestionId, choiceIdToSubmit);
+    const submissionDurationMs = Date.now() - submissionStartTimeMs;
     answersSubmitted.add(1);
-    answerSubmissionDuration.add(dur);
+    answerSubmissionDuration.add(submissionDurationMs);
 
-    if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-      if (ack.data.alreadyAnswered === true) {
-        // We only submit once per VU — an "already answered" here is a real dup.
+    if (submissionAck && submissionAck.success === true && submissionAck.data && submissionAck.data.accepted === true) {
+      if (submissionAck.data.alreadyAnswered === true) {
+        // We only submit once per VU — an "already answered" here is a duplicate answer violation.
         duplicateAnswerViolations.add(1, { where: 'burst:ack' });
       } else {
-        answersAccepted.add(1, { correct: String(!wrong) });
+        answersAccepted.add(1, { correct: String(!isWrongAnswer) });
         noUnexpected();
-        // Authoritative "no lost accepted answers" check on a staggered SAMPLE of
-        // players: re-read our own state over the SAME socket. The server said
-        // accepted:true, so the row must exist — if Reconnect disagrees, that ack
-        // was lost. Sampled + delayed so it doesn't pile onto the submit burst.
+
+        // Sampled re-read to verify state consistency.
         if (Math.random() < CONFIRM_FRACTION) {
           await delay(500 + Math.random() * 2500);
           try {
-            const st = await client.invoke('Reconnect', sessionToken);
-            const isQuestionActive = st && st.data && (st.data.status === 2 || st.data.status === 'QuestionActive');
-            const confirmed =
-              !st ||
-              st.success !== true ||
-              !st.data ||
+            const reconnectResponse = await signalrClient.invoke('Reconnect', playerSessionToken);
+            const isQuestionActive =
+              reconnectResponse &&
+              reconnectResponse.data &&
+              (reconnectResponse.data.status === 2 || reconnectResponse.data.status === 'QuestionActive');
+            const stateConfirmed =
+              !reconnectResponse ||
+              reconnectResponse.success !== true ||
+              !reconnectResponse.data ||
               !isQuestionActive ||
-              st.data.alreadyAnsweredCurrentQuestion === true;
-            if (!confirmed) {
+              reconnectResponse.data.alreadyAnsweredCurrentQuestion === true;
+            if (!stateConfirmed) {
               lostAcceptedAnswers.add(1, { where: 'burst:ack-not-in-state' });
             }
             check(
-              { confirmed },
-              { 'sampled: accepted answer confirmed in server state': (x) => x.confirmed === true },
+              { stateConfirmed },
+              { 'sampled: accepted answer confirmed in server state': (ctx) => ctx.stateConfirmed === true },
             );
           } catch (_) {
-            /* confirmation is best-effort; director-side count reconciliation still applies */
+            /* confirmation is best-effort */
           }
         }
       }
-    } else if (ack && ack.success === false && ack.error) {
-      // A well-formed rejection (e.g. QuestionClosed at the very edge) is an
-      // expected 4xx-equivalent, not an error.
-      answersRejected.add(1, { code: ack.error.code });
+    } else if (submissionAck && submissionAck.success === false && submissionAck.error) {
+      answersRejected.add(1, { code: submissionAck.error.code });
     } else {
       unexpectedAnswerFailures.add(1);
       bumpUnexpected('burst:submit:malformed');
     }
-  } catch (e) {
+  } catch (submissionException) {
     answersSubmitted.add(1);
     unexpectedAnswerFailures.add(1);
     bumpUnexpected('burst:submit:exception');
   }
 
   // Hold connection until the scenario window ends to prevent empty loop iterations
-  while (Date.now() < waitDeadline && !client.closed) {
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
     await delay(1000);
   }
-  client.close();
+  signalrClient.close();
 }
 
 export async function director(data) {
   const { env, hostToken, gameId, question } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  // 1. Wait for the FULL cohort to be in the lobby (or time out well past the
-  //    ramp). Starting the question early would force late joiners into a benign
-  //    Game.NotJoinable; waiting for 100% keeps the burst == the population.
-  const preState = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + SETTLE + 30) * 1000,
+  // 1. Wait for the cohort to assemble in the lobby
+  const preGameState = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 30) * 1000,
     minFraction: READY_FRACTION,
     intervalMs: 1500,
   });
-  const present = preState && preState.participants ? preState.participants.length : 0;
-  console.log(`[answer-burst] starting question with ${present}/${PLAYERS} players present`);
+  const participantsPresent = preGameState && preGameState.participants ? preGameState.participants.length : 0;
+  console.log(`[answer-burst] starting question with ${participantsPresent}/${PLAYERS} players present`);
   check(
-    { present },
-    { [`>= ${Math.ceil(PLAYERS * READY_FRACTION)} players joined before question`]: (x) => x.present >= Math.ceil(PLAYERS * READY_FRACTION) },
-    tags,
+    { participantsPresent },
+    { [`>= ${Math.ceil(PLAYERS * READY_FRACTION)} players joined before question`]: (ctx) => ctx.participantsPresent >= Math.ceil(PLAYERS * READY_FRACTION) },
+    directorTags,
   );
 
-  // 2. Fire the question (broadcasts QuestionStarted to the players group).
-  const started = startGame(env, hostToken, gameId);
-  check(started, { 'POST /start returned QuestionStarted': (s) => !!s && !!s.player }, tags);
+  // 2. Start the game (broadcasts QuestionStarted to the players group).
+  const startGameResult = startGame(env, hostToken, gameId);
+  check(startGameResult, { 'POST /start returned QuestionStarted': (res) => !!res && !!res.player }, directorTags);
 
-  // 3. Let the burst + any stragglers complete. Deadline is inclusive, so wait
-  //    past it before closing.
+  // 3. Let the burst + any stragglers complete.
   await delay((question.timeLimitSeconds + 15) * 1000);
 
-  // 4. Close the question and verify DB-truth state.
+  // 4. Close the question and verify database-truth state.
   endQuestion(env, hostToken, gameId);
   const { results, activePlayers } = verifyClosedQuestion(
     env,
     hostToken,
     gameId,
     question,
-    present,
+    participantsPresent,
     'answer-burst',
   );
   console.log(
     `[answer-burst] results: answerCount=${results.answerCount} participantCount=${results.participantCount} ` +
       `activePlayers=${activePlayers} correctChoiceCount=${
-        (results.choices.find((c) => c.isCorrect) || {}).answerCount
+        (results.choices.find((choice) => choice.isCorrect) || {}).answerCount
       }`,
   );
 
   // 5. Leaderboard must list exactly the active players, once each.
-  const lb = showLeaderboard(env, hostToken, gameId);
-  const lbIds = new Set(lb.entries.map((e) => e.participantId));
-  if (lbIds.size !== lb.entries.length) {
+  const leaderboard = showLeaderboard(env, hostToken, gameId);
+  const leaderboardParticipantIds = new Set(leaderboard.entries.map((entry) => entry.participantId));
+  if (leaderboardParticipantIds.size !== leaderboard.entries.length) {
     inconsistentGameState.add(1, { where: 'leaderboard-dupes' });
   }
   check(
-    lb,
+    leaderboard,
     {
-      'leaderboard entry count == active players': (l) => l.entries.length === activePlayers,
-      'leaderboard has no duplicate participants': () => lbIds.size === lb.entries.length,
-      'ranks are 1..N contiguous': (l) => ranksContiguous(l.entries),
+      'leaderboard entry count == active players': (lb) => lb.entries.length === activePlayers,
+      'leaderboard has no duplicate participants': () => leaderboardParticipantIds.size === leaderboard.entries.length,
+      'ranks are 1..N contiguous': (lb) => areRanksContiguous(lb.entries),
     },
-    tags,
+    directorTags,
   );
 
   try {
@@ -327,22 +321,21 @@ export async function director(data) {
 }
 
 export function teardown() {
-  // state and leaderboard are already fetched and verified by director
+  // state and leaderboard are verified by director
 }
 
-function ranksContiguous(entries) {
-  const ranks = entries.map((e) => e.rank).sort((a, b) => a - b);
-  for (let i = 0; i < ranks.length; i += 1) {
-    // ties allowed: rank must never exceed position+1
-    if (ranks[i] > i + 1) return false;
+function areRanksContiguous(entries) {
+  const sortedRanks = entries.map((entry) => entry.rank).sort((first, second) => first - second);
+  for (let index = 0; index < sortedRanks.length; index += 1) {
+    if (sortedRanks[index] > index + 1) return false;
   }
   return true;
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 90;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 90;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('answer-burst');

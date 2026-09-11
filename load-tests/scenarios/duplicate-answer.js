@@ -1,7 +1,7 @@
 // Scenario 5 — Duplicate-answer concurrency / idempotency.
 //
 // For each of DUP_PLAYERS players we open TWO hub connections bound to the SAME
-// participant (JoinGame on C1, Reconnect(sessionToken) on C2) and fire several
+// participant (JoinGame on primaryConnection, Reconnect(sessionToken) on reconnectedConnection) and fire several
 // near-simultaneous SubmitAnswer calls for the same (gameId, questionId,
 // participantId) across both sockets. Two independent INSERTs then race for the
 // DB unique index `uq_answer_participant_question` — this exercises the
@@ -41,7 +41,7 @@ const DUP_PLAYERS = intEnv('DUP_PLAYERS', 100);
 const ATTEMPTS_PER_CONN = Math.min(3, intEnv('DUP_ATTEMPTS_PER_CONN', 2)); // stay < 5 / 3 s guard
 const TIME_LIMIT = Math.min(300, Math.max(15, intEnv('ANSWER_TIME_LIMIT', 60)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '45s';
-const HOLD = durationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
+const TOTAL_HOLD_SECONDS = parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
 
 export const options = {
   hosts: hostsOverride(),
@@ -63,7 +63,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${HOLD + 60}s`,
+      maxDuration: `${TOTAL_HOLD_SECONDS + 60}s`,
     },
   },
   thresholds: mergeThresholds(correctnessThresholds(), {
@@ -76,162 +76,173 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, DUP_PLAYERS);
-  const p = provisionGames(env, { questions: 1, timeLimitSeconds: TIME_LIMIT, points: 1000, games: 1 });
-  return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken, question: p.firstQuestion };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, DUP_PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, {
+    questions: 1,
+    timeLimitSeconds: TIME_LIMIT,
+    points: 1000,
+    games: 1,
+  });
+  return {
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+    question: provisionedGame.firstQuestion,
+  };
 }
-
-let done = false;
 
 export async function player(data) {
   const { env, pin, question } = data;
-  if (done) {
-    await delay(3000);
-    return;
-  }
-  done = true;
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_SECONDS * 1000;
 
-  let c1;
-  let c2;
-  let recvAt = 0;
-  let qid = question.questionId;
+  let primaryConnection;
+  let reconnectedConnection;
+  let questionReceivedTimestampMs = 0;
+  let targetQuestionId = question.questionId;
 
   try {
-    c1 = new SignalRClient(env);
-    c1.on('QuestionStarted', (q) => {
-      if (!recvAt) {
-        recvAt = Date.now();
-        if (q && q.questionId) qid = q.questionId;
+    primaryConnection = new SignalRClient(env);
+    primaryConnection.on('QuestionStarted', (questionEvent) => {
+      if (!questionReceivedTimestampMs) {
+        questionReceivedTimestampMs = Date.now();
+        if (questionEvent && questionEvent.questionId) targetQuestionId = questionEvent.questionId;
       }
     });
-    await c1.start();
-    const joinRes = await c1.invoke('JoinGame', pin, uniqueNickname('d'));
-    if (!joinRes || joinRes.success !== true) {
-      recordJoinFailure(joinRes && joinRes.error ? joinRes.error.code : 'no-response', 'dup:join');
-      c1.close();
+    await primaryConnection.start();
+    const joinResult = await primaryConnection.invoke('JoinGame', pin, uniqueNickname('d'));
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, 'dup:join');
+      primaryConnection.close();
       return;
     }
-    const sessionToken = joinRes.data.sessionToken;
-    const participantId = joinRes.data.participantId;
+    const sessionToken = joinResult.data.sessionToken;
+    const participantId = joinResult.data.participantId;
     playersJoined.add(1);
     noUnexpected();
 
     // Second connection for the same participant.
-    c2 = new SignalRClient(env);
-    await c2.start();
-    const rc = await c2.invoke('Reconnect', sessionToken);
-    check(rc, {
-      'second connection reconnected same participant': (r) =>
-        !!r && r.success === true && r.data && r.data.participantId === participantId,
+    reconnectedConnection = new SignalRClient(env);
+    await reconnectedConnection.start();
+    const reconnectResult = await reconnectedConnection.invoke('Reconnect', sessionToken);
+    check(reconnectResult, {
+      'second connection reconnected same participant': (res) =>
+        !!res && res.success === true && res.data && res.data.participantId === participantId,
     });
-  } catch (e) {
+  } catch (setupException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('dup:setup:exception');
-    if (c1) c1.close();
-    if (c2) c2.close();
+    if (primaryConnection) primaryConnection.close();
+    if (reconnectedConnection) reconnectedConnection.close();
     return;
   }
 
-  // Wait for the question.
-  const deadline = Date.now() + HOLD * 1000;
-  while (!recvAt && Date.now() < deadline && !c1.closed) {
+  // Wait for the question broadcast.
+  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !primaryConnection.closed) {
     await delay(50);
   }
-  if (!recvAt) {
+  if (!questionReceivedTimestampMs) {
     check(null, { 'received QuestionStarted': () => false });
-    c1.close();
-    c2.close();
+    primaryConnection.close();
+    if (reconnectedConnection) reconnectedConnection.close();
     return;
   }
 
   // The near-simultaneous duplicate burst across BOTH sockets.
   const choiceId = question.correctChoiceId;
-  const calls = [];
-  const conns = [c1, c2];
-  for (const conn of conns) {
-    for (let i = 0; i < ATTEMPTS_PER_CONN; i += 1) {
-      const t0 = Date.now();
-      calls.push(
-        conn
-          .invoke('SubmitAnswer', qid, choiceId)
-          .then((ack) => {
-            answerSubmissionDuration.add(Date.now() - t0);
-            return ack;
+  const submissionPromises = [];
+  const clientConnections = [primaryConnection, reconnectedConnection];
+  for (const connection of clientConnections) {
+    for (let attemptIndex = 0; attemptIndex < ATTEMPTS_PER_CONN; attemptIndex += 1) {
+      const submissionStartTimeMs = Date.now();
+      submissionPromises.push(
+        connection
+          .invoke('SubmitAnswer', targetQuestionId, choiceId)
+          .then((acknowledgment) => {
+            answerSubmissionDuration.add(Date.now() - submissionStartTimeMs);
+            return acknowledgment;
           })
-          .catch((e) => ({ __throw: String(e) })),
+          .catch((err) => ({ __throw: String(err) })),
       );
     }
   }
-  const acks = await Promise.all(calls);
-  answersSubmitted.add(acks.length);
+  const submissionAcknowledgments = await Promise.all(submissionPromises);
+  answersSubmitted.add(submissionAcknowledgments.length);
 
-  let freshAccepts = 0;
-  let idempotent = 0;
-  let unexpected = 0;
-  for (const ack of acks) {
-    if (ack && ack.__throw) {
-      unexpected += 1;
+  let freshAcceptCount = 0;
+  let idempotentAcceptCount = 0;
+  let unexpectedFailureCount = 0;
+  for (const acknowledgment of submissionAcknowledgments) {
+    if (acknowledgment && acknowledgment.__throw) {
+      unexpectedFailureCount += 1;
       continue;
     }
-    if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-      if (ack.data.alreadyAnswered === true) idempotent += 1;
-      else freshAccepts += 1;
-    } else if (ack && ack.success === false && ack.error) {
-      // TooManyAnswerAttempts would mean our pacing exceeded the guard — count
-      // it as unexpected for this scenario's purposes.
-      unexpected += 1;
+    if (acknowledgment && acknowledgment.success === true && acknowledgment.data && acknowledgment.data.accepted === true) {
+      if (acknowledgment.data.alreadyAnswered === true) idempotentAcceptCount += 1;
+      else freshAcceptCount += 1;
+    } else if (acknowledgment && acknowledgment.success === false && acknowledgment.error) {
+      unexpectedFailureCount += 1;
     } else {
-      unexpected += 1;
+      unexpectedFailureCount += 1;
     }
   }
 
-  answersAccepted.add(freshAccepts + idempotent);
-  if (freshAccepts !== 1) {
+  answersAccepted.add(freshAcceptCount + idempotentAcceptCount);
+  if (freshAcceptCount !== 1) {
     // 0 => the one accepted answer was lost; >1 => the unique constraint failed
-    duplicateAnswerViolations.add(Math.abs(freshAccepts - 1), { where: 'dup:acks', freshAccepts: String(freshAccepts) });
+    duplicateAnswerViolations.add(Math.abs(freshAcceptCount - 1), {
+      where: 'dup:acks',
+      freshAcceptCount: String(freshAcceptCount),
+    });
   }
-  if (unexpected > 0) {
-    unexpectedAnswerFailures.add(unexpected);
+  if (unexpectedFailureCount > 0) {
+    unexpectedAnswerFailures.add(unexpectedFailureCount);
     bumpUnexpected('dup:submit:unexpected');
   }
 
   check(
-    { freshAccepts, idempotent, unexpected, total: acks.length },
+    { freshAcceptCount, idempotentAcceptCount, unexpectedFailureCount, totalSubmissions: submissionAcknowledgments.length },
     {
-      'exactly one fresh accept per player': (x) => x.freshAccepts === 1,
-      'all other duplicates were idempotent': (x) => x.idempotent === x.total - 1,
-      'no unexpected submission failures': (x) => x.unexpected === 0,
+      'exactly one fresh accept per player': (stats) => stats.freshAcceptCount === 1,
+      'all other duplicates were idempotent': (stats) => stats.idempotentAcceptCount === stats.totalSubmissions - 1,
+      'no unexpected submission failures': (stats) => stats.unexpectedFailureCount === 0,
     },
   );
 
-  const lingerUntil = Math.min(deadline, Date.now() + 4000);
-  while (Date.now() < lingerUntil && !c1.closed) await delay(500);
-  c1.close();
-  c2.close();
+  while (Date.now() < holdDeadlineTimestampMs && !primaryConnection.closed) {
+    await delay(1000);
+  }
+  primaryConnection.close();
+  if (reconnectedConnection) reconnectedConnection.close();
 }
 
 export async function director(data) {
   const { env, hostToken, gameId, question } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  const pre = await waitForParticipantCount(env, hostToken, gameId, DUP_PLAYERS, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + 75) * 1000,
+  const lobbyState = await waitForParticipantCount(env, hostToken, gameId, DUP_PLAYERS, {
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 75) * 1000,
     minFraction: 0.95,
     intervalMs: 1500,
   });
-  const present = pre.participants.length;
-  console.log(`[duplicate-answer] starting with ${present}/${DUP_PLAYERS} players`);
+  const presentParticipantCount = lobbyState.participants.length;
+  console.log(`[duplicate-answer] starting with ${presentParticipantCount}/${DUP_PLAYERS} players`);
 
   startGame(env, hostToken, gameId);
   await delay((question.timeLimitSeconds + 12) * 1000);
   endQuestion(env, hostToken, gameId);
 
-  const { results } = verifyClosedQuestion(env, hostToken, gameId, question, present, 'duplicate-answer');
-  console.log(`[duplicate-answer] answerCount=${results.answerCount} (expected ${present}, one row per player)`);
-  check(results, {
-    'exactly one accepted answer row per player': (r) => r.answerCount === present,
-  }, tags);
+  const { results } = verifyClosedQuestion(env, hostToken, gameId, question, presentParticipantCount, 'duplicate-answer');
+  console.log(`[duplicate-answer] answerCount=${results.answerCount} (expected ${presentParticipantCount}, one row per player)`);
+  check(
+    results,
+    {
+      'exactly one accepted answer row per player': (questionResults) => questionResults.answerCount === presentParticipantCount,
+    },
+    directorTags,
+  );
 
   try {
     endGame(env, hostToken, gameId);
@@ -240,10 +251,10 @@ export async function director(data) {
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 45;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 45;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('duplicate-answer');

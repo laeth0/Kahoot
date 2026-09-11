@@ -236,53 +236,66 @@ async function autoDetectTunnel() {
 // (scenarios then fall back to their own login()).
 async function makeTokenProvider() {
   const base = apiBase();
-  const creds = {
-    username: process.env.HOST_USERNAME || 'admin',
-    password: process.env.HOST_PASSWORD || 'admin',
+  const hostCredentials = {
+    username: process.env.HOST_USERNAME || 'IEEEXtreme Section',
+    password: process.env.HOST_PASSWORD || 'IEEEXtreme@123456789',
   };
-  let state = null; // { access, refresh, issuedAt }
+  let authState = null; // { access, refresh, issuedAt, hostId }
 
-  async function post(path, body) {
+  async function post(requestPath, requestBody) {
     try {
-      const r = await fetch(`${base}${path}`, {
+      const response = await fetch(`${base}${requestPath}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'ngrok-skip-browser-warning': 'true',
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(requestBody),
       });
-      return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };
-    } catch (err) {
+      return { status: response.status, body: response.status === 204 ? {} : await response.json().catch(() => ({})) };
+    } catch (networkError) {
       if (base.includes('.trycloudflare.com') || !base.includes('localhost')) {
         try {
-          const r = await fetch(`http://localhost:3000/api${path}`, {
+          const localFallbackResponse = await fetch(`http://localhost:3000/api${requestPath}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
+            body: JSON.stringify(requestBody),
           });
-          return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };
+          return {
+            status: localFallbackResponse.status,
+            body: localFallbackResponse.status === 204 ? {} : await localFallbackResponse.json().catch(() => ({})),
+          };
         } catch (_) {}
       }
-      throw err;
+      throw networkError;
     }
   }
 
   return async function getToken() {
-    const ageMs = state ? Date.now() - state.issuedAt : Infinity;
+    const tokenAgeMilliseconds = authState ? Date.now() - authState.issuedAt : Infinity;
     try {
-      if (!state) {
-        const r = await post('/auth/login', creds);
-        if (r.status !== 200) throw new Error(`login ${r.status}`);
-        state = { access: r.body.accessToken, refresh: r.body.refreshToken, issuedAt: Date.now(), hostId: r.body.hostId };
-      } else if (ageMs > 11 * 60 * 1000) {
-        const r = await post('/auth/refresh', { refreshToken: state.refresh });
-        if (r.status !== 200) throw new Error(`refresh ${r.status}`);
-        state = { access: r.body.accessToken, refresh: r.body.refreshToken, issuedAt: Date.now(), hostId: state.hostId };
+      if (!authState) {
+        const loginResponse = await post('/auth/login', hostCredentials);
+        if (loginResponse.status !== 200) throw new Error(`login ${loginResponse.status}`);
+        authState = {
+          access: loginResponse.body.accessToken,
+          refresh: loginResponse.body.refreshToken,
+          issuedAt: Date.now(),
+          hostId: loginResponse.body.hostId,
+        };
+      } else if (tokenAgeMilliseconds > 11 * 60 * 1000) {
+        const refreshResponse = await post('/auth/refresh', { refreshToken: authState.refresh });
+        if (refreshResponse.status !== 200) throw new Error(`refresh ${refreshResponse.status}`);
+        authState = {
+          access: refreshResponse.body.accessToken,
+          refresh: refreshResponse.body.refreshToken,
+          issuedAt: Date.now(),
+          hostId: authState.hostId,
+        };
       }
-      return { token: state.access, hostId: state.hostId };
-    } catch (e) {
-      console.warn(`[run-all] pre-auth failed (${e.message}); scenarios will log in themselves.`);
+      return { token: authState.access, hostId: authState.hostId };
+    } catch (authException) {
+      console.warn(`[run-all] pre-auth failed (${authException.message}); scenarios will log in themselves.`);
       return null;
     }
   };

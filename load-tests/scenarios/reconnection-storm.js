@@ -32,10 +32,10 @@ import {
 const STORM_PLAYERS = intEnv('STORM_PLAYERS', intEnv('PLAYERS', 500));
 const STORM_ROUNDS = intEnv('STORM_ROUNDS', 3);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
-const JOIN_RAMP_S = durationSeconds(JOIN_RAMP);
-const STORM_WINDOW = intEnv('STORM_WINDOW_SECONDS', 45); // total churn window
-const STORM_START_S = JOIN_RAMP_S + 15;
-const HOLD = STORM_START_S + STORM_WINDOW + 60;
+const JOIN_RAMP_SECONDS = parseDurationSeconds(JOIN_RAMP);
+const STORM_WINDOW_SECONDS = intEnv('STORM_WINDOW_SECONDS', 45); // total churn window
+const STORM_START_SECONDS = JOIN_RAMP_SECONDS + 15;
+const TOTAL_HOLD_DURATION_SECONDS = STORM_START_SECONDS + STORM_WINDOW_SECONDS + 60;
 
 export const options = {
   hosts: hostsOverride(),
@@ -46,7 +46,7 @@ export const options = {
       startVUs: 0,
       stages: [
         { duration: JOIN_RAMP, target: STORM_PLAYERS },
-        { duration: `${STORM_WINDOW + 75}s`, target: STORM_PLAYERS },
+        { duration: `${STORM_WINDOW_SECONDS + 75}s`, target: STORM_PLAYERS },
         { duration: '10s', target: 0 },
       ],
       gracefulRampDown: '30s',
@@ -57,7 +57,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${HOLD + 60}s`,
+      maxDuration: `${TOTAL_HOLD_DURATION_SECONDS + 60}s`,
     },
   },
   thresholds: {
@@ -70,144 +70,145 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, STORM_PLAYERS);
-  const p = provisionGames(env, { questions: 1, timeLimitSeconds: 60, games: 1 });
-  return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, STORM_PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, { questions: 1, timeLimitSeconds: 60, games: 1 });
+  return { env: environmentConfig, gameId: provisionedGame.gameId, pin: provisionedGame.pin, hostToken: provisionedGame.hostToken };
 }
-
-let done = false;
 
 export async function player(data) {
   const { env, pin } = data;
-  if (done) {
-    await delay(3000);
-    return;
-  }
-  done = true;
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
-  let client;
-  let token;
+  let signalrClient;
+  let sessionToken;
   let participantId;
   try {
-    client = new SignalRClient(env, { onClose: () => {} });
-    await client.start();
-    const res = await client.invoke('JoinGame', pin, uniqueNickname('st'));
-    if (!res || res.success !== true) {
-      recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'storm:join');
-      client.close();
+    signalrClient = new SignalRClient(env, { onClose: () => {} });
+    await signalrClient.start();
+    const joinResult = await signalrClient.invoke('JoinGame', pin, uniqueNickname('st'));
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, 'storm:join');
+      signalrClient.close();
       return;
     }
-    token = res.data.sessionToken;
-    participantId = res.data.participantId;
+    sessionToken = joinResult.data.sessionToken;
+    participantId = joinResult.data.participantId;
     playersJoined.add(1);
     noUnexpected();
-  } catch (e) {
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('storm:connect');
     return;
   }
 
   // Hold in the lobby until the whole cohort is in, so the churn is concentrated.
-  while (exec.instance.currentTestRunDuration < STORM_START_S * 1000 && !client.closed) {
+  while (exec.instance.currentTestRunDuration < STORM_START_SECONDS * 1000 && !signalrClient.closed) {
     await delay(500);
   }
 
-  const perRoundGap = Math.floor((STORM_WINDOW * 1000) / STORM_ROUNDS);
-  for (let round = 1; round <= STORM_ROUNDS; round += 1) {
+  const perRoundGapMs = Math.floor((STORM_WINDOW_SECONDS * 1000) / STORM_ROUNDS);
+  for (let roundNumber = 1; roundNumber <= STORM_ROUNDS; roundNumber += 1) {
     try {
-      client.close();
+      signalrClient.close();
     } catch (_) {
       /* ignore */
     }
     await delay(80 + Math.random() * 700);
 
-    const c = new SignalRClient(env, { onClose: () => {} });
-    const t0 = Date.now();
+    const reconnectedClient = new SignalRClient(env, { onClose: () => {} });
+    const reconnectionStartTimeMs = Date.now();
     try {
-      await c.start();
-      const rc = await c.invoke('Reconnect', token);
-      reconnectionDuration.add(Date.now() - t0, { round: String(round) });
-      if (!rc || rc.success !== true || !rc.data) {
-        reconnectionFailures.add(1, { round: String(round), reason: rc && rc.error ? rc.error.code : 'no-data' });
+      await reconnectedClient.start();
+      const reconnectResult = await reconnectedClient.invoke('Reconnect', sessionToken);
+      reconnectionDuration.add(Date.now() - reconnectionStartTimeMs, { round: String(roundNumber) });
+      if (!reconnectResult || reconnectResult.success !== true || !reconnectResult.data) {
+        const failureCode = reconnectResult && reconnectResult.error ? reconnectResult.error.code : 'no-data';
+        reconnectionFailures.add(1, { round: String(roundNumber), reason: failureCode });
         bumpUnexpected('storm:reconnect:failed');
-      } else if (rc.data.participantId !== participantId) {
+      } else if (reconnectResult.data.participantId !== participantId) {
         duplicateParticipants.add(1, { where: 'storm' });
-        reconnectionFailures.add(1, { round: String(round), reason: 'identity-changed' });
+        reconnectionFailures.add(1, { round: String(roundNumber), reason: 'identity-changed' });
       } else {
         noUnexpected();
       }
-      client = c;
-    } catch (e) {
-      reconnectionFailures.add(1, { round: String(round), reason: 'exception' });
+      signalrClient = reconnectedClient;
+    } catch (reconnectException) {
+      reconnectionFailures.add(1, { round: String(roundNumber), reason: 'exception' });
       bumpUnexpected('storm:reconnect:exception');
-      client = c;
+      signalrClient = reconnectedClient;
     }
 
-    const nextRoundAt = Date.now() + perRoundGap;
-    while (Date.now() < nextRoundAt && client && !client.closed) await delay(300);
+    const nextRoundTimestampMs = Date.now() + perRoundGapMs;
+    while (Date.now() < nextRoundTimestampMs && signalrClient && !signalrClient.closed) {
+      await delay(300);
+    }
   }
 
-  if (client && !client.closed && client.connected) {
-    check(client, { 'connection alive after storm': () => true });
+  if (signalrClient && !signalrClient.closed && signalrClient.connected) {
+    check(signalrClient, { 'connection alive after storm': () => true });
   } else {
     signalrUnexpectedDisconnects.add(1);
     check(null, { 'connection alive after storm': () => false });
   }
 
-  const deadline = Date.now() + 30000;
-  while (Date.now() < deadline && client && !client.closed) await delay(1000);
-  if (client) client.close();
+  while (Date.now() < holdDeadlineTimestampMs && signalrClient && !signalrClient.closed) {
+    await delay(1000);
+  }
+  if (signalrClient) signalrClient.close();
 }
 
 export async function director(data) {
   const { env, hostToken, gameId } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  const pre = await waitForParticipantCount(env, hostToken, gameId, STORM_PLAYERS, {
-    timeoutMs: (JOIN_RAMP_S + 60) * 1000,
+  const preStormLobbyState = await waitForParticipantCount(env, hostToken, gameId, STORM_PLAYERS, {
+    timeoutMs: (JOIN_RAMP_SECONDS + 60) * 1000,
     minFraction: 0.95,
     intervalMs: 2000,
   });
-  const present = pre.participants.length;
-  console.log(`[reconnection-storm] ${present}/${STORM_PLAYERS} joined; storm window ${STORM_WINDOW}s x ${STORM_ROUNDS} rounds`);
+  const presentParticipantCount = preStormLobbyState.participants.length;
+  console.log(`[reconnection-storm] ${presentParticipantCount}/${STORM_PLAYERS} joined; storm window ${STORM_WINDOW_SECONDS}s x ${STORM_ROUNDS} rounds`);
 
   // Probe responsiveness THROUGH the storm.
-  let probes = 0;
-  let probeFails = 0;
-  const probeUntil = (STORM_START_S + STORM_WINDOW + 5) * 1000;
-  while (exec.instance.currentTestRunDuration < probeUntil) {
+  let probeAttemptCount = 0;
+  let probeFailureCount = 0;
+  const probeUntilMs = (STORM_START_SECONDS + STORM_WINDOW_SECONDS + 5) * 1000;
+  while (exec.instance.currentTestRunDuration < probeUntilMs) {
     try {
-      const s = getHostState(env, hostToken, gameId);
-      probes += 1;
-      if (s.status === undefined || s.status === null || (typeof s.status !== 'string' && typeof s.status !== 'number')) {
-        probeFails += 1;
+      const probeState = getHostState(env, hostToken, gameId);
+      probeAttemptCount += 1;
+      if (probeState.status === undefined || probeState.status === null || (typeof probeState.status !== 'string' && typeof probeState.status !== 'number')) {
+        probeFailureCount += 1;
       }
-    } catch (e) {
-      probes += 1;
-      probeFails += 1;
+    } catch (probeError) {
+      probeAttemptCount += 1;
+      probeFailureCount += 1;
     }
     await delay(3000);
   }
 
-  // Recovery.
+  // Recovery verification.
   await delay(10000);
-  const post = getHostState(env, hostToken, gameId);
-  const ids = new Set(post.participants.map((p) => p.id));
-  const dupes = post.participants.length - ids.size;
-  if (dupes > 0) duplicateParticipants.add(dupes, { where: 'director:recovery' });
+  const postStormState = getHostState(env, hostToken, gameId);
+  const participantIds = new Set(postStormState.participants.map((participant) => participant.id));
+  const duplicateParticipantCount = postStormState.participants.length - participantIds.size;
+  if (duplicateParticipantCount > 0) {
+    duplicateParticipants.add(duplicateParticipantCount, { where: 'director:recovery' });
+  }
 
   console.log(
-    `[reconnection-storm] probes=${probes} probeFails=${probeFails} roster ${present} -> ${post.participants.length} dupes=${dupes}`,
+    `[reconnection-storm] probes=${probeAttemptCount} probeFails=${probeFailureCount} roster ${presentParticipantCount} -> ${postStormState.participants.length} dupes=${duplicateParticipantCount}`,
   );
   check(
-    { probeFails, present, post, dupes },
+    { probeFailureCount, presentParticipantCount, postStormState, duplicateParticipantCount },
     {
-      'API answered every probe during the storm': (x) => x.probeFails === 0,
-      'roster size unchanged by the storm': (x) => x.post.participants.length === x.present,
-      'no duplicate participants after recovery': (x) => x.dupes === 0,
+      'API answered every probe during the storm': (ctx) => ctx.probeFailureCount === 0,
+      'roster size unchanged by the storm': (ctx) => ctx.postStormState.participants.length === ctx.presentParticipantCount,
+      'no duplicate participants after recovery': (ctx) => ctx.duplicateParticipantCount === 0,
     },
-    tags,
+    directorTags,
   );
 
   try {
@@ -217,10 +218,10 @@ export async function director(data) {
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 90;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 90;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('reconnection-storm');

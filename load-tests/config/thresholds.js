@@ -60,12 +60,12 @@ export function reconnectionThresholds() {
   };
 }
 
-export function mergeThresholds(...sets) {
-  const out = {};
-  for (const s of sets) {
-    for (const k of Object.keys(s)) {
-      out[k] = (out[k] || []).concat(s[k]);
+export function mergeThresholds(...thresholdSets) {
+  const mergedThresholds = {};
+  for (const thresholdSet of thresholdSets) {
+    for (const metricName of Object.keys(thresholdSet)) {
+      mergedThresholds[metricName] = (mergedThresholds[metricName] || []).concat(thresholdSet[metricName]);
     }
   }
-  return out;
+  return mergedThresholds;
 }

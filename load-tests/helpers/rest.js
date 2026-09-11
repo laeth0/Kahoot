@@ -150,11 +150,11 @@ function gameControl(env, token, gameId, action, okStatus) {
   return res.body ? safeJson(res.body) : null;
 }
 
-export const startGame = (env, t, g) => gameControl(env, t, g, 'start', 200);
-export const advance = (env, t, g) => gameControl(env, t, g, 'advance', 200);
-export const endQuestion = (env, t, g) => gameControl(env, t, g, 'end-question', 200);
-export const showLeaderboard = (env, t, g) => gameControl(env, t, g, 'leaderboard', 200);
-export const endGame = (env, t, g) => gameControl(env, t, g, 'end', 200);
+export const startGame = (env, token, gameId) => gameControl(env, token, gameId, 'start', 200);
+export const advance = (env, token, gameId) => gameControl(env, token, gameId, 'advance', 200);
+export const endQuestion = (env, token, gameId) => gameControl(env, token, gameId, 'end-question', 200);
+export const showLeaderboard = (env, token, gameId) => gameControl(env, token, gameId, 'leaderboard', 200);
+export const endGame = (env, token, gameId) => gameControl(env, token, gameId, 'end', 200);
 
 export function removeParticipant(env, token, gameId, participantId) {
   const res = api(env, 'DELETE', `/games/${gameId}/participants/${participantId}`, null, token, {

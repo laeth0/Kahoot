@@ -36,10 +36,10 @@ import {
 
 const GAMES = intEnv('GAMES', 10);
 const PLAYERS_PER_GAME = intEnv('PLAYERS_PER_GAME', 50);
-const TOTAL = GAMES * PLAYERS_PER_GAME;
+const TOTAL_PLAYERS = GAMES * PLAYERS_PER_GAME;
 const TIME_LIMIT = Math.min(300, Math.max(20, intEnv('ANSWER_TIME_LIMIT', 60)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
-const HOLD = durationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
+const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
 
 export const options = {
   hosts: hostsOverride(),
@@ -49,8 +49,8 @@ export const options = {
       exec: 'player',
       startVUs: 0,
       stages: [
-        { duration: JOIN_RAMP, target: TOTAL },
-        { duration: `${120 + TIME_LIMIT}s`, target: TOTAL },
+        { duration: JOIN_RAMP, target: TOTAL_PLAYERS },
+        { duration: `${120 + TIME_LIMIT}s`, target: TOTAL_PLAYERS },
         { duration: '10s', target: 0 },
       ],
       gracefulRampDown: '30s',
@@ -61,7 +61,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${HOLD + 90}s`,
+      maxDuration: `${TOTAL_HOLD_DURATION_SECONDS + 90}s`,
     },
   },
   thresholds: mergeThresholds(correctnessThresholds(), {
@@ -73,154 +73,167 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, TOTAL);
-  const p = provisionPerGameQuizzes(env, { count: GAMES, timeLimitSeconds: TIME_LIMIT, points: 1000 });
-  return { env, hostToken: p.hostToken, games: p.games };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, TOTAL_PLAYERS);
+  const provisionedQuizzes = provisionPerGameQuizzes(environmentConfig, { count: GAMES, timeLimitSeconds: TIME_LIMIT, points: 1000 });
+  return { env: environmentConfig, hostToken: provisionedQuizzes.hostToken, games: provisionedQuizzes.games };
 }
-
-let done = false;
 
 export async function player(data) {
   const { env, games } = data;
-  if (done) {
-    await delay(3000);
-    return;
-  }
-  done = true;
+  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
-  const g = (exec.vu.idInTest - 1) % GAMES;
-  const game = games[g];
-  const myQuestionId = game.firstQuestion.questionId;
+  const assignedGameIndex = (exec.vu.idInTest - 1) % GAMES;
+  const targetGameSession = games[assignedGameIndex];
+  const assignedQuestionId = targetGameSession.firstQuestion.questionId;
 
-  let client;
-  const received = []; // questionIds seen
-  let recvOwnAt = 0;
+  let signalrClient;
+  const receivedEvents = [];
+  let ownQuestionReceivedTimestampMs = 0;
 
   try {
-    client = new SignalRClient(env);
-    const record = (label) => (payload) => {
-      const qid = payload && (payload.questionId || (payload && payload.QuestionId));
-      received.push({ label, qid });
-      if (label === 'QuestionStarted' && qid === myQuestionId && !recvOwnAt) recvOwnAt = Date.now();
-      if (qid && qid !== myQuestionId) {
-        sessionIsolationViolations.add(1, { event: label, game: String(g) });
+    signalrClient = new SignalRClient(env);
+    const createEventRecorder = (eventLabel) => (eventPayload) => {
+      const payloadQuestionId = eventPayload && (eventPayload.questionId || eventPayload.QuestionId);
+      receivedEvents.push({ label: eventLabel, questionId: payloadQuestionId });
+      if (eventLabel === 'QuestionStarted' && payloadQuestionId === assignedQuestionId && !ownQuestionReceivedTimestampMs) {
+        ownQuestionReceivedTimestampMs = Date.now();
+      }
+      if (payloadQuestionId && payloadQuestionId !== assignedQuestionId) {
+        sessionIsolationViolations.add(1, { event: eventLabel, game: String(assignedGameIndex) });
       }
     };
-    client.on('QuestionStarted', record('QuestionStarted'));
-    client.on('QuestionEnded', record('QuestionEnded'));
-    client.on('LeaderboardUpdated', () => {
-      /* leaderboard payload carries no questionId; isolation checked director-side */
-    });
-    client.on('GameEnded', () => {});
-    await client.start();
-  } catch (e) {
+    signalrClient.on('QuestionStarted', createEventRecorder('QuestionStarted'));
+    signalrClient.on('QuestionEnded', createEventRecorder('QuestionEnded'));
+    signalrClient.on('LeaderboardUpdated', () => {});
+    signalrClient.on('GameEnded', () => {});
+    await signalrClient.start();
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('multi:connect');
     return;
   }
 
-  let qidToAnswer = myQuestionId;
   try {
-    const res = await client.invoke('JoinGame', game.pin, uniqueNickname(`g${g}`));
-    if (!res || res.success !== true) {
-      recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'multi:join');
-      client.close();
+    const nickname = uniqueNickname(`g${assignedGameIndex}`);
+    const joinResult = await signalrClient.invoke('JoinGame', targetGameSession.pin, nickname);
+    if (!joinResult || joinResult.success !== true) {
+      const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
+      recordJoinFailure(errorCode, 'multi:join');
+      signalrClient.close();
       return;
     }
-    playersJoined.add(1, { game: String(g) });
+    playersJoined.add(1, { game: String(assignedGameIndex) });
     noUnexpected();
-  } catch (e) {
+  } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('multi:join:exception');
-    client.close();
+    signalrClient.close();
     return;
   }
 
-  const deadline = Date.now() + HOLD * 1000;
-  while (!recvOwnAt && Date.now() < deadline && !client.closed) await delay(50);
+  while (!ownQuestionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+    await delay(50);
+  }
 
-  if (recvOwnAt) {
+  if (ownQuestionReceivedTimestampMs) {
     try {
-      const ack = await client.invoke('SubmitAnswer', qidToAnswer, game.firstQuestion.correctChoiceId);
-      answersSubmitted.add(1, { game: String(g) });
-      if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-        answersAccepted.add(1, { game: String(g) });
+      const submissionAck = await signalrClient.invoke('SubmitAnswer', assignedQuestionId, targetGameSession.firstQuestion.correctChoiceId);
+      answersSubmitted.add(1, { game: String(assignedGameIndex) });
+      if (submissionAck && submissionAck.success === true && submissionAck.data && submissionAck.data.accepted === true) {
+        answersAccepted.add(1, { game: String(assignedGameIndex) });
         noUnexpected();
       } else {
         bumpUnexpected('multi:submit');
       }
-    } catch (e) {
+    } catch (submissionException) {
       bumpUnexpected('multi:submit:exception');
     }
   }
 
-  // Linger to catch any cross-game event that might arrive late.
-  const lingerUntil = Math.min(deadline, Date.now() + 10000);
-  while (Date.now() < lingerUntil && !client.closed) await delay(500);
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+    await delay(500);
+  }
 
   check(
-    { received, g },
+    { receivedEvents, assignedGameIndex },
     {
-      'player received its own QuestionStarted': (x) =>
-        x.received.some((r) => r.label === 'QuestionStarted' && r.qid === myQuestionId),
-      'player received NO foreign questionId': (x) => x.received.every((r) => !r.qid || r.qid === myQuestionId),
+      'player received its own QuestionStarted': (ctx) =>
+        ctx.receivedEvents.some((eventItem) => eventItem.label === 'QuestionStarted' && eventItem.questionId === assignedQuestionId),
+      'player received NO foreign questionId': (ctx) =>
+        ctx.receivedEvents.every((eventItem) => !eventItem.questionId || eventItem.questionId === assignedQuestionId),
     },
   );
 
-  client.close();
+  signalrClient.close();
 }
 
 export async function director(data) {
   const { env, hostToken, games } = data;
-  const tags = { scope: 'director' };
+  const directorTags = { scope: 'director' };
 
-  // Start every game once ~all its players are in (staggered).
-  const started = [];
+  // Start every game once participants assemble in the lobby
+  const startedGames = [];
   for (const game of games) {
-    const pre = await waitForParticipantCount(env, hostToken, game.gameId, PLAYERS_PER_GAME, {
-      timeoutMs: (durationSeconds(JOIN_RAMP) + 90) * 1000,
+    const lobbyState = await waitForParticipantCount(env, hostToken, game.gameId, PLAYERS_PER_GAME, {
+      timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 90) * 1000,
       minFraction: 0.95,
       intervalMs: 1500,
     });
     startGame(env, hostToken, game.gameId);
-    started.push({ game, present: pre.participants.length });
-    console.log(`[multiple-games] game ${game.index} started with ${pre.participants.length}/${PLAYERS_PER_GAME}`);
+    startedGames.push({ game, present: lobbyState.participants.length });
+    console.log(`[multiple-games] game ${game.index} started with ${lobbyState.participants.length}/${PLAYERS_PER_GAME}`);
     await delay(750);
   }
 
   await delay((data.games[0].firstQuestion.timeLimitSeconds + 15) * 1000);
 
   // Close + verify each game independently, then cross-check disjointness.
-  const idSets = [];
-  for (const { game, present } of started) {
+  const gameStateSummaries = [];
+  for (const { game, present } of startedGames) {
     endQuestion(env, hostToken, game.gameId);
     const { results, state } = verifyClosedQuestion(env, hostToken, game.gameId, game.firstQuestion, present, `multi:g${game.index}`);
-    const lb = showLeaderboard(env, hostToken, game.gameId);
-    const ids = new Set(state.participants.map((p) => p.id));
-    idSets.push({ index: game.index, ids, lbCount: lb.entries.length, present, answerCount: results.answerCount });
+    const leaderboard = showLeaderboard(env, hostToken, game.gameId);
+    const participantIdSet = new Set(state.participants.map((participant) => participant.id));
+    gameStateSummaries.push({
+      index: game.index,
+      ids: participantIdSet,
+      leaderboardCount: leaderboard.entries.length,
+      present,
+      answerCount: results.answerCount,
+    });
 
     check(
-      { results, lb, present },
+      { results, leaderboard, present },
       {
-        [`g${game.index}: answerCount == players (${present})`]: (x) => x.results.answerCount === x.present,
-        [`g${game.index}: leaderboard size == players`]: (x) => x.lb.entries.length === x.present,
-        [`g${game.index}: leaderboard ids subset of game roster`]: (x) =>
-          x.lb.entries.every((e) => ids.has(e.participantId)),
+        [`g${game.index}: answerCount == players (${present})`]: (ctx) => ctx.results.answerCount === ctx.present,
+        [`g${game.index}: leaderboard size == players`]: (ctx) => ctx.leaderboard.entries.length === ctx.present,
+        [`g${game.index}: leaderboard ids subset of game roster`]: (ctx) =>
+          ctx.leaderboard.entries.every((entry) => participantIdSet.has(entry.participantId)),
       },
-      tags,
+      directorTags,
     );
   }
 
   // Pairwise-disjoint participant id sets => fully isolated rosters/scores.
-  let overlaps = 0;
-  for (let i = 0; i < idSets.length; i += 1) {
-    for (let j = i + 1; j < idSets.length; j += 1) {
-      for (const id of idSets[i].ids) if (idSets[j].ids.has(id)) overlaps += 1;
+  let overlappingParticipantCount = 0;
+  for (let firstGameIndex = 0; firstGameIndex < gameStateSummaries.length; firstGameIndex += 1) {
+    for (let secondGameIndex = firstGameIndex + 1; secondGameIndex < gameStateSummaries.length; secondGameIndex += 1) {
+      for (const participantId of gameStateSummaries[firstGameIndex].ids) {
+        if (gameStateSummaries[secondGameIndex].ids.has(participantId)) {
+          overlappingParticipantCount += 1;
+        }
+      }
     }
   }
-  if (overlaps > 0) sessionIsolationViolations.add(overlaps, { where: 'roster-overlap' });
-  check({ overlaps }, { 'no participant appears in two games': (x) => x.overlaps === 0 }, tags);
+  if (overlappingParticipantCount > 0) {
+    sessionIsolationViolations.add(overlappingParticipantCount, { where: 'roster-overlap' });
+  }
+  check(
+    { overlappingParticipantCount },
+    { 'no participant appears in two games': (ctx) => ctx.overlappingParticipantCount === 0 },
+    directorTags,
+  );
 
   for (const game of games) {
     try {
@@ -231,10 +244,10 @@ export async function director(data) {
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 90;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 90;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('multiple-games');

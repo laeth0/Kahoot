@@ -32,8 +32,8 @@ import {
 const PLAYERS = intEnv('PLAYERS', 500);
 const CONNECT_RAMP = __ENV.CONNECT_RAMP || '240s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 90);
-const DOWN_SECONDS = 15;
-const TOTAL_MS = (durationSeconds(CONNECT_RAMP) + HOLD_SECONDS + DOWN_SECONDS) * 1000;
+const RAMP_DOWN_SECONDS = 15;
+const TOTAL_DURATION_MS = (parseDurationSeconds(CONNECT_RAMP) + HOLD_SECONDS + RAMP_DOWN_SECONDS) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -44,7 +44,7 @@ export const options = {
       stages: [
         { duration: CONNECT_RAMP, target: PLAYERS },
         { duration: `${HOLD_SECONDS}s`, target: PLAYERS },
-        { duration: `${DOWN_SECONDS}s`, target: 0 },
+        { duration: `${RAMP_DOWN_SECONDS}s`, target: 0 },
       ],
       gracefulRampDown: '20s',
       gracefulStop: '45s',
@@ -55,60 +55,54 @@ export const options = {
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PLAYERS);
-  return { env };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PLAYERS);
+  return { env: environmentConfig };
 }
 
-// One connection per VU, held for the rest of the run.
-let connected = false;
-
 export default async function (data) {
-  if (connected) {
-    await delay(3000);
-    return;
-  }
-  connected = true;
-
-  let droppedEarly = false;
-  const client = new SignalRClient(data.env, {
+  let wasConnectionDroppedEarly = false;
+  const signalrClient = new SignalRClient(data.env, {
     onClose: () => {
-      droppedEarly = true;
+      wasConnectionDroppedEarly = true;
     },
   });
 
   try {
-    await client.start();
-  } catch (e) {
+    await signalrClient.start();
+  } catch (connectionError) {
     bumpUnexpected('connections:connect');
     check(null, { 'connection established': () => false });
     return;
   }
 
-  check(client, { 'connection established': (c) => c.connected === true });
+  check(signalrClient, { 'connection established': (activeClient) => activeClient.connected === true });
   noUnexpected();
 
-  // Hold until ~the end of the scenario, sampling the live count as we go.
-  const holdUntil = TOTAL_MS - 8000;
-  while (exec.instance.currentTestRunDuration < holdUntil && !client.closed) {
+  // Hold until the end of the scenario, sampling the live count as we go.
+  const targetHoldUntilMs = TOTAL_DURATION_MS - 8000;
+  while (exec.instance.currentTestRunDuration < targetHoldUntilMs && !signalrClient.closed) {
     signalrConnectionsActive.add(exec.instance.vusActive);
     await delay(2000);
   }
 
-  if (droppedEarly && exec.instance.currentTestRunDuration < holdUntil - 3000) {
+  if (wasConnectionDroppedEarly && exec.instance.currentTestRunDuration < targetHoldUntilMs - 3000) {
     signalrUnexpectedDisconnects.add(1);
     check(null, { 'held the connection for the whole window': () => false });
   } else {
-    check(client, { 'held the connection for the whole window': () => true });
+    check(signalrClient, { 'held the connection for the whole window': () => true });
   }
 
-  client.close();
+  while (exec.instance.currentTestRunDuration < TOTAL_DURATION_MS && !signalrClient.closed) {
+    await delay(1000);
+  }
+  signalrClient.close();
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 240;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 240;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('connections');

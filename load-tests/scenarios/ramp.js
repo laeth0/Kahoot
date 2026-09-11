@@ -31,24 +31,26 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const LEVELS = (__ENV.RAMP_LEVELS || '100,250,500').split(',').map((s) => parseInt(s.trim(), 10));
-const PEAK = Math.max(...LEVELS);
+const RAMP_LOAD_LEVELS = (__ENV.RAMP_LEVELS || '100,250,500').split(',').map((levelString) => parseInt(levelString.trim(), 10));
+const PEAK_LOAD_PLAYERS = Math.max(...RAMP_LOAD_LEVELS);
 const JOIN_RAMP = __ENV.RAMP_JOIN_RAMP || __ENV.JOIN_RAMP || '60s';
-const Q_LEN = Math.min(300, Math.max(10, intEnv('RAMP_QUESTION_SECONDS', 20)));
-const Q_COUNT = Math.max(LEVELS.length, intEnv('RAMP_QUESTIONS', LEVELS.length));
+const QUESTION_TIME_LIMIT_SECONDS = Math.min(300, Math.max(10, intEnv('RAMP_QUESTION_SECONDS', 20)));
+const TOTAL_QUESTIONS_COUNT = Math.max(RAMP_LOAD_LEVELS.length, intEnv('RAMP_QUESTIONS', RAMP_LOAD_LEVELS.length));
 
-const stages = [
-  { duration: JOIN_RAMP, target: PEAK },
-  { duration: `${Q_COUNT * (Q_LEN + 6) + 10}s`, target: PEAK },
+const executionStages = [
+  { duration: JOIN_RAMP, target: PEAK_LOAD_PLAYERS },
+  { duration: `${TOTAL_QUESTIONS_COUNT * (QUESTION_TIME_LIMIT_SECONDS + 6) + 10}s`, target: PEAK_LOAD_PLAYERS },
   { duration: '10s', target: 0 },
 ];
 
-const perLevel = {};
-for (const l of LEVELS) {
-  perLevel[`answer_submission_duration{load:${l}}`] = l <= 500 ? ['p(95)<1000'] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
-  perLevel[`unexpected_error_rate{load:${l}}`] = l <= 500 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
-  perLevel[`answers_submitted{load:${l}}`] = ['count>=0'];
-  perLevel[`answers_accepted{load:${l}}`] = ['count>=0'];
+const perLevelThresholds = {};
+for (const loadLevel of RAMP_LOAD_LEVELS) {
+  perLevelThresholds[`answer_submission_duration{load:${loadLevel}}`] =
+    loadLevel <= 500 ? ['p(95)<1000'] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
+  perLevelThresholds[`unexpected_error_rate{load:${loadLevel}}`] =
+    loadLevel <= 500 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
+  perLevelThresholds[`answers_submitted{load:${loadLevel}}`] = ['count>=0'];
+  perLevelThresholds[`answers_accepted{load:${loadLevel}}`] = ['count>=0'];
 }
 
 export const options = {
@@ -58,7 +60,7 @@ export const options = {
       executor: 'ramping-vus',
       exec: 'player',
       startVUs: 0,
-      stages,
+      stages: executionStages,
       gracefulRampDown: '15s',
       gracefulStop: '30s',
     },
@@ -67,90 +69,101 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${stages.reduce((s, st) => s + durationSeconds(st.duration), 0) + 120}s`,
+      maxDuration: `${executionStages.reduce((totalDuration, stage) => totalDuration + parseDurationSeconds(stage.duration), 0) + 120}s`,
     },
   },
   thresholds: Object.assign(
     {
       checks: ['rate>0.90'],
     },
-    perLevel,
+    perLevelThresholds,
   ),
   summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
 };
 
 export function setup() {
-  const env = resolveEnv();
-  assertLoadAllowed(env, PEAK);
-  const p = provisionGames(env, { questions: Q_COUNT, timeLimitSeconds: Q_LEN, points: 1000, games: 1 });
-  console.log(`[ramp] game ${p.gameId} pin ${p.pin} with ${p.questions.length} questions for levels: ${LEVELS.join(', ')}`);
-  return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken, questions: p.questions };
+  const environmentConfig = resolveEnv();
+  assertLoadAllowed(environmentConfig, PEAK_LOAD_PLAYERS);
+  const provisionedGame = provisionGames(environmentConfig, {
+    questions: TOTAL_QUESTIONS_COUNT,
+    timeLimitSeconds: QUESTION_TIME_LIMIT_SECONDS,
+    points: 1000,
+    games: 1,
+  });
+  console.log(`[ramp] game ${provisionedGame.gameId} pin ${provisionedGame.pin} with ${provisionedGame.questions.length} questions for levels: ${RAMP_LOAD_LEVELS.join(', ')}`);
+  return {
+    env: environmentConfig,
+    gameId: provisionedGame.gameId,
+    pin: provisionedGame.pin,
+    hostToken: provisionedGame.hostToken,
+    questions: provisionedGame.questions,
+  };
 }
 
 export async function player(data) {
   const { env, pin, questions } = data;
   const vuIndex = exec.vu.idInTest;
 
-  const client = new SignalRClient(env, { onClose: () => {} });
-  let currentQ = null;
-  let answeredQ = null;
+  const signalrClient = new SignalRClient(env, { onClose: () => {} });
+  let activeQuestionId = null;
+  let answeredQuestionId = null;
 
-  client.on('QuestionStarted', (q) => {
-    const qid = q && (q.questionId || q.QuestionId);
-    if (qid) currentQ = String(qid).toLowerCase();
+  signalrClient.on('QuestionStarted', (questionStartedPayload) => {
+    const receivedId = questionStartedPayload && (questionStartedPayload.questionId || questionStartedPayload.QuestionId);
+    if (receivedId) activeQuestionId = String(receivedId).toLowerCase();
   });
 
   try {
-    await client.start();
-    const res = await client.invoke('JoinGame', pin, uniqueNickname('s'));
-    if (!res || res.success !== true) {
-      const code = res && res.error ? res.error.code : 'no-response';
-      recordJoinFailure(code, `ramp:join:${code}`);
-      client.close();
+    await signalrClient.start();
+    const joinResponse = await signalrClient.invoke('JoinGame', pin, uniqueNickname('s'));
+    if (!joinResponse || joinResponse.success !== true) {
+      const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
+      recordJoinFailure(errorCode, `ramp:join:${errorCode}`);
+      signalrClient.close();
       return;
     }
     playersJoined.add(1);
     noUnexpected();
-  } catch (e) {
+  } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('ramp:connect');
-    client.close();
+    signalrClient.close();
     return;
   }
 
   // Keep client alive and respond to questions throughout the game
-  const maxHoldMs = (durationSeconds(JOIN_RAMP) + Q_COUNT * (Q_LEN + 10) + 30) * 1000;
-  const deadline = Date.now() + maxHoldMs;
+  const maxHoldDurationMs = (parseDurationSeconds(JOIN_RAMP) + TOTAL_QUESTIONS_COUNT * (QUESTION_TIME_LIMIT_SECONDS + 10) + 30) * 1000;
+  const holdDeadlineTimestampMs = Date.now() + maxHoldDurationMs;
 
-  while (Date.now() < deadline && !client.closed) {
-    if (currentQ && currentQ !== answeredQ) {
-      answeredQ = currentQ;
-      const qObj = questions.find((x) => String(x.questionId).toLowerCase() === currentQ);
-      const qIndex = qObj ? qObj.orderIndex : 0;
-      const activeLevel = LEVELS[Math.min(qIndex, LEVELS.length - 1)];
+  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+    if (activeQuestionId && activeQuestionId !== answeredQuestionId) {
+      answeredQuestionId = activeQuestionId;
+      const matchingQuestion = questions.find((q) => String(q.questionId).toLowerCase() === activeQuestionId);
+      const questionIndex = matchingQuestion ? matchingQuestion.orderIndex : 0;
+      const activeLoadLevel = RAMP_LOAD_LEVELS[Math.min(questionIndex, RAMP_LOAD_LEVELS.length - 1)];
 
-      // Players up to activeLevel submit answers for this question
-      if (vuIndex <= activeLevel + 1) {
-        const choiceId = qObj ? qObj.correctChoiceId : null;
-        if (choiceId) {
-          const t0 = Date.now();
-          const tags = { load: String(activeLevel) };
+      // Players up to activeLoadLevel submit answers for this question tier
+      if (vuIndex <= activeLoadLevel + 1) {
+        const choiceIdToSubmit = matchingQuestion ? matchingQuestion.correctChoiceId : null;
+        if (choiceIdToSubmit) {
+          const submissionStartTimeMs = Date.now();
+          const loadTags = { load: String(activeLoadLevel) };
           try {
-            const ack = await client.invoke('SubmitAnswer', currentQ, choiceId);
-            answerSubmissionDuration.add(Date.now() - t0, tags);
-            answersSubmitted.add(1, tags);
-            if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-              answersAccepted.add(1, tags);
-              noUnexpected(tags);
-            } else if (ack && ack.success === false && ack.error) {
-              answersRejected.add(1, { code: ack.error.code, ...tags });
+            const submissionAck = await signalrClient.invoke('SubmitAnswer', activeQuestionId, choiceIdToSubmit);
+            answerSubmissionDuration.add(Date.now() - submissionStartTimeMs, loadTags);
+            answersSubmitted.add(1, loadTags);
+            if (submissionAck && submissionAck.success === true && submissionAck.data && submissionAck.data.accepted === true) {
+              answersAccepted.add(1, loadTags);
+              noUnexpected(loadTags);
+            } else if (submissionAck && submissionAck.success === false && submissionAck.error) {
+              answersRejected.add(1, { code: submissionAck.error.code, ...loadTags });
             } else {
-              unexpectedAnswerFailures.add(1, tags);
-              bumpUnexpected('ramp:submit:malformed', tags);
+              unexpectedAnswerFailures.add(1, loadTags);
+              bumpUnexpected('ramp:submit:malformed', loadTags);
             }
-          } catch (e) {
-            unexpectedAnswerFailures.add(1, tags);
-            bumpUnexpected('ramp:submit:exception', tags);
+          } catch (submissionException) {
+            unexpectedAnswerFailures.add(1, loadTags);
+            bumpUnexpected('ramp:submit:exception', loadTags);
           }
         }
       }
@@ -159,7 +172,7 @@ export async function player(data) {
   }
 
   try {
-    client.close();
+    signalrClient.close();
   } catch (_) {}
 }
 
@@ -167,51 +180,51 @@ export async function director(data) {
   const { env, hostToken, gameId, questions } = data;
 
   // 1. Wait for cohort to assemble in the lobby (WaitingForPlayers state)
-  console.log(`[ramp] waiting for players to join lobby (target: ${PEAK})...`);
-  const pre = await waitForParticipantCount(env, hostToken, gameId, PEAK, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + 40) * 1000,
+  console.log(`[ramp] waiting for players to join lobby (target: ${PEAK_LOAD_PLAYERS})...`);
+  const lobbyState = await waitForParticipantCount(env, hostToken, gameId, PEAK_LOAD_PLAYERS, {
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 40) * 1000,
     minFraction: 0.85,
     intervalMs: 1500,
   });
-  const present = pre && pre.participants ? pre.participants.length : 0;
-  console.log(`[ramp] lobby ready with ${present} players. Starting questions...`);
+  const presentParticipantCount = lobbyState && lobbyState.participants ? lobbyState.participants.length : 0;
+  console.log(`[ramp] lobby ready with ${presentParticipantCount} players. Starting questions...`);
 
-  let started = false;
-  for (let i = 0; i < questions.length; i += 1) {
+  let hasStarted = false;
+  for (let questionIndex = 0; questionIndex < questions.length; questionIndex += 1) {
     try {
-      if (!started) {
+      if (!hasStarted) {
         startGame(env, hostToken, gameId);
-        started = true;
+        hasStarted = true;
       } else {
         advance(env, hostToken, gameId);
       }
-    } catch (e) {
-      console.log(`[ramp] director stop at question ${i}: ${e}`);
+    } catch (startError) {
+      console.log(`[ramp] director stop at question ${questionIndex}: ${startError}`);
       break;
     }
-    await delay((questions[i].timeLimitSeconds + 3) * 1000);
+    await delay((questions[questionIndex].timeLimitSeconds + 3) * 1000);
     try {
       endQuestion(env, hostToken, gameId);
       showLeaderboard(env, hostToken, gameId);
-    } catch (e) {
-      console.log(`[ramp] director close/leaderboard error at q${i}: ${e}`);
+    } catch (closeError) {
+      console.log(`[ramp] director close/leaderboard error at question ${questionIndex}: ${closeError}`);
       break;
     }
     await delay(2000);
   }
 
-  check(started, { 'director drove at least one question': (s) => s === true });
+  check(hasStarted, { 'director drove at least one question': (status) => status === true });
   try {
     endGame(env, hostToken, gameId);
   } catch (_) {
-    /* best-effort */
+    /* best-effort cleanup */
   }
 }
 
-function durationSeconds(s) {
-  const m = /^(\d+)(s|m)?$/.exec(String(s).trim());
-  if (!m) return 30;
-  return m[2] === 'm' ? Number(m[1]) * 60 : Number(m[1]);
+function parseDurationSeconds(durationString) {
+  const match = /^(\d+)(s|m)?$/.exec(String(durationString).trim());
+  if (!match) return 30;
+  return match[2] === 'm' ? Number(match[1]) * 60 : Number(match[1]);
 }
 
 export const handleSummary = makeHandleSummary('ramp');
