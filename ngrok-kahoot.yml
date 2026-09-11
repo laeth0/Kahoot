@@ -1,0 +1,7 @@
+version: "2"
+authtoken: 33Hz3kRGSM7AfiCSEeQq7qwThqk_2xuGEoT2zs1bTBy7JGWhZ
+tunnels:
+  kahoot:
+    proto: http
+    addr: 3000
+    domain: sherill-unexplored-cluelessly.ngrok-free.dev

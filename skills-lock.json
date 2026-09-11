@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "ngrok": {
+      "source": "membranedev/application-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ngrok/SKILL.md",
+      "computedHash": "ca8159a63419cc5bd5c8636f40a08aaa8bf22aded00e24c2df7a8def177a1446"
+    }
+  }
+}
