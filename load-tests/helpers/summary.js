@@ -142,8 +142,8 @@ function stressBreakdownReport(data) {
     const errorRateFormatted = `${(errorRate * 100).toFixed(1)} %`;
 
     let status = 'HEALTHY (سليم ومستقر)';
-    if (p95Duration === undefined && submittedCount === 0) {
-      status = 'NO DATA';
+    if (submittedCount === 0) {
+      status = 'NO DATA (لم تكتمل)';
     } else if (errorRate >= 0.20 || (p95Duration && p95Duration >= 3000) || (submittedCount > 0 && acceptedCount === 0)) {
       status = '💥 CRASHED / BROKEN (الموقع وقع)';
       if (!breakingPoint) breakingPoint = level;
@@ -161,10 +161,17 @@ function stressBreakdownReport(data) {
   }
 
   rows.push('  ---------------------------------------------------------------------------------');
+  const successfullyTestedLevels = sortedLevels.filter((lvl) => {
+    const subCount = getMetricValue(metricsMap, `answers_submitted{load:${lvl}}`, 'count', 0);
+    return subCount > 0;
+  });
+
   if (breakingPoint) {
     rows.push(`  🚨 BREAKING POINT DETECTED: السيرفر انهار أو اختنق عند وصول الحمل إلى ${breakingPoint} لاعب!`);
+  } else if (successfullyTestedLevels.length > 0) {
+    rows.push(`  ✅ PASSED: الموقع صمد بنجاح أمام كافة مستويات الضغط حتى ${successfullyTestedLevels[successfullyTestedLevels.length - 1]} لاعب.`);
   } else {
-    rows.push(`  ✅ PASSED: الموقع صمد بنجاح أمام كافة مستويات الضغط حتى ${sortedLevels[sortedLevels.length - 1]} لاعب.`);
+    rows.push('  ⚠️ INCOMPLETE: لم تكتمل أي من جولات الأسئلة بنجاح.');
   }
   rows.push('===================================================================================');
 

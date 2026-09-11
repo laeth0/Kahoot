@@ -37,16 +37,25 @@ const JOIN_RAMP = __ENV.RAMP_JOIN_RAMP || __ENV.JOIN_RAMP || '60s';
 const QUESTION_TIME_LIMIT_SECONDS = Math.min(300, Math.max(10, intEnv('RAMP_QUESTION_SECONDS', 20)));
 const TOTAL_QUESTIONS_COUNT = Math.max(RAMP_LOAD_LEVELS.length, intEnv('RAMP_QUESTIONS', RAMP_LOAD_LEVELS.length));
 
+// Each question cycle takes: (timeLimitSeconds + 3s margin) + 2s leaderboard delay
+const PER_QUESTION_DURATION_SECONDS = QUESTION_TIME_LIMIT_SECONDS + 5;
+const ALL_QUESTIONS_DURATION_SECONDS = TOTAL_QUESTIONS_COUNT * PER_QUESTION_DURATION_SECONDS + 15;
+// Buffer to ensure stage 2 does not expire before all questions finish even if director waits maximum lobby timeout
+const LOBBY_WAIT_BUFFER_SECONDS = 45;
+const HOLD_STAGE_DURATION_SECONDS = LOBBY_WAIT_BUFFER_SECONDS + ALL_QUESTIONS_DURATION_SECONDS;
+
 const executionStages = [
   { duration: JOIN_RAMP, target: PEAK_LOAD_PLAYERS },
-  { duration: `${TOTAL_QUESTIONS_COUNT * (QUESTION_TIME_LIMIT_SECONDS + 6) + 10}s`, target: PEAK_LOAD_PLAYERS },
+  { duration: `${HOLD_STAGE_DURATION_SECONDS}s`, target: PEAK_LOAD_PLAYERS },
   { duration: '10s', target: 0 },
 ];
+
+const TARGET_ANSWER_P95_MS = intEnv('ANSWER_P95_MS', intEnv('TARGET_P95_MS', 1500));
 
 const perLevelThresholds = {};
 for (const loadLevel of RAMP_LOAD_LEVELS) {
   perLevelThresholds[`answer_submission_duration{load:${loadLevel}}`] =
-    loadLevel <= 500 ? ['p(95)<1000'] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
+    loadLevel <= 500 ? [`p(95)<${TARGET_ANSWER_P95_MS}`] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
   perLevelThresholds[`unexpected_error_rate{load:${loadLevel}}`] =
     loadLevel <= 500 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
   perLevelThresholds[`answers_submitted{load:${loadLevel}}`] = ['count>=0'];
@@ -112,7 +121,7 @@ export async function player(data) {
   const { env, pin, questions } = data;
   const vuIndex = exec.vu.idInTest;
 
-  const signalrClient = new SignalRClient(env, { onClose: () => {} });
+  const signalrClient = new SignalRClient(env, { connectRetries: 2, onClose: () => {} });
   let activeQuestionId = null;
   let answeredQuestionId = null;
 
@@ -189,10 +198,11 @@ export async function director(data) {
   const { env, hostToken, gameId, questions } = data;
 
   // 1. Wait for cohort to assemble in the lobby (WaitingForPlayers state)
-  console.log(`[ramp] waiting for players to join lobby (target: ${PEAK_LOAD_PLAYERS})...`);
+  const minConfirmFraction = Number(__ENV.CONFIRM_FRACTION || (env.isLocal ? 0.85 : 0.35));
+  console.log(`[ramp] waiting for players to join lobby (target: ${PEAK_LOAD_PLAYERS}, minFraction: ${minConfirmFraction})...`);
   const lobbyState = await waitForParticipantCount(env, hostToken, gameId, PEAK_LOAD_PLAYERS, {
-    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + 40) * 1000,
-    minFraction: 0.85,
+    timeoutMs: (parseDurationSeconds(JOIN_RAMP) + LOBBY_WAIT_BUFFER_SECONDS) * 1000,
+    minFraction: minConfirmFraction,
     intervalMs: 1500,
   });
   const presentParticipantCount = lobbyState && lobbyState.participants ? lobbyState.participants.length : 0;

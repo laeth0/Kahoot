@@ -46,6 +46,10 @@ https://<random-subdomain>.trycloudflare.com
   - **Username**: `IEEEXtreme Section`
   - **Password**: `IEEEXtreme@123456789`
 
+> [!NOTE]
+> لا تستخدم نفق Cloudflare إطلاقاً في الفعاليات المحلية (داخل نفس القاعة / شبكة الـ Wi-Fi).
+> اجعل اللاعبين يدخلون عبر الآي بي المحلي لجهازك مباشرة (مثال: `http://192.168.1.50:3000`).
+
 ---
 
 ## 5. (Optional) Run Load Tests
