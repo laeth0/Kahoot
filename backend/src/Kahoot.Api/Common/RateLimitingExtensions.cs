@@ -19,10 +19,10 @@ internal static class RateLimitingExtensions
                     ClientKey(context),
                     _ => new TokenBucketRateLimiterOptions
                     {
-                        TokenLimit = 240,
-                        TokensPerPeriod = 120,
-                        ReplenishmentPeriod = TimeSpan.FromSeconds(30),
-                        QueueLimit = 0,
+                        TokenLimit = 2000,
+                        TokensPerPeriod = 1000,
+                        ReplenishmentPeriod = TimeSpan.FromSeconds(10),
+                        QueueLimit = 200,
                         AutoReplenishment = true
                     }));
 
@@ -31,9 +31,9 @@ internal static class RateLimitingExtensions
                     ClientKey(context),
                     _ => new FixedWindowRateLimiterOptions
                     {
-                        PermitLimit = 10,
+                        PermitLimit = 100,
                         Window = TimeSpan.FromMinutes(5),
-                        QueueLimit = 0
+                        QueueLimit = 20
                     }));
 
             options.AddPolicy(JoinPolicy, context =>
@@ -41,10 +41,10 @@ internal static class RateLimitingExtensions
                     ClientKey(context),
                     _ => new TokenBucketRateLimiterOptions
                     {
-                        TokenLimit = 60,
-                        TokensPerPeriod = 30,
+                        TokenLimit = 1000,
+                        TokensPerPeriod = 500,
                         ReplenishmentPeriod = TimeSpan.FromSeconds(10),
-                        QueueLimit = 0,
+                        QueueLimit = 200,
                         AutoReplenishment = true
                     }));
         });
