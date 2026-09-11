@@ -1,11 +1,29 @@
 {
   "version": 1,
   "skills": {
+    "k6": {
+      "source": "grafana/skills",
+      "sourceType": "github",
+      "skillPath": "skills/grafana-k6/k6/SKILL.md",
+      "computedHash": "3b8f48ee2938a95e5508b71b74eb812f9c48173445fbb02a7bd81a38fc4bded4"
+    },
+    "k6-docs": {
+      "source": "grafana/skills",
+      "sourceType": "github",
+      "skillPath": "skills/grafana-k6/k6-docs/SKILL.md",
+      "computedHash": "2ad5b850cf6dda90cebb4f4f3f60fdbcce4b9a8c1112e3b3049ca84863111551"
+    },
     "ngrok": {
       "source": "membranedev/application-skills",
       "sourceType": "github",
       "skillPath": "skills/ngrok/SKILL.md",
       "computedHash": "ca8159a63419cc5bd5c8636f40a08aaa8bf22aded00e24c2df7a8def177a1446"
+    },
+    "performance-testing": {
+      "source": "aj-geddes/useful-ai-prompts",
+      "sourceType": "github",
+      "skillPath": "skills/performance-testing/SKILL.md",
+      "computedHash": "e004e22948d397e2d706e14b3e74b80e51cd0b021d3ffb6eed98aeb101f44953"
     }
   }
 }
