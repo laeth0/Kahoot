@@ -88,8 +88,8 @@ Copy your URL (e.g., `https://furnished-impression-juice-recognize.trycloudflare
 
 - **Players / Join Screen**: Open `https://<subdomain>.trycloudflare.com` in any mobile browser or desktop.
 - **Host / Admin Dashboard**: Navigate to `/host` or login with host credentials:
-  - **Username**: `IEEEXtreme Section Lead`
-  - **Password**: `IEEEXtreme 20.0`
+  - **Username**: `IEEEXtreme Section`
+  - **Password**: `IEEEXtreme@123456789`
 - **Health Check**: `https://<subdomain>.trycloudflare.com/health` (returns `Healthy`).
 
 ---

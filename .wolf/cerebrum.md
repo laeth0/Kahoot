@@ -49,13 +49,22 @@ budget_tokens: 2000
   - `HostGameGuard.EnsureOwnedAsync` (ownership-only, no entity) used by GetLeaderboard handler.
   - Frontend: removed the dangerous offline-simulation mocks in `authService`/`gameService`; mapped real DTOs (`hostId`→`host.id`, `status`); axios interceptor reads `ProblemDetails.detail/title`; added `frontend/.env.example` (`VITE_API_URL`, `VITE_SIGNALR_URL`).
 - **Known remaining gaps (not this pass):** frontend game UI + SignalR client (only Home/Login/Dashboard/404 exist); full metrics/observability (NFR-7/12, later phase); no load tests run (deferred); committed dev secrets `Jwt:SigningKey` + `Seeding:Host:Password` must be overridden per environment; single migration replica (no advisory lock).
+- **Load Testing & Backend Logic Alignment (load-tests/):**
+  - `GameStatus` enum is serialized as an integer (`0=Created`, `1=Lobby`, `2=QuestionActive`, `3=QuestionResults`, `4=Leaderboard`, `5=Finished`) by ASP.NET Core System.Text.Json default settings. Scenarios must accept integer status or normalize it, rather than asserting `typeof status === 'string'`.
+  - `JoinGameCommandHandler` rejects joins whenever `game.Status != GameStatus.Lobby` (`GameErrors.NotJoinable`). In any multi-VU load test, the director must wait for the player cohort to assemble in the lobby (`waitForParticipantCount`) before firing `POST /start`. Spawning new VUs mid-game causes intentional `NotJoinable` rejects.
+  - In `verifyClosedQuestion`, players who timed out without answering are not "lost accepted answers" (lost accepted answers are strict mismatches between accepted acks and database state or between answeredCount and results).
+  - Quick Cloudflare Tunnels (`trycloudflare.com`) enforce an internal rate limit on HTTP REST endpoints (`cf-int-tunnel-request-limit-hit: tunnel`), while SignalR WebSockets maintain 500+ concurrent connections smoothly. Keep REST polling intervals at 2.5s+ and keep `SIGNALR_SKIP_NEGOTIATION=true`.
 
 ## Do-Not-Repeat
 
 <!-- Mistakes made and corrected. Each entry prevents the same mistake recurring. -->
 <!-- Format: [YYYY-MM-DD] Description of what went wrong and what to do instead. -->
+- [2026-09-11] Do not assert `typeof status === 'string'` in load tests; backend enum serialization is integer (`0..5`).
+- [2026-09-11] Do not call `startGame` while VUs are still joining; late joiners get `GameErrors.NotJoinable` by design.
+- [2026-09-11] Do not close the VU WebSocket immediately after answering if the VU scenario is looping; hold until `waitDeadline` to prevent thousands of redundant iterations.
 
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
-- **[2026-09-09] Frontend Light-Only Theme & Logo Palette:** Configured Material UI theme with palette extracted from `logo.jpeg` (`#00629B` primary, `#0284C7` secondary, `#F4F8FC` canvas, `#09131F` text). Hardcoded light mode only (`mode: 'light'`) to meet user specification. Added typography scale, CSS tokens, and component overrides.
+- [2026-09-11] Load Test Suite Realignment: Aligned all 10 k6 load scenarios with ASP.NET Core backend state machines, rate limits, and SignalR contracts.
+- [2026-09-09] Frontend Light-Only Theme & Logo Palette: Configured Material UI theme with palette extracted from `logo.jpeg` (`#00629B` primary, `#0284C7` secondary, `#F4F8FC` canvas, `#09131F` text). Hardcoded light mode only (`mode: 'light'`) to meet user specification. Added typography scale, CSS tokens, and component overrides.
