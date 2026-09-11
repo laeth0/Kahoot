@@ -107,7 +107,8 @@ export async function player(data) {
   if (joinState === 'pending') {
     client = new SignalRClient(env, { onClose: () => {} });
     client.on('QuestionStarted', (q) => {
-      if (q && q.questionId) currentQ = q.questionId;
+      const qid = q && (q.questionId || q.QuestionId);
+      if (qid) currentQ = String(qid).toLowerCase();
     });
     try {
       await client.start();
@@ -139,7 +140,7 @@ export async function player(data) {
   // Answer the current question once.
   if (currentQ && currentQ !== answeredQ) {
     answeredQ = currentQ;
-    const q = data.questions.find((x) => x.questionId === currentQ);
+    const q = data.questions.find((x) => String(x.questionId).toLowerCase() === currentQ);
     const choiceId = q ? q.correctChoiceId : null;
     if (choiceId) {
       const t0 = Date.now();
