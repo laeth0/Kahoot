@@ -40,6 +40,7 @@ const TOTAL_PLAYERS = GAMES * PLAYERS_PER_GAME;
 const TIME_LIMIT = Math.min(300, Math.max(20, intEnv('ANSWER_TIME_LIMIT', 60)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -80,8 +81,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, games } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
   const assignedGameIndex = (exec.vu.idInTest - 1) % GAMES;
   const targetGameSession = games[assignedGameIndex];
@@ -111,6 +117,8 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('multi:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -121,6 +129,8 @@ export async function player(data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, 'multi:join');
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     playersJoined.add(1, { game: String(assignedGameIndex) });
@@ -129,10 +139,12 @@ export async function player(data) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('multi:join:exception');
     signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
-  while (!ownQuestionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (!ownQuestionReceivedTimestampMs && exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(50);
   }
 
@@ -151,7 +163,7 @@ export async function player(data) {
     }
   }
 
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(500);
   }
 

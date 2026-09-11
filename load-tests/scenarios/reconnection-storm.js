@@ -36,6 +36,7 @@ const JOIN_RAMP_SECONDS = parseDurationSeconds(JOIN_RAMP);
 const STORM_WINDOW_SECONDS = intEnv('STORM_WINDOW_SECONDS', 45); // total churn window
 const STORM_START_SECONDS = JOIN_RAMP_SECONDS + 15;
 const TOTAL_HOLD_DURATION_SECONDS = STORM_START_SECONDS + STORM_WINDOW_SECONDS + 60;
+const TOTAL_SCENARIO_DURATION_MS = (JOIN_RAMP_SECONDS + STORM_WINDOW_SECONDS + 75 + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -77,8 +78,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
   let signalrClient;
   let sessionToken;
@@ -91,6 +97,8 @@ export async function player(data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, 'storm:join');
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     sessionToken = joinResult.data.sessionToken;
@@ -100,6 +108,8 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('storm:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -153,7 +163,7 @@ export async function player(data) {
     check(null, { 'connection alive after storm': () => false });
   }
 
-  while (Date.now() < holdDeadlineTimestampMs && signalrClient && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && signalrClient && !signalrClient.closed) {
     await delay(1000);
   }
   if (signalrClient) signalrClient.close();

@@ -20,6 +20,7 @@
 //     load-tests/scenarios/answer-burst.js
 
 import { check } from 'k6';
+import exec from 'k6/execution';
 import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
@@ -59,7 +60,7 @@ const SETTLE_SECONDS = intEnv('SETTLE_SECONDS', 60);
 
 // director must outlive: join ramp + readiness poll + question + drain
 const DIRECTOR_MAX_DURATION = `${parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 60 + TIME_LIMIT + 60}s`;
-const PLAYER_HOLD_SECONDS = parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 40 + TIME_LIMIT;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + SETTLE_SECONDS + 40 + TIME_LIMIT + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -116,8 +117,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin, question } = data;
-  const holdDeadlineTimestampMs = Date.now() + PLAYER_HOLD_SECONDS * 1000;
 
   let signalrClient;
   let questionReceivedTimestampMs = 0;
@@ -139,6 +145,8 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('burst:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -150,6 +158,8 @@ export async function player(data) {
       const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
       recordJoinFailure(errorCode, `burst:join:${errorCode}`);
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     playerSessionToken = joinResponse.data.sessionToken;
@@ -159,11 +169,13 @@ export async function player(data) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('burst:join:exception');
     signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
   // Wait for the QuestionStarted broadcast.
-  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (!questionReceivedTimestampMs && exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(50);
   }
 
@@ -171,6 +183,8 @@ export async function player(data) {
     questionDeliveryFailures.add(1);
     check(null, { 'received QuestionStarted': () => false });
     signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -249,7 +263,7 @@ export async function player(data) {
   }
 
   // Hold connection until the scenario window ends to prevent empty loop iterations
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(1000);
   }
   signalrClient.close();

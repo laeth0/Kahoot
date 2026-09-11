@@ -61,6 +61,12 @@ export function setup() {
 }
 
 export default async function (data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   let wasConnectionDroppedEarly = false;
   const signalrClient = new SignalRClient(data.env, {
     onClose: () => {
@@ -73,6 +79,8 @@ export default async function (data) {
   } catch (connectionError) {
     bumpUnexpected('connections:connect');
     check(null, { 'connection established': () => false });
+    const remainingTimeMs = Math.max(100, TOTAL_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 

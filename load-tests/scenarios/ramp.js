@@ -53,6 +53,8 @@ for (const loadLevel of RAMP_LOAD_LEVELS) {
   perLevelThresholds[`answers_accepted{load:${loadLevel}}`] = ['count>=0'];
 }
 
+const TOTAL_SCENARIO_DURATION_MS = executionStages.reduce((totalDuration, stage) => totalDuration + parseDurationSeconds(stage.duration), 0) * 1000;
+
 export const options = {
   hosts: hostsOverride(),
   scenarios: {
@@ -69,7 +71,7 @@ export const options = {
       exec: 'director',
       vus: 1,
       iterations: 1,
-      maxDuration: `${executionStages.reduce((totalDuration, stage) => totalDuration + parseDurationSeconds(stage.duration), 0) + 120}s`,
+      maxDuration: `${Math.ceil(TOTAL_SCENARIO_DURATION_MS / 1000) + 120}s`,
     },
   },
   thresholds: Object.assign(
@@ -101,6 +103,12 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin, questions } = data;
   const vuIndex = exec.vu.idInTest;
 
@@ -120,6 +128,8 @@ export async function player(data) {
       const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
       recordJoinFailure(errorCode, `ramp:join:${errorCode}`);
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     playersJoined.add(1);
@@ -128,14 +138,13 @@ export async function player(data) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('ramp:connect');
     signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
   // Keep client alive and respond to questions throughout the game
-  const maxHoldDurationMs = (parseDurationSeconds(JOIN_RAMP) + TOTAL_QUESTIONS_COUNT * (QUESTION_TIME_LIMIT_SECONDS + 10) + 30) * 1000;
-  const holdDeadlineTimestampMs = Date.now() + maxHoldDurationMs;
-
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     if (activeQuestionId && activeQuestionId !== answeredQuestionId) {
       answeredQuestionId = activeQuestionId;
       const matchingQuestion = questions.find((q) => String(q.questionId).toLowerCase() === activeQuestionId);

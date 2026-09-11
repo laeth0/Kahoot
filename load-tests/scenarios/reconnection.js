@@ -43,6 +43,7 @@ const TIME_LIMIT = Math.min(300, Math.max(30, intEnv('ANSWER_TIME_LIMIT', 120)))
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const RECONNECT_AFTER_MS = intEnv('RECONNECT_AFTER_MS', 4000);
 const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -95,8 +96,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin, question } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
   const isReconnector = exec.vu.idInTest <= RECONNECT_PLAYERS;
 
   let initialConnection;
@@ -115,6 +121,8 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('recon:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -126,6 +134,8 @@ export async function player(data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, 'recon:join');
       initialConnection.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     sessionToken = joinResult.data.sessionToken;
@@ -136,11 +146,13 @@ export async function player(data) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('recon:join:exception');
     initialConnection.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
   // Wait for the question, then answer (correct).
-  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !initialConnection.closed) {
+  while (!questionReceivedTimestampMs && exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !initialConnection.closed) {
     await delay(50);
   }
   if (questionReceivedTimestampMs) {
@@ -159,7 +171,7 @@ export async function player(data) {
   }
 
   if (!isReconnector) {
-    while (Date.now() < holdDeadlineTimestampMs && !initialConnection.closed) {
+    while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !initialConnection.closed) {
       await delay(1000);
     }
     initialConnection.close();
@@ -226,15 +238,15 @@ export async function player(data) {
           !(dataContext.currentQuestion.choices || []).some((choice) => 'isCorrect' in choice)),
     });
 
-    const lingerUntil = Math.min(holdDeadlineTimestampMs, Date.now() + 2000);
-    while (Date.now() < lingerUntil && !reconnectedConnection.closed) {
+    const lingerUntilMs = Math.min(TOTAL_SCENARIO_DURATION_MS, exec.instance.currentTestRunDuration + 2000);
+    while (exec.instance.currentTestRunDuration < lingerUntilMs && !reconnectedConnection.closed) {
       await delay(500);
     }
     reconnectedConnection.close();
     await delay(400);
   }
 
-  while (Date.now() < holdDeadlineTimestampMs) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS) {
     await delay(1000);
   }
 }

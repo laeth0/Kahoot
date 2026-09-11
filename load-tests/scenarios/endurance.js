@@ -43,6 +43,7 @@ const QUESTION_DURATION_SECONDS = Math.min(300, Math.max(8, intEnv('ENDURANCE_QU
 const QUESTION_GAP_SECONDS = intEnv('ENDURANCE_GAP_SECONDS', 8);
 const QUESTION_CYCLE_PERIOD_SECONDS = QUESTION_DURATION_SECONDS + QUESTION_GAP_SECONDS;
 const TOTAL_RUN_SECONDS = DURATION_MINUTES * 60;
+const TOTAL_SCENARIO_DURATION_MS = (60 + TOTAL_RUN_SECONDS + 15) * 1000;
 const REQUIRED_QUESTIONS_COUNT = Math.min(120, Math.ceil(TOTAL_RUN_SECONDS / QUESTION_CYCLE_PERIOD_SECONDS) + 3);
 const HALF_RUN_DURATION_MS = (TOTAL_RUN_SECONDS / 2) * 1000;
 
@@ -73,9 +74,10 @@ export const options = {
     answer_submission_duration: ['p(95)<500'],
     'answer_submission_duration{half:first}': ['p(95)<500'],
     'answer_submission_duration{half:second}': ['p(95)<500'],
-    unexpected_error_rate: ['rate<0.01'],
-    signalr_unexpected_disconnects: [`count<${Math.ceil(PLAYERS * 0.05)}`],
-    checks: ['rate>0.98'],
+    'http_req_duration{half:second}': ['p(95)<500'],
+    unexpected_answer_failures: ['count<1'],
+    signalr_unexpected_disconnects: [`count<${Math.max(1, Math.ceil(PLAYERS * 0.02))}`],
+    reconnection_failures: [`count<${Math.max(1, Math.ceil(PLAYERS * 0.02))}`],
   },
   summaryTrendStats: ['avg', 'min', 'med', 'p(90)', 'p(95)', 'p(99)', 'max'],
 };
@@ -102,6 +104,12 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin, questions } = data;
 
   let signalrClient = null;
@@ -127,6 +135,8 @@ export async function player(data) {
       const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
       recordJoinFailure(errorCode, 'endurance:join');
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     sessionToken = joinResponse.data.sessionToken;
@@ -135,12 +145,13 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('endurance:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
   // Persistent session loop for the entire endurance duration
-  const testEndDurationMs = (TOTAL_RUN_SECONDS + 60) * 1000;
-  while (exec.instance.currentTestRunDuration < testEndDurationMs) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS) {
     // Reconnect if the connection was unexpectedly dropped
     if (!signalrClient || signalrClient.closed) {
       const recoveredClient = new SignalRClient(env, {

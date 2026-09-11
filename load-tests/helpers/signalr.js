@@ -40,8 +40,8 @@ export function delay(ms) {
 export async function waitFor(predicate, { timeoutMs = 15000, intervalMs = 100 } = {}) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const v = predicate();
-    if (v) return v;
+    const result = predicate();
+    if (result) return result;
     if (Date.now() >= deadline) return null;
     await delay(intervalMs);
   }
@@ -86,90 +86,90 @@ export class SignalRClient {
   // (HTTP 429 from the per-IP rate limiter, upgrade failures). Records the
   // connection lifecycle metrics. Resolves with `this` once handshaken.
   async start() {
-    const t0 = Date.now();
-    let lastErr = null;
+    const connectionStartTimeMs = Date.now();
+    let lastConnectionError = null;
     for (let attempt = 0; attempt <= this.connectRetries; attempt++) {
       if (attempt > 0) {
         // The per-IP global limiter refills ~4 tokens/s (120 / 30 s). A 429 means
         // wait for a real refill, not a few hundred ms — with jitter so 500 VUs
         // don't retry in lockstep. Other errors get a short backoff.
-        const rateLimited = /429|rate-limited/i.test(String(lastErr));
-        const backoff = rateLimited
+        const rateLimited = /429|rate-limited/i.test(String(lastConnectionError));
+        const backoffMs = rateLimited
           ? 6000 + attempt * 4000 + Math.random() * 5000
           : 400 * attempt + Math.random() * 400;
-        await delay(backoff);
+        await delay(backoffMs);
       }
       try {
         const wsUrl = this.skipNegotiation ? this._directUrl() : this._negotiate();
-        await this._openAndHandshake(wsUrl, t0);
+        await this._openAndHandshake(wsUrl, connectionStartTimeMs);
         signalrConnections.add(1);
         signalrConnectionSuccessRate.add(true);
-        signalrConnectionDuration.add(Date.now() - t0);
+        signalrConnectionDuration.add(Date.now() - connectionStartTimeMs);
         return this;
-      } catch (e) {
-        lastErr = e;
+      } catch (connectionError) {
+        lastConnectionError = connectionError;
         this._teardownSocket();
       }
     }
     signalrConnectionFailures.add(1);
     signalrConnectionSuccessRate.add(false);
-    throw new Error(`SignalR connect failed after ${this.connectRetries + 1} attempts: ${lastErr}`);
+    throw new Error(`SignalR connect failed after ${this.connectRetries + 1} attempts: ${lastConnectionError}`);
   }
 
   _directUrl() {
-    let u = toWsUrl(`${this.origin}${this.hubPath}`);
-    if (this.accessToken) u += `?access_token=${encodeURIComponent(this.accessToken)}`;
-    return u;
+    let directWsUrl = toWsUrl(`${this.origin}${this.hubPath}`);
+    if (this.accessToken) directWsUrl += `?access_token=${encodeURIComponent(this.accessToken)}`;
+    return directWsUrl;
   }
 
   _negotiate() {
-    const url = `${this.origin}${this.hubPath}/negotiate?negotiateVersion=1`;
+    const negotiateEndpointUrl = `${this.origin}${this.hubPath}/negotiate?negotiateVersion=1`;
     const headers = {
       'Content-Type': 'text/plain;charset=UTF-8',
       'ngrok-skip-browser-warning': 'true',
     };
     if (this.accessToken) headers['Authorization'] = `Bearer ${this.accessToken}`;
-    const res = http.post(url, null, { headers, tags: { scope: 'signalr_negotiate' } });
-    if (res.status === 429) throw new Error('negotiate rate-limited (429)');
-    if (res.status !== 200) throw new Error(`negotiate status ${res.status}: ${String(res.body).slice(0, 200)}`);
+    const negotiateResponse = http.post(negotiateEndpointUrl, null, { headers, tags: { scope: 'signalr_negotiate' } });
+    if (negotiateResponse.status === 429) throw new Error('negotiate rate-limited (429)');
+    if (negotiateResponse.status !== 200) throw new Error(`negotiate status ${negotiateResponse.status}: ${String(negotiateResponse.body).slice(0, 200)}`);
 
-    let neg;
+    let negotiatePayload;
     try {
-      neg = JSON.parse(res.body);
+      negotiatePayload = JSON.parse(negotiateResponse.body);
     } catch (_) {
-      throw new Error(`negotiate body not JSON: ${String(res.body).slice(0, 120)}`);
+      throw new Error(`negotiate body not JSON: ${String(negotiateResponse.body).slice(0, 120)}`);
     }
-    if (neg.error) throw new Error(`negotiate error: ${neg.error}`);
-    if (neg.url) {
+    if (negotiatePayload.error) throw new Error(`negotiate error: ${negotiatePayload.error}`);
+    if (negotiatePayload.url) {
       // redirect response — follow it once
-      if (neg.accessToken) this.accessToken = neg.accessToken;
-      let u = toWsUrl(neg.url);
-      if (this.accessToken) u += `${u.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(this.accessToken)}`;
-      return u;
+      if (negotiatePayload.accessToken) this.accessToken = negotiatePayload.accessToken;
+      let redirectWsUrl = toWsUrl(negotiatePayload.url);
+      if (this.accessToken) redirectWsUrl += `${redirectWsUrl.includes('?') ? '&' : '?'}access_token=${encodeURIComponent(this.accessToken)}`;
+      return redirectWsUrl;
     }
-    const token = neg.connectionToken || neg.connectionId;
-    let u = `${toWsUrl(`${this.origin}${this.hubPath}`)}?id=${encodeURIComponent(token)}`;
-    if (this.accessToken) u += `&access_token=${encodeURIComponent(this.accessToken)}`;
-    return u;
+    const connectionToken = negotiatePayload.connectionToken || negotiatePayload.connectionId;
+    let targetWsUrl = `${toWsUrl(`${this.origin}${this.hubPath}`)}?id=${encodeURIComponent(connectionToken)}`;
+    if (this.accessToken) targetWsUrl += `&access_token=${encodeURIComponent(this.accessToken)}`;
+    return targetWsUrl;
   }
 
-  _openAndHandshake(wsUrl, t0) {
+  _openAndHandshake(wsUrl, handshakeStartTimeMs) {
     return new Promise((resolve, reject) => {
       let settled = false;
-      const done = (fn, arg) => {
+      const settleHandshake = (resolveOrRejectFn, errorOrResult) => {
         if (settled) return;
         settled = true;
-        fn(arg);
+        resolveOrRejectFn(errorOrResult);
       };
 
       const ws = new WebSocket(wsUrl);
       this.ws = ws;
       ws.binaryType = 'arraybuffer';
       this._handshakeResolve = () => {
-        signalrHandshakeDuration.add(Date.now() - t0);
-        done(resolve, this);
+        signalrHandshakeDuration.add(Date.now() - handshakeStartTimeMs);
+        settleHandshake(resolve, this);
       };
-      this._handshakeReject = (err) => done(reject, err);
+      this._handshakeReject = (handshakeError) => settleHandshake(reject, handshakeError);
 
       const timeout = setTimeout(() => {
         this._handshakeReject(new Error('handshake timeout'));
@@ -351,35 +351,37 @@ export class SignalRClient {
 
 // Convenience: connect a player and JoinGame in one step. Returns
 // { client, join } where `join` is the JoinGameResponse data.
-export async function connectAndJoin(env, pin, nickname, opts = {}) {
-  const client = new SignalRClient(env, opts);
-  await client.start();
-  const res = await client.invoke('JoinGame', pin, nickname);
-  if (!res || res.success !== true) {
-    client.close();
-    const code = res && res.error ? res.error.code : 'no-response';
-    throw new JoinError(code, `JoinGame rejected: ${code}`);
+export async function connectAndJoin(env, pin, nickname, connectionOptions = {}) {
+  const signalrClient = new SignalRClient(env, connectionOptions);
+  await signalrClient.start();
+  const joinResponse = await signalrClient.invoke('JoinGame', pin, nickname);
+  if (!joinResponse || joinResponse.success !== true) {
+    signalrClient.close();
+    const errorCode = joinResponse && joinResponse.error ? joinResponse.error.code : 'no-response';
+    throw new JoinError(errorCode, `JoinGame rejected: ${errorCode}`);
   }
-  return { client, join: res.data };
+  return { client: signalrClient, join: joinResponse.data };
 }
 
 export class JoinError extends Error {
-  constructor(code, message) {
-    super(message);
-    this.code = code;
+  constructor(errorCode, errorMessage) {
+    super(errorMessage);
+    this.code = errorCode;
   }
 }
 
-function bytesToString(buf) {
-  const arr = new Uint8Array(buf);
-  let out = '';
-  for (let i = 0; i < arr.length; i += 1) out += String.fromCharCode(arr[i]);
-  return out;
+function bytesToString(arrayBuffer) {
+  const byteArray = new Uint8Array(arrayBuffer);
+  let decodedString = '';
+  for (let byteIndex = 0; byteIndex < byteArray.length; byteIndex += 1) {
+    decodedString += String.fromCharCode(byteArray[byteIndex]);
+  }
+  return decodedString;
 }
 
-function safe(fn, args) {
+function safe(callbackFunction, callbackArguments) {
   try {
-    fn.apply(null, args);
+    callbackFunction.apply(null, callbackArguments);
   } catch (_) {
     /* handler errors must not break the read loop */
   }

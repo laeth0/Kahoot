@@ -39,6 +39,7 @@ const CLOCK_SKEW_MS = Number(__ENV.CLOCK_SKEW_MS || 0);
 const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.98);
 
 const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -90,8 +91,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, gameA, gameB } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
   // First ISOLATION_PLAYERS VUs are the game-B control group.
   const isControlGroupParticipant = exec.vu.idInTest <= ISOLATION_PLAYERS;
@@ -124,6 +130,8 @@ export async function player(data) {
   } catch (connectionError) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('broadcast:connect');
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -134,6 +142,8 @@ export async function player(data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, `broadcast:join:${errorCode}`);
       signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     playersJoined.add(1, { group: isControlGroupParticipant ? 'B' : 'A' });
@@ -142,10 +152,12 @@ export async function player(data) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('broadcast:join:exception');
     signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     if (!isControlGroupParticipant && questionReceivedTimestampMs) {
       break;
     }
@@ -174,7 +186,7 @@ export async function player(data) {
     check(null, { 'received QuestionStarted': () => false });
   }
 
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(1000);
   }
   signalrClient.close();

@@ -17,6 +17,7 @@
 //   k6 run -e ALLOW_LOAD_TEST=true load-tests/scenarios/duplicate-answer.js
 
 import { check } from 'k6';
+import exec from 'k6/execution';
 import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
@@ -42,6 +43,7 @@ const ATTEMPTS_PER_CONN = Math.min(3, intEnv('DUP_ATTEMPTS_PER_CONN', 2)); // st
 const TIME_LIMIT = Math.min(300, Math.max(15, intEnv('ANSWER_TIME_LIMIT', 60)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '45s';
 const TOTAL_HOLD_SECONDS = parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -94,8 +96,13 @@ export function setup() {
 }
 
 export async function player(data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin, question } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_SECONDS * 1000;
 
   let primaryConnection;
   let reconnectedConnection;
@@ -116,6 +123,8 @@ export async function player(data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, 'dup:join');
       primaryConnection.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
       return;
     }
     const sessionToken = joinResult.data.sessionToken;
@@ -136,17 +145,21 @@ export async function player(data) {
     bumpUnexpected('dup:setup:exception');
     if (primaryConnection) primaryConnection.close();
     if (reconnectedConnection) reconnectedConnection.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
   // Wait for the question broadcast.
-  while (!questionReceivedTimestampMs && Date.now() < holdDeadlineTimestampMs && !primaryConnection.closed) {
+  while (!questionReceivedTimestampMs && exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !primaryConnection.closed) {
     await delay(50);
   }
   if (!questionReceivedTimestampMs) {
     check(null, { 'received QuestionStarted': () => false });
     primaryConnection.close();
     if (reconnectedConnection) reconnectedConnection.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -211,7 +224,7 @@ export async function player(data) {
     },
   );
 
-  while (Date.now() < holdDeadlineTimestampMs && !primaryConnection.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !primaryConnection.closed) {
     await delay(1000);
   }
   primaryConnection.close();

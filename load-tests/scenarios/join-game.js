@@ -12,16 +12,18 @@
 //   k6 run -e ALLOW_LOAD_TEST=true load-tests/scenarios/join-game.js
 
 import { check } from 'k6';
+import exec from 'k6/execution';
 import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
-import { getHostState, endGame } from '../helpers/rest.js';
+import { endGame, getHostState } from '../helpers/rest.js';
 import { makeHandleSummary } from '../helpers/summary.js';
 import {
-  playersJoined,
-  playerJoinFailures,
-  recordJoinFailure,
+  signalrConnectionSuccessRate,
   playerJoinDuration,
+  playerJoinFailures,
+  playersJoined,
+  recordJoinFailure,
   duplicateParticipants,
   bumpUnexpected,
   noUnexpected,
@@ -30,7 +32,7 @@ import {
 const PLAYERS = intEnv('PLAYERS', 500);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '120s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 45);
-const TOTAL_HOLD_DURATION_SECONDS = parseDurationSeconds(JOIN_RAMP) + HOLD_SECONDS + 20;
+const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + HOLD_SECONDS + 10) * 1000;
 
 export const options = {
   hosts: hostsOverride(),
@@ -69,8 +71,13 @@ export function setup() {
 }
 
 export default async function (data) {
+  if (exec.vu.iterationInScenario > 0) {
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
+  }
+
   const { env, pin } = data;
-  const holdDeadlineTimestampMs = Date.now() + TOTAL_HOLD_DURATION_SECONDS * 1000;
 
   let signalrClient;
   const joinStartTimeMs = Date.now();
@@ -81,6 +88,8 @@ export default async function (data) {
     playerJoinFailures.add(1, { reason: 'connect' });
     bumpUnexpected('join:connect');
     check(null, { 'player joined': () => false });
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
     return;
   }
 
@@ -91,6 +100,10 @@ export default async function (data) {
       const errorCode = joinResult && joinResult.error ? joinResult.error.code : 'no-response';
       recordJoinFailure(errorCode, `join:${errorCode}`);
       check(null, { 'player joined': () => false });
+      signalrClient.close();
+      const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+      await delay(remainingTimeMs);
+      return;
     } else {
       playerJoinDuration.add(Date.now() - joinStartTimeMs);
       playersJoined.add(1);
@@ -104,9 +117,13 @@ export default async function (data) {
   } catch (joinException) {
     playerJoinFailures.add(1, { reason: 'exception' });
     bumpUnexpected('join:exception');
+    signalrClient.close();
+    const remainingTimeMs = Math.max(100, TOTAL_SCENARIO_DURATION_MS - exec.instance.currentTestRunDuration);
+    await delay(remainingTimeMs);
+    return;
   }
 
-  while (Date.now() < holdDeadlineTimestampMs && !signalrClient.closed) {
+  while (exec.instance.currentTestRunDuration < TOTAL_SCENARIO_DURATION_MS && !signalrClient.closed) {
     await delay(1000);
   }
   signalrClient.close();
