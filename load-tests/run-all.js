@@ -109,7 +109,29 @@ function runScenario(name, passthrough) {
     /* ignore */
   }
 
-  const args = ['run', '--summary-mode', 'compact', '-e', `SUMMARY_DIR=${RESULTS}`, script, ...passthrough];
+  const forwardKeys = [
+    'BASE_URL',
+    'SIGNALR_URL',
+    'HUB_PATH',
+    'HOST_USERNAME',
+    'HOST_PASSWORD',
+    'HOST_TOKEN',
+    'HOST_ID',
+    'ALLOW_LOAD_TEST',
+    'ALLOW_PROD_LOAD_TEST',
+    'SAFE_VU_LIMIT',
+    'SIGNALR_SKIP_NEGOTIATION',
+    'SIGNALR_CONNECT_RETRIES',
+    'API_429_RETRIES',
+  ];
+  const envFlags = [];
+  for (const k of forwardKeys) {
+    if (process.env[k] !== undefined) {
+      envFlags.push('-e', `${k}=${process.env[k]}`);
+    }
+  }
+
+  const args = ['run', '--summary-mode', 'compact', '-e', `SUMMARY_DIR=${RESULTS}`, ...envFlags, script, ...passthrough];
   console.log(`\n─── ${name}  (k6 run ... ${name}.js)\n`);
   const res = spawnSync(k6Bin(), args, { stdio: 'inherit', cwd: ROOT, env: process.env });
 
@@ -168,7 +190,10 @@ async function makeTokenProvider() {
   async function post(path, body) {
     const r = await fetch(`${base}${path}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true',
+      },
       body: JSON.stringify(body),
     });
     return { status: r.status, body: r.status === 204 ? {} : await r.json().catch(() => ({})) };

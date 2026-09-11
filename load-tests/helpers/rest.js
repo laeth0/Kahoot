@@ -14,7 +14,10 @@ const RETRY_ON_429 = Number(__ENV.API_429_RETRIES || 6);
 
 function api(env, method, path, body, token, tags) {
   const params = {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    },
     tags: Object.assign({ scope: 'api' }, tags || {}),
   };
   if (token) params.headers['Authorization'] = `Bearer ${token}`;
@@ -37,7 +40,10 @@ function api(env, method, path, body, token, tags) {
 // ignores RTT/2, so treat it as a coarse correction, not a precise sync.
 export function serverClockSkewMs(env) {
   try {
-    const res = http.get(`${env.origin}/health`, { tags: { scope: 'setup', name: 'health' } });
+    const res = http.get(`${env.origin}/health`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' },
+      tags: { scope: 'setup', name: 'health' },
+    });
     const dateHeader = res.headers['Date'] || res.headers['date'];
     if (!dateHeader) return 0;
     const serverMs = Date.parse(dateHeader);
@@ -163,7 +169,10 @@ export function removeParticipant(env, token, gameId, participantId) {
 // this exists for the REST-path tests.
 export function restJoin(env, pin, nickname) {
   const res = http.post(`${env.apiBase}/games/join`, JSON.stringify({ pin, nickname }), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'ngrok-skip-browser-warning': 'true',
+    },
     tags: { scope: 'api_join', name: 'games/join' },
   });
   return res;

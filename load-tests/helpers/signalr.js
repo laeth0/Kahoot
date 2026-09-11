@@ -124,7 +124,10 @@ export class SignalRClient {
 
   _negotiate() {
     const url = `${this.origin}${this.hubPath}/negotiate?negotiateVersion=1`;
-    const headers = { 'Content-Type': 'text/plain;charset=UTF-8' };
+    const headers = {
+      'Content-Type': 'text/plain;charset=UTF-8',
+      'ngrok-skip-browser-warning': 'true',
+    };
     if (this.accessToken) headers['Authorization'] = `Bearer ${this.accessToken}`;
     const res = http.post(url, null, { headers, tags: { scope: 'signalr_negotiate' } });
     if (res.status === 429) throw new Error('negotiate rate-limited (429)');
