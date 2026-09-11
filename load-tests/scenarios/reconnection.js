@@ -16,7 +16,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, endGame, getHostState } from '../helpers/rest.js';
@@ -45,6 +45,7 @@ const RECONNECT_AFTER_MS = intEnv('RECONNECT_AFTER_MS', 4000);
 const HOLD = durationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

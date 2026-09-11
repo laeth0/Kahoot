@@ -18,7 +18,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { connectionThresholds } from '../config/thresholds.js';
 import { makeHandleSummary } from '../helpers/summary.js';
@@ -36,6 +36,7 @@ const DOWN_SECONDS = 15;
 const TOTAL_MS = (durationSeconds(CONNECT_RAMP) + HOLD_SECONDS + DOWN_SECONDS) * 1000;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     connections: {
       executor: 'ramping-vus',

@@ -12,7 +12,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, endGame } from '../helpers/rest.js';
@@ -41,6 +41,7 @@ const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.98);
 const HOLD = durationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

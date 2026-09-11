@@ -12,7 +12,7 @@
 //   k6 run -e ALLOW_LOAD_TEST=true load-tests/scenarios/join-game.js
 
 import { check } from 'k6';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay, JoinError } from '../helpers/signalr.js';
 import { provisionGames } from '../helpers/testdata.js';
 import { uniqueNickname } from '../helpers/testdata.js';
@@ -33,6 +33,7 @@ const JOIN_RAMP = __ENV.JOIN_RAMP || '120s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 45);
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     join: {
       executor: 'ramping-vus',

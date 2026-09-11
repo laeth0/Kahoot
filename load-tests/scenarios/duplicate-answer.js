@@ -17,7 +17,7 @@
 //   k6 run -e ALLOW_LOAD_TEST=true load-tests/scenarios/duplicate-answer.js
 
 import { check } from 'k6';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, endGame } from '../helpers/rest.js';
@@ -44,6 +44,7 @@ const JOIN_RAMP = __ENV.JOIN_RAMP || '45s';
 const HOLD = durationSeconds(JOIN_RAMP) + 90 + TIME_LIMIT;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

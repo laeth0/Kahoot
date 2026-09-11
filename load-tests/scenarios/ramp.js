@@ -39,7 +39,7 @@ const Q_COUNT = Math.max(LEVELS.length, intEnv('RAMP_QUESTIONS', LEVELS.length))
 
 const stages = [
   { duration: JOIN_RAMP, target: PEAK },
-  { duration: `${Q_COUNT * (Q_LEN + 6) + 45}s`, target: PEAK },
+  { duration: `${Q_COUNT * (Q_LEN + 6) + 10}s`, target: PEAK },
   { duration: '10s', target: 0 },
 ];
 
@@ -47,6 +47,8 @@ const perLevel = {};
 for (const l of LEVELS) {
   perLevel[`answer_submission_duration{load:${l}}`] = l <= 500 ? ['p(95)<1000'] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
   perLevel[`unexpected_error_rate{load:${l}}`] = l <= 500 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
+  perLevel[`answers_submitted{load:${l}}`] = ['count>=0'];
+  perLevel[`answers_accepted{load:${l}}`] = ['count>=0'];
 }
 
 export const options = {
@@ -85,81 +87,80 @@ export function setup() {
   return { env, gameId: p.gameId, pin: p.pin, hostToken: p.hostToken, questions: p.questions };
 }
 
-let joinState = 'pending'; // 'pending' | 'ok' | 'failed'
-let client = null;
-let currentQ = null;
-let answeredQ = null;
-
 export async function player(data) {
-  const { env, pin } = data;
+  const { env, pin, questions } = data;
+  const vuIndex = exec.vu.idInTest;
 
-  if (joinState === 'pending') {
-    client = new SignalRClient(env, { onClose: () => {} });
-    client.on('QuestionStarted', (q) => {
-      const qid = q && (q.questionId || q.QuestionId);
-      if (qid) currentQ = String(qid).toLowerCase();
-    });
-    try {
-      await client.start();
-      const res = await client.invoke('JoinGame', pin, uniqueNickname('s'));
-      if (!res || res.success !== true) {
-        const code = res && res.error ? res.error.code : 'no-response';
-        recordJoinFailure(code, 'ramp:join');
-        client.close();
-        joinState = 'failed';
-        return;
-      }
-      playersJoined.add(1);
-      noUnexpected();
-      joinState = 'ok';
-    } catch (e) {
-      playerJoinFailures.add(1, { reason: 'connect' });
-      bumpUnexpected('ramp:connect');
-      joinState = 'failed';
+  const client = new SignalRClient(env, { onClose: () => {} });
+  let currentQ = null;
+  let answeredQ = null;
+
+  client.on('QuestionStarted', (q) => {
+    const qid = q && (q.questionId || q.QuestionId);
+    if (qid) currentQ = String(qid).toLowerCase();
+  });
+
+  try {
+    await client.start();
+    const res = await client.invoke('JoinGame', pin, uniqueNickname('s'));
+    if (!res || res.success !== true) {
+      const code = res && res.error ? res.error.code : 'no-response';
+      recordJoinFailure(code, `ramp:join:${code}`);
+      client.close();
       return;
     }
-  }
-
-  if (joinState !== 'ok' || !client || client.closed) {
-    await delay(1000);
+    playersJoined.add(1);
+    noUnexpected();
+  } catch (e) {
+    playerJoinFailures.add(1, { reason: 'connect' });
+    bumpUnexpected('ramp:connect');
+    client.close();
     return;
   }
 
-  // Answer the current question once if this VU belongs to the current question's load tier
-  if (currentQ && currentQ !== answeredQ) {
-    answeredQ = currentQ;
-    const qObj = data.questions.find((x) => String(x.questionId).toLowerCase() === currentQ);
-    const qIndex = qObj ? qObj.orderIndex : 0;
-    const activeLevel = LEVELS[Math.min(qIndex, LEVELS.length - 1)];
+  // Keep client alive and respond to questions throughout the game
+  const maxHoldMs = (durationSeconds(JOIN_RAMP) + Q_COUNT * (Q_LEN + 10) + 30) * 1000;
+  const deadline = Date.now() + maxHoldMs;
 
-    // Only players up to activeLevel submit answers on this question
-    if (exec.vu.idInTest <= activeLevel) {
-      const choiceId = qObj ? qObj.correctChoiceId : null;
-      if (choiceId) {
-        const t0 = Date.now();
-        const tags = { load: String(activeLevel) };
-        try {
-          const ack = await client.invoke('SubmitAnswer', currentQ, choiceId);
-          answerSubmissionDuration.add(Date.now() - t0, tags);
-          answersSubmitted.add(1, tags);
-          if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
-            answersAccepted.add(1, tags);
-            noUnexpected(tags);
-          } else if (ack && ack.success === false && ack.error) {
-            answersRejected.add(1, { code: ack.error.code, ...tags });
-          } else {
+  while (Date.now() < deadline && !client.closed) {
+    if (currentQ && currentQ !== answeredQ) {
+      answeredQ = currentQ;
+      const qObj = questions.find((x) => String(x.questionId).toLowerCase() === currentQ);
+      const qIndex = qObj ? qObj.orderIndex : 0;
+      const activeLevel = LEVELS[Math.min(qIndex, LEVELS.length - 1)];
+
+      // Players up to activeLevel submit answers for this question
+      if (vuIndex <= activeLevel + 1) {
+        const choiceId = qObj ? qObj.correctChoiceId : null;
+        if (choiceId) {
+          const t0 = Date.now();
+          const tags = { load: String(activeLevel) };
+          try {
+            const ack = await client.invoke('SubmitAnswer', currentQ, choiceId);
+            answerSubmissionDuration.add(Date.now() - t0, tags);
+            answersSubmitted.add(1, tags);
+            if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
+              answersAccepted.add(1, tags);
+              noUnexpected(tags);
+            } else if (ack && ack.success === false && ack.error) {
+              answersRejected.add(1, { code: ack.error.code, ...tags });
+            } else {
+              unexpectedAnswerFailures.add(1, tags);
+              bumpUnexpected('ramp:submit:malformed', tags);
+            }
+          } catch (e) {
             unexpectedAnswerFailures.add(1, tags);
-            bumpUnexpected('ramp:submit:malformed', tags);
+            bumpUnexpected('ramp:submit:exception', tags);
           }
-        } catch (e) {
-          unexpectedAnswerFailures.add(1, tags);
-          bumpUnexpected('ramp:submit:exception', tags);
         }
       }
     }
+    await delay(100);
   }
 
-  await delay(500);
+  try {
+    client.close();
+  } catch (_) {}
 }
 
 export async function director(data) {

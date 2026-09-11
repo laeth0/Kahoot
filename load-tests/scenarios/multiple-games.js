@@ -15,7 +15,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionPerGameQuizzes, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, showLeaderboard, endGame } from '../helpers/rest.js';
@@ -42,6 +42,7 @@ const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const HOLD = durationSeconds(JOIN_RAMP) + 120 + TIME_LIMIT;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',

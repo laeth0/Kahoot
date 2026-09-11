@@ -11,7 +11,7 @@
 
 import { check } from 'k6';
 import exec from 'k6/execution';
-import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js';
+import { resolveEnv, assertLoadAllowed, intEnv, hostsOverride } from '../config/environments.js';
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { getHostState, endGame } from '../helpers/rest.js';
@@ -38,6 +38,7 @@ const STORM_START_S = JOIN_RAMP_S + 15;
 const HOLD = STORM_START_S + STORM_WINDOW + 60;
 
 export const options = {
+  hosts: hostsOverride(),
   scenarios: {
     players: {
       executor: 'ramping-vus',
