@@ -106,8 +106,10 @@ export async function player(data) {
     client = new SignalRClient(env);
     const flag = (name) => (args) => {
       if (isControl) {
-        leaked = true;
-        sessionIsolationViolations.add(1, { event: name });
+        if (name !== 'GameEnded' || (args && args.gameId === gameA.gameId)) {
+          leaked = true;
+          sessionIsolationViolations.add(1, { event: name });
+        }
       } else if (name === 'QuestionStarted' && !recvAt) {
         recvAt = Date.now();
         payload = args;
