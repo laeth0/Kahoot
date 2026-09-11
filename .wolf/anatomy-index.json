@@ -1,13 +1,13 @@
 {
   "version": 1,
   "meta": {
-    "lastScanned": "2026-09-10T17:15:08.389Z",
-    "fileCount": 274,
+    "lastScanned": "2026-09-10T17:16:50.485Z",
+    "fileCount": 275,
     "hits": 0,
     "misses": 0,
-    "renderedHash": "d22795c64ee67786a0126b5189e6df37a0c1e4fdb3c2479c12eb1f8e44aa0942",
-    "storeUpdatedAt": "2026-09-10T17:15:08.429Z",
-    "rootHash": "189ad960082f6288"
+    "renderedHash": "2f4339cc33edf19db4d5d0b6ffa3696e1af9b402524025b499c52015ee44ab72",
+    "storeUpdatedAt": "2026-09-10T17:16:50.525Z",
+    "rootHash": "8f52b47c7092b7b0"
   },
   "files": {
     "AGENTS.md": {
@@ -4146,6 +4146,15 @@
       "size": 280,
       "mtimeMs": 1789060508201.974,
       "updatedAt": "2026-09-10T17:15:08.388Z",
+      "source": "hook"
+    },
+    "ngrok.md": {
+      "description": "Local deployment with ngrok",
+      "tokens": 2172,
+      "hash": "0eb370f028054e8b",
+      "size": 8685,
+      "mtimeMs": 1789060610255.612,
+      "updatedAt": "2026-09-10T17:16:50.484Z",
       "source": "hook"
     }
   },
