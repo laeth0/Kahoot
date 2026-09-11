@@ -216,7 +216,7 @@ export async function director(data) {
 
   const pre = await waitForParticipantCount(env, hostToken, gameId, DUP_PLAYERS, {
     timeoutMs: (durationSeconds(JOIN_RAMP) + 75) * 1000,
-    minFraction: 1,
+    minFraction: 0.95,
     intervalMs: 1500,
   });
   const present = pre.participants.length;

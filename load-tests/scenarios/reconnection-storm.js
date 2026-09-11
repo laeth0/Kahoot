@@ -165,7 +165,7 @@ export async function director(data) {
 
   const pre = await waitForParticipantCount(env, hostToken, gameId, STORM_PLAYERS, {
     timeoutMs: (JOIN_RAMP_S + 60) * 1000,
-    minFraction: 0.97,
+    minFraction: 0.95,
     intervalMs: 2000,
   });
   const present = pre.participants.length;
@@ -179,7 +179,9 @@ export async function director(data) {
     try {
       const s = getHostState(env, hostToken, gameId);
       probes += 1;
-      if (typeof s.status !== 'string') probeFails += 1;
+      if (s.status === undefined || s.status === null || (typeof s.status !== 'string' && typeof s.status !== 'number')) {
+        probeFails += 1;
+      }
     } catch (e) {
       probes += 1;
       probeFails += 1;

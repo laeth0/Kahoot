@@ -20,6 +20,7 @@ import { resolveEnv, assertLoadAllowed, intEnv } from '../config/environments.js
 import { SignalRClient, delay } from '../helpers/signalr.js';
 import { provisionGames, uniqueNickname } from '../helpers/testdata.js';
 import { startGame, endQuestion, showLeaderboard, advance, endGame } from '../helpers/rest.js';
+import { waitForParticipantCount } from '../helpers/orchestration.js';
 import { makeHandleSummary } from '../helpers/summary.js';
 import {
   playersJoined,
@@ -189,7 +190,12 @@ export async function player(data) {
 
 export async function director(data) {
   const { env, hostToken, gameId, questions } = data;
-  await delay(70000); // let players connect
+  console.log(`[endurance] waiting for players to assemble in lobby (target: ${PLAYERS})...`);
+  await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
+    timeoutMs: 90000,
+    minFraction: 0.90,
+    intervalMs: 1500,
+  });
 
   let started = false;
   let cycles = 0;

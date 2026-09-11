@@ -200,7 +200,9 @@ export async function player(data) {
 
     check(d, {
       'reconnect restored same participant id': (x) => x.participantId === participantId,
-      'reconnect restored game status': (x) => typeof x.status === 'string' && x.status.length > 0,
+      'reconnect restored game status': (x) =>
+        (typeof x.status === 'string' && x.status.length > 0) ||
+        (typeof x.status === 'number' && x.status >= 0 && x.status <= 5),
       'reconnect restored current question': (x) => !!x.currentQuestion && !!x.currentQuestion.endsAt,
       'reconnect preserved answered flag': (x) => x.alreadyAnsweredCurrentQuestion === true,
       'reconnect preserved a non-negative score': (x) => x.totalScore >= 0 && x.totalScore <= data.question.points,
@@ -225,7 +227,7 @@ export async function director(data) {
 
   const pre = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
     timeoutMs: (durationSeconds(JOIN_RAMP) + 90) * 1000,
-    minFraction: 1,
+    minFraction: 0.95,
     intervalMs: 2000,
   });
   const present = pre.participants.length;

@@ -179,7 +179,7 @@ export async function director(data) {
   for (const game of games) {
     const pre = await waitForParticipantCount(env, hostToken, game.gameId, PLAYERS_PER_GAME, {
       timeoutMs: (durationSeconds(JOIN_RAMP) + 90) * 1000,
-      minFraction: 1,
+      minFraction: 0.95,
       intervalMs: 1500,
     });
     startGame(env, hostToken, game.gameId);

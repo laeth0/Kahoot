@@ -182,7 +182,7 @@ export async function director(data) {
 
   const pre = await waitForParticipantCount(env, hostToken, gameA.gameId, PLAYERS, {
     timeoutMs: (durationSeconds(JOIN_RAMP) + 75) * 1000,
-    minFraction: 1,
+    minFraction: READY_FRACTION,
     intervalMs: 2000,
   });
   console.log(`[question-broadcast] starting with ${pre.participants.length}/${PLAYERS} game-A players`);

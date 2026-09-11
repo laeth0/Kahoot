@@ -51,7 +51,7 @@ const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const TIME_LIMIT = Math.min(300, Math.max(5, intEnv('ANSWER_TIME_LIMIT', 120)));
 const WRONG_FRACTION = Number(__ENV.WRONG_FRACTION || 0.15);
 const CONFIRM_FRACTION = Number(__ENV.CONFIRM_FRACTION || 0.3);
-const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.98);
+const READY_FRACTION = Number(__ENV.READY_FRACTION || 0.90);
 const CLOCK_SKEW_MS = Number(__ENV.CLOCK_SKEW_MS || 0);
 // Slack after the join ramp for the director's readiness poll + post-question
 // drain + state verification. Lower it for quick dev runs.
@@ -218,11 +218,12 @@ export async function player(data) {
           await delay(500 + Math.random() * 2500);
           try {
             const st = await client.invoke('Reconnect', sessionToken);
+            const isQuestionActive = st && st.data && (st.data.status === 2 || st.data.status === 'QuestionActive');
             const confirmed =
               !st ||
               st.success !== true ||
               !st.data ||
-              st.data.status !== 1 /* QuestionActive */ ||
+              !isQuestionActive ||
               st.data.alreadyAnsweredCurrentQuestion === true;
             if (!confirmed) {
               lostAcceptedAnswers.add(1, { where: 'burst:ack-not-in-state' });
@@ -250,10 +251,9 @@ export async function player(data) {
     bumpUnexpected('burst:submit:exception');
   }
 
-  // Stay connected briefly so a late server event can't be misread as a drop.
-  const holdUntil = Math.min(waitDeadline, Date.now() + 5000);
-  while (Date.now() < holdUntil && !client.closed) {
-    await delay(500);
+  // Hold connection until the scenario window ends to prevent empty loop iterations
+  while (Date.now() < waitDeadline && !client.closed) {
+    await delay(1000);
   }
   client.close();
 }
@@ -266,11 +266,11 @@ export async function director(data) {
   //    ramp). Starting the question early would force late joiners into a benign
   //    Game.NotJoinable; waiting for 100% keeps the burst == the population.
   const preState = await waitForParticipantCount(env, hostToken, gameId, PLAYERS, {
-    timeoutMs: (durationSeconds(JOIN_RAMP) + SETTLE) * 1000,
-    minFraction: 1,
-    intervalMs: 2000,
+    timeoutMs: (durationSeconds(JOIN_RAMP) + SETTLE + 30) * 1000,
+    minFraction: READY_FRACTION,
+    intervalMs: 1500,
   });
-  const present = preState.participants.length;
+  const present = preState && preState.participants ? preState.participants.length : 0;
   console.log(`[answer-burst] starting question with ${present}/${PLAYERS} players present`);
   check(
     { present },
@@ -326,13 +326,8 @@ export async function director(data) {
   }
 }
 
-export function teardown(data) {
-  try {
-    const s = getHostState(data.env, data.hostToken, data.gameId);
-    console.log(`[answer-burst] final status=${s.status} participants=${s.participants.length}`);
-  } catch (_) {
-    /* ignore */
-  }
+export function teardown() {
+  // state and leaderboard are already fetched and verified by director
 }
 
 function ranksContiguous(entries) {

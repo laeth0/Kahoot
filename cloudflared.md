@@ -80,7 +80,7 @@ Once started, `cloudflared` outputs logs in the terminal. Look for the line:
 2026-09-11T... INF +--------------------------------------------------------------------------------------------+
 ```
 
-Copy your URL (e.g., `https://feof-warned-buried-self.trycloudflare.com`).
+Copy your URL (e.g., `https://furnished-impression-juice-recognize.trycloudflare.com`).
 
 ---
 
