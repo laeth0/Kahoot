@@ -135,6 +135,11 @@ function runScenario(name, passthrough) {
     'SIGNALR_SKIP_NEGOTIATION',
     'SIGNALR_CONNECT_RETRIES',
     'API_429_RETRIES',
+    'RAMP_LEVELS',
+    'RAMP_STEP_RAMP',
+    'RAMP_STEP_HOLD',
+    'RAMP_QUESTIONS',
+    'RAMP_QUESTION_SECONDS',
   ];
   const envFlags = [];
   for (const k of forwardKeys) {

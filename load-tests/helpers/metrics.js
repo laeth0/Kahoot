@@ -43,18 +43,19 @@ export const unexpectedErrors = new Counter('unexpected_errors');
 export const unexpectedErrorRate = new Rate('unexpected_error_rate');
 
 // Record an unexpected failure once, consistently, everywhere.
-export function bumpUnexpected(labelTag) {
-  unexpectedErrors.add(1, labelTag ? { where: labelTag } : undefined);
-  unexpectedErrorRate.add(true, labelTag ? { where: labelTag } : undefined);
+export function bumpUnexpected(labelTag, extraTags) {
+  const tags = Object.assign({}, extraTags, labelTag ? { where: labelTag } : undefined);
+  unexpectedErrors.add(1, Object.keys(tags).length ? tags : undefined);
+  unexpectedErrorRate.add(true, Object.keys(tags).length ? tags : undefined);
 }
-export function noUnexpected() {
-  unexpectedErrorRate.add(false);
+export function noUnexpected(extraTags) {
+  unexpectedErrorRate.add(false, extraTags && Object.keys(extraTags).length ? extraTags : undefined);
 }
 
 // A player arriving after the host already started the question gets
 // Game.NotJoinable — that is expected attrition on a ramped join, not a defect.
 const BENIGN_JOIN_CODES = ['Game.NotJoinable'];
-export function recordJoinFailure(code, where) {
-  playerJoinFailures.add(1, { reason: code || 'unknown' });
-  if (!BENIGN_JOIN_CODES.includes(code)) bumpUnexpected(where || `join:${code}`);
+export function recordJoinFailure(code, where, extraTags) {
+  playerJoinFailures.add(1, Object.assign({ reason: code || 'unknown' }, extraTags));
+  if (!BENIGN_JOIN_CODES.includes(code)) bumpUnexpected(where || `join:${code}`, extraTags);
 }

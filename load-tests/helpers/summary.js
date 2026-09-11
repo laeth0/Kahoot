@@ -73,6 +73,11 @@ export function makeHandleSummary(scenarioName) {
       '',
     ];
 
+    const breakdown = stressBreakdownReport(data);
+    if (breakdown) {
+      rows.push(breakdown, '');
+    }
+
     const out = {};
     out.stdout = rows.join('\n');
     // handleSummary writes relative to k6's CWD. run-all.js runs from load-tests/
@@ -96,4 +101,70 @@ function thresholdReport(data) {
   }
   if (failed.length === 0) return 'THRESHOLDS: all passed';
   return `THRESHOLDS FAILED (${failed.length}):\n` + failed.map((f) => `  - ${f}`).join('\n');
+}
+
+function stressBreakdownReport(data) {
+  const m = data.metrics || {};
+  const levels = new Set();
+
+  for (const k of Object.keys(m)) {
+    const match = /\{load:(\d+)\}/.exec(k);
+    if (match) {
+      levels.add(parseInt(match[1], 10));
+    }
+  }
+
+  if (levels.size === 0) return '';
+
+  const sortedLevels = Array.from(levels).sort((a, b) => a - b);
+  const rows = [
+    '================  STRESS & BREAKPOINT ANALYSIS (تحليل نقطة الانهيار)  ================',
+    '',
+    '  Load Level      Latency (p95)    Submitted     Accepted    Errors (%)    Status',
+    '  ---------------------------------------------------------------------------------',
+  ];
+
+  let breakingPoint = null;
+
+  for (const lvl of sortedLevels) {
+    const durKey = `answer_submission_duration{load:${lvl}}`;
+    const errKey = `unexpected_error_rate{load:${lvl}}`;
+    const subKey = `answers_submitted{load:${lvl}}`;
+    const accKey = `answers_accepted{load:${lvl}}`;
+
+    const p95Val = n(m, durKey, 'p(95)');
+    const p95Str = ms(p95Val);
+    const subCount = n(m, subKey, 'count', 0);
+    const accCount = n(m, accKey, 'count', 0);
+    const errRateVal = n(m, errKey, 'rate', 0);
+    const errRateStr = `${(errRateVal * 100).toFixed(1)} %`;
+
+    let status = 'HEALTHY (سليم ومستقر)';
+    if (p95Val === undefined && subCount === 0) {
+      status = 'NO DATA';
+    } else if (errRateVal >= 0.20 || (p95Val && p95Val >= 3000) || (subCount > 0 && accCount === 0)) {
+      status = '💥 CRASHED / BROKEN (الموقع وقع)';
+      if (!breakingPoint) breakingPoint = lvl;
+    } else if (errRateVal >= 0.03 || (p95Val && p95Val >= 1000)) {
+      status = '⚠️ DEGRADED (ضغط عالي / اختناق)';
+    }
+
+    const colLevel = `${lvl} players`.padEnd(16);
+    const colP95 = p95Str.padEnd(17);
+    const colSub = String(subCount).padEnd(14);
+    const colAcc = String(accCount).padEnd(12);
+    const colErr = errRateStr.padEnd(14);
+
+    rows.push(`  ${colLevel}${colP95}${colSub}${colAcc}${colErr}${status}`);
+  }
+
+  rows.push('  ---------------------------------------------------------------------------------');
+  if (breakingPoint) {
+    rows.push(`  🚨 BREAKING POINT DETECTED: السيرفر انهار أو اختنق عند وصول الحمل إلى ${breakingPoint} لاعب!`);
+  } else {
+    rows.push(`  ✅ PASSED: الموقع صمد بنجاح أمام كافة مستويات الضغط حتى ${sortedLevels[sortedLevels.length - 1]} لاعب.`);
+  }
+  rows.push('===================================================================================');
+
+  return rows.join('\n');
 }

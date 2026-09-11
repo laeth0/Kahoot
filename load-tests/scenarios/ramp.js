@@ -112,18 +112,20 @@ export async function player(data) {
     try {
       await client.start();
       const res = await client.invoke('JoinGame', pin, uniqueNickname('s'));
+      const loadTag = { load: loadBucket() };
       if (!res || res.success !== true) {
-        recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'ramp:join');
+        recordJoinFailure(res && res.error ? res.error.code : 'no-response', 'ramp:join', loadTag);
         client.close();
         joinState = 'failed';
         return;
       }
       playersJoined.add(1);
-      noUnexpected();
+      noUnexpected(loadTag);
       joinState = 'ok';
     } catch (e) {
-      playerJoinFailures.add(1, { reason: 'connect' });
-      bumpUnexpected('ramp:connect');
+      const loadTag = { load: loadBucket() };
+      playerJoinFailures.add(1, { reason: 'connect', ...loadTag });
+      bumpUnexpected('ramp:connect', loadTag);
       joinState = 'failed';
       return;
     }
@@ -148,16 +150,16 @@ export async function player(data) {
         answersSubmitted.add(1, tags);
         if (ack && ack.success === true && ack.data && ack.data.accepted === true) {
           answersAccepted.add(1, tags);
-          noUnexpected();
+          noUnexpected(tags);
         } else if (ack && ack.success === false && ack.error) {
-          answersRejected.add(1, { code: ack.error.code });
+          answersRejected.add(1, { code: ack.error.code, ...tags });
         } else {
           unexpectedAnswerFailures.add(1, tags);
-          bumpUnexpected('ramp:submit:malformed');
+          bumpUnexpected('ramp:submit:malformed', tags);
         }
       } catch (e) {
         unexpectedAnswerFailures.add(1, tags);
-        bumpUnexpected('ramp:submit:exception');
+        bumpUnexpected('ramp:submit:exception', tags);
       }
     }
   }
