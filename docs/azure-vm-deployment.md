@@ -225,28 +225,28 @@ cd /home/azureuser/kahoot
 
 ### Step 7: Launch the Production Stack
 
-Start the production containers using `docker-compose.prod.yml`:
+Start the production containers using `docker-compose.yml`:
 
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 
 Verify that all containers are healthy and running:
 
 ```bash
-docker compose -f docker-compose.prod.yml ps
+docker compose ps
 ```
 
 You should see:
-- `kahoot-db-prod`: `Up (healthy)`
-- `kahoot-backend-prod`: `Up`
-- `kahoot-frontend-prod`: `Up`
-- `kahoot-nginx-prod`: `Up` (Ports `0.0.0.0:80->80/tcp`, `0.0.0.0:443->443/tcp`)
+- `kahoot-db`: `Up (healthy)`
+- `kahoot-backend`: `Up`
+- `kahoot-frontend`: `Up`
+- `kahoot-nginx`: `Up` (Ports `0.0.0.0:80->80/tcp`, `0.0.0.0:443->443/tcp`)
 
 Check backend logs to confirm database migrations and host account creation completed:
 
 ```bash
-docker compose -f docker-compose.prod.yml logs -f backend
+docker compose logs -f backend
 ```
 *(Press `Ctrl + C` to stop watching logs).*
 
@@ -370,7 +370,7 @@ ping yourdomain.com
 
 3. **Reload Nginx**:
    ```bash
-   docker compose -f docker-compose.prod.yml restart nginx
+   docker compose restart nginx
    ```
 
 ---
@@ -383,7 +383,7 @@ ping yourdomain.com
 mkdir -p /home/azureuser/backups
 
 # Export database dump to a compressed file with timestamp
-docker exec kahoot-db-prod pg_dump -U kahoot_admin -d kahoot | gzip > /home/azureuser/backups/kahoot_$(date +%Y%m%d_%H%M%S).sql.gz
+docker exec kahoot-db pg_dump -U kahoot_admin -d kahoot | gzip > /home/azureuser/backups/kahoot_$(date +%Y%m%d_%H%M%S).sql.gz
 
 # Verify backup file exists
 ls -lh /home/azureuser/backups
@@ -392,26 +392,26 @@ ls -lh /home/azureuser/backups
 ### 2. How to Restore the Database
 ```bash
 # Decompress and restore SQL dump
-gunzip -c /home/azureuser/backups/kahoot_2026xxxx.sql.gz | docker exec -i -e PGPASSWORD="<your_password>" kahoot-db-prod psql -U kahoot_admin -d kahoot
+gunzip -c /home/azureuser/backups/kahoot_2026xxxx.sql.gz | docker exec -i -e PGPASSWORD="<your_password>" kahoot-db psql -U kahoot_admin -d kahoot
 ```
 
 ### 3. How to Reset the Database (Clean Slate)
 ```bash
 # Stop backend to release active database connections
-docker compose -f docker-compose.prod.yml stop backend
+docker compose stop backend
 
 # Drop and recreate the database
-docker exec -it kahoot-db-prod psql -U postgres -c "DROP DATABASE IF EXISTS kahoot;"
-docker exec -it kahoot-db-prod psql -U postgres -c "CREATE DATABASE kahoot OWNER kahoot_admin;"
+docker exec -it kahoot-db psql -U postgres -c "DROP DATABASE IF EXISTS kahoot;"
+docker exec -it kahoot-db psql -U postgres -c "CREATE DATABASE kahoot OWNER kahoot_admin;"
 
 # Start backend (migrations will automatically run on startup)
-docker compose -f docker-compose.prod.yml start backend
+docker compose start backend
 ```
 
 ### 4. How to Apply Migrations
 Migrations run automatically on container startup via `DatabaseMigrationHostedService`. If you wish to trigger them manually:
 ```bash
-docker compose -f docker-compose.prod.yml restart backend
+docker compose restart backend
 ```
 
 ---

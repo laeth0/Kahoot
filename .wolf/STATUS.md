@@ -24,13 +24,16 @@ budget_tokens: 1000
   - Authored comprehensive `docs/azure-deployment.md` covering architecture (Mermaid), Azure CLI/Portal provisioning, PostgreSQL Flexible Server setup, App Service settings, SignalR WebSockets, migrations, and troubleshooting.
   - Verified backend compilation (`dotnet build backend/Kahoot.slnx`, 0 warnings, 0 errors), frontend compilation (`npm run build`, 0 errors), Docker container build (`kahoot-backend:test`), and live e2e tests against running container stack.
   - Zero-comment rule strictly maintained across all C# and TypeScript code.
-- **Docker Compose Production Consolidation (Completed & Verified):**
+- **Docker Compose Production Consolidation & Env Sync (Completed & Verified):**
   - Removed `docker-compose.prod.yml`.
-  - Unified all production configurations into `docker-compose.yml`, parameterized via environment variables (`.env`).
-  - Added `kahoot_internal` bridge network, robust health checks, secure loopback interface port bindings (`127.0.0.1:5433:5432` for PostgreSQL and `127.0.0.1:5000:8080` for backend API), and parameterized `"${HTTP_PORT:-80}:80"` for the frontend.
-  - Updated `DEPLOYMENT_HOSTINGER.md` deployment commands and troubleshooting notes to use `docker compose up -d --build`.
-  - Rebuilt and started containers cleanly with `docker compose up -d --build`; verified healthy database, successful backend migrations, and live API / health / frontend responses.
-  - Zero-comment rule strictly maintained.
+  - Unified all production configurations directly into `docker-compose.yml`:
+    - `db`: `postgres:18-alpine`, volume `postgres_data:/var/lib/postgresql`, internal network `kahoot_internal` only.
+    - `backend`: ASP.NET Core (.NET 10), volume `uploads_data:/app/uploads`, depends on `db: condition: service_healthy`, internal network `kahoot_internal` only.
+    - `frontend`: React 19 SPA served via internal Nginx, build args `VITE_API_URL=/api`, `VITE_SIGNALR_URL=/hubs/game`, internal network `kahoot_internal` only.
+    - `nginx`: `nginx:alpine`, reverse proxy on `${HTTP_PORT:-80}:80` and `${HTTPS_PORT:-443}:443`, routing `/`, `/api/`, `/health`, `/uploads/`, `/hubs/`, and Certbot challenge.
+  - Synchronized root `.env` with `.env.example` with identical 1-to-1 keys (`POSTGRES_*`, `JWT_*`, `HOST_SEED_*`, `CORS_ALLOWED_ORIGINS`, `VITE_*`, `HTTP_PORT`, `HTTPS_PORT`).
+  - Zero-comment rule strictly maintained across all code and compose files.
+  - Verified with live Docker stack (`docker compose up -d --build`), live health checks, and 100% passing game flow through Nginx.
 - **Ngrok Removal (Completed & Verified):**
   - Deleted `ngrok-kahoot.yml` configuration.
   - Deleted `.agents/skills/ngrok/` skill directory and removed entry from `skills-lock.json`.
