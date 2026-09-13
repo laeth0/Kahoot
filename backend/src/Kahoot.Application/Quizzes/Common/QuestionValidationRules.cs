@@ -26,10 +26,11 @@ public sealed class ChoiceInputValidator : AbstractValidator<ChoiceInput>
 {
     public ChoiceInputValidator()
     {
-        RuleFor(choice => choice.Text).MaximumLength(QuestionValidationRules.MaxChoiceTextLength);
-        RuleFor(choice => choice.ImageUrl).MaximumLength(QuestionValidationRules.MaxImageUrlLength);
-        RuleFor(choice => choice)
-            .Must(choice => !string.IsNullOrWhiteSpace(choice.Text) || !string.IsNullOrWhiteSpace(choice.ImageUrl))
-            .WithMessage("A choice must have text or an image.");
+        RuleFor(choice => choice.Text)
+            .NotEmpty()
+            .WithMessage("A choice must have text.")
+            .Must(text => !string.IsNullOrWhiteSpace(text))
+            .WithMessage("A choice must have text.")
+            .MaximumLength(QuestionValidationRules.MaxChoiceTextLength);
     }
 }

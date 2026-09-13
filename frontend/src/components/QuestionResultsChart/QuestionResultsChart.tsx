@@ -1,8 +1,6 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { Box, Stack, Typography } from '@mui/material';
-import { useState } from 'react';
 
-import { resolveMediaUrl } from '../../api/media.ts';
 import type { ChoiceResultResponse, QuestionResultsResponse } from '../../realtime/events.ts';
 import { ChoiceShape } from '../ChoiceGrid/ChoiceShape.tsx';
 import { choiceColor, choiceLetter } from '../ChoiceGrid/choiceVisuals.ts';
@@ -18,11 +16,8 @@ interface ChoiceResultRowProps {
 }
 
 function ChoiceResultRow({ choice, index, maxCount }: ChoiceResultRowProps) {
-  const [imageError, setImageError] = useState(false);
   const widthPercent = Math.round((choice.answerCount / maxCount) * 100);
   const label = choice.text?.trim() ? choice.text : `Answer ${choiceLetter(index)}`;
-  const mediaUrl = choice.imageUrl ? resolveMediaUrl(choice.imageUrl) : null;
-  const showImage = Boolean(mediaUrl && !imageError);
 
   return (
     <Box>
@@ -44,23 +39,6 @@ function ChoiceResultRow({ choice, index, maxCount }: ChoiceResultRowProps) {
             {choiceLetter(index)}
           </Typography>
         </Stack>
-
-        {showImage && (
-          <Box
-            component="img"
-            src={mediaUrl!}
-            alt=""
-            onError={() => setImageError(true)}
-            sx={{
-              width: 34,
-              height: 34,
-              borderRadius: 1,
-              objectFit: 'cover',
-              border: '1px solid #CBD5E1',
-              flexShrink: 0,
-            }}
-          />
-        )}
 
         <Typography
           sx={{

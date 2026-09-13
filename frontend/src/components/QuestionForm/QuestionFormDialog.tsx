@@ -119,7 +119,7 @@ function QuestionFormContent({
       ? initialData.choices.map((c) => ({
           id: c.id,
           text: c.text,
-          imageUrl: c.imageUrl,
+          imageUrl: null,
           isCorrect: c.isCorrect,
         }))
       : DEFAULT_CHOICES,
@@ -180,9 +180,9 @@ function QuestionFormContent({
       return;
     }
 
-    const invalidChoice = choices.some((c) => (!c.text || !c.text.trim()) && !c.imageUrl);
+    const invalidChoice = choices.some((c) => !c.text || !c.text.trim());
     if (invalidChoice) {
-      setValidationError('Every choice must have either answer text or an image.');
+      setValidationError('Every choice must have answer text.');
       return;
     }
 

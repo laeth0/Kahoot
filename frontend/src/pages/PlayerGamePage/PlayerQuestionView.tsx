@@ -60,7 +60,7 @@ export function PlayerQuestionView({
           <Typography variant="h5" component="h1" sx={{ fontWeight: 800, color: '#09131F' }}>
             {question.text}
           </Typography>
-          <QuestionMedia imageUrl={question.imageUrl} maxHeight={220} />
+          <QuestionMedia imageUrl={question.imageUrl} />
         </Stack>
       </Paper>
 

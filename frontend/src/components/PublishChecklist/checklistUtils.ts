@@ -30,8 +30,8 @@ export function evaluateQuizPublishCriteria(questions: QuestionResponse[]): {
       failingCorrectCount.push(qNum);
     }
 
-    const allChoicesHaveContent = q.choices.every(
-      (c) => Boolean(c.text && c.text.trim().length > 0) || Boolean(c.imageUrl),
+    const allChoicesHaveContent = q.choices.every((c) =>
+      Boolean(c.text && c.text.trim().length > 0),
     );
     if (!allChoicesHaveContent) {
       failingChoiceContent.push(qNum);
@@ -62,7 +62,7 @@ export function evaluateQuizPublishCriteria(questions: QuestionResponse[]): {
     },
     {
       id: 'choice-content',
-      label: 'Every choice has text or an image attached',
+      label: 'Every choice has answer text',
       passed: hasQuestions && failingChoiceContent.length === 0,
       failingQuestions: failingChoiceContent,
     },

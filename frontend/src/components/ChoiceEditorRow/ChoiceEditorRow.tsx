@@ -14,7 +14,6 @@ import {
 } from '@mui/material';
 
 import type { ChoiceInput } from '../../api/quizQuestionService.ts';
-import { ImageUploadField } from '../ImageUploadField/ImageUploadField.tsx';
 
 export interface ChoiceEditorRowProps {
   index: number;
@@ -45,13 +44,6 @@ export function ChoiceEditorRow({
     onChange({
       ...choice,
       text: text.slice(0, 300),
-    });
-  };
-
-  const handleImageChange = (imageUrl: string | null) => {
-    onChange({
-      ...choice,
-      imageUrl,
     });
   };
 
@@ -152,15 +144,6 @@ export function ChoiceEditorRow({
           }}
           helperText={`${(choice.text ?? '').length}/300 characters`}
         />
-
-        <Box sx={{ pt: 0.5 }}>
-          <ImageUploadField
-            value={choice.imageUrl}
-            onChange={handleImageChange}
-            label={`Choice ${letter} Image (optional if text is provided)`}
-            disabled={disabled}
-          />
-        </Box>
       </Stack>
     </Paper>
   );

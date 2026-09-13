@@ -5,7 +5,6 @@ import { ChoiceButton, type ChoiceReveal } from './ChoiceButton.tsx';
 export interface ChoiceOption {
   id: string;
   text?: string | null;
-  imageUrl?: string | null;
 }
 
 export interface ChoiceGridProps {
@@ -62,7 +61,6 @@ export function ChoiceGrid({
             key={choice.id}
             index={index}
             text={choice.text}
-            imageUrl={choice.imageUrl}
             selected={choice.id === selectedChoiceId}
             disabled={!interactive}
             reveal={reveal}

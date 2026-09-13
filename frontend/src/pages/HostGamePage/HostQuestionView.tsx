@@ -70,7 +70,7 @@ export function HostQuestionView({
           <AnsweredCounter answered={answeredCount} total={participantCount} />
         </Stack>
 
-        <QuestionMedia imageUrl={question?.imageUrl} maxHeight={280} />
+        <QuestionMedia imageUrl={question?.imageUrl} />
 
         <Box sx={{ maxWidth: 520, mx: 'auto', width: '100%' }}>
           <ServerCountdown {...countdown} paused={paused} size="projector" />
