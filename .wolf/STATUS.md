@@ -6,12 +6,18 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-13 (quiz overview question card simplified, correct-answer summary removed)
+> Last updated: 2026-09-13 (automatic question completion & responsive leaderboard viewport optimization)
 
 ---
 
 ## ✅ Done
 
+- **Automatic Question Completion & Responsive Leaderboard Viewport (Completed & Verified):**
+  - **Backend Auto-End Question:** Implemented `TryAutoEndQuestionCommand` and `TryAutoEndQuestionCommandHandler` in `Kahoot.Application`. Transition occurs atomically as soon as all active (non-removed, connected) players submit answers (`totalAnswers > 0 && remaining == 0`). Integrated into `GameHub.SubmitAnswer`, `GameHub.OnDisconnectedAsync`, and `GamesController.RemoveParticipant`. Host manual controls and question countdown timer remain functional fallbacks.
+  - **Automated Verification:** Verified via standalone realtime test (`test_auto_end_question.mjs`), confirming immediate question completion when all active players answer and immediate unblocking when an unanswered player disconnects.
+  - **Responsive Leaderboard Viewport (`host/game/{id}`):** Refactored `LeaderboardCard.tsx`, `LeaderboardPodium.tsx`, and `PodiumSlot.tsx` to use dynamic viewport-relative clamp sizing (`clamp()`, `vh`) and a responsive 2-column split layout for >= 4 players on `md`+ screens (podium on left, scroll-contained standings on right). Total card height capped at ~440px on standard laptops (1366x768), fitting the Top 3 podium, badges, and host controls inside the initial viewport without scrolling.
+  - **Visual Verification:** Verified live in Chromium across 1366×768 (laptop), 1920×1080 (desktop), and 390×844 (mobile) with 11 players and long nicknames.
+  - **Zero Comments Constraint:** Strictly enforced 0 comments in C# and TypeScript files. All checks passed: `dotnet build` (0 warnings, 0 errors), `npm run lint` (0 errors), `npm run format:check` (100% formatted), `npm run build` (built cleanly).
 - **Hostinger Production Deployment Preparation (Completed & Verified):**
   - Added permanent engineering rules to both `AGENTS.md` and `CLAUDE.md` mandating production-ready architecture, zero hardcoded localhost URLs, secret injection via environment variables, and persistent storage.
   - Configured frontend API (`axiosClient.ts`), media URL resolver (`media.ts`), and SignalR hub resolver (`gameHub.ts`) to use relative routes (`/api`, `/uploads`, `/hubs/game`) by default in production, eliminating hardcoded localhost dependencies.
