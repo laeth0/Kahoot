@@ -38,16 +38,57 @@ internal sealed class UpdateQuestionCommandHandler(IApplicationDbContext dbConte
         question.Points = command.Points;
         quizResult.Value.IsPublished = false;
 
-        await using IDbContextTransaction transaction =
-            await dbContext.Database.BeginTransactionAsync(cancellationToken);
+        List<Choice> existingChoices = [.. question.Choices.OrderBy(candidate => candidate.OrderIndex)];
+        Dictionary<Guid, Choice> existingById = existingChoices.ToDictionary(candidate => candidate.Id);
+        HashSet<Choice> remainingExisting = [.. existingChoices];
+        List<Choice> updatedChoices = [];
 
-        dbContext.Choices.RemoveRange(question.Choices);
+        for (int i = 0; i < command.Choices.Count; i++)
+        {
+            ChoiceInput input = command.Choices[i];
+            Choice? targetChoice = null;
+
+            if (input.Id.HasValue && existingById.TryGetValue(input.Id.Value, out Choice? foundById))
+            {
+                targetChoice = foundById;
+            }
+            else if (i < existingChoices.Count && remainingExisting.Contains(existingChoices[i]))
+            {
+                targetChoice = existingChoices[i];
+            }
+
+            if (targetChoice is not null)
+            {
+                targetChoice.Text = QuestionMapping.Normalize(input.Text);
+                targetChoice.ImageUrl = QuestionMapping.Normalize(input.ImageUrl);
+                targetChoice.IsCorrect = input.IsCorrect;
+                targetChoice.OrderIndex = i;
+                remainingExisting.Remove(targetChoice);
+                updatedChoices.Add(targetChoice);
+            }
+            else
+            {
+                var newChoice = new Choice
+                {
+                    Id = input.Id ?? Guid.CreateVersion7(),
+                    QuestionId = question.Id,
+                    OrderIndex = i,
+                    Text = QuestionMapping.Normalize(input.Text),
+                    ImageUrl = QuestionMapping.Normalize(input.ImageUrl),
+                    IsCorrect = input.IsCorrect
+                };
+                dbContext.Choices.Add(newChoice);
+                updatedChoices.Add(newChoice);
+            }
+        }
+
+        if (remainingExisting.Count > 0)
+        {
+            dbContext.Choices.RemoveRange(remainingExisting);
+        }
+
+        question.Choices = updatedChoices;
         await dbContext.SaveChangesAsync(cancellationToken);
-
-        question.Choices = QuestionMapping.BuildChoices(question.Id, command.Choices);
-        await dbContext.SaveChangesAsync(cancellationToken);
-
-        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

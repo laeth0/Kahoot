@@ -30,4 +30,4 @@ public sealed record ChoiceResponse(
     string? ImageUrl,
     bool IsCorrect);
 
-public sealed record ChoiceInput(string? Text, string? ImageUrl, bool IsCorrect);
+public sealed record ChoiceInput(string? Text, string? ImageUrl, bool IsCorrect, Guid? Id = null);

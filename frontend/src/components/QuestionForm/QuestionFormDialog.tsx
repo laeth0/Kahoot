@@ -14,6 +14,7 @@ import {
   FormControl,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   Select,
@@ -46,11 +47,34 @@ const DEFAULT_CHOICES: ChoiceInput[] = [
 ];
 
 const TIME_LIMIT_OPTIONS = [5, 10, 20, 30, 60, 90, 120, 240, 300];
-const POINT_OPTIONS = [
-  { label: 'Standard (1000 pts)', value: 1000 },
-  { label: 'Double Points (2000 pts)', value: 2000 },
-  { label: 'No Points (0 pts)', value: 0 },
-];
+const PRESET_POINTS = [1000, 2000, 0] as const;
+
+function validateCustomPoints(input: string): string | null {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return 'Point value is required.';
+  }
+  if (trimmed.includes('-')) {
+    return 'Points must be non-negative.';
+  }
+  if (trimmed.includes('.') || trimmed.includes(',')) {
+    return 'Points must be a whole number.';
+  }
+  if (!/^\d+$/.test(trimmed)) {
+    return 'Please enter a valid whole number.';
+  }
+  const val = Number(trimmed);
+  if (isNaN(val) || val < 0) {
+    return 'Points must be non-negative.';
+  }
+  if (!Number.isInteger(val)) {
+    return 'Points must be a whole number.';
+  }
+  if (val > 2147483647) {
+    return 'Points cannot exceed 2,147,483,647.';
+  }
+  return null;
+}
 
 interface QuestionFormContentProps {
   initialData?: QuestionResponse | null;
@@ -65,15 +89,35 @@ function QuestionFormContent({
   onSubmit,
   isSaving,
 }: QuestionFormContentProps) {
+  const initialPoints = initialData?.points ?? 1000;
+  const isPresetPoint = PRESET_POINTS.includes(initialPoints as (typeof PRESET_POINTS)[number]);
+
   const [text, setText] = useState<string>(() => initialData?.text ?? '');
   const [imageUrl, setImageUrl] = useState<string | null>(() => initialData?.imageUrl ?? null);
   const [timeLimitSeconds, setTimeLimitSeconds] = useState<number>(
     () => initialData?.timeLimitSeconds ?? 20,
   );
-  const [points, setPoints] = useState<number>(() => initialData?.points ?? 1000);
+  const [pointsMode, setPointsMode] = useState<string>(() =>
+    isPresetPoint ? String(initialPoints) : 'custom',
+  );
+  const [customPointsInput, setCustomPointsInput] = useState<string>(() => String(initialPoints));
+
+  const customPointsError =
+    pointsMode === 'custom' ? validateCustomPoints(customPointsInput) : null;
+
+  const handlePointsModeChange = (mode: string) => {
+    setPointsMode(mode);
+    if (validationError) setValidationError(null);
+  };
+
+  const handleCustomPointsChange = (val: string) => {
+    setCustomPointsInput(val);
+    if (validationError) setValidationError(null);
+  };
   const [choices, setChoices] = useState<ChoiceInput[]>(() =>
     initialData
       ? initialData.choices.map((c) => ({
+          id: c.id,
           text: c.text,
           imageUrl: c.imageUrl,
           isCorrect: c.isCorrect,
@@ -98,7 +142,7 @@ function QuestionFormContent({
 
   const handleAddChoice = () => {
     if (choices.length >= 6) return;
-    setChoices((prev) => [...prev, { text: '', imageUrl: null, isCorrect: false }]);
+    setChoices((prev) => [...prev, { id: null, text: '', imageUrl: null, isCorrect: false }]);
   };
 
   const handleRemoveChoice = (index: number) => {
@@ -142,13 +186,25 @@ function QuestionFormContent({
       return;
     }
 
+    let finalPoints: number;
+    if (pointsMode === 'custom') {
+      const customErr = validateCustomPoints(customPointsInput);
+      if (customErr) {
+        setValidationError(customErr);
+        return;
+      }
+      finalPoints = Number(customPointsInput.trim());
+    } else {
+      finalPoints = Number(pointsMode);
+    }
+
     setValidationError(null);
 
     await onSubmit({
       text: text.trim(),
       imageUrl,
       timeLimitSeconds,
-      points,
+      points: finalPoints,
       choices,
     });
   };
@@ -245,22 +301,43 @@ function QuestionFormContent({
               </Grid>
 
               <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth size="small">
-                  <InputLabel id="points-select-label">Points</InputLabel>
-                  <Select
-                    labelId="points-select-label"
-                    value={points}
-                    label="Points"
-                    onChange={(e) => setPoints(Number(e.target.value))}
-                    disabled={isSaving}
-                  >
-                    {POINT_OPTIONS.map((opt) => (
-                      <MenuItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <Stack spacing={1.5}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel id="points-select-label">Points</InputLabel>
+                    <Select
+                      labelId="points-select-label"
+                      value={pointsMode}
+                      label="Points"
+                      onChange={(e) => handlePointsModeChange(e.target.value)}
+                      disabled={isSaving}
+                    >
+                      <MenuItem value="1000">Standard (1000 pts)</MenuItem>
+                      <MenuItem value="2000">Double Points (2000 pts)</MenuItem>
+                      <MenuItem value="0">No Points (0 pts)</MenuItem>
+                      <MenuItem value="custom">Custom Points</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  {pointsMode === 'custom' && (
+                    <TextField
+                      id="custom-points-input"
+                      label="Custom Points"
+                      fullWidth
+                      size="small"
+                      value={customPointsInput}
+                      onChange={(e) => handleCustomPointsChange(e.target.value)}
+                      disabled={isSaving}
+                      error={Boolean(customPointsError)}
+                      helperText={customPointsError ?? 'Enter non-negative whole number'}
+                      slotProps={{
+                        input: {
+                          endAdornment: <InputAdornment position="end">pts</InputAdornment>,
+                          inputProps: { min: 0, step: 1, 'aria-label': 'Custom Points' },
+                        },
+                      }}
+                    />
+                  )}
+                </Stack>
               </Grid>
             </Grid>
 
@@ -339,7 +416,7 @@ function QuestionFormContent({
             type="submit"
             variant="contained"
             color="primary"
-            disabled={isSaving}
+            disabled={isSaving || (pointsMode === 'custom' && Boolean(customPointsError))}
             startIcon={isSaving ? <CircularProgress size={18} color="inherit" /> : <SaveIcon />}
             sx={{ minHeight: 44, fontWeight: 700, px: 3 }}
           >
