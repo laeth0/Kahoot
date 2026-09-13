@@ -174,6 +174,7 @@ export function ReorderableQuestionList({
                       justifyContent: 'flex-end',
                       alignSelf: { xs: 'flex-end', sm: 'center' },
                       flexWrap: 'wrap',
+                      flexShrink: 0,
                     }}
                   >
                     <Tooltip title="Move question up">
@@ -292,9 +293,7 @@ export function ReorderableQuestionList({
               <QuestionCardContent
                 question={draggedQuestion}
                 position={drag.sourceIndex + 1}
-                dragHandle={
-                  <DragIndicatorIcon sx={{ color: 'primary.main', flexShrink: 0, mt: 1 }} />
-                }
+                dragHandle={<DragIndicatorIcon sx={{ color: 'primary.main', flexShrink: 0 }} />}
               />
             </Card>
           </Box>

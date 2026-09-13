@@ -6,12 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-13 (dynamic question drag-and-drop verified)
+> Last updated: 2026-09-13 (quiz overview question card simplified, correct-answer summary removed)
 
 ---
 
 ## ✅ Done
 
+- **Quiz Overview Card Polish:** Removed the green correct-answer summary badge from question cards on `/host/quizzes/{id}` while preserving choices and answers in question forms and live gameplay. Adjusted card padding, spacing, and vertical alignment for a compact, balanced card. Cleaned up `.playwright-cli`. Verified with `format:check`, `eslint .`, and `tsc -b && vite build`.
 - **Dynamic quiz question ordering:** Added handles on every card, mouse/touch and keyboard moves, edge scrolling, floating preview, dynamic destination text, immediate reindexing, full-ID saves, and failure rollback. Verified all six move patterns on 50 real questions, long scrolling, refresh persistence, unchanged question/choice data, cancellation, and 320–1440px question-list layouts. Build, lint, and format checks run with pinned dependencies in an isolated Linux source copy.
 
 <!-- Move items here from "🚀 Next phase" when finished. Group by area. -->

@@ -1,4 +1,3 @@
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import ImageIcon from '@mui/icons-material/Image';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import { Box, CardContent, Chip, Stack, Typography } from '@mui/material';
@@ -19,17 +18,28 @@ export function QuestionCardContent({
   dragHandle,
   actions,
 }: QuestionCardContentProps) {
-  const correctChoices = question.choices.filter((choice) => choice.isCorrect);
   return (
-    <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
+    <CardContent
+      sx={{
+        py: { xs: 1.75, sm: 2 },
+        px: { xs: 2, sm: 2.5 },
+        '&:last-child': { pb: { xs: 1.75, sm: 2 } },
+      }}
+    >
       <Stack
         direction={{ xs: 'column', sm: 'row' }}
         spacing={2}
-        sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
+        sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
       >
         <Stack
           direction="row"
-          sx={{ flex: 1, minWidth: 0, flexWrap: { xs: 'wrap', sm: 'nowrap' }, gap: 2 }}
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            flexWrap: { xs: 'wrap', sm: 'nowrap' },
+            gap: 2,
+            alignItems: 'center',
+          }}
         >
           {dragHandle}
           <Box
@@ -55,7 +65,7 @@ export function QuestionCardContent({
             <Stack
               direction="row"
               spacing={1}
-              sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}
+              sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 0.75 }}
             >
               <Chip
                 icon={<TimerOutlinedIcon sx={{ fontSize: 16 }} />}
@@ -109,42 +119,11 @@ export function QuestionCardContent({
                 fontWeight: 700,
                 color: '#09131f',
                 lineHeight: 1.4,
-                mb: 1.5,
                 wordBreak: 'break-word',
               }}
             >
               {question.text}
             </Typography>
-
-            {correctChoices.length > 0 && (
-              <Stack
-                direction="row"
-                spacing={1}
-                sx={{
-                  alignItems: 'center',
-                  bgcolor: 'rgba(16, 185, 129, 0.08)',
-                  p: 1,
-                  borderRadius: 1.5,
-                  border: '1px solid rgba(16, 185, 129, 0.2)',
-                  maxWidth: 540,
-                }}
-              >
-                <CheckCircleOutlinedIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 700,
-                    color: '#065f46',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {correctChoices.length > 1 ? 'Correct answers: ' : 'Correct: '}
-                  {correctChoices.map((c) => c.text || '(Image answer)').join(', ')}
-                </Typography>
-              </Stack>
-            )}
           </Box>
         </Stack>
 
