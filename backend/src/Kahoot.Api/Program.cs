@@ -93,9 +93,15 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("FrontendCorsPolicy", policy =>
     {
-        policy.WithOrigins(
-                builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ??
-                ["http://localhost:5173", "http://localhost:3000"])
+        string[] configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+            ?? builder.Configuration["Cors:AllowedOrigins"]?.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            ?? [];
+
+        string[] origins = configuredOrigins.Length > 0
+            ? configuredOrigins
+            : ["http://localhost:5173", "http://localhost:3000"];
+
+        policy.WithOrigins(origins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();

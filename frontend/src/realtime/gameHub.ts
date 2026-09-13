@@ -8,13 +8,25 @@ import {
 import { authService } from '../api/authService.ts';
 import type { AnswerAckResponse, PlayerGameStateResponse, RealtimeResponse } from './events.ts';
 
-const SIGNALR_URL =
-  import.meta.env.VITE_SIGNALR_URL ??
-  import.meta.env.VITE_API_URL?.replace(/\/api\/?$/, '') ??
-  'http://localhost:5000';
+function getHubUrl(): string {
+  const configuredSignalR = import.meta.env.VITE_SIGNALR_URL?.trim();
+  if (configuredSignalR) {
+    return configuredSignalR.endsWith('/hubs/game')
+      ? configuredSignalR
+      : `${configuredSignalR.replace(/\/$/, '')}/hubs/game`;
+  }
+
+  const configuredApi = import.meta.env.VITE_API_URL?.trim();
+  if (configuredApi) {
+    const base = configuredApi.replace(/\/api\/?$/, '').replace(/\/$/, '');
+    return base ? `${base}/hubs/game` : '/hubs/game';
+  }
+
+  return '/hubs/game';
+}
 
 export function createGameHubConnection(requireHostAuth = false): HubConnection {
-  const hubUrl = `${SIGNALR_URL}/hubs/game`;
+  const hubUrl = getHubUrl();
 
   const builder = new HubConnectionBuilder()
     .withUrl(hubUrl, {

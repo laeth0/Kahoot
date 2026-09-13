@@ -236,6 +236,12 @@ follow the more specific rule without weakening the requirements in this file.
 - Summarize the completed outcome, important design decisions, and verification results.
   Call out remaining risks, limitations, or required follow-up plainly.
 
+## Production Deployment Readiness
+
+- Always build, configure, and maintain code to be production-ready for deployment.
+- Never rely on hardcoded development URLs (e.g. localhost), default weak credentials, or ephemeral storage in production environments.
+- Ensure all secrets, endpoints, allowed origins, and storage paths are properly configurable via environment variables and production configuration profiles.
+
 
 # OpenWolf
 

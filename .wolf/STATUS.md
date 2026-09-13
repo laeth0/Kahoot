@@ -12,7 +12,17 @@ budget_tokens: 1000
 
 ## ✅ Done
 
-- **Answer Choice Images End-to-End Fix (Completed & Verified):**
+- **Hostinger Production Deployment Preparation (Completed & Verified):**
+  - Added permanent engineering rules to both `AGENTS.md` and `CLAUDE.md` mandating production-ready architecture, zero hardcoded localhost URLs, secret injection via environment variables, and persistent storage.
+  - Configured frontend API (`axiosClient.ts`), media URL resolver (`media.ts`), and SignalR hub resolver (`gameHub.ts`) to use relative routes (`/api`, `/uploads`, `/hubs/game`) by default in production, eliminating hardcoded localhost dependencies.
+  - Enhanced frontend `nginx.conf` with `client_max_body_size 10M;`, WebSocket proxy timeouts (`3600s`), real client IP/protocol forwarding (`X-Forwarded-Proto $scheme`), and static asset gzip compression.
+  - Created `frontend/public/.htaccess` for Hostinger Web Hosting Apache/LiteSpeed SPA fallback routing with security headers and caching policies.
+  - Created `docker-compose.prod.yml` with isolated internal database network, environment variable parameterized credentials, healthchecks, restart policies, and named persistent volumes.
+  - Created root and frontend production environment templates (`.env.production.example`, `frontend/.env.production.example`).
+  - Added comma/semicolon delimited string parsing to `Cors:AllowedOrigins` in `Kahoot.Api/Program.cs` for flexible environment variable overrides.
+  - Authored comprehensive `DEPLOYMENT_HOSTINGER.md` guide covering Hostinger VPS setup, Docker Compose deployment, SSL with Certbot, database backups, Hostinger Web Hosting alternative, and 9-point production verification checklist.
+  - Zero-comment rule strictly maintained across all C# and TypeScript code.
+  - Verification passed: `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors), `npm run lint` (0 errors), `npm run format:check` (100% formatted), `npm run build` (clean dist), and live container verification running image upload, direct/proxied fetches, and SignalR gameplay.
   - Resolved root cause of missing choice images during live gameplay: added persistent Docker volume `uploads_data:/app/uploads` to `backend` service in `docker-compose.yml` so uploaded media survives container restarts and rebuilds.
   - Added Vite dev server proxy in `frontend/vite.config.ts` forwarding `/api`, `/uploads`, and `/hubs` to `http://localhost:5000`.
   - Extended backend `ChoiceResultResponse` and `QuestionResultsBuilder` in `Kahoot.Application` to project and return `choice.ImageUrl` in `QuestionResultsResponse`.
