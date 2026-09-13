@@ -10,8 +10,8 @@ export interface PodiumSlotProps {
   entry: LeaderboardEntryResponse;
   rank: 1 | 2 | 3;
   isFirstPlace: boolean;
-  height: { xs: number; sm: number };
-  avatarSize: { xs: number; sm: number };
+  height?: { xs: number | string; sm: number | string } | string | number;
+  avatarSize?: { xs: number | string; sm: number | string } | string | number;
   pedestalGradient: string;
   accentColor: string;
   delaySec: number;
@@ -50,32 +50,50 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
 }) => {
   const avatarBg = getAvatarColor(entry.nickname, rank);
 
+  const resolvedHeight =
+    height ??
+    (isFirstPlace
+      ? { xs: 'clamp(65px, 14vh, 180px)', sm: 'clamp(80px, 17vh, 210px)' }
+      : rank === 2
+        ? { xs: 'clamp(48px, 10vh, 130px)', sm: 'clamp(60px, 13vh, 155px)' }
+        : { xs: 'clamp(36px, 7.5vh, 95px)', sm: 'clamp(46px, 9.5vh, 120px)' });
+
+  const resolvedAvatarSize =
+    avatarSize ??
+    (isFirstPlace
+      ? { xs: 'clamp(40px, 6.5vh, 64px)', sm: 'clamp(50px, 8vh, 78px)' }
+      : rank === 2
+        ? { xs: 'clamp(36px, 5.5vh, 56px)', sm: 'clamp(42px, 6.8vh, 66px)' }
+        : { xs: 'clamp(32px, 5vh, 50px)', sm: 'clamp(38px, 6vh, 58px)' });
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50, scale: 0.88 }}
+      initial={{ opacity: 0, y: 40, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
-        duration: 0.6,
+        duration: 0.55,
         delay: delaySec,
         ease: [0.34, 1.56, 0.64, 1],
       }}
       style={{
         flex: 1,
-        maxWidth: isProjector ? 230 : 160,
+        maxWidth: isProjector ? 240 : 180,
         minWidth: 0,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
       }}
     >
-      <Stack spacing={1} sx={{ alignItems: 'center', width: '100%', overflow: 'visible' }}>
+      <Stack spacing={0.75} sx={{ alignItems: 'center', width: '100%', overflow: 'visible' }}>
         <Box
           sx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            mb: -0.5,
+            minHeight: isFirstPlace
+              ? { xs: 'clamp(28px, 4vh, 48px)', sm: 'clamp(36px, 5vh, 56px)' }
+              : { xs: 24, sm: 28 },
           }}
         >
           {isFirstPlace ? (
@@ -87,7 +105,7 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
                 animation: 'winnerTrophyFloat 2.6s ease-in-out infinite',
                 '@keyframes winnerTrophyFloat': {
                   '0%, 100%': { transform: 'translateY(0) scale(1)' },
-                  '50%': { transform: 'translateY(-6px) scale(1.06)' },
+                  '50%': { transform: 'translateY(-5px) scale(1.05)' },
                 },
                 '@media (prefers-reduced-motion: reduce)': {
                   animation: 'none',
@@ -96,7 +114,7 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
             >
               <EmojiEventsIcon
                 sx={{
-                  fontSize: isProjector ? { xs: 44, sm: 54 } : { xs: 34, sm: 42 },
+                  fontSize: { xs: 'clamp(26px, 4vh, 42px)', sm: 'clamp(32px, 5vh, 50px)' },
                   color: '#F59E0B',
                   filter: 'drop-shadow(0 4px 12px rgba(245, 158, 11, 0.5))',
                 }}
@@ -113,8 +131,8 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
         <Box
           sx={{
             position: 'relative',
-            width: avatarSize,
-            height: avatarSize,
+            width: resolvedAvatarSize,
+            height: resolvedAvatarSize,
             borderRadius: '50%',
             bgcolor: isYou ? '#00629B' : avatarBg,
             color: '#FFFFFF',
@@ -123,33 +141,37 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
             justifyContent: 'center',
             fontWeight: 900,
             fontSize: isFirstPlace
-              ? { xs: '1.5rem', sm: '1.9rem' }
-              : { xs: '1.25rem', sm: '1.5rem' },
+              ? { xs: 'clamp(1.1rem, 2.2vh, 1.6rem)', sm: 'clamp(1.3rem, 2.6vh, 1.9rem)' }
+              : { xs: 'clamp(0.95rem, 1.8vh, 1.3rem)', sm: 'clamp(1.1rem, 2.1vh, 1.5rem)' },
             border: isYou
               ? '3px solid #00629B'
               : isFirstPlace
-                ? '3.5px solid #FDE68A'
-                : '3px solid #FFFFFF',
+                ? '3px solid #FDE68A'
+                : '2.5px solid #FFFFFF',
             boxShadow: isFirstPlace
-              ? '0 8px 24px rgba(245, 158, 11, 0.4)'
-              : '0 4px 14px rgba(0, 0, 0, 0.12)',
+              ? '0 8px 22px rgba(245, 158, 11, 0.35)'
+              : '0 4px 12px rgba(0, 0, 0, 0.1)',
+            flexShrink: 0,
           }}
         >
           {getInitial(entry.nickname)}
         </Box>
 
-        <Stack spacing={0.25} sx={{ alignItems: 'center', width: '100%', minWidth: 0, px: 0.5 }}>
+        <Stack spacing={0.2} sx={{ alignItems: 'center', width: '100%', minWidth: 0, px: 0.25 }}>
           <Typography
             sx={{
               fontWeight: 800,
               color: '#09131F',
               textAlign: 'center',
               fontSize: isFirstPlace
-                ? { xs: '0.95rem', sm: '1.15rem' }
-                : { xs: '0.825rem', sm: '0.975rem' },
+                ? { xs: 'clamp(0.8rem, 1.5vh, 1.05rem)', sm: 'clamp(0.9rem, 1.7vh, 1.15rem)' }
+                : { xs: 'clamp(0.72rem, 1.3vh, 0.9rem)', sm: 'clamp(0.8rem, 1.4vh, 0.98rem)' },
               width: '100%',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
-            noWrap
+            title={entry.nickname}
           >
             {entry.nickname}
           </Typography>
@@ -159,9 +181,9 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
               label="YOU"
               size="small"
               sx={{
-                height: 18,
+                height: 16,
                 fontWeight: 900,
-                fontSize: '0.65rem',
+                fontSize: '0.6rem',
                 bgcolor: '#00629B',
                 color: '#FFFFFF',
               }}
@@ -173,8 +195,8 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
               fontWeight: 900,
               color: '#09131F',
               fontSize: isFirstPlace
-                ? { xs: '1.1rem', sm: '1.35rem' }
-                : { xs: '0.95rem', sm: '1.1rem' },
+                ? { xs: 'clamp(0.85rem, 1.6vh, 1.15rem)', sm: 'clamp(0.95rem, 1.8vh, 1.3rem)' }
+                : { xs: 'clamp(0.75rem, 1.4vh, 0.95rem)', sm: 'clamp(0.825rem, 1.5vh, 1.05rem)' },
               fontVariantNumeric: 'tabular-nums',
             }}
           >
@@ -185,17 +207,18 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
         <Box
           sx={{
             width: '100%',
-            height,
+            height: resolvedHeight,
+            minHeight: isFirstPlace ? 'clamp(45px, 9vh, 80px)' : 'clamp(30px, 6vh, 60px)',
             borderRadius: '16px 16px 0 0',
             background: pedestalGradient,
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            pt: { xs: 1.5, sm: 2 },
+            pt: { xs: 0.75, sm: 1.25 },
             boxShadow: isFirstPlace
-              ? '0 12px 30px rgba(245, 158, 11, 0.3)'
-              : '0 6px 18px rgba(0, 0, 0, 0.08)',
+              ? '0 10px 24px rgba(245, 158, 11, 0.28)'
+              : '0 5px 14px rgba(0, 0, 0, 0.07)',
             border: isFirstPlace
               ? '2px solid rgba(254, 240, 138, 0.8)'
               : '1px solid rgba(255, 255, 255, 0.7)',
@@ -232,8 +255,8 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
               fontWeight: 900,
               color: isFirstPlace ? '#92400E' : accentColor,
               fontSize: isFirstPlace
-                ? { xs: '2.25rem', sm: '3rem' }
-                : { xs: '1.8rem', sm: '2.4rem' },
+                ? { xs: 'clamp(1.6rem, 3.2vh, 2.5rem)', sm: 'clamp(1.9rem, 3.8vh, 3rem)' }
+                : { xs: 'clamp(1.3rem, 2.6vh, 2rem)', sm: 'clamp(1.5rem, 3vh, 2.4rem)' },
               lineHeight: 1,
               opacity: 0.9,
             }}

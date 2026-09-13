@@ -1,6 +1,7 @@
 using Kahoot.Api.Common;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Games.Common;
+using Kahoot.Application.Games.EndQuestion;
 using Kahoot.Application.Games.JoinGame;
 using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Games.Reconnect;
@@ -79,9 +80,24 @@ public sealed class GameHub(
             new SubmitAnswerCommand(gameId, questionId, sessionToken, selectedChoiceId),
             Context.ConnectionAborted);
 
-        return result.IsSuccess
-            ? RealtimeResponse<AnswerAckResponse>.Ok(result.Value)
-            : RealtimeResponse<AnswerAckResponse>.Failure(result.Error);
+        if (!result.IsSuccess)
+        {
+            return RealtimeResponse<AnswerAckResponse>.Failure(result.Error);
+        }
+
+        if (result.Value.Accepted && !result.Value.AlreadyAnswered)
+        {
+            Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
+                new TryAutoEndQuestionCommand(gameId, questionId),
+                Context.ConnectionAborted);
+
+            if (autoEndResult.IsSuccess && autoEndResult.Value is not null)
+            {
+                await notifier.QuestionEndedAsync(gameId, autoEndResult.Value);
+            }
+        }
+
+        return RealtimeResponse<AnswerAckResponse>.Ok(result.Value);
     }
 
     [Authorize]
@@ -113,6 +129,15 @@ public sealed class GameHub(
             if (detachResult.IsSuccess && detachResult.Value)
             {
                 await notifier.ParticipantLeftAsync(gameId, participantId);
+
+                Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
+                    new TryAutoEndQuestionCommand(gameId, null),
+                    CancellationToken.None);
+
+                if (autoEndResult.IsSuccess && autoEndResult.Value is not null)
+                {
+                    await notifier.QuestionEndedAsync(gameId, autoEndResult.Value);
+                }
             }
         }
 

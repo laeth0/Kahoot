@@ -174,7 +174,7 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     gameState.currentQuestionIndex < gameState.totalQuestions - 1;
 
   const controls = (
-    <Box sx={{ mt: 5 }}>
+    <Box sx={{ mt: { xs: 2, sm: 'clamp(12px, 2vh, 24px)' } }}>
       <HostGameControls
         status={status}
         participantCount={participantCount}
@@ -194,11 +194,14 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
       <MetadataManager title={`${gameState.quizTitle} - Host - Kahoot`} noindex />
 
-      <Box ref={mainRegionRef} sx={{ maxWidth: 1400, mx: 'auto', pb: 8 }}>
+      <Box
+        ref={mainRegionRef}
+        sx={{ maxWidth: 1400, mx: 'auto', pb: { xs: 2, sm: 'clamp(16px, 2.5vh, 32px)' } }}
+      >
         <LiveRegion message={liveAnnouncement?.message} politeness={liveAnnouncement?.politeness} />
         <ConnectionStatusBanner status={hubConnectionStatus} onRetry={retryHub} />
 
-        <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: { xs: 1.5, sm: 'clamp(10px, 1.5vh, 20px)' } }}>
           <GamePhaseIndicator
             status={status}
             currentQuestionIndex={gameState.currentQuestionIndex ?? undefined}
@@ -294,7 +297,7 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
             <Box
               sx={{
                 position: 'relative',
-                py: { xs: 2, sm: 3 },
+                py: { xs: 1, sm: 'clamp(8px, 1.5vh, 20px)' },
                 borderRadius: 6,
                 background:
                   'radial-gradient(ellipse at 50% 25%, rgba(254, 240, 138, 0.3) 0%, rgba(186, 230, 253, 0.22) 40%, rgba(255, 255, 255, 0) 72%)',
@@ -303,14 +306,14 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
               <Typography
                 aria-hidden="true"
                 sx={{
-                  display: { xs: 'none', lg: 'block' },
+                  display: { xs: 'none', xl: 'block' },
                   position: 'absolute',
-                  left: { lg: 10, xl: 40 },
+                  left: { xl: 16, xxl: 40 },
                   top: '35%',
                   transform: 'rotate(-10deg)',
                   fontFamily: 'cursive, "Brush Script MT", "Segoe Print", sans-serif',
                   fontWeight: 900,
-                  fontSize: { lg: '2.5rem', xl: '3.25rem' },
+                  fontSize: { xl: '2.5rem' },
                   color: '#38BDF8',
                   letterSpacing: '0.04em',
                   textShadow: '0 4px 14px rgba(56, 189, 248, 0.25)',
@@ -326,14 +329,14 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
               <Typography
                 aria-hidden="true"
                 sx={{
-                  display: { xs: 'none', lg: 'block' },
+                  display: { xs: 'none', xl: 'block' },
                   position: 'absolute',
-                  right: { lg: 10, xl: 40 },
+                  right: { xl: 16, xxl: 40 },
                   top: '48%',
                   transform: 'rotate(10deg)',
                   fontFamily: 'cursive, "Brush Script MT", "Segoe Print", sans-serif',
                   fontWeight: 900,
-                  fontSize: { lg: '2.5rem', xl: '3.25rem' },
+                  fontSize: { xl: '2.5rem' },
                   color: '#A855F7',
                   letterSpacing: '0.04em',
                   textShadow: '0 4px 14px rgba(168, 85, 247, 0.25)',
