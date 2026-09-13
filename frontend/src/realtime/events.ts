@@ -45,6 +45,7 @@ export interface HostQuestionResponse {
 export interface ChoiceResultResponse {
   choiceId: string;
   text?: string | null;
+  imageUrl?: string | null;
   answerCount: number;
   isCorrect: boolean;
 }

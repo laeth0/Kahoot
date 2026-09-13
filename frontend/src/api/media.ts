@@ -7,8 +7,16 @@ export function resolveMediaUrl(path: string | null | undefined): string | null 
   if (!path) {
     return null;
   }
-  if (/^(https?:)?\/\//.test(path) || path.startsWith('data:') || path.startsWith('blob:')) {
-    return path;
+  const trimmed = path.trim();
+  if (!trimmed) {
+    return null;
   }
-  return `${API_ORIGIN}${path.startsWith('/') ? '' : '/'}${path}`;
+  if (
+    /^(https?:)?\/\//.test(trimmed) ||
+    trimmed.startsWith('data:') ||
+    trimmed.startsWith('blob:')
+  ) {
+    return trimmed;
+  }
+  return `${API_ORIGIN}${trimmed.startsWith('/') ? '' : '/'}${trimmed}`;
 }

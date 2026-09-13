@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { useState } from 'react';
 
 import { resolveMediaUrl } from '../../api/media.ts';
 
@@ -9,8 +10,10 @@ export interface QuestionMediaProps {
 }
 
 export function QuestionMedia({ imageUrl, alt = '', maxHeight = 320 }: QuestionMediaProps) {
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const src = resolveMediaUrl(imageUrl);
-  if (!src) {
+
+  if (!src || failedSrc === src) {
     return null;
   }
 
@@ -26,6 +29,7 @@ export function QuestionMedia({ imageUrl, alt = '', maxHeight = 320 }: QuestionM
         component="img"
         src={src}
         alt={alt}
+        onError={() => setFailedSrc(src)}
         loading="lazy"
         sx={{
           width: 'auto',

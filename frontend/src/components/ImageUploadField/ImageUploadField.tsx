@@ -1,5 +1,6 @@
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
 import {
   Alert,
   Box,
@@ -12,6 +13,7 @@ import {
 } from '@mui/material';
 import { type ChangeEvent, useRef, useState } from 'react';
 
+import { resolveMediaUrl } from '../../api/media.ts';
 import { uploadService } from '../../api/uploadService.ts';
 
 export interface ImageUploadFieldProps {
@@ -30,6 +32,10 @@ export function ImageUploadField({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedValue, setFailedValue] = useState<string | null>(null);
+
+  const previewSrc = resolveMediaUrl(value) ?? value;
+  const previewError = Boolean(value && failedValue === value);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -102,25 +108,44 @@ export function ImageUploadField({
           }}
         >
           <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
-            <Box
-              component="img"
-              src={value}
-              alt="Uploaded preview"
-              sx={{
-                width: 64,
-                height: 64,
-                borderRadius: 1.5,
-                objectFit: 'cover',
-                border: '1px solid #cbd5e1',
-                bgcolor: '#ffffff',
-              }}
-            />
+            {previewError ? (
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 1.5,
+                  border: '1px solid #cbd5e1',
+                  bgcolor: '#ffffff',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#94a3b8',
+                }}
+              >
+                <ImageNotSupportedOutlinedIcon />
+              </Box>
+            ) : (
+              <Box
+                component="img"
+                src={previewSrc ?? undefined}
+                alt="Uploaded preview"
+                onError={() => setFailedValue(value ?? null)}
+                sx={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 1.5,
+                  objectFit: 'cover',
+                  border: '1px solid #cbd5e1',
+                  bgcolor: '#ffffff',
+                }}
+              />
+            )}
             <Typography
               variant="body2"
               noWrap
               sx={{ color: '#334e68', maxWidth: { xs: 160, sm: 260 }, fontWeight: 500 }}
             >
-              Image attached
+              {previewError ? 'Image attached (preview unavailable)' : 'Image attached'}
             </Typography>
           </Stack>
 

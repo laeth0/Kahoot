@@ -1,6 +1,8 @@
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ImageNotSupportedOutlinedIcon from '@mui/icons-material/ImageNotSupportedOutlined';
 import { Box, ButtonBase, Chip, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
 
 import { resolveMediaUrl } from '../../api/media.ts';
 import { ChoiceShape } from './ChoiceShape.tsx';
@@ -29,9 +31,11 @@ export function ChoiceButton({
   reveal = null,
   count = null,
 }: ChoiceButtonProps) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string | null>(null);
   const letter = choiceLetter(index);
   const baseColor = choiceColor(index);
   const media = resolveMediaUrl(imageUrl);
+  const imageError = Boolean(imageUrl && failedImageUrl === imageUrl);
 
   const muted = reveal === 'muted';
   const outlineColor =
@@ -43,7 +47,10 @@ export function ChoiceButton({
           ? '#FFFFFF'
           : 'transparent';
 
-  const label = text?.trim() ? text : `Answer ${letter}`;
+  const hasText = Boolean(text?.trim());
+  const label = hasText ? (text as string).trim() : `Answer ${letter}`;
+  const showImage = Boolean(media && !imageError);
+  const isImageOnlyFailed = !hasText && Boolean(media && imageError);
 
   return (
     <ButtonBase
@@ -96,19 +103,57 @@ export function ChoiceButton({
           </Typography>
         </Stack>
 
-        {media ? (
+        {showImage && (
           <Box
             component="img"
-            src={media}
-            alt={label}
+            src={media ?? undefined}
+            alt={hasText ? label : `Choice ${letter}`}
+            onError={() => setFailedImageUrl(imageUrl ?? null)}
             loading="lazy"
-            sx={{ height: 56, maxWidth: '60%', objectFit: 'contain', borderRadius: 1 }}
+            sx={{
+              height: { xs: 48, sm: 56 },
+              maxWidth: hasText ? { xs: 80, sm: 120 } : '70%',
+              objectFit: 'contain',
+              borderRadius: 1.5,
+              bgcolor: 'rgba(0, 0, 0, 0.12)',
+              flexShrink: 0,
+            }}
           />
-        ) : (
+        )}
+
+        {hasText && (
           <Typography
             sx={{
               fontWeight: 800,
-              fontSize: { xs: '1rem', sm: '1.1rem' },
+              fontSize: { xs: '0.95rem', sm: '1.05rem' },
+              lineHeight: 1.3,
+              overflowWrap: 'anywhere',
+            }}
+          >
+            {label}
+          </Typography>
+        )}
+
+        {isImageOnlyFailed && (
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', opacity: 0.9 }}>
+            <ImageNotSupportedOutlinedIcon sx={{ fontSize: 22, flexShrink: 0 }} />
+            <Typography
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                lineHeight: 1.3,
+              }}
+            >
+              {label}
+            </Typography>
+          </Stack>
+        )}
+
+        {!showImage && !hasText && !isImageOnlyFailed && (
+          <Typography
+            sx={{
+              fontWeight: 800,
+              fontSize: { xs: '0.95rem', sm: '1.05rem' },
               lineHeight: 1.3,
               overflowWrap: 'anywhere',
             }}

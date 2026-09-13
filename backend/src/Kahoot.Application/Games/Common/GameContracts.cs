@@ -41,7 +41,7 @@ public sealed record QuestionStartedResponse(HostQuestionResponse Host, PlayerQu
 
 public sealed record AnswerAckResponse(bool Accepted, bool AlreadyAnswered);
 
-public sealed record ChoiceResultResponse(Guid ChoiceId, string? Text, int AnswerCount, bool IsCorrect);
+public sealed record ChoiceResultResponse(Guid ChoiceId, string? Text, int AnswerCount, bool IsCorrect, string? ImageUrl = null);
 
 public sealed record QuestionResultsResponse(
     Guid QuestionId,

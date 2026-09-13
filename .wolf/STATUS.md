@@ -12,6 +12,15 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Answer Choice Images End-to-End Fix (Completed & Verified):**
+  - Resolved root cause of missing choice images during live gameplay: added persistent Docker volume `uploads_data:/app/uploads` to `backend` service in `docker-compose.yml` so uploaded media survives container restarts and rebuilds.
+  - Added Vite dev server proxy in `frontend/vite.config.ts` forwarding `/api`, `/uploads`, and `/hubs` to `http://localhost:5000`.
+  - Extended backend `ChoiceResultResponse` and `QuestionResultsBuilder` in `Kahoot.Application` to project and return `choice.ImageUrl` in `QuestionResultsResponse`.
+  - Updated frontend `ChoiceResultResponse` in `src/realtime/events.ts` to include `imageUrl?: string | null`.
+  - Refactored `ChoiceButton.tsx` to render both choice thumbnail and label when present, and display an accessible `ImageNotSupportedOutlinedIcon` fallback instead of a broken browser icon if an image fails to load.
+  - Refactored `ImageUploadField.tsx`, `QuestionMedia.tsx`, and `QuestionResultsChart.tsx` to resolve media URLs and handle image errors cleanly without synchronous effect cascades.
+  - Zero-comment rule strictly maintained across all C# and TypeScript files.
+  - End-to-end verified via automated script: image upload, direct (port 5000) and proxied (port 3000) fetch, DB persistence, container restart persistence, and live SignalR game delivery for Host (`QuestionStartedForHost`, `QuestionEnded`) and Player (`QuestionStarted`).
 - **Quiz Overview Card Polish:** Removed the green correct-answer summary badge from question cards on `/host/quizzes/{id}` while preserving choices and answers in question forms and live gameplay. Adjusted card padding, spacing, and vertical alignment for a compact, balanced card. Cleaned up `.playwright-cli`. Verified with `format:check`, `eslint .`, and `tsc -b && vite build`.
 - **Dynamic quiz question ordering:** Added handles on every card, mouse/touch and keyboard moves, edge scrolling, floating preview, dynamic destination text, immediate reindexing, full-ID saves, and failure rollback. Verified all six move patterns on 50 real questions, long scrolling, refresh persistence, unchanged question/choice data, cancellation, and 320–1440px question-list layouts. Build, lint, and format checks run with pinned dependencies in an isolated Linux source copy.
 
