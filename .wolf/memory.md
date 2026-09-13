@@ -651,4 +651,4 @@ description: chronological action log per session, consolidated weekly
 ## Session: 2026-09-10 21:53
 
 | Time | Action | File(s) | Outcome | ~Tokens |
-|------|--------|---------|---------|--------|
+| 21:50 | Removed host username badge from navbar in RootLayout.tsx | frontend/src/layouts/RootLayout.tsx | success | ~180 |

@@ -12,6 +12,12 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Navbar Host Badge Removal (Completed & Verified):**
+  - Removed the `Host: <username>` outlined Chip badge and its unused `PersonIcon` and `Chip` imports from `frontend/src/layouts/RootLayout.tsx`.
+  - Zero-comment rule strictly maintained.
+  - Verified with `npm run lint` (0 errors), `npm run format:check` (100% compliant), and `npm run build` (clean dist).
+  - Rebuilt and restarted the frontend Docker container (`kahoot-frontend`), verified live in Chromium on `/host/quizzes`.
+
 - **Project Configuration Consolidation (Completed & Verified):**
   - Consolidated application configuration templates into a single example file per component: `appsettings.json` + root `.env.example` for backend/Docker stack, and `frontend/.env.example` for frontend.
   - Purged all secrets from `backend/src/Kahoot.Api/appsettings.json` (`Jwt:SigningKey: ""` and `Seeding:Host:Password: ""`), while preserving non-sensitive defaults and local connection string for design-time EF Core tooling. Merged `"Microsoft.EntityFrameworkCore.Database.Command": "Warning"` into `appsettings.json`.
