@@ -6,11 +6,20 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-13 (automatic question completion & responsive leaderboard viewport optimization)
+> Last updated: 2026-09-13 (consolidate application configuration templates and remove duplicate production examples)
 
 ---
 
 ## ✅ Done
+
+- **Project Configuration Consolidation (Completed & Verified):**
+  - Consolidated application configuration templates into a single example file per component: `appsettings.json` + root `.env.example` for backend/Docker stack, and `frontend/.env.example` for frontend.
+  - Purged all secrets from `backend/src/Kahoot.Api/appsettings.json` (`Jwt:SigningKey: ""` and `Seeding:Host:Password: ""`), while preserving non-sensitive defaults and local connection string for design-time EF Core tooling. Merged `"Microsoft.EntityFrameworkCore.Database.Command": "Warning"` into `appsettings.json`.
+  - Removed duplicate `backend/src/Kahoot.Api/appsettings.Production.json`.
+  - Created root `.env.example` containing parameterized Docker Compose variables for PostgreSQL, JWT security, initial host seeding, CORS origins, and frontend URLs; deleted obsolete `.env.production.example`.
+  - Updated `frontend/.env.example` to unify local Vite development defaults with production reverse-proxy routing; deleted obsolete `frontend/.env.production.example`.
+  - Updated `DEPLOYMENT_HOSTINGER.md` instructions to reference `.env.example`.
+  - Verified: `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors), runtime fail-fast OptionsValidationException when JWT signing key is omitted, `dotnet ef migrations list` initialized successfully, `npm run lint` (0 errors), `npm run format:check` (100% compliant), `npm run build` (clean dist), secret audit clean across tracked files, and Docker backend container rebuilt and running healthy. Zero comments in C# and TypeScript strictly maintained.
 
 - **Automatic Question Completion & Responsive Leaderboard Viewport (Completed & Verified):**
   - **Backend Auto-End Question:** Implemented `TryAutoEndQuestionCommand` and `TryAutoEndQuestionCommandHandler` in `Kahoot.Application`. Transition occurs atomically as soon as all active (non-removed, connected) players submit answers (`totalAnswers > 0 && remaining == 0`). Integrated into `GameHub.SubmitAnswer`, `GameHub.OnDisconnectedAsync`, and `GamesController.RemoveParticipant`. Host manual controls and question countdown timer remain functional fallbacks.

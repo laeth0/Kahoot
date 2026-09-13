@@ -51,9 +51,9 @@ Hostinger offers two primary types of hosting plans:
    git clone <your_repository_url> /opt/kahoot
    cd /opt/kahoot
    ```
-2. Copy the production environment template:
+2. Copy the environment configuration template:
    ```bash
-   cp .env.production.example .env
+   cp .env.example .env
    ```
 3. Edit `.env` with production secrets:
    ```bash
