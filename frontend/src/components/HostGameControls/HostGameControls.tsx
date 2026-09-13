@@ -3,7 +3,16 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Tooltip, Typography } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  CircularProgress,
+  Paper,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
 import { type ReactNode, useState } from 'react';
 
 import { type GameStatus, normalizeGameStatus } from '../../constants/gameStatus.ts';

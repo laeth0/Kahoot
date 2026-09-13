@@ -3,13 +3,11 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import ReplayIcon from '@mui/icons-material/Replay';
 import { Box, Button, Paper, Stack, Typography } from '@mui/material';
 
-import { useCelebration } from '../../hooks/useCelebration.ts';
 import type { LeaderboardEntryResponse } from '../../realtime/events.ts';
 import { ordinal } from '../../utils/rank.ts';
 import { CelebrationOverlay } from '../CelebrationOverlay/index.ts';
 import { LeaderboardList } from '../LeaderboardList/index.ts';
 import { LeaderboardPodium } from '../LeaderboardPodium/index.ts';
-import { SoundToggle } from '../SoundToggle/index.ts';
 
 export interface GameFinishedScreenProps {
   nickname: string;
@@ -30,12 +28,6 @@ export function GameFinishedScreen({
   onPlayAgain,
   onLeave,
 }: GameFinishedScreenProps) {
-  useCelebration({
-    variant: 'final-results',
-    triggerKey: `finished_${participantId}_${totalScore}`,
-    autoPlaySound: true,
-  });
-
   const getWinnerBanner = () => {
     if (rank === 1) {
       return {
@@ -90,10 +82,6 @@ export function GameFinishedScreen({
             rank === 1 ? '0 8px 30px rgba(245, 158, 11, 0.2)' : '0 4px 20px rgba(0, 98, 155, 0.08)',
         }}
       >
-        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-          <SoundToggle size="small" />
-        </Box>
-
         <Stack spacing={3.5} sx={{ alignItems: 'center' }}>
           <Stack spacing={1} sx={{ alignItems: 'center', textAlign: 'center' }}>
             <Box

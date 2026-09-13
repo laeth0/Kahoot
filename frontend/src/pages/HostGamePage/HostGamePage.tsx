@@ -27,7 +27,6 @@ import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { ParticipantGrid } from '../../components/ParticipantGrid/index.ts';
 import { PlayerCountBadge } from '../../components/PlayerCountBadge/index.ts';
 import { QuestionResultsChart } from '../../components/QuestionResultsChart/index.ts';
-import { SoundToggle } from '../../components/SoundToggle/index.ts';
 import {
   isFinishedStatus,
   isLeaderboardStatus,
@@ -35,7 +34,6 @@ import {
   isQuestionActiveStatus,
   isQuestionResultsStatus,
 } from '../../constants/gameStatus.ts';
-import { useCelebration } from '../../hooks/useCelebration.ts';
 import { useHostGame } from '../../hooks/useHostGame.ts';
 import { GameLayout } from '../../layouts/GameLayout.tsx';
 import { HostQuestionView } from './HostQuestionView.tsx';
@@ -93,21 +91,6 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
       }
     }
   }, [gameState?.status]);
-
-  const activeStatus = gameState?.status ?? null;
-  const isFinishedGame = activeStatus !== null && isFinishedStatus(activeStatus);
-  const isLeaderboardGame = activeStatus !== null && isLeaderboardStatus(activeStatus);
-
-  useCelebration({
-    variant: isFinishedGame ? 'final-results' : 'leaderboard',
-    active: isLeaderboardGame || isFinishedGame,
-    triggerKey: isFinishedGame
-      ? 'host_finished'
-      : isLeaderboardGame
-        ? `host_lb_${gameState?.currentQuestionIndex ?? 0}`
-        : undefined,
-    autoPlaySound: true,
-  });
 
   const handleStartNewSession = async () => {
     if (!quizId || isCreatingNew) {
@@ -310,17 +293,6 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
 
             <Box
               sx={{
-                position: 'absolute',
-                top: -12,
-                right: 0,
-                zIndex: 5,
-              }}
-            >
-              <SoundToggle size="small" />
-            </Box>
-
-            <Box
-              sx={{
                 position: 'relative',
                 py: { xs: 2, sm: 3 },
                 borderRadius: 6,
@@ -388,17 +360,6 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
         {isFinished && (
           <Box sx={{ position: 'relative', width: '100%' }}>
             <CelebrationOverlay variant="final-results" triggerKey="host_finished" />
-
-            <Box
-              sx={{
-                position: 'absolute',
-                top: -12,
-                right: 0,
-                zIndex: 5,
-              }}
-            >
-              <SoundToggle size="small" />
-            </Box>
 
             <Stack spacing={4}>
               <Box

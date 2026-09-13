@@ -17,7 +17,6 @@ import { useNavigate } from 'react-router-dom';
 
 import logo from '../assets/logo.jpeg';
 import { ConfirmDialog } from '../components/ConfirmDialog/index.ts';
-import { SoundToggle } from '../components/SoundToggle/index.ts';
 
 export interface GameLayoutProps {
   children: ReactNode;
@@ -178,8 +177,6 @@ export function GameLayout({
                   </Typography>
                 </Box>
               )}
-
-              <SoundToggle size="medium" />
 
               <Tooltip
                 title={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen (Projector Mode)'}

@@ -6,8 +6,6 @@ import { Box, Paper, Stack, Typography } from '@mui/material';
 import { CelebrationOverlay } from '../../components/CelebrationOverlay/index.ts';
 import { LeaderboardList } from '../../components/LeaderboardList/index.ts';
 import { LeaderboardPodium } from '../../components/LeaderboardPodium/index.ts';
-import { SoundToggle } from '../../components/SoundToggle/index.ts';
-import { useCelebration } from '../../hooks/useCelebration.ts';
 import type { LeaderboardResponse } from '../../realtime/events.ts';
 import { ordinal } from '../../utils/rank.ts';
 
@@ -28,12 +26,6 @@ export function PlayerLeaderboardView({
 }: PlayerLeaderboardViewProps) {
   const entries = leaderboard?.entries ?? [];
   const deltaMap = rankDelta !== null ? { [participantId]: rankDelta } : null;
-
-  useCelebration({
-    variant: 'leaderboard',
-    triggerKey: `${rank}_${totalScore}_${entries.length}`,
-    autoPlaySound: true,
-  });
 
   const getRankHeadline = () => {
     if (rank === 1) {
@@ -79,10 +71,6 @@ export function PlayerLeaderboardView({
             boxShadow: '0 4px 20px rgba(0, 98, 155, 0.08)',
           }}
         >
-          <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-            <SoundToggle size="small" />
-          </Box>
-
           <Stack spacing={1.5} sx={{ alignItems: 'center' }}>
             {rank && rank <= 3 && (
               <Box
