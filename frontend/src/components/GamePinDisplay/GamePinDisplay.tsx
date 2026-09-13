@@ -27,8 +27,6 @@ export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
     typeof window !== 'undefined'
       ? `${window.location.origin}/join?pin=${pin}`
       : `/join?pin=${pin}`;
-  const displayHost =
-    typeof window !== 'undefined' ? `${window.location.host}/join` : 'our-site/join';
 
   const handleCopyPin = async () => {
     try {
@@ -101,40 +99,6 @@ export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
             alignItems: 'center',
           }}
         >
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1.5 }}>
-            <Typography
-              variant="h6"
-              sx={{
-                fontWeight: 700,
-                color: '#486581',
-                fontSize: { xs: '1rem', sm: '1.25rem', md: '1.5rem' },
-              }}
-            >
-              Join at
-            </Typography>
-            <Box
-              sx={{
-                bgcolor: 'rgba(2, 132, 199, 0.1)',
-                color: '#0284C7',
-                px: 2,
-                py: 0.5,
-                borderRadius: 2,
-                fontWeight: 800,
-                fontSize: { xs: '1.1rem', sm: '1.35rem', md: '1.6rem' },
-                letterSpacing: 0.5,
-              }}
-            >
-              {displayHost}
-            </Box>
-          </Stack>
-
-          <Typography
-            variant="body2"
-            sx={{ color: '#627D98', fontWeight: 500, mb: { xs: 2, sm: 3 } }}
-          >
-            or enter the game PIN below on your phone or laptop
-          </Typography>
-
           <Box
             onClick={handleCopyPin}
             sx={{
