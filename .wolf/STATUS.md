@@ -12,6 +12,11 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **PostgreSQL 18 Upgrade (Completed & Verified):**
+  - Upgraded PostgreSQL container image to `postgres:18-alpine` in `docker-compose.yml`.
+  - Updated data mount path to `postgres_data:/var/lib/postgresql` per official PostgreSQL 18+ directory standards.
+  - Backed up and restored existing data seamlessly with 100% data integrity.
+  - Verified container startup, healthy status, and live e2e tests.
 - **Azure Production Deployment Preparation (Completed & Verified):**
   - Updated `backend/src/Kahoot.Api/Program.cs` with dynamic Azure App Service port discovery (`PORT` / `WEBSITES_PORT`).
   - Added root `.dockerignore` for clean container builds.
