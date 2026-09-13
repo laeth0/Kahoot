@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { quizQuestionService, type SaveQuestionPayload } from '../api/quizQuestionService.ts';
 import {
@@ -13,6 +13,7 @@ export function useQuiz(quizId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
   const [isMutating, setIsMutating] = useState<boolean>(false);
   const [refreshIndex, setRefreshIndex] = useState(0);
+  const reorderPendingRef = useRef(false);
 
   useEffect(() => {
     if (!quizId) {
@@ -132,16 +133,34 @@ export function useQuiz(quizId: string | undefined) {
 
   const reorderQuestions = useCallback(
     async (orderedQuestionIds: string[]) => {
-      if (!quizId) return;
+      if (!quizId || !quiz || isMutating || reorderPendingRef.current) return;
+      const questionsById = new Map(quiz.questions.map((question) => [question.id, question]));
+      if (
+        orderedQuestionIds.length !== quiz.questions.length ||
+        new Set(orderedQuestionIds).size !== orderedQuestionIds.length ||
+        orderedQuestionIds.some((id) => !questionsById.has(id))
+      ) {
+        throw new Error('The question list changed. Reload the quiz before reordering.');
+      }
+      const reorderedQuestions = orderedQuestionIds.map((id, orderIndex) => {
+        const question = questionsById.get(id);
+        if (!question) throw new Error('Question not found. Reload the quiz before reordering.');
+        return { ...question, orderIndex };
+      });
+      reorderPendingRef.current = true;
       setIsMutating(true);
+      setQuiz({ ...quiz, questions: reorderedQuestions, isPublished: false });
       try {
         await quizQuestionService.reorderQuestions(quizId, orderedQuestionIds);
-        await refetch();
+      } catch (err) {
+        setQuiz(quiz);
+        throw err;
       } finally {
+        reorderPendingRef.current = false;
         setIsMutating(false);
       }
     },
-    [quizId, refetch],
+    [quizId, quiz, isMutating],
   );
 
   const triggerReload = useCallback(() => {

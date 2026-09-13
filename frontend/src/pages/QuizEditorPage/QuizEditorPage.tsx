@@ -26,7 +26,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { hostGameService } from '../../api/hostGameService.ts';
@@ -45,6 +45,10 @@ import { useQuiz } from '../../hooks/useQuiz.ts';
 
 export function QuizEditorPage() {
   const { quizId } = useParams<{ quizId: string }>();
+  return <QuizEditor key={quizId} quizId={quizId} />;
+}
+
+function QuizEditor({ quizId }: { quizId: string | undefined }) {
   const navigate = useNavigate();
 
   const {
@@ -182,27 +186,21 @@ export function QuizEditorPage() {
     }
   };
 
-  const handleMoveUp = async (index: number) => {
-    if (!quiz || index <= 0) return;
-    const sorted = [...quiz.questions].sort((a, b) => a.orderIndex - b.orderIndex);
-    const temp = sorted[index];
-    sorted[index] = sorted[index - 1];
-    sorted[index - 1] = temp;
-
-    const orderedIds = sorted.map((q) => q.id);
-    await reorderQuestions(orderedIds);
-  };
-
-  const handleMoveDown = async (index: number) => {
-    if (!quiz || index >= quiz.questions.length - 1) return;
-    const sorted = [...quiz.questions].sort((a, b) => a.orderIndex - b.orderIndex);
-    const temp = sorted[index];
-    sorted[index] = sorted[index + 1];
-    sorted[index + 1] = temp;
-
-    const orderedIds = sorted.map((q) => q.id);
-    await reorderQuestions(orderedIds);
-  };
+  const handleReorderQuestions = useCallback(
+    async (orderedIds: string[]) => {
+      try {
+        await reorderQuestions(orderedIds);
+        setSnackbarSeverity('success');
+        setSnackbarMessage('Question order saved.');
+      } catch (err) {
+        setSnackbarSeverity('error');
+        setSnackbarMessage(
+          err instanceof Error ? err.message : 'Failed to save question order. Please try again.',
+        );
+      }
+    },
+    [reorderQuestions],
+  );
 
   if (isLoading) {
     return (
@@ -405,7 +403,10 @@ export function QuizEditorPage() {
                         }
                         onClick={handleStartGame}
                         disabled={
-                          !quiz.isPublished || quiz.questions.length === 0 || isStartingGame
+                          !quiz.isPublished ||
+                          quiz.questions.length === 0 ||
+                          isStartingGame ||
+                          isMutating
                         }
                         sx={{
                           fontWeight: 700,
@@ -445,6 +446,7 @@ export function QuizEditorPage() {
                     color="primary"
                     startIcon={<AddIcon />}
                     onClick={handleOpenAddQuestion}
+                    disabled={isMutating}
                     sx={{
                       fontWeight: 700,
                       borderRadius: 2.5,
@@ -459,8 +461,7 @@ export function QuizEditorPage() {
                   questions={quiz.questions}
                   onEdit={handleOpenEditQuestion}
                   onDelete={(id) => setQuestionToDelete(id)}
-                  onMoveUp={handleMoveUp}
-                  onMoveDown={handleMoveDown}
+                  onReorder={handleReorderQuestions}
                   isReordering={isMutating}
                 />
               </Stack>

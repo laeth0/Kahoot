@@ -1,31 +1,23 @@
 import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import HelpOutlinedIcon from '@mui/icons-material/HelpOutlined';
-import ImageIcon from '@mui/icons-material/Image';
-import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
-import {
-  Box,
-  Card,
-  CardContent,
-  Chip,
-  IconButton,
-  Paper,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Box, Card, IconButton, Paper, Portal, Stack, Tooltip, Typography } from '@mui/material';
+import { useId, useMemo } from 'react';
 
 import type { QuestionResponse } from '../../api/quizService.ts';
+import { LiveRegion } from '../Feedback/index.ts';
+import { QuestionCardContent } from './QuestionCardContent.tsx';
+import { useQuestionDrag } from './useQuestionDrag.ts';
 
 export interface ReorderableQuestionListProps {
   questions: QuestionResponse[];
   onEdit: (question: QuestionResponse) => void;
   onDelete: (questionId: string) => void;
-  onMoveUp: (index: number) => void;
-  onMoveDown: (index: number) => void;
+  onReorder: (orderedQuestionIds: string[]) => void;
   isReordering?: boolean;
 }
 
@@ -33,10 +25,42 @@ export function ReorderableQuestionList({
   questions,
   onEdit,
   onDelete,
-  onMoveUp,
-  onMoveDown,
+  onReorder,
   isReordering = false,
 }: ReorderableQuestionListProps) {
+  const instructionsId = useId();
+  const sortedQuestions = useMemo(
+    () => [...questions].sort((a, b) => a.orderIndex - b.orderIndex),
+    [questions],
+  );
+  const questionIds = useMemo(
+    () => sortedQuestions.map((question) => question.id),
+    [sortedQuestions],
+  );
+  const { listRef, previewRef, drag, destination, announcement, onPointerDown, onKeyDown } =
+    useQuestionDrag({
+      questionIds,
+      disabled: isReordering,
+      onReorder,
+    });
+  const draggedQuestion = drag
+    ? sortedQuestions.find((question) => question.id === drag.questionId)
+    : null;
+  const dropMessage = destination
+    ? destination.beforeIndex === null
+      ? 'Drop here to move to the end'
+      : `Drop here to move before Question #${destination.beforeIndex + 1}`
+    : '';
+  const controlsDisabled = isReordering || drag !== null;
+
+  function moveQuestion(index: number, destinationIndex: number) {
+    if (controlsDisabled || destinationIndex < 0 || destinationIndex >= questionIds.length) return;
+    const orderedIds = [...questionIds];
+    const [questionId] = orderedIds.splice(index, 1);
+    orderedIds.splice(destinationIndex, 0, questionId);
+    onReorder(orderedIds);
+  }
+
   if (questions.length === 0) {
     return (
       <Paper
@@ -76,220 +100,207 @@ export function ReorderableQuestionList({
     );
   }
 
-  const sortedQuestions = [...questions].sort((a, b) => a.orderIndex - b.orderIndex);
-
   return (
-    <Stack spacing={2}>
-      {sortedQuestions.map((q, index) => {
-        const isFirst = index === 0;
-        const isLast = index === sortedQuestions.length - 1;
-        const correctChoices = q.choices.filter((c) => c.isCorrect);
-
-        return (
-          <Card
-            key={q.id}
-            variant="outlined"
-            sx={{
-              borderRadius: 2.5,
-              borderColor: '#e2e8f0',
-              bgcolor: '#ffffff',
-              transition: 'all 0.2s ease-in-out',
-              '&:hover': {
-                borderColor: '#0284c7',
-                boxShadow: '0 4px 16px rgba(0, 98, 155, 0.08)',
-              },
-            }}
-          >
-            <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } }}>
-              <Stack
-                direction={{ xs: 'column', sm: 'row' }}
-                spacing={2}
-                sx={{ alignItems: { sm: 'flex-start' }, justifyContent: 'space-between' }}
-              >
-                <Stack direction="row" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
-                  <Box
+    <Box>
+      <Typography
+        id={instructionsId}
+        variant="caption"
+        color="text.secondary"
+        sx={{ display: 'block', mb: 2 }}
+      >
+        Drag the six-dot handle to reorder. For keyboard, press Space or Enter, use arrow keys, then
+        press again to drop. Escape cancels. You can also use the up/down buttons.
+      </Typography>
+      <LiveRegion message={dropMessage || announcement} />
+      <Box
+        ref={listRef}
+        role="list"
+        aria-label="Quiz questions"
+        aria-busy={isReordering}
+        sx={{ position: 'relative', overflowAnchor: 'none' }}
+      >
+        <Stack spacing={2}>
+          {sortedQuestions.map((question, index) => (
+            <Card
+              key={question.id}
+              data-question-id={question.id}
+              role="listitem"
+              aria-label={`Question ${index + 1}`}
+              variant="outlined"
+              sx={{
+                borderRadius: 2.5,
+                borderColor: 'divider',
+                bgcolor: 'background.paper',
+                opacity: drag?.questionId === question.id ? 0.25 : 1,
+                transition: 'border-color 0.2s, box-shadow 0.2s',
+                '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                '&:hover': { borderColor: 'primary.main', boxShadow: 2 },
+              }}
+            >
+              <QuestionCardContent
+                question={question}
+                position={index + 1}
+                dragHandle={
+                  <Tooltip title="Drag to reorder question">
+                    <span>
+                      <IconButton
+                        aria-label={`Drag question ${index + 1}`}
+                        aria-describedby={instructionsId}
+                        aria-pressed={drag?.questionId === question.id}
+                        disabled={questionIds.length < 2}
+                        aria-disabled={isReordering || questionIds.length < 2}
+                        onPointerDown={(event) => onPointerDown(event, question.id)}
+                        onKeyDown={(event) => onKeyDown(event, question.id)}
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          color: 'text.secondary',
+                          cursor: 'grab',
+                          touchAction: 'none',
+                          '&:active': { cursor: 'grabbing' },
+                        }}
+                      >
+                        <DragIndicatorIcon />
+                      </IconButton>
+                    </span>
+                  </Tooltip>
+                }
+                actions={
+                  <Stack
+                    direction="row"
+                    spacing={0.5}
                     sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: 2,
-                      bgcolor: '#00629b',
-                      color: '#ffffff',
-                      display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center',
-                      fontWeight: 800,
-                      fontSize: '1.1rem',
-                      flexShrink: 0,
+                      justifyContent: 'flex-end',
+                      alignSelf: { xs: 'flex-end', sm: 'center' },
+                      flexWrap: 'wrap',
                     }}
                   >
-                    #{index + 1}
-                  </Box>
-
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack
-                      direction="row"
-                      spacing={1}
-                      sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1, mb: 1 }}
-                    >
-                      <Chip
-                        icon={<TimerOutlinedIcon sx={{ fontSize: 16 }} />}
-                        label={`${q.timeLimitSeconds}s`}
-                        size="small"
-                        sx={{
-                          bgcolor: '#f0f4f8',
-                          color: '#334e68',
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                      <Chip
-                        label={`${q.points} pts`}
-                        size="small"
-                        sx={{
-                          bgcolor: '#e0f2fe',
-                          color: '#0284c7',
-                          fontWeight: 700,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                      <Chip
-                        label={`${q.choices.length} choices`}
-                        size="small"
-                        sx={{
-                          bgcolor: '#f8fafc',
-                          color: '#627d98',
-                          fontWeight: 600,
-                          fontSize: '0.75rem',
-                        }}
-                      />
-                      {q.imageUrl && (
-                        <Chip
-                          icon={<ImageIcon sx={{ fontSize: 16 }} />}
-                          label="Image attached"
-                          size="small"
-                          sx={{
-                            bgcolor: '#f1f5f9',
-                            color: '#475569',
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                          }}
-                        />
-                      )}
-                    </Stack>
-
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontWeight: 700,
-                        color: '#09131f',
-                        lineHeight: 1.4,
-                        mb: 1.5,
-                        wordBreak: 'break-word',
-                      }}
-                    >
-                      {q.text}
-                    </Typography>
-
-                    {correctChoices.length > 0 && (
-                      <Stack
-                        direction="row"
-                        spacing={1}
-                        sx={{
-                          alignItems: 'center',
-                          bgcolor: 'rgba(16, 185, 129, 0.08)',
-                          p: 1,
-                          borderRadius: 1.5,
-                          border: '1px solid rgba(16, 185, 129, 0.2)',
-                          maxWidth: 540,
-                        }}
-                      >
-                        <CheckCircleOutlinedIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontWeight: 700,
-                            color: '#065f46',
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
+                    <Tooltip title="Move question up">
+                      <span>
+                        <IconButton
+                          onClick={() => moveQuestion(index, index - 1)}
+                          disabled={index === 0 || controlsDisabled}
+                          aria-label={`Move question ${index + 1} up`}
+                          sx={{ width: 44, height: 44, color: 'text.secondary' }}
                         >
-                          {correctChoices.length > 1 ? 'Correct answers: ' : 'Correct: '}
-                          {correctChoices.map((c) => c.text || '(Image answer)').join(', ')}
-                        </Typography>
-                      </Stack>
-                    )}
-                  </Box>
-                </Stack>
-
-                <Stack
-                  direction="row"
-                  spacing={0.5}
-                  sx={{
-                    alignItems: 'center',
-                    justifyContent: { xs: 'flex-end', sm: 'flex-start' },
-                    alignSelf: { xs: 'flex-end', sm: 'center' },
-                    pt: { xs: 1, sm: 0 },
-                    borderTop: { xs: '1px solid #f1f5f9', sm: 'none' },
-                    width: { xs: '100%', sm: 'auto' },
-                  }}
-                >
-                  <Tooltip title="Move question up">
-                    <span>
-                      <IconButton
-                        size="small"
-                        onClick={() => onMoveUp(index)}
-                        disabled={isFirst || isReordering}
-                        aria-label={`Move question ${index + 1} up`}
-                        sx={{ color: '#486581' }}
-                      >
-                        <ArrowUpwardIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-
-                  <Tooltip title="Move question down">
-                    <span>
-                      <IconButton
-                        size="small"
-                        onClick={() => onMoveDown(index)}
-                        disabled={isLast || isReordering}
-                        aria-label={`Move question ${index + 1} down`}
-                        sx={{ color: '#486581' }}
-                      >
-                        <ArrowDownwardIcon fontSize="small" />
-                      </IconButton>
-                    </span>
-                  </Tooltip>
-
-                  <Tooltip title="Edit question">
-                    <IconButton
-                      size="small"
-                      onClick={() => onEdit(q)}
-                      aria-label={`Edit question ${index + 1}`}
-                      sx={{ color: '#00629b' }}
-                    >
-                      <EditOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-
-                  <Tooltip title="Delete question">
-                    <IconButton
-                      size="small"
-                      onClick={() => onDelete(q.id)}
-                      aria-label={`Delete question ${index + 1}`}
-                      sx={{ color: '#ef4444' }}
-                    >
-                      <DeleteOutlinedIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </Stack>
+                          <ArrowUpwardIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Move question down">
+                      <span>
+                        <IconButton
+                          onClick={() => moveQuestion(index, index + 1)}
+                          disabled={index === questionIds.length - 1 || controlsDisabled}
+                          aria-label={`Move question ${index + 1} down`}
+                          sx={{ width: 44, height: 44, color: 'text.secondary' }}
+                        >
+                          <ArrowDownwardIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Edit question">
+                      <span>
+                        <IconButton
+                          onClick={() => onEdit(question)}
+                          disabled={controlsDisabled}
+                          aria-label={`Edit question ${index + 1}`}
+                          sx={{ width: 44, height: 44, color: 'primary.main' }}
+                        >
+                          <EditOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Delete question">
+                      <span>
+                        <IconButton
+                          onClick={() => onDelete(question.id)}
+                          disabled={controlsDisabled}
+                          aria-label={`Delete question ${index + 1}`}
+                          sx={{ width: 44, height: 44, color: 'error.main' }}
+                        >
+                          <DeleteOutlinedIcon fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  </Stack>
+                }
+              />
+            </Card>
+          ))}
+        </Stack>
+        {destination && (
+          <Paper
+            elevation={0}
+            sx={{
+              position: 'absolute',
+              top: destination.top,
+              left: 0,
+              right: 0,
+              transform: 'translateY(-50%)',
+              zIndex: (theme) => theme.zIndex.tooltip + 2,
+              pointerEvents: 'none',
+              border: '2px dashed',
+              borderColor: 'primary.main',
+              bgcolor: 'info.light',
+              color: 'primary.main',
+              borderRadius: 2,
+              minHeight: 56,
+              px: 2,
+              py: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
+            }}
+          >
+            <ArrowForwardIcon />
+            <Typography variant="body2" sx={{ fontWeight: 700 }}>
+              {dropMessage}
+            </Typography>
+          </Paper>
+        )}
+      </Box>
+      {drag && draggedQuestion && (
+        <Portal>
+          <Box
+            ref={previewRef}
+            aria-hidden="true"
+            sx={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: drag.width,
+              maxWidth: 'calc(100vw - 24px)',
+              visibility: 'hidden',
+              zIndex: (theme) => theme.zIndex.tooltip + 1,
+              pointerEvents: 'none',
+            }}
+          >
+            <Card
+              sx={{
+                borderRadius: 2.5,
+                border: '2px solid',
+                borderColor: 'primary.main',
+                boxShadow: 16,
+                transform: 'rotate(-1.5deg)',
+                maxHeight: 'calc(100vh - 24px)',
+                overflow: 'hidden',
+                '@media (prefers-reduced-motion: reduce)': { transform: 'none' },
+              }}
+            >
+              <QuestionCardContent
+                question={draggedQuestion}
+                position={drag.sourceIndex + 1}
+                dragHandle={
+                  <DragIndicatorIcon sx={{ color: 'primary.main', flexShrink: 0, mt: 1 }} />
+                }
+              />
+            </Card>
+          </Box>
+        </Portal>
+      )}
+    </Box>
   );
 }
 

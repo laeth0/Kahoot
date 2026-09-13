@@ -16,6 +16,21 @@ A modern, responsive, client-rendered React application built with **React 19**,
 
 ---
 
+## Quiz question ordering
+
+The quiz editor renders a six-dot drag handle for every question. Drag near the top or bottom
+of the viewport to scroll through long quizzes while keeping the floating question visible.
+The blue destination marker identifies the question to insert before, or the end of the list.
+
+Keyboard users can focus a handle, press Space or Enter to pick up, use the arrow keys
+(or Home/End), and press Space or Enter again to drop. Escape cancels. The up/down buttons
+also remain available.
+
+Each drop saves the complete question ID sequence through the existing question-order API.
+Visible positions update immediately; question IDs and contents remain unchanged. Further
+reorders wait for the save to finish, failures restore the previous order, and a saved reorder
+returns the quiz to Draft status.
+
 ## Folder Structure
 
 ```text

@@ -47,7 +47,15 @@ export function RootLayout() {
 
       <AppBar position="sticky" sx={{ bgcolor: '#ffffff', borderBottom: '1px solid #e2e8f0' }}>
         <Container maxWidth="lg">
-          <Toolbar disableGutters sx={{ justifyContent: 'space-between', py: 1.25 }}>
+          <Toolbar
+            disableGutters
+            sx={{
+              justifyContent: 'space-between',
+              flexWrap: 'wrap',
+              gap: 2,
+              py: 1.25,
+            }}
+          >
             <Stack
               component={RouterLink}
               to="/"
@@ -58,6 +66,8 @@ export function RootLayout() {
                 textDecoration: 'none',
                 color: 'inherit',
                 cursor: 'pointer',
+                minWidth: 0,
+                maxWidth: '100%',
               }}
             >
               <Box
@@ -67,6 +77,7 @@ export function RootLayout() {
                 sx={{
                   width: 44,
                   height: 44,
+                  flexShrink: 0,
                   borderRadius: '50%',
                   objectFit: 'cover',
                   border: '2px solid #00629b',
@@ -82,13 +93,22 @@ export function RootLayout() {
                   color: '#09131f',
                   letterSpacing: '-0.02em',
                   display: 'block',
+                  minWidth: 0,
+                  overflowWrap: 'anywhere',
                 }}
               >
                 IEEEXtreme Palestine Section
               </Typography>
             </Stack>
 
-            <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+            <Stack
+              component="nav"
+              aria-label="Main navigation"
+              direction="row"
+              spacing={1.5}
+              useFlexGap
+              sx={{ alignItems: 'center', flexWrap: 'wrap', minWidth: 0, maxWidth: '100%' }}
+            >
               <Button
                 component={RouterLink}
                 to="/join"
@@ -112,7 +132,7 @@ export function RootLayout() {
                     label={`Host: ${host.username}`}
                     variant="outlined"
                     color="primary"
-                    sx={{ fontWeight: 600, height: 36 }}
+                    sx={{ fontWeight: 600, height: 36, maxWidth: '100%' }}
                   />
                   <Button
                     component={RouterLink}
