@@ -69,17 +69,17 @@ Hostinger offers two primary types of hosting plans:
    - `VITE_SIGNALR_URL`: `/hubs/game`
 
 ### Step 3: Launch Containers
-Run the production compose file:
+Run the compose file:
 ```bash
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose up -d --build
 ```
 Verify that all containers are healthy:
 ```bash
-docker compose -f docker-compose.prod.yml ps
+docker compose ps
 ```
 Check backend startup and database migration logs:
 ```bash
-docker compose -f docker-compose.prod.yml logs -f backend
+docker compose logs -f backend
 ```
 *Note: Database migrations run automatically on container startup via `DatabaseMigrationHostedService`.*
 
@@ -190,4 +190,4 @@ Verify each of the following before going live:
 
 ### 5. Uploaded images return 404 after redeployment
 - **Cause:** Volume `uploads_data` was not mounted or named volume was removed.
-- **Fix:** Always deploy using `docker compose -f docker-compose.prod.yml` with named volume `uploads_data:/app/uploads`.
+- **Fix:** Always deploy using `docker compose up -d` with named volume `uploads_data:/app/uploads`.

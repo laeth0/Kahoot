@@ -12,6 +12,13 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Docker Compose Production Consolidation (Completed & Verified):**
+  - Removed `docker-compose.prod.yml`.
+  - Unified all production configurations into `docker-compose.yml`, parameterized via environment variables (`.env`).
+  - Added `kahoot_internal` bridge network, robust health checks, secure loopback interface port bindings (`127.0.0.1:5433:5432` for PostgreSQL and `127.0.0.1:5000:8080` for backend API), and parameterized `"${HTTP_PORT:-80}:80"` for the frontend.
+  - Updated `DEPLOYMENT_HOSTINGER.md` deployment commands and troubleshooting notes to use `docker compose up -d --build`.
+  - Rebuilt and started containers cleanly with `docker compose up -d --build`; verified healthy database, successful backend migrations, and live API / health / frontend responses.
+  - Zero-comment rule strictly maintained.
 - **Ngrok Removal (Completed & Verified):**
   - Deleted `ngrok-kahoot.yml` configuration.
   - Deleted `.agents/skills/ngrok/` skill directory and removed entry from `skills-lock.json`.
