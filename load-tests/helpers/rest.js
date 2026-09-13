@@ -16,7 +16,6 @@ function api(env, method, path, body, token, tags) {
   const params = {
     headers: {
       'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
     },
     tags: Object.assign({ scope: 'api' }, tags || {}),
   };
@@ -41,7 +40,6 @@ function api(env, method, path, body, token, tags) {
 export function serverClockSkewMs(env) {
   try {
     const res = http.get(`${env.origin}/health`, {
-      headers: { 'ngrok-skip-browser-warning': 'true' },
       tags: { scope: 'setup', name: 'health' },
     });
     const dateHeader = res.headers['Date'] || res.headers['date'];
@@ -171,7 +169,6 @@ export function restJoin(env, pin, nickname) {
   const res = http.post(`${env.apiBase}/games/join`, JSON.stringify({ pin, nickname }), {
     headers: {
       'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
     },
     tags: { scope: 'api_join', name: 'games/join' },
   });
