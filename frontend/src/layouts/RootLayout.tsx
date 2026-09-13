@@ -1,8 +1,7 @@
 import LogoutIcon from '@mui/icons-material/Logout';
-import PersonIcon from '@mui/icons-material/Person';
 import QuizIcon from '@mui/icons-material/Quiz';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-import { AppBar, Box, Button, Chip, Container, Stack, Toolbar, Typography } from '@mui/material';
+import { AppBar, Box, Button, Container, Stack, Toolbar, Typography } from '@mui/material';
 import { Link as RouterLink, Outlet, useNavigate } from 'react-router-dom';
 
 import logo from '../assets/logo.jpeg';
@@ -127,13 +126,6 @@ export function RootLayout() {
 
               {isAuthenticated && host ? (
                 <>
-                  <Chip
-                    icon={<PersonIcon />}
-                    label={`Host: ${host.username}`}
-                    variant="outlined"
-                    color="primary"
-                    sx={{ fontWeight: 600, height: 36, maxWidth: '100%' }}
-                  />
                   <Button
                     component={RouterLink}
                     to="/host/quizzes"
