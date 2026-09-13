@@ -6,11 +6,17 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-13 (consolidate application configuration templates and remove duplicate production examples)
+> Last updated: 2026-09-13 (remove ngrok configuration, skills, and headers from repository)
 
 ---
 
 ## ✅ Done
+
+- **Ngrok Removal (Completed & Verified):**
+  - Deleted `ngrok-kahoot.yml` configuration.
+  - Deleted `.agents/skills/ngrok/` skill directory and removed entry from `skills-lock.json`.
+  - Removed `ngrok-skip-browser-warning` headers from `load-tests/helpers/rest.js`, `load-tests/helpers/signalr.js`, and `load-tests/run-all.js`.
+  - Audited repository: 0 remaining references to ngrok across all tracked files.
 
 - **Navbar Host Badge Removal (Completed & Verified):**
   - Removed the `Host: <username>` outlined Chip badge and its unused `PersonIcon` and `Chip` imports from `frontend/src/layouts/RootLayout.tsx`.
