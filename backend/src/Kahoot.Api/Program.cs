@@ -19,6 +19,12 @@ const string gameHubPath = "/hubs/game";
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = builder.Configuration["PORT"] ?? builder.Configuration["WEBSITES_PORT"];
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://+:{port}");
+}
+
 builder.Host.UseDefaultServiceProvider((_, options) =>
 {
     options.ValidateScopes = true;

@@ -1,0 +1,14 @@
+**/.git
+**/.github
+**/.vs
+**/.vscode
+**/bin
+**/obj
+**/*.user
+**/*.suo
+**/node_modules
+**/dist
+**/coverage
+**/.wolf
+**/brain
+**/*.log

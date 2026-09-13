@@ -12,6 +12,13 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Azure Production Deployment Preparation (Completed & Verified):**
+  - Updated `backend/src/Kahoot.Api/Program.cs` with dynamic Azure App Service port discovery (`PORT` / `WEBSITES_PORT`).
+  - Added root `.dockerignore` for clean container builds.
+  - Added `frontend/vercel.json`, root `vercel.json`, and `frontend/staticwebapp.config.json` for seamless client-side SPA routing on Vercel and Azure Static Web Apps.
+  - Authored comprehensive `docs/azure-deployment.md` covering architecture (Mermaid), Azure CLI/Portal provisioning, PostgreSQL Flexible Server setup, App Service settings, SignalR WebSockets, migrations, and troubleshooting.
+  - Verified backend compilation (`dotnet build backend/Kahoot.slnx`, 0 warnings, 0 errors), frontend compilation (`npm run build`, 0 errors), Docker container build (`kahoot-backend:test`), and live e2e tests against running container stack.
+  - Zero-comment rule strictly maintained across all C# and TypeScript code.
 - **Docker Compose Production Consolidation (Completed & Verified):**
   - Removed `docker-compose.prod.yml`.
   - Unified all production configurations into `docker-compose.yml`, parameterized via environment variables (`.env`).
