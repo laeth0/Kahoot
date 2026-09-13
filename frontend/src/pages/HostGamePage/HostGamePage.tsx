@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { hostGameService } from '../../api/hostGameService.ts';
+import { CelebrationOverlay } from '../../components/CelebrationOverlay/index.ts';
 import { ConnectionStatusBanner } from '../../components/ConnectionStatusBanner/index.ts';
 import { AppErrorBoundary } from '../../components/ErrorBoundary/index.ts';
 import { LiveRegion } from '../../components/Feedback/index.ts';
@@ -34,6 +35,7 @@ import {
   isQuestionActiveStatus,
   isQuestionResultsStatus,
 } from '../../constants/gameStatus.ts';
+import { useCelebration } from '../../hooks/useCelebration.ts';
 import { useHostGame } from '../../hooks/useHostGame.ts';
 import { GameLayout } from '../../layouts/GameLayout.tsx';
 import { HostQuestionView } from './HostQuestionView.tsx';
@@ -91,6 +93,21 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
       }
     }
   }, [gameState?.status]);
+
+  const activeStatus = gameState?.status ?? null;
+  const isFinishedGame = activeStatus !== null && isFinishedStatus(activeStatus);
+  const isLeaderboardGame = activeStatus !== null && isLeaderboardStatus(activeStatus);
+
+  useCelebration({
+    variant: isFinishedGame ? 'final-results' : 'leaderboard',
+    active: isLeaderboardGame || isFinishedGame,
+    triggerKey: isFinishedGame
+      ? 'host_finished'
+      : isLeaderboardGame
+        ? `host_lb_${gameState?.currentQuestionIndex ?? 0}`
+        : undefined,
+    autoPlaySound: true,
+  });
 
   const handleStartNewSession = async () => {
     if (!quizId || isCreatingNew) {
@@ -295,65 +312,106 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
 
         {isLeaderboardStatus(status) && (
           <>
-            {leaderboardCard('Standings', 12)}
+            <CelebrationOverlay
+              variant="leaderboard"
+              triggerKey={`host_lb_${gameState.currentQuestionIndex ?? 0}`}
+            />
+            <Card sx={{ borderRadius: 4, border: '2px solid #E2E8F0', p: { xs: 3, sm: 4 } }}>
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{ fontWeight: 900, color: '#09131F', mb: 2, textAlign: 'center' }}
+              >
+                Current Standings
+              </Typography>
+              {(leaderboard?.entries ?? []).length >= 3 && (
+                <Box sx={{ mb: 4, pb: 2, borderBottom: '1px solid #E2E8F0' }}>
+                  <PodiumView entries={leaderboard?.entries ?? []} size="projector" />
+                </Box>
+              )}
+              <LeaderboardList entries={leaderboard?.entries ?? []} maxRows={10} size="projector" />
+            </Card>
             {controls}
           </>
         )}
 
         {isFinished && (
-          <Stack spacing={3}>
-            <Card sx={{ borderRadius: 4, border: '2px solid #00629B', p: { xs: 3, sm: 4 } }}>
-              <Typography
-                variant="h4"
-                component="h1"
-                sx={{ fontWeight: 900, color: '#09131F', mb: 1, textAlign: 'center' }}
+          <>
+            <CelebrationOverlay variant="final-results" triggerKey="host_finished" />
+            <Stack spacing={3}>
+              <Card
+                sx={{
+                  borderRadius: 4,
+                  border: '2px solid #00629B',
+                  p: { xs: 3, sm: 5 },
+                  bgcolor: '#FFFFFF',
+                  boxShadow: '0 8px 30px rgba(0, 98, 155, 0.12)',
+                }}
               >
-                Final Results
-              </Typography>
-              <PodiumView entries={leaderboard?.entries ?? []} />
-            </Card>
-
-            {leaderboardCard('Full Standings', 20)}
-
-            {newSessionError && (
-              <Alert severity="error" sx={{ borderRadius: 2 }}>
-                {newSessionError}
-              </Alert>
-            )}
-
-            <Stack
-              direction={{ xs: 'column', sm: 'row' }}
-              spacing={2}
-              sx={{ justifyContent: 'center' }}
-            >
-              <Button
-                variant="outlined"
-                startIcon={<ArrowBackIcon />}
-                onClick={() => navigate(quizId ? `/host/quizzes/${quizId}` : '/host/quizzes')}
-                sx={{ fontWeight: 700, textTransform: 'none', minHeight: 48 }}
-              >
-                Back to Quiz
-              </Button>
-              {quizId && (
-                <Button
-                  variant="contained"
-                  startIcon={
-                    isCreatingNew ? <CircularProgress size={18} color="inherit" /> : <AddIcon />
-                  }
-                  onClick={handleStartNewSession}
-                  disabled={isCreatingNew}
+                <Typography
+                  variant="h3"
+                  component="h1"
                   sx={{
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    bgcolor: '#00629B',
-                    minHeight: 48,
+                    fontWeight: 900,
+                    color: '#09131F',
+                    mb: 1,
+                    textAlign: 'center',
+                    fontSize: { xs: '2rem', sm: '2.75rem' },
                   }}
                 >
-                  {isCreatingNew ? 'Starting…' : 'Start New Session'}
-                </Button>
+                  Final Results & Champions
+                </Typography>
+                <Typography
+                  variant="subtitle1"
+                  sx={{ color: '#64748B', fontWeight: 600, mb: 3, textAlign: 'center' }}
+                >
+                  Congratulations to all players!
+                </Typography>
+                <PodiumView entries={leaderboard?.entries ?? []} size="projector" />
+              </Card>
+
+              {leaderboardCard('Full Standings', 20)}
+
+              {newSessionError && (
+                <Alert severity="error" sx={{ borderRadius: 2 }}>
+                  {newSessionError}
+                </Alert>
               )}
+
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                sx={{ justifyContent: 'center' }}
+              >
+                <Button
+                  variant="outlined"
+                  startIcon={<ArrowBackIcon />}
+                  onClick={() => navigate(quizId ? `/host/quizzes/${quizId}` : '/host/quizzes')}
+                  sx={{ fontWeight: 700, textTransform: 'none', minHeight: 48 }}
+                >
+                  Back to Quiz
+                </Button>
+                {quizId && (
+                  <Button
+                    variant="contained"
+                    startIcon={
+                      isCreatingNew ? <CircularProgress size={18} color="inherit" /> : <AddIcon />
+                    }
+                    onClick={handleStartNewSession}
+                    disabled={isCreatingNew}
+                    sx={{
+                      fontWeight: 700,
+                      textTransform: 'none',
+                      bgcolor: '#00629B',
+                      minHeight: 48,
+                    }}
+                  >
+                    {isCreatingNew ? 'Starting…' : 'Start New Session'}
+                  </Button>
+                )}
+              </Stack>
             </Stack>
-          </Stack>
+          </>
         )}
       </Box>
     </GameLayout>
