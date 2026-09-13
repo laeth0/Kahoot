@@ -1,13 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  type CelebrationVariant,
-  isMuted,
-  playCelebrationSound,
-  stopCelebrationSound,
-  subscribeMuteChange,
-  toggleMuted,
-} from '../utils/celebrationAudio';
+import { celebrationAudioService } from '../services/celebrationAudioService.ts';
+
+export type CelebrationVariant = 'leaderboard' | 'final-results';
 
 export interface UseCelebrationOptions {
   variant?: CelebrationVariant;
@@ -23,29 +18,28 @@ export interface UseCelebrationResult {
 }
 
 export function useCelebration({
-  variant = 'leaderboard',
   active = true,
   triggerKey,
   autoPlaySound = true,
 }: UseCelebrationOptions = {}): UseCelebrationResult {
-  const [muted, setMutedState] = useState<boolean>(() => isMuted());
+  const [muted, setMutedState] = useState<boolean>(() => celebrationAudioService.isMuted());
   const lastFiredKeyRef = useRef<string | number | undefined>(undefined);
 
   useEffect(() => {
-    return subscribeMuteChange((next) => {
+    return celebrationAudioService.subscribe((next) => {
       setMutedState(next);
     });
   }, []);
 
   const triggerCelebration = useCallback(() => {
     if (autoPlaySound) {
-      playCelebrationSound(variant);
+      celebrationAudioService.playApplause();
     }
-  }, [autoPlaySound, variant]);
+  }, [autoPlaySound]);
 
   useEffect(() => {
     if (!active) {
-      stopCelebrationSound();
+      celebrationAudioService.stop();
       return;
     }
 
@@ -57,12 +51,12 @@ export function useCelebration({
     triggerCelebration();
 
     return () => {
-      stopCelebrationSound();
+      celebrationAudioService.stop();
     };
   }, [active, triggerKey, triggerCelebration]);
 
   const toggleMute = useCallback(() => {
-    return toggleMuted();
+    return celebrationAudioService.toggleMuted();
   }, []);
 
   return {

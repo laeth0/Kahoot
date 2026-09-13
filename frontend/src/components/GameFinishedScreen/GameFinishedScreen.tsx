@@ -8,7 +8,7 @@ import type { LeaderboardEntryResponse } from '../../realtime/events.ts';
 import { ordinal } from '../../utils/rank.ts';
 import { CelebrationOverlay } from '../CelebrationOverlay/index.ts';
 import { LeaderboardList } from '../LeaderboardList/index.ts';
-import { PodiumView } from '../PodiumView/index.ts';
+import { LeaderboardPodium } from '../LeaderboardPodium/index.ts';
 import { SoundToggle } from '../SoundToggle/index.ts';
 
 export interface GameFinishedScreenProps {
@@ -144,7 +144,11 @@ export function GameFinishedScreen({
           </Stack>
 
           <Box sx={{ width: '100%' }}>
-            <PodiumView entries={entries} highlightParticipantId={participantId} size="compact" />
+            <LeaderboardPodium
+              entries={entries}
+              highlightParticipantId={participantId}
+              size="compact"
+            />
           </Box>
 
           <Box sx={{ width: '100%' }}>

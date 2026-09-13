@@ -22,12 +22,12 @@ import { LiveRegion } from '../../components/Feedback/index.ts';
 import { GamePhaseIndicator } from '../../components/GamePhaseIndicator/index.ts';
 import { GamePinDisplay } from '../../components/GamePinDisplay/index.ts';
 import { HostGameControls } from '../../components/HostGameControls/index.ts';
-import { LeaderboardList } from '../../components/LeaderboardList/index.ts';
+import { LeaderboardCard } from '../../components/LeaderboardCard/index.ts';
 import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { ParticipantGrid } from '../../components/ParticipantGrid/index.ts';
 import { PlayerCountBadge } from '../../components/PlayerCountBadge/index.ts';
-import { PodiumView } from '../../components/PodiumView/index.ts';
 import { QuestionResultsChart } from '../../components/QuestionResultsChart/index.ts';
+import { SoundToggle } from '../../components/SoundToggle/index.ts';
 import {
   isFinishedStatus,
   isLeaderboardStatus,
@@ -207,15 +207,6 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     </Box>
   );
 
-  const leaderboardCard = (heading: string, maxRows: number) => (
-    <Card sx={{ borderRadius: 4, border: '2px solid #E2E8F0', p: { xs: 3, sm: 4 } }}>
-      <Typography variant="h4" component="h1" sx={{ fontWeight: 900, color: '#09131F', mb: 3 }}>
-        {heading}
-      </Typography>
-      <LeaderboardList entries={leaderboard?.entries ?? []} maxRows={maxRows} size="projector" />
-    </Card>
-  );
-
   return (
     <GameLayout quizTitle={gameState.quizTitle} gamePin={gameState.pin} isGameActive={!isFinished}>
       <MetadataManager title={`${gameState.quizTitle} - Host - Kahoot`} noindex />
@@ -311,66 +302,122 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
         )}
 
         {isLeaderboardStatus(status) && (
-          <>
+          <Box sx={{ position: 'relative', width: '100%', overflow: 'visible' }}>
             <CelebrationOverlay
               variant="leaderboard"
               triggerKey={`host_lb_${gameState.currentQuestionIndex ?? 0}`}
             />
-            <Card sx={{ borderRadius: 4, border: '2px solid #E2E8F0', p: { xs: 3, sm: 4 } }}>
+
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -12,
+                right: 0,
+                zIndex: 5,
+              }}
+            >
+              <SoundToggle size="small" />
+            </Box>
+
+            <Box
+              sx={{
+                position: 'relative',
+                py: { xs: 2, sm: 3 },
+                borderRadius: 6,
+                background:
+                  'radial-gradient(ellipse at 50% 25%, rgba(254, 240, 138, 0.3) 0%, rgba(186, 230, 253, 0.22) 40%, rgba(255, 255, 255, 0) 72%)',
+              }}
+            >
               <Typography
-                variant="h4"
-                component="h1"
-                sx={{ fontWeight: 900, color: '#09131F', mb: 2, textAlign: 'center' }}
+                aria-hidden="true"
+                sx={{
+                  display: { xs: 'none', lg: 'block' },
+                  position: 'absolute',
+                  left: { lg: 10, xl: 40 },
+                  top: '35%',
+                  transform: 'rotate(-10deg)',
+                  fontFamily: 'cursive, "Brush Script MT", "Segoe Print", sans-serif',
+                  fontWeight: 900,
+                  fontSize: { lg: '2.5rem', xl: '3.25rem' },
+                  color: '#38BDF8',
+                  letterSpacing: '0.04em',
+                  textShadow: '0 4px 14px rgba(56, 189, 248, 0.25)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
               >
-                Current Standings
+                Amazing
+                <br />
+                Players!
               </Typography>
-              {(leaderboard?.entries ?? []).length >= 3 && (
-                <Box sx={{ mb: 4, pb: 2, borderBottom: '1px solid #E2E8F0' }}>
-                  <PodiumView entries={leaderboard?.entries ?? []} size="projector" />
-                </Box>
-              )}
-              <LeaderboardList entries={leaderboard?.entries ?? []} maxRows={10} size="projector" />
-            </Card>
+
+              <Typography
+                aria-hidden="true"
+                sx={{
+                  display: { xs: 'none', lg: 'block' },
+                  position: 'absolute',
+                  right: { lg: 10, xl: 40 },
+                  top: '48%',
+                  transform: 'rotate(10deg)',
+                  fontFamily: 'cursive, "Brush Script MT", "Segoe Print", sans-serif',
+                  fontWeight: 900,
+                  fontSize: { lg: '2.5rem', xl: '3.25rem' },
+                  color: '#A855F7',
+                  letterSpacing: '0.04em',
+                  textShadow: '0 4px 14px rgba(168, 85, 247, 0.25)',
+                  pointerEvents: 'none',
+                  userSelect: 'none',
+                }}
+              >
+                You're
+                <br />
+                Awesome!
+              </Typography>
+
+              <LeaderboardCard
+                entries={leaderboard?.entries ?? []}
+                size="projector"
+                maxStandingsRows={10}
+              />
+            </Box>
+
             {controls}
-          </>
+          </Box>
         )}
 
         {isFinished && (
-          <>
+          <Box sx={{ position: 'relative', width: '100%' }}>
             <CelebrationOverlay variant="final-results" triggerKey="host_finished" />
-            <Stack spacing={3}>
-              <Card
+
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -12,
+                right: 0,
+                zIndex: 5,
+              }}
+            >
+              <SoundToggle size="small" />
+            </Box>
+
+            <Stack spacing={4}>
+              <Box
                 sx={{
-                  borderRadius: 4,
-                  border: '2px solid #00629B',
-                  p: { xs: 3, sm: 5 },
-                  bgcolor: '#FFFFFF',
-                  boxShadow: '0 8px 30px rgba(0, 98, 155, 0.12)',
+                  position: 'relative',
+                  py: { xs: 2, sm: 3 },
+                  borderRadius: 6,
+                  background:
+                    'radial-gradient(ellipse at 50% 30%, rgba(254, 240, 138, 0.4) 0%, rgba(186, 230, 253, 0.25) 45%, rgba(255, 255, 255, 0) 75%)',
                 }}
               >
-                <Typography
-                  variant="h3"
-                  component="h1"
-                  sx={{
-                    fontWeight: 900,
-                    color: '#09131F',
-                    mb: 1,
-                    textAlign: 'center',
-                    fontSize: { xs: '2rem', sm: '2.75rem' },
-                  }}
-                >
-                  Final Results & Champions
-                </Typography>
-                <Typography
-                  variant="subtitle1"
-                  sx={{ color: '#64748B', fontWeight: 600, mb: 3, textAlign: 'center' }}
-                >
-                  Congratulations to all players!
-                </Typography>
-                <PodiumView entries={leaderboard?.entries ?? []} size="projector" />
-              </Card>
-
-              {leaderboardCard('Full Standings', 20)}
+                <LeaderboardCard
+                  entries={leaderboard?.entries ?? []}
+                  size="projector"
+                  title="Final Results & Champions"
+                  subtitle="Congratulations to all participants for an incredible competition!"
+                  maxStandingsRows={20}
+                />
+              </Box>
 
               {newSessionError && (
                 <Alert severity="error" sx={{ borderRadius: 2 }}>
@@ -387,7 +434,13 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
                   variant="outlined"
                   startIcon={<ArrowBackIcon />}
                   onClick={() => navigate(quizId ? `/host/quizzes/${quizId}` : '/host/quizzes')}
-                  sx={{ fontWeight: 700, textTransform: 'none', minHeight: 48 }}
+                  sx={{
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    minHeight: 48,
+                    borderRadius: 8,
+                    px: 3.5,
+                  }}
                 >
                   Back to Quiz
                 </Button>
@@ -404,6 +457,8 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
                       textTransform: 'none',
                       bgcolor: '#00629B',
                       minHeight: 48,
+                      borderRadius: 8,
+                      px: 4,
                     }}
                   >
                     {isCreatingNew ? 'Starting…' : 'Start New Session'}
@@ -411,7 +466,7 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
                 )}
               </Stack>
             </Stack>
-          </>
+          </Box>
         )}
       </Box>
     </GameLayout>

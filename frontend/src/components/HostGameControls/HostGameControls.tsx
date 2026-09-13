@@ -3,7 +3,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import LeaderboardIcon from '@mui/icons-material/Leaderboard';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import StopCircleIcon from '@mui/icons-material/StopCircle';
-import { Alert, Box, Button, CircularProgress, Paper, Stack, Tooltip } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Paper, Stack, Tooltip, Typography } from '@mui/material';
 import { type ReactNode, useState } from 'react';
 
 import { type GameStatus, normalizeGameStatus } from '../../constants/gameStatus.ts';
@@ -24,9 +24,9 @@ export interface HostGameControlsProps {
 
 const primaryButtonSx = {
   fontWeight: 800,
-  minHeight: 52,
+  minHeight: 48,
   fontSize: '1.05rem',
-  borderRadius: 3,
+  borderRadius: 8,
   textTransform: 'none',
   px: { xs: 3, sm: 4.5 },
   width: { xs: '100%', sm: 'auto' },
@@ -181,21 +181,40 @@ export function HostGameControls({
         >
           <Button
             variant="outlined"
-            color="error"
+            color="inherit"
             onClick={() => setShowEndGameConfirm(true)}
             disabled={isActionPending || isFinished}
-            startIcon={<CancelIcon />}
+            startIcon={<CancelIcon sx={{ color: '#64748B' }} />}
             sx={{
               fontWeight: 700,
-              minHeight: 48,
-              borderRadius: 3,
+              minHeight: 46,
+              borderRadius: 8,
               textTransform: 'none',
               px: 3,
+              borderColor: '#CBD5E1',
+              color: '#334155',
               width: { xs: '100%', sm: 'auto' },
+              '&:hover': {
+                borderColor: '#94A3B8',
+                bgcolor: '#F8FAFC',
+              },
             }}
           >
             End Game
           </Button>
+
+          {phase === 'Leaderboard' && (
+            <Typography
+              sx={{
+                fontWeight: 600,
+                color: '#64748B',
+                fontSize: '0.95rem',
+                display: { xs: 'none', md: 'block' },
+              }}
+            >
+              Keep it up! 💙
+            </Typography>
+          )}
 
           <Box
             sx={{ width: { xs: '100%', sm: 'auto' }, display: 'flex', justifyContent: 'flex-end' }}

@@ -5,7 +5,7 @@ import { Box, Paper, Stack, Typography } from '@mui/material';
 
 import { CelebrationOverlay } from '../../components/CelebrationOverlay/index.ts';
 import { LeaderboardList } from '../../components/LeaderboardList/index.ts';
-import { PodiumView } from '../../components/PodiumView/index.ts';
+import { LeaderboardPodium } from '../../components/LeaderboardPodium/index.ts';
 import { SoundToggle } from '../../components/SoundToggle/index.ts';
 import { useCelebration } from '../../hooks/useCelebration.ts';
 import type { LeaderboardResponse } from '../../realtime/events.ts';
@@ -156,7 +156,7 @@ export function PlayerLeaderboardView({
           </Stack>
         </Paper>
 
-        {entries.length >= 3 && (
+        {entries.length > 0 && (
           <Paper
             elevation={0}
             sx={{
@@ -172,7 +172,11 @@ export function PlayerLeaderboardView({
             >
               Top Performers
             </Typography>
-            <PodiumView entries={entries} highlightParticipantId={participantId} size="compact" />
+            <LeaderboardPodium
+              entries={entries}
+              highlightParticipantId={participantId}
+              size="compact"
+            />
           </Paper>
         )}
 
