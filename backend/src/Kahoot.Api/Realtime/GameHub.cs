@@ -56,6 +56,9 @@ public sealed class GameHub(
 
         PlayerGameStateResponse value = result.Value;
         await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
+        await notifier.ParticipantJoinedAsync(
+            value.GameId,
+            new GameParticipantResponse(value.ParticipantId, value.Nickname, value.TotalScore, value.Rank, true, false));
 
         return RealtimeResponse<PlayerGameStateResponse>.Ok(value);
     }
@@ -106,8 +109,11 @@ public sealed class GameHub(
     {
         if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
         {
-            await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
-            await notifier.ParticipantLeftAsync(gameId, participantId);
+            Result<bool> detachResult = await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
+            if (detachResult.IsSuccess && detachResult.Value)
+            {
+                await notifier.ParticipantLeftAsync(gameId, participantId);
+            }
         }
 
         await base.OnDisconnectedAsync(exception);

@@ -7,13 +7,13 @@ namespace Kahoot.Application.Games.Presence;
 
 internal sealed class DetachParticipantConnectionCommandHandler(
     IApplicationDbContext dbContext,
-    TimeProvider timeProvider) : ICommandHandler<DetachParticipantConnectionCommand>
+    TimeProvider timeProvider) : ICommandHandler<DetachParticipantConnectionCommand, bool>
 {
-    public async Task<Result> Handle(DetachParticipantConnectionCommand command, CancellationToken cancellationToken)
+    public async Task<Result<bool>> Handle(DetachParticipantConnectionCommand command, CancellationToken cancellationToken)
     {
         DateTime now = timeProvider.GetUtcNow().UtcDateTime;
 
-        await dbContext.Participants
+        int rowsAffected = await dbContext.Participants
             .Where(participant =>
                 participant.Id == command.ParticipantId &&
                 participant.ConnectionId == command.ConnectionId)
@@ -23,6 +23,6 @@ internal sealed class DetachParticipantConnectionCommandHandler(
                     .SetProperty(participant => participant.LastSeenAt, now),
                 cancellationToken);
 
-        return Result.Success();
+        return Result.Success(rowsAffected > 0);
     }
 }

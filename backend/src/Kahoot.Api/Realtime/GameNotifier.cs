@@ -9,7 +9,7 @@ public sealed class GameNotifier(IHubContext<GameHub, IGameClient> hub)
         Everyone(gameId).ParticipantJoined(participant);
 
     public Task ParticipantLeftAsync(Guid gameId, Guid participantId) =>
-        hub.Clients.Group(GameGroups.Host(gameId)).ParticipantLeft(participantId);
+        Everyone(gameId).ParticipantLeft(participantId);
 
     public Task ParticipantRemovedAsync(Guid gameId, Guid participantId) =>
         Everyone(gameId).ParticipantRemoved(participantId);

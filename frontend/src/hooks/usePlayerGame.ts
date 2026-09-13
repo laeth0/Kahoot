@@ -176,6 +176,14 @@ export function usePlayerGame(gameId: string | undefined) {
       );
     };
 
+    const handleParticipantLeft = () => {
+      setPlayerState((previous) =>
+        previous
+          ? { ...previous, participantCount: Math.max(1, previous.participantCount - 1) }
+          : previous,
+      );
+    };
+
     const handleParticipantRemoved = (participantId: string) => {
       if (participantId === liveRef.current.participantId) {
         handleKicked();
@@ -247,7 +255,13 @@ export function usePlayerGame(gameId: string | undefined) {
       foldLeaderboard(board, 'Finished');
     };
 
+    const handleBeforeUnload = () => {
+      connection.stop().catch(() => {});
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
     connection.on('ParticipantJoined', handleParticipantJoined);
+    connection.on('ParticipantLeft', handleParticipantLeft);
     connection.on('ParticipantRemoved', handleParticipantRemoved);
     connection.on('QuestionStarted', handleQuestionStarted);
     connection.on('QuestionEnded', handleQuestionEnded);
@@ -258,7 +272,9 @@ export function usePlayerGame(gameId: string | undefined) {
 
     return () => {
       active = false;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       connection.off('ParticipantJoined', handleParticipantJoined);
+      connection.off('ParticipantLeft', handleParticipantLeft);
       connection.off('ParticipantRemoved', handleParticipantRemoved);
       connection.off('QuestionStarted', handleQuestionStarted);
       connection.off('QuestionEnded', handleQuestionEnded);

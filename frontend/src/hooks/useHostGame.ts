@@ -169,11 +169,16 @@ export function useHostGame(gameId: string | undefined) {
     }, jitter);
 
     const handleParticipantJoined = (participant: GameParticipantResponse) => {
-      setLiveAnnouncement({
-        message: `Player ${participant.nickname} joined.`,
-        politeness: 'polite',
-      });
-      pendingJoinQueueRef.current.push(participant);
+      if (participant.isConnected) {
+        setLiveAnnouncement({
+          message: `Player ${participant.nickname} joined.`,
+          politeness: 'polite',
+        });
+      }
+      pendingJoinQueueRef.current = [
+        ...pendingJoinQueueRef.current.filter((p) => p.id !== participant.id),
+        participant,
+      ];
       if (!flushTimeoutRef.current) {
         flushTimeoutRef.current = setTimeout(() => {
           flushTimeoutRef.current = null;
@@ -187,6 +192,9 @@ export function useHostGame(gameId: string | undefined) {
         message: 'A player disconnected.',
         politeness: 'polite',
       });
+      pendingJoinQueueRef.current = pendingJoinQueueRef.current.filter(
+        (p) => p.id !== participantId,
+      );
       setParticipantsMap((previous) => {
         const existing = previous.get(participantId);
         if (!existing) {
@@ -203,6 +211,9 @@ export function useHostGame(gameId: string | undefined) {
         message: 'A player was removed.',
         politeness: 'polite',
       });
+      pendingJoinQueueRef.current = pendingJoinQueueRef.current.filter(
+        (p) => p.id !== participantId,
+      );
       setParticipantsMap((previous) => {
         if (!previous.has(participantId)) {
           return previous;
@@ -338,7 +349,10 @@ export function useHostGame(gameId: string | undefined) {
     };
   }, [gameId, gameState?.status, leaderboard]);
 
-  const participants = useMemo(() => Array.from(participantsMap.values()), [participantsMap]);
+  const activeParticipants = useMemo(
+    () => Array.from(participantsMap.values()).filter((p) => p.isConnected && !p.isRemoved),
+    [participantsMap],
+  );
 
   const runAction = useCallback(async (action: () => Promise<unknown>, fallbackMessage: string) => {
     if (actionInFlightRef.current) {
@@ -441,8 +455,8 @@ export function useHostGame(gameId: string | undefined) {
 
   return {
     gameState,
-    participants,
-    participantCount: participants.length,
+    participants: activeParticipants,
+    participantCount: activeParticipants.length,
     currentQuestion,
     questionResults,
     leaderboard,

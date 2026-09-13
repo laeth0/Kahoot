@@ -179,14 +179,6 @@ public sealed class GamesController(ISender sender, GameNotifier notifier) : Api
         Result<JoinGameResponse> result = await sender.Send(
             new JoinGameCommand(request.Pin, request.Nickname), cancellationToken);
 
-        if (result.IsSuccess)
-        {
-            JoinGameResponse value = result.Value;
-            await notifier.ParticipantJoinedAsync(
-                value.GameId,
-                new GameParticipantResponse(value.ParticipantId, value.Nickname, 0, null, false, false));
-        }
-
         return ToActionResult(result, joinResult => Ok(joinResult));
     }
 }

@@ -9,7 +9,7 @@ import { MetadataManager } from '../../components/MetadataManager/index.ts';
 import { NicknameEntryForm } from '../../components/NicknameEntryForm/index.ts';
 import { PinEntryForm } from '../../components/PinEntryForm/index.ts';
 import { getFriendlyErrorMessage } from '../../constants/errorCodes.ts';
-import { saveSession } from '../../hooks/useSessionToken.ts';
+import { getSessionByPin, saveSession } from '../../hooks/useSessionToken.ts';
 
 type JoinStep = 'pin' | 'nickname';
 
@@ -42,6 +42,15 @@ export function JoinPage() {
     [],
   );
 
+  useEffect(() => {
+    if (initialPin) {
+      const existing = getSessionByPin(initialPin);
+      if (existing) {
+        navigate(`/play/${existing.gameId}`, { replace: true });
+      }
+    }
+  }, [initialPin, navigate]);
+
   const clearErrors = () => {
     setPinError(null);
     setNicknameServerError(null);
@@ -49,6 +58,11 @@ export function JoinPage() {
   };
 
   const handlePinContinue = (enteredPin: string) => {
+    const existing = getSessionByPin(enteredPin);
+    if (existing) {
+      navigate(`/play/${existing.gameId}`);
+      return;
+    }
     setPin(enteredPin);
     setSearchParams({ pin: enteredPin }, { replace: true });
     clearErrors();
@@ -82,6 +96,7 @@ export function JoinPage() {
         participantId: response.participantId,
         nickname: response.nickname,
         gameId: response.gameId,
+        pin,
       });
       navigate(`/play/${response.gameId}`);
     } catch (err) {
