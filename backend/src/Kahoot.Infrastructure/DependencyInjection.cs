@@ -8,6 +8,7 @@ using Kahoot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 
 namespace Kahoot.Infrastructure;
 
@@ -18,9 +19,16 @@ public static class DependencyInjection
         string connectionString = configuration.GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is not configured.");
 
+        NpgsqlDataSource dataSource = new NpgsqlDataSourceBuilder(connectionString)
+        {
+            Name = "kahoot-db"
+        }.Build();
+
+        services.AddSingleton(dataSource);
+
         services.AddDbContext<KahootDbContext>(options =>
             options
-                .UseNpgsql(connectionString)
+                .UseNpgsql(dataSource)
                 .UseSnakeCaseNamingConvention());
 
         services.AddScoped<IApplicationDbContext>(serviceProvider =>

@@ -6,9 +6,11 @@ using Kahoot.Api.Realtime;
 using Kahoot.Application;
 using Kahoot.Application.Authentication.Common;
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure;
+using Kahoot.Infrastructure.Observability;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -122,6 +124,16 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.AddKahootObservability();
 
+var observabilityOptions = builder.Configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>();
+if (observabilityOptions is { Enabled: true })
+{
+    builder.Services.AddHostedService(sp => new BusinessMetricsSnapshotHostedService(
+        sp.GetRequiredService<IServiceScopeFactory>(),
+        sp.GetRequiredService<IKahootTelemetry>(),
+        sp.GetRequiredService<ILogger<BusinessMetricsSnapshotHostedService>>(),
+        TimeSpan.FromSeconds(observabilityOptions.BusinessSnapshotIntervalSeconds)));
+}
+
 var fileStorageOptions = builder.Configuration.GetSection(FileStorageOptions.SectionName).Get<FileStorageOptions>()
                          ?? new FileStorageOptions();
 
@@ -133,6 +145,7 @@ builder.Services.Configure<FormOptions>(options =>
 var app = builder.Build();
 
 app.UseForwardedHeaders();
+app.UseMiddleware<RequestCorrelationMiddleware>();
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
