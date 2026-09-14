@@ -209,6 +209,7 @@ const ignoredFiles = [
 ];
 
 for (const file of trackedFiles) {
+  if (!fs.existsSync(file)) continue;
   const base = path.basename(file);
   if (base.startsWith(".env") || file.includes("/docs/") || file.includes("\\docs\\") || file.includes("/.wolf/") || file.includes("\\.wolf\\") || ignoredFiles.some(f => file.endsWith(f))) continue;
   const content = fs.readFileSync(file, "utf8");
@@ -238,6 +239,7 @@ const forbiddenPatterns = [
 ];
 
 for (const file of trackedFiles) {
+  if (!fs.existsSync(file)) continue;
   if (file.includes("/docs/") || file.includes("\\docs\\") || file.includes("/observability/scripts/") || file.includes("\\observability\\scripts\\")) continue;
   const content = fs.readFileSync(file, "utf8");
   for (const pattern of forbiddenPatterns) {
