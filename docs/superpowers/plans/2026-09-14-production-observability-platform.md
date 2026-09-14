@@ -949,15 +949,15 @@ git commit -m "feat: proxy authenticated Grafana subpath"
 - Fixed data source UIDs: `prometheus`, `loki`, and `jaeger`
 - Fixed dashboard folder UID: `kahoot-observability`
 
-- [ ] **Step 1: Provision Prometheus as the default data source**
+- [x] **Step 1: Provision Prometheus as the default data source**
 
 Set URL `http://prometheus:9090`, proxy access, editable false, 15-second time interval, and UID `prometheus`. Configure exemplar trace-ID destinations for both `trace_id` and `traceID` to UID `jaeger` so histogram exemplars open the matching trace.
 
-- [ ] **Step 2: Provision Loki and trace correlation**
+- [x] **Step 2: Provision Loki and trace correlation**
 
 Set URL `http://loki:3100`, proxy access, editable false, and UID `loki`. Add a derived field named `TraceID` that recognizes lower-case 32-character trace IDs from structured OTLP log fields and opens `${__value.raw}` in the Jaeger data source. Validate the final matcher against one real backend error log; do not parse or display a token, query string, or request body.
 
-- [ ] **Step 3: Provision Jaeger with logs, metrics, and service graphs**
+- [x] **Step 3: Provision Jaeger with logs, metrics, and service graphs**
 
 Set URL `http://jaeger:16686`, proxy access, editable false, and UID `jaeger`. Configure:
 
@@ -967,11 +967,11 @@ Set URL `http://jaeger:16686`, proxy access, editable false, and UID `jaeger`. C
 
 All URLs are Docker DNS names. Never use `localhost`, the Azure public IP, or published ports for a Grafana data source.
 
-- [ ] **Step 4: Provision the immutable dashboard folder**
+- [x] **Step 4: Provision the immutable dashboard folder**
 
 Create a file provider with `folder: Kahoot Observability`, `folderUid: kahoot-observability`, `type: file`, `disableDeletion: true`, `allowUiUpdates: false`, update interval 30 seconds, and path `/var/lib/grafana/dashboards`. Mount provisioning files and dashboards read-only at Grafana's standard provisioning and dashboard paths.
 
-- [ ] **Step 5: Validate provisioning schema**
+- [x] **Step 5: Validate provisioning schema**
 
 Start only Grafana plus its dependencies on the internal network and inspect logs:
 
@@ -982,7 +982,7 @@ docker compose -f docker-compose.prod.yml logs --no-color grafana
 
 Expected: three data sources and one dashboard provider are provisioned with no provisioning error. Stop these validation containers without deleting volumes.
 
-- [ ] **Step 6: Commit Grafana provisioning base**
+- [x] **Step 6: Commit Grafana provisioning base**
 
 ```bash
 git add observability/grafana/provisioning/datasources observability/grafana/provisioning/dashboards

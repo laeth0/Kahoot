@@ -272,6 +272,12 @@ budget_tokens: 1000
   - Verified Compose production configuration rendering with `docker compose config --quiet` (exit code 0).
   - Committed with `feat: proxy authenticated Grafana subpath` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 11 Provision Grafana Data Sources and Dashboard Loading (Completed & Verified):**
+  - Created `observability/grafana/provisioning/datasources/datasources.yml`: configured Prometheus as default (`http://prometheus:9090`, `timeInterval: 15s`, `uid: prometheus`, `exemplarTraceIdDestinations` for `trace_id` and `traceID` pointing to `jaeger`), Loki (`http://loki:3100`, `uid: loki`, `TraceID` derived field with regex matching lowercase 32-hex trace IDs to `jaeger`), and Jaeger (`http://jaeger:16686`, `uid: jaeger`, `tracesToLogsV2` with ±5m window, tag mapping `service.name` to `service_name`, `tracesToMetrics` with span metrics rate/error/p95 queries, `serviceMap`, and `nodeGraph: enabled`).
+  - Created `observability/grafana/provisioning/dashboards/dashboards.yml`: configured immutable file provider for `Kahoot Observability` folder (`folderUid: kahoot-observability`, `path: /var/lib/grafana/dashboards`, `disableDeletion: true`, `allowUiUpdates: false`, `updateIntervalSeconds: 30`).
+  - Verified live in Grafana container by starting `prometheus`, `loki`, `jaeger`, `grafana` with Docker Compose; inspected logs and confirmed all three data sources and dashboard provider inserted without error. Stopped containers without removing volumes.
+  - Committed with `feat: provision Grafana data sources` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -288,7 +294,8 @@ budget_tokens: 1000
 - Task 8: Completed.
 - Task 9: Completed.
 - Task 10: Completed.
-- Task 11: Provision Grafana Data Sources and Dashboard Loading (`observability/grafana/provisioning/datasources/datasources.yml`, `observability/grafana/provisioning/dashboards/dashboards.yml`).
+- Task 11: Completed.
+- Task 12: Provision Application and Realtime Dashboards (`observability/grafana/dashboards/application.json`, `observability/grafana/dashboards/realtime.json`, `observability/grafana/provisioning/alerting/alerts.yml`).
 
 ---
 
