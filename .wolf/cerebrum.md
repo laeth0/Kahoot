@@ -18,6 +18,7 @@ budget_tokens: 2000
 - **Frontend Theme & Branding:** Strictly **Light Theme only** (`mode: 'light'`). No dark theme switchers or dark mode variants. Branding and color palette are derived directly from the IEEEXtreme Palestine Section logo (`frontend/src/assets/logo.jpeg`): Primary is IEEE Ocean Blue `#00629B`, secondary accent is Radar Cyan `#0284C7`, background canvas is `#F4F8FC`, text is `#09131F`.
 - Requirements are split into `docs/functional-requirements.md` + `docs/non-functional-requirements.md` (living spec, keep synced). `docs/Kahoot-like Platform.md` is the untouched original brief.
 - `backend/projectSchema.dbml`: keep it free of `//` comments (user asked). DBML `Note:` annotations are allowed (they render in dbdiagram).
+- **Observability Stack Scope:** Grafana, Loki, Prometheus, and companion exporters are strictly for local development (`docker-compose.yml`); production (`docker-compose.prod.yml`) is kept lean with core application services only (`db`, `backend`, `frontend`, `nginx`) to dedicate compute and memory to game processing.
 
 ## Key Learnings
 

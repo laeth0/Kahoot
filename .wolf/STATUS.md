@@ -12,6 +12,14 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Observability Stack Production Removal & Dev-Only Isolation (Completed & Verified):**
+  - Removed Grafana, Prometheus, Loki, Jaeger, OTel Collector, cAdvisor, Node Exporter, Postgres Exporter, and Blackbox Exporter from `docker-compose.prod.yml`.
+  - Configured `backend` in `docker-compose.prod.yml` with `Observability__Enabled: ${OBSERVABILITY_ENABLED:-false}`.
+  - Created `nginx/default.prod.conf` without dead `/grafana/` routes, preventing Nginx startup crashes from unresolvable upstreams in production.
+  - Retained full observability stack in `docker-compose.yml` for local development, publishing direct host ports (`3001` for Grafana, `9090` for Prometheus, `3100` for Loki, `16686` for Jaeger).
+  - Maintained 100% strict synchronization across `.env`, `.env.example`, and `.env.production.example`.
+  - Updated `observability/scripts/validate-config.sh` to assert absence in production and retention invariants in dev; verified 100% passing.
+
 - **Answer-burst bottleneck research (documentation only):**
   - Created `bullenick.md` from `walkthrough.md`, current answer/auto-end code, production Compose resource limits, and authoritative PostgreSQL/Npgsql/EF Core/Docker/OpenTelemetry/k6 guidance.
   - Identified repeated per-answer auto-end aggregates and 0.75-vCPU backend/database caps as the leading, still-to-be-measured contributors; recorded a prioritized solution and 500-answer verification plan.

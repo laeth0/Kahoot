@@ -660,3 +660,4 @@ description: chronological action log per session, consolidated weekly
 |------|--------|---------|---------|--------|
 | 17:30 | Audited repository production readiness and wrote a phased Gemini execution plan without implementing it | prompt.md, .wolf/STATUS.md, .wolf/cerebrum.md | success; critical owner gates and release blockers recorded | ~70k |
 | 18:30 | Researched answer-burst bottleneck and created a documentation-only remediation plan | bullenick.md, .wolf/STATUS.md, .wolf/memory.md | success; no code, secrets, env, or tests changed | ~12k |
+| 22:30 | Removed Grafana, Loki, Prometheus, and companion exporters from production compose; retained in dev compose with exposed ports; created nginx/default.prod.conf and updated validate-config.sh | docker-compose.prod.yml, docker-compose.yml, nginx/default.prod.conf, .env*, validate-config.sh | success; all validation checks passed | ~15k |
