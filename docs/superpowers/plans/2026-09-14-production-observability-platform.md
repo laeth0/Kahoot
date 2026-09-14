@@ -1319,19 +1319,19 @@ git commit -m "test: validate observability deployment"
 - Operator entry point: `http://20.19.48.78/grafana/`
 - One command path: production Compose plus an untracked `.env.production`
 
-- [ ] **Step 1: Document the actual architecture and trust boundaries**
+- [x] **Step 1: Document the actual architecture and trust boundaries**
 
 `architecture.md` must show Internet → Nginx:80 → `/grafana/` → Grafana:3000 and backend → OTLP → Collector → Prometheus/Loki/Jaeger. Show the two networks, every private port, storage volume, signal flow, tail-sampling policy, exact retention, resource-priority order, and why frontend browser telemetry and Azure Monitor Agent are out of scope. List Azure Monitor Agent only under optional future improvements.
 
-- [ ] **Step 2: Write reproducible setup and access instructions**
+- [x] **Step 2: Write reproducible setup and access instructions**
 
 `setup.md` must cover prerequisites, copying `.env.production.example` to the already-ignored `.env.production`, generating strong passwords, Azure NSG exposure (80 only for this HTTP target; retain 443 only if the existing application already uses it), database extension/monitor-role bootstrap, `docker compose ... config`, static validation, deployment, health checks, and access/login. State that dashboards/data sources/alerts appear automatically and there is no Grafana UI setup step.
 
-- [ ] **Step 3: Document every dashboard and alert**
+- [x] **Step 3: Document every dashboard and alert**
 
 `dashboards.md` maps all panels to their data source, recording rule, units, expected baseline, and drill-down link. `alerts.md` lists every rule from Task 15, threshold, duration, severity, interpretation, false-positive checks, runbook, and recovery. Prominently state that no email, Teams, Slack, webhook, or other external delivery exists in this phase.
 
-- [ ] **Step 4: Write the required Grafana security guide**
+- [x] **Step 4: Write the required Grafana security guide**
 
 `grafana-security.md` must explain:
 
@@ -1344,11 +1344,11 @@ git commit -m "test: validate observability deployment"
 - recommended future migration to a domain with HTTPS before broader production access;
 - OAuth, SSO, Entra ID, and external identity providers are intentionally not configured.
 
-- [ ] **Step 5: Add focused troubleshooting and capacity guidance**
+- [x] **Step 5: Add focused troubleshooting and capacity guidance**
 
 `troubleshooting.md` covers missing metrics/logs/traces, sampling expectations, datasource failures, provisioning errors, subpath redirect loops, Grafana Live WebSockets, exporter permission failures, cAdvisor on cgroup v2, `pg_stat_statements`, disk pressure, Collector refusal, and recovery without volume deletion. Update Azure deployment and load-test docs with the 2-vCPU/8-GB resource budget, 200-user validation procedure, observation commands, and stop criteria.
 
-- [ ] **Step 6: Check documentation consistency**
+- [x] **Step 6: Check documentation consistency**
 
 ```bash
 rg -n "(OAuth|Entra|SMTP|Teams|Slack|Azure Monitor Agent|https://20\.19\.48\.78|localhost:9090|localhost:3100|localhost:16686)" docs/observability docs/azure-vm-deployment.md
@@ -1357,7 +1357,7 @@ rg -n "20\.19\.48\.78/grafana/?" docs/observability docs/azure-vm-deployment.md
 
 Expected: prohibited integrations appear only in explicit “not configured/future” statements; every access instruction uses the HTTP `/grafana/` target and warns about its limitation.
 
-- [ ] **Step 7: Commit operator documentation**
+- [x] **Step 7: Commit operator documentation**
 
 ```bash
 git add docs/observability docs/azure-vm-deployment.md load-tests/README.md

@@ -317,16 +317,25 @@ budget_tokens: 1000
   - Created `observability/prometheus/rules/recording-rules.test.yml`: comprehensive Prometheus rule test fixtures covering zero-traffic error ratio, 1.9% vs 2.1% 5xx, 0.9 vs 1.1s p95, 79% vs 81% CPU, 89% vs 91% memory and disk, Blackbox probe success/failure, and missing exporter series. Verified with `promtool test rules` via pinned Docker container (`prom/prometheus:v3.14.0`) with 100% SUCCESS.
   - Created `observability/scripts/validate-observability.sh`: safe post-deployment runtime validator checking redirect from `/grafana` to `/grafana/`, unauthenticated 401 rejection, authenticated 200 access, datasource existence/health, all 6 dashboard UIDs, all 18 alert rule UIDs, public port isolation (9090, 3100, 16686, 3000, 4317, 4318, 9100, 9115, 9187 closed), and existing application health/negotiate endpoints.
   - Created `observability/scripts/controlled-failures.md`: controlled fault-injection and recovery procedures covering backend pause, database pause, frontend pause, Collector pause, and offline rule fixture simulation for CPU/memory.
-  - Committed with `test: validate observability deployment` and pushed to GitHub `origin/main`.
+  - **Production Observability Platform — Task 17 Document Architecture, Access, Operations, and Security (Completed & Verified):**
+  - Created `docs/observability/architecture.md`: documented production observability architecture (Internet -> Nginx:80 -> `/grafana/` -> Grafana:3000 and Backend -> OTLP -> Collector -> Prometheus/Loki/Jaeger), dual Docker network isolation (`kahoot_internal`, `observability_internal`), storage volumes and retention caps, tail-sampling policies (10% normal, 100% errors and >1s traces), resource allocation priorities, and justifications for excluding browser telemetry and Azure Monitor Agent.
+  - Created `docs/observability/setup.md`: reproducible operator guide for environment configuration (`.env.production`), strong password generation, Azure NSG inbound rules (HTTP 80 only), database monitoring role initialization, static validation, deployment commands, and health verification.
+  - Created `docs/observability/dashboards.md`: complete reference catalog for all 6 dashboards (`Application Health`, `Realtime Engine`, `Infrastructure & Host`, `PostgreSQL Database`, `Logs & Exceptions`, `Distributed Tracing`) mapping panel queries, recording rules, units, expected baselines, and cross-dashboard drill-down workflows.
+  - Created `docs/observability/alerts.md`: documented all 18 provisioned alert rules, evaluation groups, thresholds, durations, interpretations, false-positive checks, runbook procedures, and recovery actions. Highlighted dashboard-only evaluation with zero external notification channels.
+  - Created `docs/observability/grafana-security.md`: comprehensive security posture documentation covering local credential management, admin password rotation, private network isolation, HTTP cleartext transport risks, cookie security (`SameSite=Strict`), Azure NSG source IP restriction recommendations, and HTTPS migration guidance.
+  - Created `docs/observability/troubleshooting.md`: diagnostic guide for common failure modes (missing metrics/logs/traces, sampling expectations, datasource/provisioning errors, subpath redirect loops, Grafana Live WebSockets, cAdvisor cgroup v2 compatibility, `pg_stat_statements`, disk pressure, and safe recovery without volume deletion).
+  - Updated `docs/azure-vm-deployment.md`: incorporated observability architecture, subpath URL (`http://20.19.48.78/grafana/`), security boundaries, and post-deployment validation steps.
+  - Updated `load-tests/README.md`: documented 200-user validation workload, observability monitoring commands during load tests, application-first acceptance criteria, and abort conditions.
+  - Verified documentation consistency: confirmed zero prohibited integrations (OAuth, SSO, Entra ID, SMTP, Teams, Slack, Azure Monitor Agent) outside explicit non-configured statements, and validated all Grafana access URLs point to `http://20.19.48.78/grafana/`.
+  - Static configuration check verified with 100% pass (`bash observability/scripts/validate-config.sh`).
 
 ---
 
 ## 🚀 Next phase
 
 **Active Quest:** Production Observability Platform (`docs/superpowers/plans/2026-09-14-production-observability-platform.md`)
-- Task 0 to 16: Completed.
-- Task 17: Document Architecture, Access, Operations, and Security (`docs/observability/architecture.md`, `setup.md`, `dashboards.md`, `alerts.md`, `troubleshooting.md`, `grafana-security.md`, `docs/azure-vm-deployment.md`, `load-tests/README.md`).
-- Task 18: Prove Capacity, Deploy Safely, and Record Rollback.
+- Task 0 to 17: Completed.
+- Task 18: Prove Capacity, Deploy Safely, and Record Rollback (Pre-deployment gates, idle overhead, 200-user load verification, Azure VM deployment, Definition of Done, final change audit, and close OpenWolf state).
 
 ---
 

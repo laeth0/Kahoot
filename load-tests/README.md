@@ -401,3 +401,63 @@ substitute for those graphs.
 * `duplicate-answer.js` opens 2 sockets per player to force a real INSERT race;
   it deliberately stays under the hub's 5-per-3 s answer guard, so it proves the
   DB/application idempotency path, not the spam guard.
+
+---
+
+## 200-User Workload Validation on Azure VM (2 vCPU, 8 GB RAM)
+
+For production/staging capacity validation under the OpenTelemetry observability platform, execute the 200-player answer burst and endurance scenarios:
+
+### 1. Execution Commands
+```bash
+# Answer burst (200 concurrent players)
+k6 run -e ALLOW_LOAD_TEST=true -e ALLOW_PROD_LOAD_TEST=true \
+  -e BASE_URL=http://20.19.48.78/api \
+  -e SIGNALR_URL=http://20.19.48.78 \
+  -e HOST_USERNAME="$HOST_USERNAME" \
+  -e HOST_PASSWORD="$HOST_PASSWORD" \
+  -e PLAYERS=200 \
+  load-tests/scenarios/answer-burst.js
+
+# Endurance test (200 players, 10 minutes)
+k6 run -e ALLOW_LOAD_TEST=true -e ALLOW_PROD_LOAD_TEST=true \
+  -e BASE_URL=http://20.19.48.78/api \
+  -e SIGNALR_URL=http://20.19.48.78 \
+  -e HOST_USERNAME="$HOST_USERNAME" \
+  -e HOST_PASSWORD="$HOST_PASSWORD" \
+  -e ENDURANCE_PLAYERS=200 \
+  -e ENDURANCE_MINUTES=10 \
+  load-tests/scenarios/endurance.js
+```
+
+### 2. Live Observation Commands
+During the test, observe container resource bounds and system health:
+```bash
+# Observe live container CPU and Memory allocations
+docker stats --no-stream
+
+# Check host memory and disk headroom
+free -m
+df -h /
+
+# Verify container process health and restart counts
+docker compose -f docker-compose.prod.yml ps
+```
+
+### 3. Application-First Acceptance Criteria
+Pass the deployment gate only when all of the following conditions are met:
+1. **Application Error Rate:** Unexpected application errors remain `< 1%`.
+2. **Latency SLAs:** Normal API p95 remains `< 300 ms`; live answer processing p95 remains `< 500 ms`.
+3. **Container Stability:** `backend`, `frontend`, `db`, and `nginx` do not restart or report `OOMKilled`.
+4. **Host Capacity:** Host CPU sustained usage remains `< 80%`; memory remains below the critical 90% threshold (> 800 MB available); root disk remains `< 90%`.
+5. **Observability Boundedness:** Observability services (`otel-collector`, `prometheus`, `loki`, `jaeger`, `grafana`) operate within their resource caps without causing application throttling.
+6. **Telemetry Ingestion:** OpenTelemetry Collector reports zero sustained refused or dropped spans/metrics/logs (`kahoot-collector-dropping` does not fire).
+7. **Cross-Signal Correlation:** All six dashboards populate; request IDs and trace IDs link across metrics, logs, and traces.
+8. **Retention Projections:** Prometheus, Loki, and Jaeger disk utilization projects comfortably within the ~10 GB allocated budget (~30 GB free host disk).
+
+### 4. Stop Criteria & Abort Conditions
+Immediately abort the load test and revert or scale down telemetry if:
+- API response times exceed 1000 ms sustained.
+- The host memory drops below 500 MB free or swap usage escalates rapidly.
+- Docker containers report restart counts > 0 or OOM kills.
+- PostgreSQL connection pool becomes saturated with queue wait times > 1s.

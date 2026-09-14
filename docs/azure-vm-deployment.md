@@ -6,53 +6,75 @@ This guide covers operational maintenance, configuration updates, and environmen
 
 ## 1. System Architecture & Live Deployment Context
 
-The production application is containerized and managed via `docker-compose.prod.yml`:
+The production application and its companion OpenTelemetry observability platform are containerized and managed via `docker-compose.prod.yml`:
 
 ```mermaid
 flowchart TD
-    Internet["Public Internet\n(Hosts & Players)"]
+    subgraph Public["Public Internet (Hosts, Players, Operators)"]
+        Users["Players & Quiz Hosts"]
+        Ops["Authenticated Operators"]
+    end
 
-    subgraph AzureVM["Azure Virtual Machine (IP: 20.19.48.78)"]
+    subgraph AzureVM["Azure Linux VM (20.19.48.78: Standard D2s v3, 2 vCPU, 8 GB RAM)"]
         subgraph NSG["Network Security Group (NSG)"]
             P22["Port 22 (SSH Admin)"]
             P80["Port 80 (HTTP)"]
-            P443["Port 443 (HTTPS)"]
+            P443["Port 443 (HTTPS - Optional)"]
         end
 
-        subgraph DockerNet["Docker Isolated Network (kahoot_internal)"]
+        subgraph IngressProxy["Ingress Proxy"]
             Nginx["Nginx Reverse Proxy\n(kahoot-nginx)\nListens on :80 / :443"]
+        end
+
+        subgraph AppNet["Docker Network: kahoot_internal (Bridge)"]
             Frontend["React 19 SPA\n(kahoot-frontend)\nInternal Port 80"]
             Backend["ASP.NET Core Web API + SignalR\n(kahoot-backend)\nInternal Port 8080"]
             Database[("PostgreSQL 18\n(kahoot-db)\nInternal Port 5432")]
         end
 
+        subgraph ObsNet["Docker Network: observability_internal (internal: true)"]
+            Collector["OTel Collector Contrib\n(kahoot-otel-collector)"]
+            Prometheus[("Prometheus 3.14.0\n(kahoot-prometheus)")]
+            Loki[("Grafana Loki 3.7.7\n(kahoot-loki)")]
+            Jaeger[("Jaeger 2.20.0\n(kahoot-jaeger)")]
+            Grafana["Grafana 13.2.1\n(kahoot-grafana)\nInternal Port 3000"]
+            Exporters["Node, cAdvisor, Postgres & Blackbox Exporters"]
+        end
+
         subgraph PersistentVolumes["Docker Named Volumes"]
-            V_DB[("postgres_data\n(/var/lib/postgresql)")]
-            V_Uploads[("uploads_data\n(/app/uploads)")]
-            V_Certs[("certbot_conf\n(/etc/letsencrypt)")]
-            V_WWW[("certbot_www\n(/var/www/certbot)")]
+            V_DB[("postgres_data")]
+            V_Uploads[("uploads_data")]
+            V_Prom[("prometheus_data")]
+            V_Loki[("loki_data")]
+            V_Jaeger[("jaeger_data")]
+            V_Grafana[("grafana_data")]
+            V_Logs[("nginx_logs")]
         end
     end
 
-    Internet -->|SSH| P22
-    Internet -->|HTTP :80| P80 --> Nginx
-    Internet -->|HTTPS :443| P443 --> Nginx
+    Users -->|HTTP :80| P80 --> Nginx
+    Ops -->|HTTP :80 /grafana/| P80 --> Nginx
 
     Nginx -->|/ & /assets/| Frontend
     Nginx -->|/api/ & /health| Backend
     Nginx <-->|/hubs/game (WebSockets)| Backend
-    Nginx -->|/uploads/| Backend
-    Backend -->|Host=db:5432| Database
+    Nginx -->|/grafana/| Grafana
 
-    Database --- V_DB
-    Backend --- V_Uploads
-    Nginx --- V_Certs
-    Nginx --- V_WWW
+    Backend -->|OTLP gRPC :4317| Collector
+    Collector --> Prometheus
+    Collector --> Loki
+    Collector --> Jaeger
+
+    Grafana --> Prometheus
+    Grafana --> Loki
+    Grafana --> Jaeger
 ```
 
-### Security Rule for Container Ports:
+### Security & Network Port Rules:
 - **Only Nginx** is exposed to host ports `80` and `443`.
-- `kahoot-backend` (`8080`), `kahoot-frontend` (`80`), and `kahoot-db` (`5432`) reside strictly on the internal Docker network `kahoot_internal`. They are not reachable from the public internet or external network scans.
+- All other services (`backend`, `frontend`, `db`, `grafana`, `prometheus`, `loki`, `jaeger`, `otel-collector`, and exporters) reside strictly on internal Docker networks (`kahoot_internal` and `observability_internal`). They have **zero published host ports** and cannot be probed or scanned from the internet.
+- **Operator Access:** Grafana is accessed securely via subpath proxy at `http://20.19.48.78/grafana/`.
+- **Note on Azure Monitor Agent:** Azure Monitor Agent is not configured or required for this host; host and container telemetry are completely covered by Prometheus Node Exporter and cAdvisor. Azure Monitor Agent remains an optional future cloud integration.
 
 ---
 
@@ -295,14 +317,20 @@ cd /home/azureuser/kahoot
 # 3. Pull latest code
 git pull origin main
 
-# 4. Rebuild and restart containers
-docker compose -f docker-compose.prod.yml up -d --build
+# 4. Run deterministic static validation before deployment
+bash observability/scripts/validate-config.sh
 
-# 5. Clean up stale/dangling images to free disk space
+# 5. Rebuild and restart containers
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+
+# 6. Clean up stale/dangling images to free disk space
 docker image prune -f
 
-# 6. Verify containers are healthy
-docker compose -f docker-compose.prod.yml ps
+# 7. Verify containers are healthy
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
+
+# 8. Run post-deployment observability verification
+GRAFANA_ADMIN_USER=admin GRAFANA_ADMIN_PASSWORD="$GRAFANA_ADMIN_PASSWORD" GRAFANA_URL=http://20.19.48.78/grafana bash observability/scripts/validate-observability.sh
 ```
 
 ---
