@@ -225,16 +225,16 @@ cd /home/azureuser/kahoot
 
 ### Step 7: Launch the Production Stack
 
-Start the production containers using `docker-compose.yml`:
+Start the production containers using `docker-compose.prod.yml`:
 
 ```bash
-docker compose up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 Verify that all containers are healthy and running:
 
 ```bash
-docker compose ps
+docker compose -f docker-compose.prod.yml ps
 ```
 
 You should see:
@@ -246,7 +246,7 @@ You should see:
 Check backend logs to confirm database migrations and host account creation completed:
 
 ```bash
-docker compose logs -f backend
+docker compose -f docker-compose.prod.yml logs -f backend
 ```
 *(Press `Ctrl + C` to stop watching logs).*
 
@@ -370,7 +370,7 @@ ping yourdomain.com
 
 3. **Reload Nginx**:
    ```bash
-   docker compose restart nginx
+   docker compose -f docker-compose.prod.yml restart nginx
    ```
 
 ---
@@ -398,20 +398,20 @@ gunzip -c /home/azureuser/backups/kahoot_2026xxxx.sql.gz | docker exec -i -e PGP
 ### 3. How to Reset the Database (Clean Slate)
 ```bash
 # Stop backend to release active database connections
-docker compose stop backend
+docker compose -f docker-compose.prod.yml stop backend
 
 # Drop and recreate the database
 docker exec -it kahoot-db psql -U postgres -c "DROP DATABASE IF EXISTS kahoot;"
 docker exec -it kahoot-db psql -U postgres -c "CREATE DATABASE kahoot OWNER kahoot_admin;"
 
 # Start backend (migrations will automatically run on startup)
-docker compose start backend
+docker compose -f docker-compose.prod.yml start backend
 ```
 
 ### 4. How to Apply Migrations
 Migrations run automatically on container startup via `DatabaseMigrationHostedService`. If you wish to trigger them manually:
 ```bash
-docker compose restart backend
+docker compose -f docker-compose.prod.yml restart backend
 ```
 
 ---

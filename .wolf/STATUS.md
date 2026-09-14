@@ -17,23 +17,19 @@ budget_tokens: 1000
   - Updated data mount path to `postgres_data:/var/lib/postgresql` per official PostgreSQL 18+ directory standards.
   - Backed up and restored existing data seamlessly with 100% data integrity.
   - Verified container startup, healthy status, and live e2e tests.
-- **Azure Production Deployment Preparation (Completed & Verified):**
-  - Updated `backend/src/Kahoot.Api/Program.cs` with dynamic Azure App Service port discovery (`PORT` / `WEBSITES_PORT`).
-  - Added root `.dockerignore` for clean container builds.
-  - Added `frontend/vercel.json`, root `vercel.json`, and `frontend/staticwebapp.config.json` for seamless client-side SPA routing on Vercel and Azure Static Web Apps.
-  - Authored comprehensive `docs/azure-deployment.md` covering architecture (Mermaid), Azure CLI/Portal provisioning, PostgreSQL Flexible Server setup, App Service settings, SignalR WebSockets, migrations, and troubleshooting.
-  - Verified backend compilation (`dotnet build backend/Kahoot.slnx`, 0 warnings, 0 errors), frontend compilation (`npm run build`, 0 errors), Docker container build (`kahoot-backend:test`), and live e2e tests against running container stack.
-  - Zero-comment rule strictly maintained across all C# and TypeScript code.
-- **Docker Compose Production Consolidation & Env Sync (Completed & Verified):**
-  - Removed `docker-compose.prod.yml`.
-  - Unified all production configurations directly into `docker-compose.yml`:
-    - `db`: `postgres:18-alpine`, volume `postgres_data:/var/lib/postgresql`, internal network `kahoot_internal` only.
-    - `backend`: ASP.NET Core (.NET 10), volume `uploads_data:/app/uploads`, depends on `db: condition: service_healthy`, internal network `kahoot_internal` only.
-    - `frontend`: React 19 SPA served via internal Nginx, build args `VITE_API_URL=/api`, `VITE_SIGNALR_URL=/hubs/game`, internal network `kahoot_internal` only.
-    - `nginx`: `nginx:alpine`, reverse proxy on `${HTTP_PORT:-80}:80` and `${HTTPS_PORT:-443}:443`, routing `/`, `/api/`, `/health`, `/uploads/`, `/hubs/`, and Certbot challenge.
-  - Synchronized root `.env` with `.env.example` with identical 1-to-1 keys (`POSTGRES_*`, `JWT_*`, `HOST_SEED_*`, `CORS_ALLOWED_ORIGINS`, `VITE_*`, `HTTP_PORT`, `HTTPS_PORT`).
-  - Zero-comment rule strictly maintained across all code and compose files.
-  - Verified with live Docker stack (`docker compose up -d --build`), live health checks, and 100% passing game flow through Nginx.
+- **Azure VM Production Deployment (Completed & Active):**
+  - Project deployment target is Azure VM (Ubuntu) with Docker Compose (`docker-compose.prod.yml`).
+  - Removed obsolete `DEPLOYMENT_HOSTINGER.md` guide.
+  - Active deployment guide is maintained in `docs/azure-vm-deployment.md`.
+- **Docker Dev & Prod Separation (Completed & Verified):**
+  - Separated Docker configurations into:
+    - `docker-compose.yml`: Default local development stack (`docker compose up -d`). Exposes standard ports on localhost: Frontend on `3000:80`, Backend on `5000:8080`, PostgreSQL on `5432:5432`. No outer Nginx container needed in dev.
+    - `docker-compose.prod.yml`: Hardened production stack on Azure VM (`docker compose -f docker-compose.prod.yml up -d --build`). Features Nginx reverse proxy on standard HTTP/HTTPS ports (`80`/`443`), with internal-only application containers, health checks, and Let's Encrypt Certbot volume mounts.
+  - Separated environment templates:
+    - `.env` & `.env.example`: Local development defaults (`FRONTEND_PORT=3000`, `BACKEND_PORT=5000`, `DB_PORT=5432`, `CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173`).
+    - `.env.production.example`: Production template with `HTTP_PORT=80`, `HTTPS_PORT=443`, and production placeholders.
+  - Updated `docs/azure-vm-deployment.md` to reference `docker-compose.prod.yml`.
+  - Zero-comment rule strictly maintained across all configuration and code files.
 - **Ngrok Removal (Completed & Verified):**
   - Deleted `ngrok-kahoot.yml` configuration.
   - Deleted `.agents/skills/ngrok/` skill directory and removed entry from `skills-lock.json`.

@@ -240,8 +240,7 @@ follow the more specific rule without weakening the requirements in this file.
 
 - Always build, configure, and maintain code to be production-ready for deployment.
 - Never rely on hardcoded development URLs (e.g. localhost), default weak credentials, or ephemeral storage in production environments.
-- Ensure all secrets, endpoints, allowed origins, and storage paths are properly configurable via environment variables and production configuration profiles.
-- `.env` files are not ignored by `.gitignore`; they are intentionally unignored to support direct deployment and configuration management. Ensure environment variables are maintained accurately.
+- `.env` files containing environment-specific configurations and secrets must be ignored by `.gitignore` and never committed to version control. Use `.env.example` and `.env.production.example` templates instead.
 
 
 # OpenWolf
