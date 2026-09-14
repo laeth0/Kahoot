@@ -12,6 +12,11 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Answer-burst bottleneck research (documentation only):**
+  - Created `bullenick.md` from `walkthrough.md`, current answer/auto-end code, production Compose resource limits, and authoritative PostgreSQL/Npgsql/EF Core/Docker/OpenTelemetry/k6 guidance.
+  - Identified repeated per-answer auto-end aggregates and 0.75-vCPU backend/database caps as the leading, still-to-be-measured contributors; recorded a prioritized solution and 500-answer verification plan.
+  - No application, infrastructure, secret, environment, or test file was changed for this task.
+
 - **Azure Production Load Testing Setup & Live Verification (Completed & Verified):**
   - Updated `load-tests/config/environments.js` with `TARGET_URL` support, production detection for remote hosts, and strict `TARGET_PRODUCTION_ONLY=true` safeguard blocking local runs.
   - Removed obsolete Cloudflare tunnel auto-detection and dangerous `localhost:3000` fallback from `load-tests/run-all.js`.
