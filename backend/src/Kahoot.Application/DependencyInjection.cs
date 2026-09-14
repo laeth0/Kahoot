@@ -1,5 +1,6 @@
 using FluentValidation;
 using Kahoot.Application.Common.Behaviors;
+using Kahoot.Application.Common.Observability;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,6 +22,7 @@ public static class DependencyInjection
         TypeAdapterConfig.GlobalSettings.Scan(AssemblyReference.Assembly);
 
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IKahootTelemetry, KahootTelemetry>();
 
         return services;
     }
