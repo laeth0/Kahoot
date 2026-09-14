@@ -1,18 +1,7 @@
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LinkIcon from '@mui/icons-material/Link';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  IconButton,
-  Snackbar,
-  Stack,
-  Tooltip,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Snackbar, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 
 import { copyToClipboard } from '../../utils/clipboard.ts';
@@ -160,39 +149,20 @@ export function GamePinDisplay({ pin, quizTitle, joinUrl }: GamePinDisplayProps)
             >
               Game PIN
             </Typography>
-            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-              <Typography
-                variant="h1"
-                sx={{
-                  fontWeight: 900,
-                  color: '#09131F',
-                  fontFamily: 'monospace',
-                  letterSpacing: { xs: 6, sm: 10, md: 14 },
-                  fontSize: { xs: '2.75rem', sm: '4rem', md: '5.25rem' },
-                  userSelect: 'all',
-                  lineHeight: 1.1,
-                }}
-              >
-                {pin}
-              </Typography>
-              <Tooltip title="Copy PIN">
-                <IconButton
-                  size="large"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCopyPin();
-                  }}
-                  sx={{
-                    color: '#00629B',
-                    bgcolor: 'rgba(0, 98, 155, 0.1)',
-                    '&:hover': { bgcolor: 'rgba(0, 98, 155, 0.2)' },
-                  }}
-                  aria-label="Copy Game PIN"
-                >
-                  <ContentCopyIcon fontSize="medium" />
-                </IconButton>
-              </Tooltip>
-            </Stack>
+            <Typography
+              variant="h1"
+              sx={{
+                fontWeight: 900,
+                color: '#09131F',
+                fontFamily: 'monospace',
+                letterSpacing: { xs: 6, sm: 10, md: 14 },
+                fontSize: { xs: '2.75rem', sm: '4rem', md: '5.25rem' },
+                userSelect: 'all',
+                lineHeight: 1.1,
+              }}
+            >
+              {pin}
+            </Typography>
           </Box>
 
           <Stack
