@@ -1,5 +1,6 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Errors;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
@@ -9,7 +10,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Application.Games.GetHostGameState;
 
-internal sealed class GetHostGameStateQueryHandler(IApplicationDbContext dbContext, ICurrentUser currentUser)
+internal sealed class GetHostGameStateQueryHandler(
+    IApplicationDbContext dbContext,
+    ICurrentUser currentUser,
+    IJoinUrlGenerator joinUrlGenerator)
     : IQueryHandler<GetHostGameStateQuery, HostGameStateResponse>
 {
     public async Task<Result<HostGameStateResponse>> Handle(
@@ -63,6 +67,8 @@ internal sealed class GetHostGameStateQueryHandler(IApplicationDbContext dbConte
                 cancellationToken)
             : 0;
 
+        string joinUrl = joinUrlGenerator.GenerateJoinUrl(game.Pin);
+
         return Result.Success(new HostGameStateResponse(
             game.Id,
             game.Pin,
@@ -73,6 +79,7 @@ internal sealed class GetHostGameStateQueryHandler(IApplicationDbContext dbConte
             game.CurrentQuestionStartedAt is { } startedAt ? startedAt.ToUtcOffset() : null,
             game.CurrentQuestionEndsAt is { } endsAt ? endsAt.ToUtcOffset() : null,
             answeredCount,
-            participants));
+            participants,
+            joinUrl));
     }
 }

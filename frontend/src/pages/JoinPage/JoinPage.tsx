@@ -1,7 +1,7 @@
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
 import { Alert, Box, Card, CardContent, Container, Stack, Typography } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { ApiError } from '../../api/axiosClient.ts';
 import { gameService } from '../../api/gameService.ts';
@@ -19,7 +19,8 @@ const RATE_LIMIT_COOLDOWN_MS = 4000;
 export function JoinPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialPin = (searchParams.get('pin') ?? '').trim();
+  const { pin: routePin } = useParams<{ pin?: string }>();
+  const initialPin = (searchParams.get('pin') ?? routePin ?? '').trim();
 
   const [pin, setPin] = useState(initialPin);
   const [step, setStep] = useState<JoinStep>(() =>

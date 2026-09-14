@@ -4,6 +4,7 @@ using Kahoot.Api.Endpoints;
 using Kahoot.Api.Realtime;
 using Kahoot.Application;
 using Kahoot.Application.Authentication.Common;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure;
@@ -52,6 +53,7 @@ builder.Services.AddSingleton<GameNotifier>();
 builder.Services.AddHealthChecks();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
+builder.Services.AddScoped<IJoinUrlGenerator, JoinUrlGenerator>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();

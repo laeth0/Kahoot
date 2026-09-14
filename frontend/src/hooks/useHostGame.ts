@@ -81,6 +81,15 @@ export function useHostGame(gameId: string | undefined) {
         if (!isMounted) {
           return;
         }
+        console.info('[HostGame] Game session state loaded from API', {
+          environment: import.meta.env.MODE,
+          gameId: data.gameId,
+          pin: data.pin,
+          joinUrl: data.joinUrl,
+          status: data.status,
+          currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+          apiBaseUrl: import.meta.env.VITE_API_URL ?? '/api',
+        });
         setGameState({ ...data, status: normalizeGameStatus(data.status) });
         const nextMap = new Map<string, GameParticipantResponse>();
         data.participants.forEach((participant) => nextMap.set(participant.id, participant));

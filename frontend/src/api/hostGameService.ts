@@ -12,6 +12,7 @@ export interface CreateGameResponse {
   gameId: string;
   pin: string;
   status: GameStatus;
+  joinUrl?: string;
 }
 
 export interface QuestionStartedResponse {
@@ -30,6 +31,7 @@ export interface HostGameStateResponse {
   currentQuestionEndsAt: string | null;
   answeredCount: number;
   participants: GameParticipantResponse[];
+  joinUrl?: string;
 }
 
 export const hostGameService = {

@@ -36,6 +36,7 @@ services:
       Seeding__Host__Username: ${HOST_SEED_USERNAME:-}
       Seeding__Host__Password: ${HOST_SEED_PASSWORD:-}
       Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
+      Client__BaseUrl: ${CLIENT_BASE_URL:-http://localhost:3000}
     ports:
       - "${BACKEND_PORT:-5000}:8080"
     volumes:

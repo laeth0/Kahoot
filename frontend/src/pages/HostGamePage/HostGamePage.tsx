@@ -220,7 +220,11 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
                 mb: 4,
               }}
             >
-              <GamePinDisplay pin={gameState.pin} quizTitle={gameState.quizTitle} />
+              <GamePinDisplay
+                pin={gameState.pin}
+                quizTitle={gameState.quizTitle}
+                joinUrl={gameState.joinUrl}
+              />
               <Card
                 sx={{
                   borderRadius: 4,

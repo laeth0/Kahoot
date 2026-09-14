@@ -15,34 +15,62 @@ import {
 } from '@mui/material';
 import { useState } from 'react';
 
+import { copyToClipboard } from '../../utils/clipboard.ts';
+
 export interface GamePinDisplayProps {
   pin: string;
   quizTitle?: string;
+  joinUrl?: string;
 }
 
-export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+export function GamePinDisplay({ pin, quizTitle, joinUrl }: GamePinDisplayProps) {
+  const [toast, setToast] = useState<{ message: string; severity: 'success' | 'error' } | null>(
+    null,
+  );
 
-  const joinUrl =
-    typeof window !== 'undefined'
+  const effectiveJoinUrl =
+    joinUrl ||
+    (typeof window !== 'undefined'
       ? `${window.location.origin}/join?pin=${pin}`
-      : `/join?pin=${pin}`;
+      : `/join?pin=${pin}`);
 
   const handleCopyPin = async () => {
-    try {
-      await navigator.clipboard.writeText(pin);
-      setToastMessage('Game PIN copied to clipboard!');
-    } catch {
-      setToastMessage('Failed to copy PIN');
+    console.info('[GameLobby] Copy PIN action triggered', {
+      environment: import.meta.env.MODE,
+      pin,
+      currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : false,
+    });
+
+    const result = await copyToClipboard(pin, 'Game PIN');
+    if (result.success) {
+      setToast({ message: 'Game PIN copied to clipboard!', severity: 'success' });
+    } else {
+      setToast({
+        message: `Failed to copy PIN. PIN: ${pin}`,
+        severity: 'error',
+      });
     }
   };
 
   const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(joinUrl);
-      setToastMessage('Join link copied to clipboard!');
-    } catch {
-      setToastMessage('Failed to copy link');
+    console.info('[GameLobby] Copy Join Link action triggered', {
+      environment: import.meta.env.MODE,
+      generatedJoinUrl: effectiveJoinUrl,
+      currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
+      apiBaseUrl: import.meta.env.VITE_API_URL ?? '/api',
+      urlSource: joinUrl ? 'Server Configuration' : 'Client Fallback',
+      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : false,
+    });
+
+    const result = await copyToClipboard(effectiveJoinUrl, 'Join Link');
+    if (result.success) {
+      setToast({ message: 'Join link copied to clipboard!', severity: 'success' });
+    } else {
+      setToast({
+        message: `Failed to copy link. URL: ${effectiveJoinUrl}`,
+        severity: 'error',
+      });
     }
   };
 
@@ -209,19 +237,19 @@ export function GamePinDisplay({ pin, quizTitle }: GamePinDisplayProps) {
       </Card>
 
       <Snackbar
-        open={Boolean(toastMessage)}
+        open={Boolean(toast)}
         autoHideDuration={3000}
-        onClose={() => setToastMessage(null)}
+        onClose={() => setToast(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert
-          onClose={() => setToastMessage(null)}
-          severity="success"
+          onClose={() => setToast(null)}
+          severity={toast?.severity ?? 'success'}
           variant="filled"
-          icon={<CheckCircleIcon fontSize="inherit" />}
+          icon={toast?.severity === 'success' ? <CheckCircleIcon fontSize="inherit" /> : undefined}
           sx={{ width: '100%', borderRadius: 2, fontWeight: 600 }}
         >
-          {toastMessage}
+          {toast?.message}
         </Alert>
       </Snackbar>
     </>

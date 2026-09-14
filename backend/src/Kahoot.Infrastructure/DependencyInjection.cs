@@ -2,6 +2,7 @@ using Kahoot.Application.Authentication.Common;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Storage;
+using Kahoot.Infrastructure.Options;
 using Kahoot.Infrastructure.Persistence;
 using Kahoot.Infrastructure.Startup;
 using Microsoft.EntityFrameworkCore;
@@ -36,6 +37,7 @@ public static class DependencyInjection
             .ValidateOnStart();
 
         services.Configure<HostSeedOptions>(configuration.GetSection(HostSeedOptions.SectionName));
+        services.Configure<ClientOptions>(configuration.GetSection(ClientOptions.SectionName));
 
         services.AddHostedService<DatabaseMigrationHostedService>();
         services.AddHostedService<DatabaseSeederHostedService>();

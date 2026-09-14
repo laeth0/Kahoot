@@ -23,6 +23,7 @@ export function AppRoutes() {
         <Route element={<RootLayout />}>
           <Route index element={<HomePage />} />
           <Route path="join" element={<JoinPage />} />
+          <Route path="join/:pin" element={<JoinPage />} />
         </Route>
 
         <Route path="play/:gameId" element={<PlayerGamePage />} />

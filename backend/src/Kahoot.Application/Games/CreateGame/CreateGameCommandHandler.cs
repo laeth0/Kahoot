@@ -1,5 +1,6 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Errors;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
@@ -14,7 +15,8 @@ internal sealed class CreateGameCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
     IGamePinGenerator pinGenerator,
-    IDbExceptionInterpreter dbExceptionInterpreter) : ICommandHandler<CreateGameCommand, CreateGameResponse>
+    IDbExceptionInterpreter dbExceptionInterpreter,
+    IJoinUrlGenerator joinUrlGenerator) : ICommandHandler<CreateGameCommand, CreateGameResponse>
 {
     private const int MaxPinAttempts = 5;
 
@@ -56,7 +58,8 @@ internal sealed class CreateGameCommandHandler(
             try
             {
                 await dbContext.SaveChangesAsync(cancellationToken);
-                return Result.Success(new CreateGameResponse(game.Id, game.Pin, game.Status));
+                string joinUrl = joinUrlGenerator.GenerateJoinUrl(game.Pin);
+                return Result.Success(new CreateGameResponse(game.Id, game.Pin, game.Status, joinUrl));
             }
             catch (DbUpdateException exception)
                 when (dbExceptionInterpreter.IsUniqueViolation(exception, "uq_game_session_active_pin"))

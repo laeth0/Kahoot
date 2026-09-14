@@ -2,7 +2,7 @@ using Kahoot.Domain.Games;
 
 namespace Kahoot.Application.Games.Common;
 
-public sealed record CreateGameResponse(Guid GameId, string Pin, GameStatus Status);
+public sealed record CreateGameResponse(Guid GameId, string Pin, GameStatus Status, string? JoinUrl = null);
 
 public sealed record JoinGameResponse(
     Guid GameId,
@@ -73,7 +73,8 @@ public sealed record HostGameStateResponse(
     DateTimeOffset? CurrentQuestionStartedAt,
     DateTimeOffset? CurrentQuestionEndsAt,
     int AnsweredCount,
-    IReadOnlyList<GameParticipantResponse> Participants);
+    IReadOnlyList<GameParticipantResponse> Participants,
+    string JoinUrl);
 
 public sealed record PlayerGameStateResponse(
     Guid GameId,
