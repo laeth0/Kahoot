@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Application.Quizzes.Common;
@@ -16,7 +18,8 @@ internal sealed class CreateGameCommandHandler(
     ICurrentUser currentUser,
     IGamePinGenerator pinGenerator,
     IDbExceptionInterpreter dbExceptionInterpreter,
-    IJoinUrlGenerator joinUrlGenerator) : ICommandHandler<CreateGameCommand, CreateGameResponse>
+    IJoinUrlGenerator joinUrlGenerator,
+    IKahootTelemetry telemetry) : ICommandHandler<CreateGameCommand, CreateGameResponse>
 {
     private const int MaxPinAttempts = 5;
 
@@ -58,6 +61,9 @@ internal sealed class CreateGameCommandHandler(
             try
             {
                 await dbContext.SaveChangesAsync(cancellationToken);
+                Activity.Current?.SetTag("game.id", game.Id);
+                Activity.Current?.SetTag("quiz.id", command.QuizId);
+                telemetry.RecordGameCreated();
                 string joinUrl = joinUrlGenerator.GenerateJoinUrl(game.Pin);
                 return Result.Success(new CreateGameResponse(game.Id, game.Pin, game.Status, joinUrl));
             }

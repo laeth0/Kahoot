@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
@@ -12,7 +14,8 @@ internal sealed class JoinGameCommandHandler(
     ISecureTokenGenerator secureTokenGenerator,
     ITokenHasher tokenHasher,
     IDbExceptionInterpreter dbExceptionInterpreter,
-    TimeProvider timeProvider) : ICommandHandler<JoinGameCommand, JoinGameResponse>
+    TimeProvider timeProvider,
+    IKahootTelemetry telemetry) : ICommandHandler<JoinGameCommand, JoinGameResponse>
 {
     public async Task<Result<JoinGameResponse>> Handle(JoinGameCommand command, CancellationToken cancellationToken)
     {
@@ -49,6 +52,9 @@ internal sealed class JoinGameCommandHandler(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            Activity.Current?.SetTag("game.id", game.Id);
+            Activity.Current?.SetTag("participant.id", participant.Id);
+            telemetry.RecordPlayerJoined();
         }
         catch (DbUpdateException exception)
             when (dbExceptionInterpreter.IsUniqueViolation(exception, "uq_participant_game_nickname"))

@@ -1,5 +1,6 @@
 using Kahoot.Api.Common;
 using Kahoot.Application.Common.Errors;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Games.Common;
 using Kahoot.Application.Games.EndQuestion;
 using Kahoot.Application.Games.JoinGame;
@@ -16,7 +17,8 @@ namespace Kahoot.Api.Realtime;
 public sealed class GameHub(
     ISender sender,
     GameNotifier notifier,
-    TimeProvider timeProvider) : Hub<IGameClient>
+    TimeProvider timeProvider,
+    IKahootTelemetry telemetry) : Hub<IGameClient>
 {
     private const string GameIdItem = "gameId";
     private const string ParticipantIdItem = "participantId";
@@ -47,21 +49,31 @@ public sealed class GameHub(
 
     public async Task<RealtimeResponse<PlayerGameStateResponse>> Reconnect(string sessionToken)
     {
-        Result<PlayerGameStateResponse> result = await sender.Send(
-            new ReconnectParticipantCommand(sessionToken), Context.ConnectionAborted);
+        string outcome = "failure";
 
-        if (result.IsFailure)
+        try
         {
-            return RealtimeResponse<PlayerGameStateResponse>.Failure(result.Error);
+            Result<PlayerGameStateResponse> result = await sender.Send(
+                new ReconnectParticipantCommand(sessionToken), Context.ConnectionAborted);
+
+            if (result.IsFailure)
+            {
+                return RealtimeResponse<PlayerGameStateResponse>.Failure(result.Error);
+            }
+
+            PlayerGameStateResponse value = result.Value;
+            await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
+            await notifier.ParticipantJoinedAsync(
+                value.GameId,
+                new GameParticipantResponse(value.ParticipantId, value.Nickname, value.TotalScore, value.Rank, true, false));
+
+            outcome = "success";
+            return RealtimeResponse<PlayerGameStateResponse>.Ok(value);
         }
-
-        PlayerGameStateResponse value = result.Value;
-        await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
-        await notifier.ParticipantJoinedAsync(
-            value.GameId,
-            new GameParticipantResponse(value.ParticipantId, value.Nickname, value.TotalScore, value.Rank, true, false));
-
-        return RealtimeResponse<PlayerGameStateResponse>.Ok(value);
+        finally
+        {
+            telemetry.RecordReconnect(outcome);
+        }
     }
 
     public async Task<RealtimeResponse<AnswerAckResponse>> SubmitAnswer(Guid questionId, Guid selectedChoiceId)
@@ -123,25 +135,32 @@ public sealed class GameHub(
 
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
-        if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
+        try
         {
-            Result<bool> detachResult = await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
-            if (detachResult.IsSuccess && detachResult.Value)
+            if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
             {
-                await notifier.ParticipantLeftAsync(gameId, participantId);
-
-                Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
-                    new TryAutoEndQuestionCommand(gameId, null),
-                    CancellationToken.None);
-
-                if (autoEndResult.IsSuccess && autoEndResult.Value is not null)
+                Result<bool> detachResult = await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
+                if (detachResult.IsSuccess && detachResult.Value)
                 {
-                    await notifier.QuestionEndedAsync(gameId, autoEndResult.Value);
+                    await notifier.ParticipantLeftAsync(gameId, participantId);
+
+                    Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
+                        new TryAutoEndQuestionCommand(gameId, null),
+                        CancellationToken.None);
+
+                    if (autoEndResult.IsSuccess && autoEndResult.Value is not null)
+                    {
+                        await notifier.QuestionEndedAsync(gameId, autoEndResult.Value);
+                    }
                 }
             }
-        }
 
-        await base.OnDisconnectedAsync(exception);
+            await base.OnDisconnectedAsync(exception);
+        }
+        finally
+        {
+            telemetry.RecordDisconnect(exception is null ? "normal" : "error");
+        }
     }
 
     private async Task TrackPlayerConnectionAsync(Guid gameId, Guid participantId, string sessionToken)

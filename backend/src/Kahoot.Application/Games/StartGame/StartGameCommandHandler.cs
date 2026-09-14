@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
@@ -12,7 +14,8 @@ namespace Kahoot.Application.Games.StartGame;
 internal sealed class StartGameCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
-    TimeProvider timeProvider) : ICommandHandler<StartGameCommand, QuestionStartedResponse>
+    TimeProvider timeProvider,
+    IKahootTelemetry telemetry) : ICommandHandler<StartGameCommand, QuestionStartedResponse>
 {
     public async Task<Result<QuestionStartedResponse>> Handle(StartGameCommand command, CancellationToken cancellationToken)
     {
@@ -28,6 +31,7 @@ internal sealed class StartGameCommandHandler(
         bool alreadyOnFirstQuestion = game.Status == GameStatus.QuestionActive && game.CurrentQuestionIndex == 0;
         if (!alreadyOnFirstQuestion && !GameStateMachine.CanFire(game.Status, GameTransition.StartFirstQuestion))
         {
+            telemetry.RecordTransitionFailure("StartFirstQuestion", GameErrors.InvalidStateTransition.Code);
             return Result.Failure<QuestionStartedResponse>(GameErrors.InvalidStateTransition);
         }
 
@@ -48,18 +52,29 @@ internal sealed class StartGameCommandHandler(
 
         if (alreadyOnFirstQuestion)
         {
+            Activity.Current?.SetTag("game.id", game.Id);
+            Activity.Current?.SetTag("transition", "StartFirstQuestion");
+            Activity.Current?.SetTag("game.source_state", game.Status.ToString());
+            Activity.Current?.SetTag("game.resulting_state", game.Status.ToString());
             return Result.Success(QuestionActivation.Rebuild(game, question, totalQuestions));
         }
 
+        GameStatus sourceState = game.Status;
         QuestionStartedResponse response = QuestionActivation.Activate(
             game, question, 0, totalQuestions, timeProvider.GetUtcNow());
 
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            Activity.Current?.SetTag("game.id", game.Id);
+            Activity.Current?.SetTag("transition", "StartFirstQuestion");
+            Activity.Current?.SetTag("game.source_state", sourceState.ToString());
+            Activity.Current?.SetTag("game.resulting_state", game.Status.ToString());
+            telemetry.RecordQuestionServed("start");
         }
         catch (DbUpdateConcurrencyException)
         {
+            telemetry.RecordTransitionFailure("StartFirstQuestion", GameErrors.ConcurrentModification.Code);
             return Result.Failure<QuestionStartedResponse>(GameErrors.ConcurrentModification);
         }
 

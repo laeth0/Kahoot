@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
@@ -12,7 +14,8 @@ namespace Kahoot.Application.Games.StartNextQuestion;
 internal sealed class StartNextQuestionCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
-    TimeProvider timeProvider) : ICommandHandler<StartNextQuestionCommand, QuestionStartedResponse>
+    TimeProvider timeProvider,
+    IKahootTelemetry telemetry) : ICommandHandler<StartNextQuestionCommand, QuestionStartedResponse>
 {
     public async Task<Result<QuestionStartedResponse>> Handle(
         StartNextQuestionCommand command,
@@ -30,6 +33,7 @@ internal sealed class StartNextQuestionCommandHandler(
         bool reentry = game.Status == GameStatus.QuestionActive;
         if (!reentry && !GameStateMachine.CanFire(game.Status, GameTransition.AdvanceToNextQuestion))
         {
+            telemetry.RecordTransitionFailure("AdvanceToNextQuestion", GameErrors.InvalidStateTransition.Code);
             return Result.Failure<QuestionStartedResponse>(GameErrors.InvalidStateTransition);
         }
 
@@ -41,9 +45,16 @@ internal sealed class StartNextQuestionCommandHandler(
             Question? current = await LoadQuestionAsync(
                 game.QuizId, game.CurrentQuestionIndex ?? 0, cancellationToken);
 
-            return current is null
-                ? Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions)
-                : Result.Success(QuestionActivation.Rebuild(game, current, totalQuestions));
+            if (current is null)
+            {
+                return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
+            }
+
+            Activity.Current?.SetTag("game.id", game.Id);
+            Activity.Current?.SetTag("transition", "AdvanceToNextQuestion");
+            Activity.Current?.SetTag("game.source_state", game.Status.ToString());
+            Activity.Current?.SetTag("game.resulting_state", game.Status.ToString());
+            return Result.Success(QuestionActivation.Rebuild(game, current, totalQuestions));
         }
 
         int nextIndex = (game.CurrentQuestionIndex ?? -1) + 1;
@@ -58,15 +69,22 @@ internal sealed class StartNextQuestionCommandHandler(
             return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
         }
 
+        GameStatus sourceState = game.Status;
         QuestionStartedResponse response = QuestionActivation.Activate(
             game, question, nextIndex, totalQuestions, timeProvider.GetUtcNow());
 
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            Activity.Current?.SetTag("game.id", game.Id);
+            Activity.Current?.SetTag("transition", "AdvanceToNextQuestion");
+            Activity.Current?.SetTag("game.source_state", sourceState.ToString());
+            Activity.Current?.SetTag("game.resulting_state", game.Status.ToString());
+            telemetry.RecordQuestionServed("advance");
         }
         catch (DbUpdateConcurrencyException)
         {
+            telemetry.RecordTransitionFailure("AdvanceToNextQuestion", GameErrors.ConcurrentModification.Code);
             return Result.Failure<QuestionStartedResponse>(GameErrors.ConcurrentModification);
         }
 
