@@ -321,7 +321,14 @@ git pull origin main
 bash observability/scripts/validate-config.sh
 
 # 5. Rebuild and restart containers
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+
+> [!TIP]
+> Always use `--force-recreate` when rebuilding containers:
+> ```bash
+> docker compose -f docker-compose.prod.yml up -d --build --force-recreate
+> ```
+> This forces Nginx and proxy dependencies to re-resolve upstream container IP addresses immediately, preventing `502 Bad Gateway` errors from cached Docker bridge IPs.
 
 # 6. Clean up stale/dangling images to free disk space
 docker image prune -f
@@ -380,7 +387,7 @@ docker compose -f docker-compose.prod.yml start backend
 
 | Symptom | Probable Cause | Diagnostic Command & Fix |
 | :--- | :--- | :--- |
-| **502 Bad Gateway from Nginx** | Backend container is crashing or starting up. | Check logs: `docker compose -f docker-compose.prod.yml logs --tail=100 backend`. Check DB health: `docker compose -f docker-compose.prod.yml ps`. |
+| **502 Bad Gateway from Nginx** | Backend starting up or Nginx cached stale container IP after a rebuild. | Run `docker compose -f docker-compose.prod.yml restart nginx` or rebuild with `--force-recreate`. Check backend logs: `docker compose -f docker-compose.prod.yml logs --tail=100 backend`. Check DB health: `docker compose -f docker-compose.prod.yml ps`. |
 | **SignalR WebSockets disconnect or fallback to polling** | Missing WebSocket upgrade headers in Nginx. | Ensure `proxy_set_header Upgrade $http_upgrade;` and `proxy_set_header Connection "upgrade";` exist in the `/hubs/` location block in `nginx/default.conf`. |
 | **CORS error in browser console** | Frontend origin does not match `CORS_ALLOWED_ORIGINS`. | Check origin in browser network tab. Update `CORS_ALLOWED_ORIGINS` in `.env` to include the exact scheme and domain (e.g. `http://20.19.48.78` or `https://kahoot.yourdomain.com`). Restart backend: `docker compose -f docker-compose.prod.yml restart backend`. |
 | **Copy Join Link produces wrong URL** | `CLIENT_BASE_URL` in `.env` is incorrect or missing. | Update `CLIENT_BASE_URL` in `.env` to match the actual public host (e.g. `http://20.19.48.78` or `https://yourdomain.com`). Restart backend. |
