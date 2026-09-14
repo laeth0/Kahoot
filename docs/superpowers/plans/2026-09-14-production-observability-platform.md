@@ -663,17 +663,17 @@ git commit -m "feat: configure bounded telemetry collection"
 - Loki accepts private OTLP HTTP logs and exposes private query API `3100`
 - Jaeger accepts private OTLP gRPC traces and exposes private query API `16686`
 
-- [ ] **Step 1: Configure single-binary Loki**
+- [x] **Step 1: Configure single-binary Loki**
 
 Use `auth_enabled: false` only because Loki is isolated on the internal Docker network and has no published port. Configure TSDB schema v13, filesystem object/chunk storage under `/loki`, replication factor 1, structured metadata enabled, compactor retention enabled with a 168-hour retention period and 24-hour delete delay, and a 168-hour reject-old-samples horizon. Set conservative limits: ingestion rate 4 MB/s, burst 8 MB, maximum line size 256 KB, per-stream rate 1 MB/s, maximum query lookback 168 hours, and query parallelism 2.
 
 Map only low-cardinality OTLP resource attributes such as `service.name`, `deployment.environment.name`, and `severity_text` to Loki labels. Keep trace ID, span ID, request ID, route, status, and entity IDs as structured metadata or parsed fields, never index labels.
 
-- [ ] **Step 2: Configure Jaeger v2 with local Badger storage**
+- [x] **Step 2: Configure Jaeger v2 with local Badger storage**
 
 Base the file on Jaeger 2.20's v2 Collector configuration: OTLP receiver, `jaeger_storage` extension with a named Badger backend, `jaeger_storage_exporter`, and `jaeger_query` extension on `0.0.0.0:16686`. Set `ephemeral: false`, value/key directories under `/badger`, `ttl.spans: 72h`, and expose OTLP gRPC on `0.0.0.0:4317`. Do not enable Zipkin, Cassandra, Elasticsearch, remote storage, or a public query port.
 
-- [ ] **Step 3: Validate syntax with the pinned images**
+- [x] **Step 3: Validate syntax with the pinned images**
 
 Run:
 
@@ -684,7 +684,7 @@ docker run --rm -v "$PWD/observability/jaeger/jaeger-config.yml:/etc/jaeger/conf
 
 Expected: both commands exit zero. If the Jaeger image exposes validation through `--dry-run` rather than `validate`, inspect `docker run --rm jaegertracing/jaeger:2.20.0 --help`, use the documented validation form, and record the exact command in `setup.md`.
 
-- [ ] **Step 4: Commit storage backends**
+- [x] **Step 4: Commit storage backends**
 
 ```bash
 git add observability/loki/loki-config.yml observability/jaeger/jaeger-config.yml

@@ -242,6 +242,12 @@ budget_tokens: 1000
   - Verified configuration using `docker run --rm -v ... otel/opentelemetry-collector-contrib:0.160.0 validate --config=...` (exit code 0).
   - Committed with `feat: configure bounded telemetry collection` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 7 Configure Loki and Jaeger Retention (Completed & Verified):**
+  - Created `observability/loki/loki-config.yml` for `grafana/loki:3.7.7`: configured single-binary TSDB v13 schema, filesystem chunks and rules under `/loki`, replication factor 1, compactor with 168h retention and 24h delete delay (`delete_request_store: filesystem`), 168h reject-old-samples horizon, conservative limits (4 MB/s ingestion, 8 MB burst, 256 KB max line size, 1 MB/s per stream, 168h query lookback, parallelism 2), structured metadata enabled, and low-cardinality OTLP index labels (`service.name`, `deployment.environment.name`, `severity_text`) under both `limits_config.otlp_config` and `distributor.otlp_config`.
+  - Created `observability/jaeger/jaeger-config.yml` for `jaegertracing/jaeger:2.20.0`: configured OTLP gRPC receiver on `0.0.0.0:4317`, `jaeger_storage` extension with Badger backend (`ephemeral: false`, `/badger/keys` and `/badger/data`, `ttl.spans: 72h`), `jaeger_storage_exporter`, and `jaeger_query` HTTP extension on `0.0.0.0:16686`.
+  - Verified configurations using `grafana/loki:3.7.7` (`-verify-config`) and `jaegertracing/jaeger:2.20.0` (`validate --config=...`), both exiting 0.
+  - Committed with `feat: configure short telemetry retention` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -254,7 +260,8 @@ budget_tokens: 1000
 - Task 4: Completed.
 - Task 5: Completed.
 - Task 6: Completed.
-- Task 7: Configure Loki and Jaeger Retention (`observability/loki/loki-config.yml`, `observability/jaeger/jaeger-config.yml`).
+- Task 7: Completed.
+- Task 8: Configure Exporters, Database Monitoring, and Prometheus (`observability/blackbox/blackbox.yml`, `observability/postgres/init-monitoring-role.sh`, `observability/prometheus/prometheus.yml`, `observability/prometheus/rules/recording-rules.yml`).
 
 ---
 
