@@ -1237,7 +1237,7 @@ git commit -m "feat: provision dashboard-visible alerts"
 - Static validator requires Docker, Docker Compose, Node.js, `rg`, and Bash
 - Runtime validator requires `curl`, Docker Compose, and Grafana credentials in the process environment
 
-- [ ] **Step 1: Complete deterministic static validation**
+- [x] **Step 1: Complete deterministic static validation**
 
 The script must:
 
@@ -1254,7 +1254,7 @@ The script must:
 
 Do not require `jq`; Node.js is already part of the repository toolchain. Remove the intentional initial missing-file failure from Task 1 once all files exist.
 
-- [ ] **Step 2: Unit-check recording rules at threshold boundaries**
+- [x] **Step 2: Unit-check recording rules at threshold boundaries**
 
 Use `promtool test rules` fixtures for: zero-traffic error ratio, 1.9% versus 2.1% 5xx, 0.9 versus 1.1 second p95, 79% versus 81% CPU, 89% versus 91% memory/disk, probe success/failure, and missing exporter series. The file tests recording outputs; Grafana API checks cover Grafana rule provisioning.
 
@@ -1266,7 +1266,7 @@ docker run --rm --entrypoint promtool -v "$PWD/observability/prometheus:/etc/pro
 
 Expected: every boundary fixture passes and zero traffic never evaluates as high error rate.
 
-- [ ] **Step 3: Implement safe post-deploy validation**
+- [x] **Step 3: Implement safe post-deploy validation**
 
 `validate-observability.sh` must require `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD`, default `GRAFANA_URL` to `http://20.19.48.78/grafana`, and never enable shell tracing or print credentials. It must assert:
 
@@ -1282,11 +1282,11 @@ Expected: every boundary fixture passes and zero traffic never evaluates as high
 
 Use HTTP status/body checks, not screenshots. Sampling can omit a successful trace; retry up to 20 bounded requests or generate a safe validation error that is always retained.
 
-- [ ] **Step 4: Document controlled alert tests with recovery first**
+- [x] **Step 4: Document controlled alert tests with recovery first**
 
 `controlled-failures.md` must begin with “Local/staging only unless an approved Azure maintenance window is active.” For each test, list prechecks, exact trigger, expected alert/firing delay, recovery command, and post-recovery verification. Cover backend pause, database pause, frontend pause, Collector pause, and temporary disk/CPU threshold simulation through rule fixtures. Never add a production fault endpoint, fill the OS disk, fork a CPU bomb, corrupt a volume, or use `docker compose down -v`.
 
-- [ ] **Step 5: Run the validation suite locally**
+- [x] **Step 5: Run the validation suite locally**
 
 ```bash
 bash observability/scripts/validate-config.sh
@@ -1296,7 +1296,7 @@ GRAFANA_ADMIN_USER=admin GRAFANA_ADMIN_PASSWORD='local-validation-only' GRAFANA_
 
 Expected: static/rule checks pass; runtime check passes against the running local stack. The validation password remains shell-local and untracked.
 
-- [ ] **Step 6: Commit validation automation**
+- [x] **Step 6: Commit validation automation**
 
 ```bash
 git add observability/scripts observability/prometheus/rules/recording-rules.test.yml

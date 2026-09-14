@@ -312,14 +312,20 @@ budget_tokens: 1000
   - Validated static configuration with `bash observability/scripts/validate-config.sh` (16 of 16 required files pass).
   - Committed with `feat: provision dashboard-visible alerts` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 16 Add Static, Runtime, and Controlled-Failure Validation (Completed & Verified):**
+  - Completed `observability/scripts/validate-config.sh`: deterministic 8-stage validator asserting all required files, 6 dashboards parsed with Node.js (unique UIDs, immutable, alertlist present, no DS placeholders), Compose config rendering and port isolation (only Nginx 80/443 exposed), pinned tool validations via Docker (Prometheus config/rules check, Loki verify-config, Collector validate, Nginx syntax, Jaeger validate), secret and forbidden integration audit via `git ls-files`, Grafana root URL `/grafana/` and anonymous auth false, retention checks (Prometheus 7d/4GB, Loki 168h, Jaeger 72h), and zero high-cardinality metric label dimensions. Tested and passed cleanly.
+  - Created `observability/prometheus/rules/recording-rules.test.yml`: comprehensive Prometheus rule test fixtures covering zero-traffic error ratio, 1.9% vs 2.1% 5xx, 0.9 vs 1.1s p95, 79% vs 81% CPU, 89% vs 91% memory and disk, Blackbox probe success/failure, and missing exporter series. Verified with `promtool test rules` via pinned Docker container (`prom/prometheus:v3.14.0`) with 100% SUCCESS.
+  - Created `observability/scripts/validate-observability.sh`: safe post-deployment runtime validator checking redirect from `/grafana` to `/grafana/`, unauthenticated 401 rejection, authenticated 200 access, datasource existence/health, all 6 dashboard UIDs, all 18 alert rule UIDs, public port isolation (9090, 3100, 16686, 3000, 4317, 4318, 9100, 9115, 9187 closed), and existing application health/negotiate endpoints.
+  - Created `observability/scripts/controlled-failures.md`: controlled fault-injection and recovery procedures covering backend pause, database pause, frontend pause, Collector pause, and offline rule fixture simulation for CPU/memory.
+  - Committed with `test: validate observability deployment` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
 
 **Active Quest:** Production Observability Platform (`docs/superpowers/plans/2026-09-14-production-observability-platform.md`)
-- Task 0 to 15: Completed.
-- Task 16: Add Static, Runtime, and Controlled-Failure Validation (`observability/scripts/validate-config.sh`, `validate-observability.sh`, `controlled-failures.md`, `recording-rules.test.yml`).
-- Task 17: Document Architecture, Access, Operations, and Security.
+- Task 0 to 16: Completed.
+- Task 17: Document Architecture, Access, Operations, and Security (`docs/observability/architecture.md`, `setup.md`, `dashboards.md`, `alerts.md`, `troubleshooting.md`, `grafana-security.md`, `docs/azure-vm-deployment.md`, `load-tests/README.md`).
 - Task 18: Prove Capacity, Deploy Safely, and Record Rollback.
 
 ---
