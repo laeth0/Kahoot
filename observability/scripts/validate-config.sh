@@ -14,13 +14,13 @@ REQUIRED_FILES=(
   "observability/postgres/init-monitoring-role.sh"
   "observability/grafana/provisioning/datasources/datasources.yml"
   "observability/grafana/provisioning/dashboards/dashboards.yml"
-  "observability/grafana/provisioning/alerting/alerts.yml"
   "observability/grafana/dashboards/application.json"
   "observability/grafana/dashboards/realtime.json"
   "observability/grafana/dashboards/infrastructure.json"
   "observability/grafana/dashboards/database.json"
   "observability/grafana/dashboards/logs.json"
   "observability/grafana/dashboards/tracing.json"
+  "observability/grafana/provisioning/alerting/alerts.yml"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do

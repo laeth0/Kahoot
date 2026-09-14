@@ -999,11 +999,11 @@ git commit -m "feat: provision Grafana data sources"
 - Dashboard UIDs: `kahoot-application` and `kahoot-realtime`
 - Uses: Prometheus UID `prometheus`, Loki UID `loki`, and Jaeger UID `jaeger`
 
-- [ ] **Step 1: Use a consistent dashboard contract**
+- [x] **Step 1: Use a consistent dashboard contract**
 
 Set schema/version compatible with Grafana 13.2.1, timezone browser, default range 1 hour, 15-second refresh, tags `kahoot` and `provisioned`, editable false, and no datasource picker that can break fixed queries. Put an `alertlist` panel filtered to the `Kahoot Observability` folder at the top of both dashboards.
 
-- [ ] **Step 2: Build the Application Overview dashboard**
+- [x] **Step 2: Build the Application Overview dashboard**
 
 Create these panels and exact signal sources:
 
@@ -1023,7 +1023,7 @@ Create these panels and exact signal sources:
 
 Use Grafana data links from route/error panels to Logs with the same time range, and exemplar links from latency panels to Jaeger.
 
-- [ ] **Step 3: Build the Realtime and Game Health dashboard**
+- [x] **Step 3: Build the Realtime and Game Health dashboard**
 
 Create:
 
@@ -1044,7 +1044,7 @@ Create:
 
 Use the NFR marker lines: normal API p95 300 ms, answer p95 500 ms, warning latency 1 second, and error ratio 2%. The marker is a visual target; only the thresholds in Task 15 create alerts.
 
-- [ ] **Step 4: Parse and provision-check both JSON documents**
+- [x] **Step 4: Parse and provision-check both JSON documents**
 
 Run:
 
@@ -1055,7 +1055,7 @@ bash observability/scripts/validate-config.sh
 
 Expected: JSON parses, each file has a stable UID/title/panel array, and static validation advances to the next not-yet-created dashboard.
 
-- [ ] **Step 5: Commit application dashboards**
+- [x] **Step 5: Commit application dashboards**
 
 ```bash
 git add observability/grafana/dashboards/application.json observability/grafana/dashboards/realtime.json

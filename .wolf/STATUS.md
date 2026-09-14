@@ -278,6 +278,13 @@ budget_tokens: 1000
   - Verified live in Grafana container by starting `prometheus`, `loki`, `jaeger`, `grafana` with Docker Compose; inspected logs and confirmed all three data sources and dashboard provider inserted without error. Stopped containers without removing volumes.
   - Committed with `feat: provision Grafana data sources` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 12 Provision Application and Realtime Dashboards (Completed & Verified):**
+  - Created `observability/grafana/dashboards/application.json` (UID `kahoot-application`, `Kahoot Observability` alertlist panel, backend & frontend Blackbox probe status, HTTP request rate, 5xx error ratio with 2% NFR marker, p50/p95/p99 latency with 300ms/1s NFR markers and exemplar tracing links to Jaeger, HTTP statuses stacked bar, failed requests by route with Loki log links, slow endpoints table, application operations duration, .NET runtime pressure metrics, and recent backend error logs in Loki).
+  - Created `observability/grafana/dashboards/realtime.json` (UID `kahoot-realtime`, `Kahoot Observability` alertlist panel, active games by state bar gauge, connected players, active SignalR connections, game sessions created/ended rate, player joins rate, questions served rate, answers submitted stacked by outcome, answer p50/p95/p99 latency with 500ms/1s NFR markers and exemplar tracing links to Jaeger, SignalR reconnect/disconnect rates, broadcast failures, broadcast p95 duration, and state transition failures table).
+  - Validated JSON schemas with Node.js assertions and `observability/scripts/validate-config.sh`.
+  - Verified live dashboard provisioning in Grafana 13.2.1 container with zero errors.
+  - Committed with `feat: provision application health dashboards` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -295,7 +302,8 @@ budget_tokens: 1000
 - Task 9: Completed.
 - Task 10: Completed.
 - Task 11: Completed.
-- Task 12: Provision Application and Realtime Dashboards (`observability/grafana/dashboards/application.json`, `observability/grafana/dashboards/realtime.json`, `observability/grafana/provisioning/alerting/alerts.yml`).
+- Task 12: Completed.
+- Task 13: Provision Infrastructure and Database Dashboards (`observability/grafana/dashboards/infrastructure.json`, `observability/grafana/dashboards/database.json`).
 
 ---
 
