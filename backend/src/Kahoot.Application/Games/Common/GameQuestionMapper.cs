@@ -22,7 +22,8 @@ internal static class GameQuestionMapper
             question.ImageUrl,
             question.TimeLimitSeconds,
             endsAt,
-            [.. ordered.Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))]);
+            [.. ordered.Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))],
+            correctChoiceIds.Count > 1);
 
         HostQuestionResponse host = new(
             question.Id,
@@ -54,5 +55,6 @@ internal static class GameQuestionMapper
             endsAt,
             [.. question.Choices
                 .OrderBy(choice => choice.OrderIndex)
-                .Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))]);
+                .Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))],
+            question.Choices.Count(choice => choice.IsCorrect) > 1);
 }

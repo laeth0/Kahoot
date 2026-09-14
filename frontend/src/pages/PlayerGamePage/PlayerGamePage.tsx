@@ -103,6 +103,7 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
     submitAnswer,
     answerState,
     selectedChoiceId,
+    selectedChoiceIds,
     pointsThisQuestion,
     rankDelta,
     liveAnnouncement,
@@ -173,6 +174,7 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
           question={playerState.currentQuestion}
           paused={hubStatus !== 'connected'}
           answerState={answerState}
+          selectedChoiceIds={selectedChoiceIds}
           selectedChoiceId={selectedChoiceId}
           onSelect={submitAnswer}
         />
@@ -184,6 +186,7 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
         <PlayerResultsView
           question={playerState.currentQuestion}
           results={playerState.lastResults}
+          selectedChoiceIds={selectedChoiceIds}
           selectedChoiceId={selectedChoiceId}
           totalScore={playerState.totalScore}
           pointsThisQuestion={pointsThisQuestion}

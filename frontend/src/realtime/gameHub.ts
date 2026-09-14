@@ -69,11 +69,12 @@ export async function invokeReconnect(
 export async function invokeSubmitAnswer(
   connection: HubConnection,
   questionId: string,
-  selectedChoiceId: string,
+  selectedChoiceIds: string | string[],
 ): Promise<RealtimeResponse<AnswerAckResponse>> {
+  const payload = Array.isArray(selectedChoiceIds) ? selectedChoiceIds : [selectedChoiceIds];
   return await connection.invoke<RealtimeResponse<AnswerAckResponse>>(
     'SubmitAnswer',
     questionId,
-    selectedChoiceId,
+    payload,
   );
 }

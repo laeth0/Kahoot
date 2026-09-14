@@ -23,7 +23,8 @@ public sealed record PlayerQuestionResponse(
     string? ImageUrl,
     int TimeLimitSeconds,
     DateTimeOffset EndsAt,
-    IReadOnlyList<PlayerChoiceResponse> Choices);
+    IReadOnlyList<PlayerChoiceResponse> Choices,
+    bool AllowMultipleAnswers = false);
 
 public sealed record HostQuestionResponse(
     Guid QuestionId,

@@ -19,17 +19,16 @@ public sealed class AnswerConfiguration : IEntityTypeConfiguration<Answer>
         builder.HasIndex(answer => new { answer.GameSessionId, answer.QuestionId })
             .HasDatabaseName("ix_answer_game_question");
         builder.HasIndex(answer => answer.ParticipantId).HasDatabaseName("ix_answer_participant_id");
-        builder.HasIndex(answer => answer.SelectedChoiceId).HasDatabaseName("ix_answer_selected_choice_id");
 
         builder.HasOne(answer => answer.Question)
             .WithMany(question => question.Answers)
             .HasForeignKey(answer => answer.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(answer => answer.SelectedChoice)
-            .WithMany(choice => choice.Answers)
-            .HasForeignKey(answer => answer.SelectedChoiceId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(answer => answer.SelectedChoices)
+            .WithOne(selectedChoice => selectedChoice.Answer)
+            .HasForeignKey(selectedChoice => selectedChoice.AnswerId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.ToTable(table =>
         {

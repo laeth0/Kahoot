@@ -54,7 +54,7 @@ export function usePlayerGame(gameId: string | undefined) {
   const [isKicked, setIsKicked] = useState(false);
   const [hydrateError, setHydrateError] = useState<string | null>(null);
   const [answerState, setAnswerState] = useState<AnswerState>('idle');
-  const [selectedChoiceId, setSelectedChoiceId] = useState<string | null>(null);
+  const [selectedChoiceIds, setSelectedChoiceIds] = useState<string[]>([]);
   const [scoreBeforeQuestion, setScoreBeforeQuestion] = useState(0);
   const [rankDelta, setRankDelta] = useState<number | null>(null);
   const [liveAnnouncement, setLiveAnnouncement] = useState<{
@@ -202,7 +202,7 @@ export function usePlayerGame(gameId: string | undefined) {
       setScoreBeforeQuestion(liveRef.current.totalScore);
       rankBeforeQuestionRef.current = liveRef.current.rank;
       setRankDelta(null);
-      setSelectedChoiceId(null);
+      setSelectedChoiceIds([]);
       setAnswerState('idle');
       setLiveAnnouncement({ message: 'Question started.', politeness: 'polite' });
       setPlayerState((previous) =>
@@ -286,15 +286,19 @@ export function usePlayerGame(gameId: string | undefined) {
   const activeQuestionId = playerState?.currentQuestion?.questionId ?? null;
 
   const submitAnswer = useCallback(
-    async (choiceId: string) => {
+    async (choiceIds: string | string[]) => {
       if (!connection || !activeQuestionId || submitInFlightRef.current) {
         return;
       }
+      const ids = Array.isArray(choiceIds) ? choiceIds : [choiceIds];
+      if (ids.length === 0) {
+        return;
+      }
       submitInFlightRef.current = true;
-      setSelectedChoiceId(choiceId);
+      setSelectedChoiceIds(ids);
       setAnswerState('submitting');
       try {
-        const response = await invokeSubmitAnswer(connection, activeQuestionId, choiceId);
+        const response = await invokeSubmitAnswer(connection, activeQuestionId, ids);
         if (response.success && response.data?.accepted) {
           setLiveAnnouncement({ message: 'Answer accepted.', politeness: 'polite' });
           setAnswerState(response.data.alreadyAnswered ? 'alreadyAnswered' : 'accepted');
@@ -361,7 +365,8 @@ export function usePlayerGame(gameId: string | undefined) {
     leaveGame,
     submitAnswer,
     answerState,
-    selectedChoiceId,
+    selectedChoiceId: selectedChoiceIds[0] ?? null,
+    selectedChoiceIds,
     pointsThisQuestion,
     rankDelta,
     liveAnnouncement,

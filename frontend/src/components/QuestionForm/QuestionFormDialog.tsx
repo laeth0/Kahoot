@@ -136,7 +136,9 @@ function QuestionFormContent({
   };
 
   const handleToggleCorrect = (index: number) => {
-    setChoices((prev) => prev.map((c, i) => ({ ...c, isCorrect: i === index })));
+    setChoices((prev) =>
+      prev.map((c, i) => (i === index ? { ...c, isCorrect: !c.isCorrect } : c)),
+    );
     if (validationError) setValidationError(null);
   };
 
@@ -175,8 +177,8 @@ function QuestionFormContent({
     }
 
     const correctCount = choices.filter((c) => c.isCorrect).length;
-    if (correctCount !== 1) {
-      setValidationError('Exactly one choice must be marked as correct.');
+    if (correctCount < 1) {
+      setValidationError('At least one choice must be marked as correct.');
       return;
     }
 

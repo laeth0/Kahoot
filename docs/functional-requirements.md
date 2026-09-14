@@ -69,9 +69,10 @@ A player:
 - A quiz has a title, an optional description, an `isPublished` flag, and an ordered list of questions.
 - A question has text, an optional image, an order, a time limit, base points, and 2–6 choices.
 - A choice has text and/or an image (at least one), and an `isCorrect` flag.
-- **G2 — correct-answer cardinality:** exactly one choice per question must be
-  marked correct. A submitted answer is correct when its selected choice is the
-  single correct choice.
+- **G2 — correct-answer cardinality:** one or more choices per question may be
+  marked correct (1..N). A submitted answer is correct when the selected choices
+  match the expected correct choices exactly (no missing correct choices, no extra
+  incorrect choices).
 - A quiz must be **published** before a game can be started from it. Publishing requires the quiz to be valid (see FR-3.2).
 - A quiz that has ever been used to run a game cannot be deleted (historical results are preserved).
 - A quiz with a game session that is not finished cannot be edited.
@@ -86,7 +87,7 @@ A player:
 
 ### FR-3.2 Publish validation
 
-- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and exactly one correct choice, and every choice has text or an image.
+- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and at least one correct choice (1..N), and every choice has text or an image.
 
 ---
 
@@ -133,12 +134,12 @@ Allowed transitions (all others are rejected server-side):
   through `GET /api/games/{id}` state.
 - The host may remove a player; a removed player cannot rejoin the same game with
   the same handle.
-- A game has at most **500 reserved participant seats**. A successful first join
-  reserves one seat; a reconnect restores that same participant and never reserves
-  another seat. The reservation count is the number of non-removed participants,
-  not the number with an active SignalR connection.
-- Before the game starts, removing a participant releases their seat. Once the
-  game has started, no new joins are accepted and neither a disconnect nor a
+- **Participant capacity:** Games have **no artificial participant limit**. Games accept
+  an unbounded, dynamically increasing number of participants (including > 500 players)
+  subject only to platform resources. Players are never rejected due to maximum participant count.
+- All other join validations are strictly preserved: valid game PIN, game in Lobby state,
+  case-insensitive handle uniqueness, and duplicate session prevention.
+- Once the game has started, no new joins are accepted and neither a disconnect nor a
   removal creates a joinable seat.
 
 ---
@@ -174,15 +175,22 @@ Allowed transitions (all others are rejected server-side):
 
 ### FR-6.2 Answer submission
 
-- A player submits `{ gameId, questionId, participantId, selectedChoiceId }` over the real-time channel.
+- A player submits `{ gameId, questionId, participantId, selectedChoiceIds }` over the real-time channel.
 - The server accepts an answer only if: the game is in `QUESTION_ACTIVE`, `questionId` is the current question, and `serverTime <= questionEndsAt` (**the deadline is inclusive** — an answer arriving exactly at `questionEndsAt` is accepted).
+- At least one choice must be selected. Duplicate choices in the submission payload are deduplicated.
+- All submitted choice IDs must belong to the question's choices.
 - Exactly one accepted answer is allowed per `(gameId, questionId, participantId)`. Duplicate submissions receive an idempotent "already answered" response and never create a second answer or score.
 - Client-supplied timestamps are never trusted for acceptance or scoring.
 
-### FR-6.3 Scoring
+### FR-6.3 Answer validation & scoring
 
-- Scoring is server-side, isolated behind a scoring service.
-- Score considers correctness and response speed, e.g. `score = basePoints × timeFactor`.
+- Answer validation uses exact set equality between submitted choice IDs and the question's correct choice IDs:
+  - Exact match (all correct choices selected, no incorrect choices selected) = **Correct**.
+  - Missing any correct choice = **Incorrect**.
+  - Selecting any incorrect choice = **Incorrect**.
+- Scoring is server-side, isolated behind `IScoringService`.
+- A correct answer earns speed-scaled points: `score = basePoints × timeFactor`.
+- An incorrect answer receives 0 points.
 - The formula is replaceable without touching controllers or hubs.
 
 ### FR-6.4 Results & leaderboard

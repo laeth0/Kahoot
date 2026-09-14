@@ -7,4 +7,4 @@ public sealed record SubmitAnswerCommand(
     Guid GameId,
     Guid QuestionId,
     string ParticipantSessionToken,
-    Guid SelectedChoiceId) : ICommand<AnswerAckResponse>;
+    IReadOnlyList<Guid> SelectedChoiceIds) : ICommand<AnswerAckResponse>;

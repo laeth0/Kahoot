@@ -38,13 +38,6 @@ internal sealed class JoinGameCommandHandler(
             return Result.Failure<JoinGameResponse>(GameErrors.NotJoinable);
         }
 
-        int participantCount = await dbContext.Participants
-            .CountAsync(p => p.GameSessionId == game.Id && !p.IsRemoved, cancellationToken);
-
-        if (participantCount >= 500)
-        {
-            return Result.Failure<JoinGameResponse>(GameErrors.SessionFull);
-        }
 
         string sessionToken = secureTokenGenerator.GenerateToken();
 

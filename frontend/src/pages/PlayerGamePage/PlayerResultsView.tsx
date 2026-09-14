@@ -8,7 +8,8 @@ import type { PlayerQuestionResponse, QuestionResultsResponse } from '../../real
 export interface PlayerResultsViewProps {
   question: PlayerQuestionResponse | null;
   results: QuestionResultsResponse;
-  selectedChoiceId: string | null;
+  selectedChoiceIds?: readonly string[] | null;
+  selectedChoiceId?: string | null;
   totalScore: number;
   pointsThisQuestion: number | null;
 }
@@ -16,12 +17,21 @@ export interface PlayerResultsViewProps {
 export function PlayerResultsView({
   question,
   results,
-  selectedChoiceId,
+  selectedChoiceIds = null,
+  selectedChoiceId = null,
   totalScore,
   pointsThisQuestion,
 }: PlayerResultsViewProps) {
-  const answered = selectedChoiceId !== null;
-  const correct = selectedChoiceId !== null && results.correctChoiceIds.includes(selectedChoiceId);
+  const myChoices = selectedChoiceIds && selectedChoiceIds.length > 0
+    ? selectedChoiceIds
+    : selectedChoiceId ? [selectedChoiceId] : [];
+
+  const answered = myChoices.length > 0;
+  const correct = pointsThisQuestion !== null && pointsThisQuestion > 0
+    ? true
+    : answered
+      && myChoices.length === results.correctChoiceIds.length
+      && myChoices.every((id) => results.correctChoiceIds.includes(id));
 
   const counts: Record<string, number> = {};
   results.choices.forEach((choice) => {
@@ -83,7 +93,7 @@ export function PlayerResultsView({
           correctChoiceIds={results.correctChoiceIds}
           revealDistribution
           counts={counts}
-          selectedChoiceId={selectedChoiceId}
+          selectedChoiceIds={myChoices}
         />
       )}
     </Stack>

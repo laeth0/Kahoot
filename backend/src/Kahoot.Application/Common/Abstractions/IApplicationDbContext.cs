@@ -28,6 +28,8 @@ public interface IApplicationDbContext
 
     DbSet<GameChoiceSnapshot> GameChoiceSnapshots { get; }
 
+    DbSet<AnswerSelectedChoice> AnswerSelectedChoices { get; }
+
     Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
 
     DatabaseFacade Database { get; }

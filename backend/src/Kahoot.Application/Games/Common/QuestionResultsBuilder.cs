@@ -24,10 +24,10 @@ internal static class QuestionResultsBuilder
             return null;
         }
 
-        var counts = await dbContext.Answers
+        var counts = await dbContext.AnswerSelectedChoices
             .AsNoTracking()
-            .Where(answer => answer.GameSessionId == gameId && answer.QuestionId == questionId)
-            .GroupBy(answer => answer.SelectedChoiceId)
+            .Where(selectedChoice => selectedChoice.Answer!.GameSessionId == gameId && selectedChoice.Answer.QuestionId == questionId)
+            .GroupBy(selectedChoice => selectedChoice.SelectedChoiceId)
             .Select(group => new { ChoiceId = group.Key, Count = group.Count() })
             .ToListAsync(cancellationToken);
 
@@ -36,6 +36,10 @@ internal static class QuestionResultsBuilder
         int participantCount = await dbContext.Participants
             .AsNoTracking()
             .CountAsync(participant => participant.GameSessionId == gameId && !participant.IsRemoved, cancellationToken);
+
+        int answerCount = await dbContext.Answers
+            .AsNoTracking()
+            .CountAsync(answer => answer.GameSessionId == gameId && answer.QuestionId == questionId, cancellationToken);
 
         List<ChoiceResultResponse> choiceResults =
         [
@@ -52,7 +56,7 @@ internal static class QuestionResultsBuilder
             questionIndex,
             [.. choices.Where(choice => choice.IsCorrect).Select(choice => choice.Id)],
             participantCount,
-            countByChoice.Values.Sum(),
+            answerCount,
             choiceResults);
     }
 }

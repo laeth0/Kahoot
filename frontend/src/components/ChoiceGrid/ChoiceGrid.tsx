@@ -10,6 +10,7 @@ export interface ChoiceOption {
 export interface ChoiceGridProps {
   choices: ChoiceOption[];
   selectedChoiceId?: string | null;
+  selectedChoiceIds?: readonly string[] | null;
   disabled?: boolean;
   onSelect?: (choiceId: string) => void;
   correctChoiceIds?: readonly string[] | null;
@@ -20,6 +21,7 @@ export interface ChoiceGridProps {
 export function ChoiceGrid({
   choices,
   selectedChoiceId = null,
+  selectedChoiceIds = null,
   disabled = false,
   onSelect,
   correctChoiceIds = null,
@@ -27,6 +29,8 @@ export function ChoiceGrid({
   counts = null,
 }: ChoiceGridProps) {
   const revealing = Boolean(correctChoiceIds && correctChoiceIds.length > 0);
+  const isSelected = (id: string) =>
+    selectedChoiceIds ? selectedChoiceIds.includes(id) : id === selectedChoiceId;
 
   return (
     <Box
@@ -44,7 +48,7 @@ export function ChoiceGrid({
         if (revealing) {
           if (correctChoiceIds?.includes(choice.id)) {
             reveal = 'correct';
-          } else if (revealDistribution && choice.id === selectedChoiceId) {
+          } else if (revealDistribution && isSelected(choice.id)) {
             reveal = 'incorrect';
           } else if (revealDistribution) {
             reveal = 'muted';
@@ -61,7 +65,7 @@ export function ChoiceGrid({
             key={choice.id}
             index={index}
             text={choice.text}
-            selected={choice.id === selectedChoiceId}
+            selected={isSelected(choice.id)}
             disabled={!interactive}
             reveal={reveal}
             count={count}

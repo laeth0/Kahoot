@@ -91,6 +91,7 @@ export interface PlayerQuestionResponse {
   timeLimitSeconds: number;
   endsAt: string;
   choices: PlayerChoiceResponse[];
+  allowMultipleAnswers?: boolean;
 }
 
 export interface PlayerGameStateResponse {

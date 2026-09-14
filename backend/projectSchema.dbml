@@ -92,7 +92,7 @@ Table questions {
     quiz_id [name: 'ix_question_quiz_id', note: 'Load an ordered quiz']
   }
 
-  Note: 'Application-enforced invariant: 2..6 choices, exactly one with is_correct = true.'
+  Note: 'Application-enforced invariant: 2..6 choices, at least one with is_correct = true.'
 }
 
 Table choices {
@@ -213,7 +213,6 @@ Table answers {
   game_session_id uuid [not null, ref: > game_sessions.id, note: 'ON DELETE CASCADE. Answers are always scoped to their session']
   question_id uuid [not null, ref: > game_question_snapshots.id, note: 'ON DELETE RESTRICT']
   participant_id uuid [not null, ref: > participants.id, note: 'ON DELETE RESTRICT - players are soft-removed, never hard-deleted']
-  selected_choice_id uuid [not null, ref: > game_choice_snapshots.id, note: 'ON DELETE RESTRICT. An answer row always records a selected choice']
   is_correct boolean [not null, note: 'Server-evaluated at submission']
   points_awarded int [not null, default: 0, note: 'Server-calculated final points for this answer. CHECK >= 0']
   response_time_ms int [not null, note: 'server submitted_at - current_question_started_at. CHECK >= 0']
@@ -221,10 +220,9 @@ Table answers {
 
   indexes {
     (game_session_id, question_id, participant_id) [unique, name: 'uq_answer_participant_question', note: 'FINAL integrity boundary: one accepted answer per (game, question, player). A duplicate insert raises a unique violation that the application maps to an idempotent already-answered response']
-    (game_session_id, question_id) [name: 'ix_answer_game_question', note: 'Response count and per-choice aggregation when a question closes']
+    (game_session_id, question_id) [name: 'ix_answer_game_question', note: 'Response count and aggregation when a question closes']
     question_id [name: 'ix_answers_question_id', note: 'FK index; the composite above does not lead with question_id']
     participant_id [name: 'ix_answer_participant_id', note: 'answer history for one player, for the results screen']
-    selected_choice_id [name: 'ix_answer_selected_choice_id', note: 'FK integrity checks and per-choice statistics']
   }
 
   Note: '''
@@ -236,3 +234,18 @@ Table answers {
   Late or duplicate submissions create neither a row nor a score.
   '''
 }
+
+Table answer_selected_choices {
+  id uuid [pk]
+  answer_id uuid [not null, ref: > answers.id, note: 'ON DELETE CASCADE']
+  selected_choice_id uuid [not null, ref: > game_choice_snapshots.id, note: 'ON DELETE RESTRICT']
+
+  indexes {
+    (answer_id, selected_choice_id) [unique, name: 'uq_answer_selected_choice']
+    answer_id [name: 'ix_answer_selected_choice_answer_id']
+    selected_choice_id [name: 'ix_answer_selected_choice_choice_id']
+  }
+
+  Note: 'Stores 1..N selected choices for an accepted answer submission.'
+}
+

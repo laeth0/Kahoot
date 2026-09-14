@@ -12,8 +12,6 @@ public sealed class Answer
 
     public Guid ParticipantId { get; set; }
 
-    public Guid SelectedChoiceId { get; set; }
-
     public bool IsCorrect { get; set; }
 
     public int PointsAwarded { get; set; }
@@ -28,5 +26,5 @@ public sealed class Answer
 
     public Participant? Participant { get; set; }
 
-    public GameChoiceSnapshot? SelectedChoice { get; set; }
+    public ICollection<AnswerSelectedChoice> SelectedChoices { get; set; } = [];
 }

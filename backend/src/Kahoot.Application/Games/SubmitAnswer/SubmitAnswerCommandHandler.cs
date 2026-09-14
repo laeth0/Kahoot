@@ -49,9 +49,11 @@ internal sealed class SubmitAnswerCommandHandler(
                         {
                             question.Points,
                             question.TimeLimitSeconds,
-                            SelectedChoiceIsCorrect = question.Choices
-                                .Any(choice => choice.Id == command.SelectedChoiceId && choice.IsCorrect),
-                            SelectedChoiceExists = question.Choices.Any(choice => choice.Id == command.SelectedChoiceId)
+                            Choices = question.Choices.Select(choice => new
+                            {
+                                choice.Id,
+                                choice.IsCorrect
+                            }).ToList()
                         })
                         .FirstOrDefault()
                 })
@@ -87,7 +89,14 @@ internal sealed class SubmitAnswerCommandHandler(
                 return Result.Failure<AnswerAckResponse>(GameErrors.NotCurrentQuestion);
             }
 
-            if (!snapshot.Question.SelectedChoiceExists)
+            List<Guid> submittedChoiceIds = [.. command.SelectedChoiceIds.Distinct()];
+            if (submittedChoiceIds.Count == 0)
+            {
+                return Result.Failure<AnswerAckResponse>(GameErrors.ChoiceNotInQuestion);
+            }
+
+            HashSet<Guid> validChoiceIds = [.. snapshot.Question.Choices.Select(choice => choice.Id)];
+            if (!submittedChoiceIds.All(validChoiceIds.Contains))
             {
                 return Result.Failure<AnswerAckResponse>(GameErrors.ChoiceNotInQuestion);
             }
@@ -99,8 +108,11 @@ internal sealed class SubmitAnswerCommandHandler(
                 return Result.Failure<AnswerAckResponse>(GameErrors.QuestionClosed);
             }
 
+            HashSet<Guid> correctChoiceIds = [.. snapshot.Question.Choices.Where(choice => choice.IsCorrect).Select(choice => choice.Id)];
+            bool isCorrect = submittedChoiceIds.Count == correctChoiceIds.Count
+                && submittedChoiceIds.All(correctChoiceIds.Contains);
+
             int responseTimeMs = Math.Max(0, (int)(now.UtcDateTime - startedAt).TotalMilliseconds);
-            bool isCorrect = snapshot.Question.SelectedChoiceIsCorrect;
             int pointsAwarded = scoringService.CalculateScore(
                 isCorrect,
                 TimeSpan.FromMilliseconds(responseTimeMs),
@@ -112,11 +124,14 @@ internal sealed class SubmitAnswerCommandHandler(
                 GameSessionId = command.GameId,
                 QuestionId = command.QuestionId,
                 ParticipantId = snapshot.Participant.Id,
-                SelectedChoiceId = command.SelectedChoiceId,
                 IsCorrect = isCorrect,
                 PointsAwarded = pointsAwarded,
                 ResponseTimeMs = responseTimeMs,
-                SubmittedAt = now.UtcDateTime
+                SubmittedAt = now.UtcDateTime,
+                SelectedChoices = [.. submittedChoiceIds.Select(choiceId => new AnswerSelectedChoice
+                {
+                    SelectedChoiceId = choiceId
+                })]
             };
 
             dbContext.Answers.Add(answer);

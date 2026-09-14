@@ -63,7 +63,14 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                     candidate.TimeLimitSeconds,
                     Choices = candidate.Choices
                         .OrderBy(choice => choice.OrderIndex)
-                        .Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))
+                        .Select(choice => new
+                        {
+                            choice.Id,
+                            choice.OrderIndex,
+                            choice.Text,
+                            choice.ImageUrl,
+                            choice.IsCorrect
+                        })
                         .ToList()
                 })
                 .FirstOrDefaultAsync(cancellationToken);
@@ -78,7 +85,8 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                     question.ImageUrl,
                     question.TimeLimitSeconds,
                     (participant.CurrentQuestionEndsAt ?? default).ToUtcOffset(),
-                    question.Choices);
+                    [.. question.Choices.Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))],
+                    question.Choices.Count(choice => choice.IsCorrect) > 1);
             }
 
             alreadyAnswered = await dbContext.Answers.AnyAsync(

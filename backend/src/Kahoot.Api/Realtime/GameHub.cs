@@ -7,6 +7,7 @@ using Kahoot.Application.Games.JoinGame;
 using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Games.Reconnect;
 using Kahoot.Application.Games.SubmitAnswer;
+using System.Text.Json;
 using Kahoot.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -86,7 +87,7 @@ public sealed class GameHub(
         }
     }
 
-    public async Task<RealtimeResponse<AnswerAckResponse>> SubmitAnswer(Guid questionId, Guid selectedChoiceId)
+    public async Task<RealtimeResponse<AnswerAckResponse>> SubmitAnswer(Guid questionId, JsonElement selectedChoices)
     {
         if (Context.Items[GameIdItem] is not Guid gameId || Context.Items[SessionTokenItem] is not string sessionToken)
         {
@@ -98,8 +99,40 @@ public sealed class GameHub(
             return RealtimeResponse<AnswerAckResponse>.Failure(GameErrors.TooManyAnswerAttempts);
         }
 
+        List<Guid> choiceIds = [];
+        if (selectedChoices.ValueKind == JsonValueKind.Array)
+        {
+            foreach (JsonElement element in selectedChoices.EnumerateArray())
+            {
+                if (element.TryGetGuid(out Guid id))
+                {
+                    choiceIds.Add(id);
+                }
+                else if (element.ValueKind == JsonValueKind.String && Guid.TryParse(element.GetString(), out Guid parsedId))
+                {
+                    choiceIds.Add(parsedId);
+                }
+            }
+        }
+        else if (selectedChoices.ValueKind == JsonValueKind.String)
+        {
+            if (selectedChoices.TryGetGuid(out Guid id))
+            {
+                choiceIds.Add(id);
+            }
+            else if (Guid.TryParse(selectedChoices.GetString(), out Guid parsedId))
+            {
+                choiceIds.Add(parsedId);
+            }
+        }
+
+        if (choiceIds.Count == 0)
+        {
+            return RealtimeResponse<AnswerAckResponse>.Failure(GameErrors.ChoiceNotInQuestion);
+        }
+
         Result<AnswerAckResponse> result = await sender.Send(
-            new SubmitAnswerCommand(gameId, questionId, sessionToken, selectedChoiceId),
+            new SubmitAnswerCommand(gameId, questionId, sessionToken, choiceIds),
             Context.ConnectionAborted);
 
         if (!result.IsSuccess)

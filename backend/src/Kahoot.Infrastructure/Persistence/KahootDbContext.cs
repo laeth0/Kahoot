@@ -29,6 +29,8 @@ public sealed class KahootDbContext(DbContextOptions<KahootDbContext> options)
 
     public DbSet<GameChoiceSnapshot> GameChoiceSnapshots => Set<GameChoiceSnapshot>();
 
+    public DbSet<AnswerSelectedChoice> AnswerSelectedChoices => Set<AnswerSelectedChoice>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(KahootDbContext).Assembly);

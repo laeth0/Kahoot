@@ -18,5 +18,5 @@ public sealed class GameChoiceSnapshot
 
     public GameQuestionSnapshot? QuestionSnapshot { get; set; }
 
-    public ICollection<Answer> Answers { get; set; } = [];
+    public ICollection<AnswerSelectedChoice> SelectedChoices { get; set; } = [];
 }
