@@ -256,6 +256,15 @@ budget_tokens: 1000
   - Verified Prometheus configuration and all 16 recording rules using `promtool check config` and `promtool check rules` in `prom/prometheus:v3.14.0` (exit code 0).
   - Committed with `feat: monitor host containers and database` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 9 Integrate the Stack with Resource-Bounded Docker Compose (Completed & Verified):**
+  - Updated `docker-compose.prod.yml` and `docker-compose.yml` with all 14 services (`db`, `postgres-monitor-init`, `backend`, `frontend`, `nginx`, `grafana`, `prometheus`, `loki`, `jaeger`, `otel-collector`, `cadvisor`, `node-exporter`, `postgres-exporter`, `blackbox-exporter`).
+  - Applied exact production resource budget across all services using service-level `cpus`, `mem_limit`, `mem_reservation`, and `cpu_shares`.
+  - Configured JSON file logging rotation (`max-size: 10m`, `max-file: 3`) on all containers.
+  - Configured two isolated networks: `kahoot_internal` and `observability_internal` (`internal: true`). Only backend, nginx, postgres-exporter, and blackbox-exporter bridge networks; db, postgres-monitor-init, and frontend stay on application network; grafana, prometheus, loki, jaeger, collector, node-exporter, cadvisor stay on observability network.
+  - Mounted configurations read-only, created named volumes for persistent data (`postgres_data`, `uploads_data`, `certbot_conf`, `certbot_www`, `nginx_logs`, `grafana_data`, `prometheus_data`, `loki_data`, `jaeger_data`), configured Prometheus with 7d retention / 4GB cap, mounted host stats read-only in node-exporter and cadvisor.
+  - Verified with `docker compose config` on both dev and prod environments; verified zero forbidden published ports match `(3000|3100|4317|4318|8888|8889|9090|9100|9115|9187|16686)`; verified only Nginx publishes ports in production.
+  - Committed with `feat: deploy private observability services` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -270,7 +279,8 @@ budget_tokens: 1000
 - Task 6: Completed.
 - Task 7: Completed.
 - Task 8: Completed.
-- Task 9: Integrate the Stack with Resource-Bounded Docker Compose (`docker-compose.yml`, `docker-compose.prod.yml`).
+- Task 9: Completed.
+- Task 10: Expose Authenticated Grafana Through the Existing Nginx (`nginx/nginx.conf`, `nginx/default.conf`, `docker-compose.yml`, `docker-compose.prod.yml`).
 
 ---
 

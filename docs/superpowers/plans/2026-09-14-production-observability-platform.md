@@ -779,7 +779,7 @@ git commit -m "feat: monitor host containers and database"
 - Produces: `kahoot_internal` application network and `observability_internal` with `internal: true`
 - Publishes: only Nginx `80:80` and the existing future-ready `443:443`; all observability ports use `expose` or remain container-internal
 
-- [ ] **Step 1: Apply this production resource budget exactly**
+- [x] **Step 1: Apply this production resource budget exactly**
 
 Use Compose service-level `cpus`, `mem_limit`, `mem_reservation`, and `cpu_shares` rather than Swarm-only deploy limits:
 
@@ -802,11 +802,11 @@ Use Compose service-level `cpus`, `mem_limit`, `mem_reservation`, and `cpu_share
 
 This deliberately allows capped CPU to be oversubscribed while CPU shares preserve application/database priority under contention. The combined memory caps remain below 8 GB, leaving approximately 1 GB for the Linux host and Docker overhead.
 
-- [ ] **Step 2: Add pinned services, mounts, and persistent volumes**
+- [x] **Step 2: Add pinned services, mounts, and persistent volumes**
 
 Use every image pin from the Tech Stack. Mount configurations read-only. Add named volumes for Grafana, Prometheus, Loki, and Jaeger; add a shared read-only Nginx log volume to the Collector. Configure Prometheus with `--storage.tsdb.retention.time=7d`, `--storage.tsdb.retention.size=4GB`, and lifecycle disabled. Configure all containers with JSON-file rotation (`max-size: 10m`, `max-file: 3`).
 
-- [ ] **Step 3: Apply the least network access needed**
+- [x] **Step 3: Apply the least network access needed**
 
 - `db` and `frontend`: application network only.
 - `backend` and `nginx`: application and observability networks.
@@ -816,15 +816,15 @@ Use every image pin from the Tech Stack. Mount configurations read-only. Add nam
 
 Do not publish any observability or database port. Remove development host port mappings from production if any are present. Development Compose may retain existing application convenience ports, but observability ports remain private there as well.
 
-- [ ] **Step 4: Configure runtime health and startup ordering**
+- [x] **Step 4: Configure runtime health and startup ordering**
 
 Add health checks for Grafana `/api/health`, Prometheus `/-/ready`, Loki `/ready`, Jaeger query health, Collector `13133`, exporters, backend `/health`, database readiness, and Nginx. Use `depends_on` with health conditions only for hard startup prerequisites; do not make the backend wait for observability. A failed Collector must degrade telemetry, not application availability.
 
-- [ ] **Step 5: Mount host collectors narrowly**
+- [x] **Step 5: Mount host collectors narrowly**
 
 Run Node Exporter with read-only host `/proc`, `/sys`, and root mounts and set its path flags. Mount cAdvisor's required `/`, `/var/run`, `/sys`, `/var/lib/docker`, and `/dev/disk` paths read-only where supported. If cAdvisor requires privileged device access on the Azure VM, document that explicit host-observation exception; do not grant privileged mode to any other service.
 
-- [ ] **Step 6: Render and audit both Compose models**
+- [x] **Step 6: Render and audit both Compose models**
 
 Run with non-secret temporary shell variables, not committed values:
 
@@ -836,7 +836,7 @@ rg -n "published: (3000|3100|4317|4318|8888|8889|9090|9100|9115|9187|16686)" /tm
 
 Expected: both render successfully; the forbidden-port search returns no matches. Inspect `/tmp/kahoot-compose-prod.yml` and confirm only Nginx publishes ports.
 
-- [ ] **Step 7: Commit Compose integration**
+- [x] **Step 7: Commit Compose integration**
 
 ```bash
 git add docker-compose.yml docker-compose.prod.yml
