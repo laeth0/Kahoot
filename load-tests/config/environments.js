@@ -45,9 +45,20 @@ export function assertLoadAllowed(env, peakVus) {
 }
 
 export function hostCredentials() {
+  const username = __ENV.HOST_USERNAME;
+  const password = __ENV.HOST_PASSWORD;
+
+  if (!username) {
+    fail('HOST_USERNAME environment variable is required');
+  }
+
+  if (!password) {
+    fail('HOST_PASSWORD environment variable is required');
+  }
+
   return {
-    username: __ENV.HOST_USERNAME || 'IEEEXtreme Section',
-    password: __ENV.HOST_PASSWORD || 'IEEEXtreme@123456789',
+    username,
+    password,
   };
 }
 
