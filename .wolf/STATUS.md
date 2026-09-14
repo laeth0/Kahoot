@@ -285,6 +285,14 @@ budget_tokens: 1000
   - Verified live dashboard provisioning in Grafana 13.2.1 container with zero errors.
   - Committed with `feat: provision application health dashboards` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 13 Provision Infrastructure and Database Dashboards (Completed & Verified):**
+  - Created `observability/grafana/dashboards/infrastructure.json` (UID `kahoot-infrastructure`, `Kahoot Observability` alertlist panel, VM CPU & normalized load, RAM ratio / available bytes / swap used, disk capacity ratio & free bytes, disk I/O bytes/IOPS/wait, network traffic & errors by non-loopback device, container CPU by Compose service, container memory by Compose service, container uptime & presence table, OpenTelemetry Collector health metrics, and Prometheus TSDB retention/filesystem usage).
+  - Created `observability/grafana/dashboards/database.json` (UID `kahoot-database`, `Kahoot Observability` alertlist panel, PostgreSQL availability & exporter scrape latency, active/idle/max connections and Npgsql pool metrics, query latency p50/p95/p99 with 1.0s warning marker line and exemplar tracing links, slow query IDs top 20 from `pg_stat_statements` with credentials/query-text protected, query throughput, database errors/deadlocks/rollbacks/failed spans, locks and longest transaction duration, cache hit ratio and tuple operations, and database size and deriv growth rate).
+  - Validated JSON schemas with Node.js assertions and static check (`bash observability/scripts/validate-config.sh` advancing to `logs.json`).
+  - Verified bounded PromQL `by (...)` aggregation labels across all dashboards.
+  - Verified live dashboard provisioning in Grafana 13.2.1 container with zero errors (`finished to provision dashboards`, `All modules healthy`).
+  - Committed with `feat: provision infrastructure dashboards` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -303,7 +311,8 @@ budget_tokens: 1000
 - Task 10: Completed.
 - Task 11: Completed.
 - Task 12: Completed.
-- Task 13: Provision Infrastructure and Database Dashboards (`observability/grafana/dashboards/infrastructure.json`, `observability/grafana/dashboards/database.json`).
+- Task 13: Completed.
+- Task 14: Provision Logs and Tracing Dashboards (`observability/grafana/dashboards/logs.json`, `observability/grafana/dashboards/tracing.json`).
 
 ---
 

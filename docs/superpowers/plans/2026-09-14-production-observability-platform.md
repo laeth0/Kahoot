@@ -1071,7 +1071,7 @@ git commit -m "feat: provision application health dashboards"
 **Interfaces:**
 - Dashboard UIDs: `kahoot-infrastructure` and `kahoot-database`
 
-- [ ] **Step 1: Build the Azure VM and Docker dashboard**
+- [x] **Step 1: Build the Azure VM and Docker dashboard**
 
 Add the shared alert list followed by:
 
@@ -1090,7 +1090,7 @@ Add the shared alert list followed by:
 
 Filter cAdvisor panels to the known `kahoot` Compose project/services so host system containers do not dominate the dashboard. Show CPU as cores/percent consistently and memory/disk in IEC bytes.
 
-- [ ] **Step 2: Build the PostgreSQL dashboard**
+- [x] **Step 2: Build the PostgreSQL dashboard**
 
 Add the shared alert list followed by:
 
@@ -1108,7 +1108,7 @@ Add the shared alert list followed by:
 
 Never display SQL query text, bind values, usernames containing credentials, or connection strings. `queryid` is the investigation key; operators obtain SQL separately through controlled database access.
 
-- [ ] **Step 3: Parse and static-check the JSON**
+- [x] **Step 3: Parse and static-check the JSON**
 
 ```bash
 node -e "for (const p of process.argv.slice(1)) { const d=require('./'+p); if (!d.uid || !d.title || !Array.isArray(d.panels)) throw new Error(p); }" observability/grafana/dashboards/infrastructure.json observability/grafana/dashboards/database.json
@@ -1117,7 +1117,7 @@ bash observability/scripts/validate-config.sh
 
 Expected: JSON parses and no unbounded identifier appears in a PromQL `by (...)` clause.
 
-- [ ] **Step 4: Commit infrastructure dashboards**
+- [x] **Step 4: Commit infrastructure dashboards**
 
 ```bash
 git add observability/grafana/dashboards/infrastructure.json observability/grafana/dashboards/database.json
