@@ -248,6 +248,14 @@ budget_tokens: 1000
   - Verified configurations using `grafana/loki:3.7.7` (`-verify-config`) and `jaegertracing/jaeger:2.20.0` (`validate --config=...`), both exiting 0.
   - Committed with `feat: configure short telemetry retention` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 8 Configure Exporters, Database Monitoring, and Prometheus (Completed & Verified):**
+  - Created `observability/blackbox/blackbox.yml` with `http_2xx` probing module (5s timeout, IPv4 preference, redirects enabled, HTTP/1.1 and HTTP/2, TLS verification enabled). Verified with `blackbox_exporter --config.check` in `quay.io/prometheus/blackbox-exporter:v0.28.0` (exit code 0).
+  - Created `observability/postgres/init-monitoring-role.sh`: safe idempotent PostgreSQL monitoring bootstrap with `set -euo pipefail`, requires `POSTGRES_MONITOR_USER` and `POSTGRES_MONITOR_PASSWORD`, safely escapes and executes dynamic role creation/alteration via `psql` variables and `\gexec`, grants `pg_monitor` and DB connect, creates `pg_stat_statements`, and never echoes passwords. Verified live in PostgreSQL container.
+  - Created `observability/prometheus/prometheus.yml`: configured global scrape/evaluation intervals (15s), scrape timeout (10s), rule loading (`/etc/prometheus/rules/*.yml`), and 6 scrape jobs (`kahoot-application`, `otel-collector`, `node`, `cadvisor`, `postgres`, `blackbox` with target-to-instance relabeling).
+  - Created `observability/prometheus/rules/recording-rules.yml`: configured 16 stable recording rules (HTTP requests, 5xx rate/ratio, latency p50/p95/p99, answer latency p95, DB latency p95, host VM CPU/RAM/disk ratios, container CPU/RAM, SignalR active connections, DB error rate, and Blackbox probe success).
+  - Verified Prometheus configuration and all 16 recording rules using `promtool check config` and `promtool check rules` in `prom/prometheus:v3.14.0` (exit code 0).
+  - Committed with `feat: monitor host containers and database` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -261,7 +269,8 @@ budget_tokens: 1000
 - Task 5: Completed.
 - Task 6: Completed.
 - Task 7: Completed.
-- Task 8: Configure Exporters, Database Monitoring, and Prometheus (`observability/blackbox/blackbox.yml`, `observability/postgres/init-monitoring-role.sh`, `observability/prometheus/prometheus.yml`, `observability/prometheus/rules/recording-rules.yml`).
+- Task 8: Completed.
+- Task 9: Integrate the Stack with Resource-Bounded Docker Compose (`docker-compose.yml`, `docker-compose.prod.yml`).
 
 ---
 

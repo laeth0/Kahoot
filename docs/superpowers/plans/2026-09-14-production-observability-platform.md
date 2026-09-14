@@ -703,17 +703,17 @@ git commit -m "feat: configure short telemetry retention"
 - Prometheus scrapes private Collector, node, container, PostgreSQL, and Blackbox endpoints
 - PostgreSQL bootstrap consumes `POSTGRES_MONITOR_USER` and `POSTGRES_MONITOR_PASSWORD` without writing them to logs
 
-- [ ] **Step 1: Add a safe HTTP probe module**
+- [x] **Step 1: Add a safe HTTP probe module**
 
 Create `http_2xx` with a 5-second timeout, IPv4 preference, redirects enabled, HTTP/1.1 and HTTP/2, and TLS verification enabled for future HTTPS. Do not add ICMP or privileged probing.
 
-- [ ] **Step 2: Create an idempotent PostgreSQL monitoring bootstrap**
+- [x] **Step 2: Create an idempotent PostgreSQL monitoring bootstrap**
 
 The shell script must use `set -euo pipefail`, require the two monitoring variables, safely quote identifiers/values through `psql` variables, create or alter the login role, grant `pg_monitor`, create `pg_stat_statements` in the application database if absent, and never echo the password. It must be safe on every database restart.
 
 Configure the PostgreSQL container command with `shared_preload_libraries=pg_stat_statements` and `track_io_timing=on`; the extension bootstrap runs only after PostgreSQL is healthy. The exporter connection string must use the dedicated monitor role, `sslmode=disable` on the private network, and Compose interpolation—not a committed URI.
 
-- [ ] **Step 3: Add Prometheus global and scrape policy**
+- [x] **Step 3: Add Prometheus global and scrape policy**
 
 Set `scrape_interval: 15s`, `evaluation_interval: 15s`, `scrape_timeout: 10s`, and load `/etc/prometheus/rules/*.yml`. Add these jobs:
 
@@ -728,11 +728,11 @@ Set `scrape_interval: 15s`, `evaluation_interval: 15s`, `scrape_timeout: 10s`, a
 
 For Blackbox, use the standard relabel sequence that maps each URL to `__param_target`, copies it to the `instance` label, and replaces `__address__` with `blackbox-exporter:9115`. Probe internal service URLs, not the Azure public IP, so loss of public loopback routing does not create false negatives.
 
-- [ ] **Step 4: Enable bounded database statement metrics**
+- [x] **Step 4: Enable bounded database statement metrics**
 
 Enable PostgreSQL Exporter's built-in `stat_statements` collector, keep query text excluded, and cap returned statement rows. Dashboards identify slow query IDs through `queryid`, database, and user; they never display SQL text or parameters.
 
-- [ ] **Step 5: Add the exact recording rules**
+- [x] **Step 5: Add the exact recording rules**
 
 Place the Dashboard Query Contract rules from this plan in `recording-rules.yml`. Add these supporting rules with bounded labels:
 
@@ -751,7 +751,7 @@ Place the Dashboard Query Contract rules from this plan in `recording-rules.yml`
 
 Confirm the pinned Prometheus exporter normalizes `signalr.server.active_connections` to `signalr_server_active_connections` and the span connector output to `traces_span_metrics_calls_total`. If actual normalization differs, update the recording rule and every dashboard/alert consumer together; never substitute active HTTP requests for the SignalR connection metric.
 
-- [ ] **Step 6: Validate rule syntax**
+- [x] **Step 6: Validate rule syntax**
 
 Run:
 
@@ -762,7 +762,7 @@ docker run --rm --entrypoint promtool -v "$PWD/observability/prometheus:/etc/pro
 
 Expected: configuration and all rule groups pass.
 
-- [ ] **Step 7: Commit exporters and Prometheus**
+- [x] **Step 7: Commit exporters and Prometheus**
 
 ```bash
 git add observability/blackbox observability/postgres observability/prometheus
