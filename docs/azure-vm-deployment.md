@@ -90,7 +90,7 @@ The repository maintains strict separation between local development and product
 | **Azure VM Production** | `docker-compose.prod.yml` | `.env` (on VM) | `.env.production.example` |
 
 > [!IMPORTANT]
-> Git ignore rules in `.gitignore` are configured to ignore `.env` and all `.env.*` files **except** `.env.example` and `.env.production.example`. This prevents accidental exposure of production passwords or signing keys.
+> Git ignore rules in `.gitignore` are configured to ignore `.env`. Active runtime environment variables and secrets are kept in `.env` (untracked), while `.env.example` and `.env.production.example` serve as version-controlled templates.
 
 ---
 
@@ -321,13 +321,13 @@ git pull origin main
 bash observability/scripts/validate-config.sh
 
 # 5. Rebuild and restart containers
-docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml up -d --build
 
 # 6. Clean up stale/dangling images to free disk space
 docker image prune -f
 
 # 7. Verify containers are healthy
-docker compose --env-file .env.production -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps
 
 # 8. Run post-deployment observability verification
 GRAFANA_ADMIN_USER=admin GRAFANA_ADMIN_PASSWORD="$GRAFANA_ADMIN_PASSWORD" GRAFANA_URL=http://20.19.48.78/grafana bash observability/scripts/validate-observability.sh
