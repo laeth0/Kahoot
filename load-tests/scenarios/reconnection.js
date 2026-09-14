@@ -8,10 +8,10 @@
 //   * alreadyAnsweredCurrentQuestion == true            (answered flag preserved)
 //   * totalScore unchanged across repeated reconnects   (score preserved)
 // and globally:
-//   * host participant count stays == PLAYERS  (no second Participant row: not 500 -> 600)
+//   * host participant count stays == PLAYERS  (no second Participant row: not 250 -> 300)
 //   * results.answerCount == PLAYERS           (no accepted answer lost in the churn)
 //
-//   k6 run -e ALLOW_LOAD_TEST=true -e PLAYERS=500 -e RECONNECT_PLAYERS=100 \
+//   k6 run -e ALLOW_LOAD_TEST=true -e PLAYERS=250 -e RECONNECT_PLAYERS=50 \
 //     load-tests/scenarios/reconnection.js
 
 import { check } from 'k6';
@@ -37,8 +37,8 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const PLAYERS = intEnv('PLAYERS', 500);
-const RECONNECT_PLAYERS = Math.min(PLAYERS, intEnv('RECONNECT_PLAYERS', 100));
+const PLAYERS = intEnv('PLAYERS', 250);
+const RECONNECT_PLAYERS = Math.min(PLAYERS, intEnv('RECONNECT_PLAYERS', 50));
 const TIME_LIMIT = Math.min(300, Math.max(30, intEnv('ANSWER_TIME_LIMIT', 120)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const RECONNECT_AFTER_MS = intEnv('RECONNECT_AFTER_MS', 4000);

@@ -15,8 +15,9 @@
 #   ./load-tests/run.sh -- -e PLAYERS=200   pass extra flags through to every k6 run
 #
 # Env overrides:
-#   BASE_URL      (default http://localhost:5000/api - the docker-compose.yml backend)
-#   SIGNALR_URL   (default http://localhost:5000)
+#   TARGET_URL    (default http://20.19.48.78 - Azure deployed application)
+#   BASE_URL      (default derived from TARGET_URL or http://20.19.48.78/api)
+#   SIGNALR_URL   (default derived from TARGET_URL or http://20.19.48.78)
 #   K6_BIN        (path to k6 if it is not on PATH)
 #   HEALTH_TIMEOUT (seconds to wait for the API, default 150)
 
@@ -26,13 +27,38 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$HERE/.." && pwd)"
 COMPOSE_FILE="$ROOT/docker-compose.yml"
 
-BASE_URL="${BASE_URL:-http://localhost:5000/api}"
-SIGNALR_URL="${SIGNALR_URL:-http://localhost:5000}"
+# Source load-tests/.env if present and not already exported
+if [ -f "$HERE/.env" ]; then
+  while IFS='=' read -r key val || [ -n "$key" ]; do
+    [[ "$key" =~ ^[[:space:]]*# ]] && continue
+    [[ -z "$key" ]] && continue
+    key="$(echo "$key" | xargs)"
+    val="$(echo "$val" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" | xargs)"
+    if [ -z "${!key:-}" ]; then
+      export "$key=$val"
+    fi
+  done < "$HERE/.env"
+fi
+
+TARGET_URL="${TARGET_URL:-http://20.19.48.78}"
+BASE_URL="${BASE_URL:-${TARGET_URL%/}/api}"
+SIGNALR_URL="${SIGNALR_URL:-${TARGET_URL%/}}"
 HEALTH_URL="${SIGNALR_URL%/}/health"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-150}"
-export BASE_URL SIGNALR_URL
+TARGET_PRODUCTION_ONLY="${TARGET_PRODUCTION_ONLY:-false}"
+export TARGET_URL BASE_URL SIGNALR_URL TARGET_PRODUCTION_ONLY
 
-DO_UP=1
+# If targeting remote host, do NOT try to bring up local docker-compose
+if [[ "$BASE_URL" =~ localhost|127\.0\.0\.1|0\.0\.0\.0 ]]; then
+  DO_UP=1
+  if [ "$TARGET_PRODUCTION_ONLY" = "true" ]; then
+    echo "!! Refusing to run: TARGET_PRODUCTION_ONLY=true but target is local ($BASE_URL)" >&2
+    exit 1
+  fi
+else
+  DO_UP=0
+fi
+
 DO_VERIFY=0
 DO_DOWN_AFTER=0
 SCENARIOS=()
@@ -40,6 +66,7 @@ K6_PASSTHROUGH=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
+    --up)          DO_UP=1 ;;
     --no-up)       DO_UP=0 ;;
     --verify)      DO_VERIFY=1 ;;
     --down-after)  DO_DOWN_AFTER=1 ;;

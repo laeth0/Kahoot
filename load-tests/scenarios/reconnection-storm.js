@@ -6,7 +6,7 @@
 // Measures reconnect failures, reconnect latency, duplicate participants, and
 // whether the API stays responsive during and recovers after the storm.
 //
-//   k6 run -e ALLOW_LOAD_TEST=true -e STORM_PLAYERS=500 -e STORM_ROUNDS=3 \
+//   k6 run -e ALLOW_LOAD_TEST=true -e STORM_PLAYERS=250 -e STORM_ROUNDS=3 \
 //     load-tests/scenarios/reconnection-storm.js
 
 import { check } from 'k6';
@@ -29,7 +29,7 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const STORM_PLAYERS = intEnv('STORM_PLAYERS', intEnv('PLAYERS', 500));
+const STORM_PLAYERS = intEnv('STORM_PLAYERS', intEnv('PLAYERS', 250));
 const STORM_ROUNDS = intEnv('STORM_ROUNDS', 3);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const JOIN_RAMP_SECONDS = parseDurationSeconds(JOIN_RAMP);

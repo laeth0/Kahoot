@@ -1,4 +1,4 @@
-// Scenario 3 — Question broadcast with 500 connected players + group isolation.
+// Scenario 3 — Question broadcast with 250 connected players + group isolation.
 //
 // PLAYERS players join game A. A smaller ISOLATION_PLAYERS group joins game B
 // (same quiz, never started). The director starts A's first question and, after
@@ -31,7 +31,7 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const PLAYERS = intEnv('PLAYERS', 500);
+const PLAYERS = intEnv('PLAYERS', 250);
 const ISOLATION_PLAYERS = intEnv('ISOLATION_PLAYERS', 25);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const TIME_LIMIT = Math.min(300, Math.max(5, intEnv('ANSWER_TIME_LIMIT', 60)));

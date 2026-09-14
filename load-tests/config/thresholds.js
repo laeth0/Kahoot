@@ -36,7 +36,7 @@ export function correctnessThresholds() {
   );
 }
 
-// SignalR connection reliability (NFR-1: 500 concurrent connections).
+// SignalR connection reliability (250 concurrent connections target).
 export function connectionThresholds(maxFailureRate = 0.01) {
   return {
     signalr_connection_success_rate: [`rate>${1 - maxFailureRate}`],

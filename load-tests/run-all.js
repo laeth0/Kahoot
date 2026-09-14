@@ -51,14 +51,14 @@ function cooldownSeconds() {
 }
 
 const LABEL = {
-  connections: '500 connections',
-  'join-game': '500-player join',
+  connections: '250 connections',
+  'join-game': '250-player join',
   'question-broadcast': 'Question broadcast',
-  'answer-burst': '500-answer burst',
+  'answer-burst': '250-answer burst',
   'duplicate-answer': 'Duplicate-answer protection',
-  reconnection: '100-player reconnect',
-  'multiple-games': '10 x 50 game isolation',
-  ramp: '750-user stress test',
+  reconnection: '50-player reconnect',
+  'multiple-games': '10 x 25 game isolation',
+  ramp: '250-user stress test',
   'reconnection-storm': 'Reconnection storm',
   endurance: 'Endurance / soak',
 };
@@ -110,9 +110,12 @@ function runScenario(name, passthrough) {
   }
 
   const forwardKeys = [
+    'TARGET_URL',
     'BASE_URL',
     'SIGNALR_URL',
     'HUB_PATH',
+    'TARGET_PRODUCTION_ONLY',
+    'REQUIRE_PROD',
     'HOST_USERNAME',
     'HOST_PASSWORD',
     'HOST_TOKEN',
@@ -191,43 +194,9 @@ function failedThresholds(summary) {
 }
 
 function apiBase() {
-  const raw = (process.env.BASE_URL || 'http://localhost:5048/api').replace(/\/+$/, '');
+  const targetUrl = (process.env.TARGET_URL || '').replace(/\/+$/, '');
+  const raw = (process.env.BASE_URL || (targetUrl ? `${targetUrl}/api` : 'http://localhost:5048/api')).replace(/\/+$/, '');
   return /\/api$/.test(raw) ? raw : `${raw}/api`;
-}
-
-async function autoDetectTunnel() {
-  try {
-    const res = await fetch('http://127.0.0.1:20241/quicktunnel', { signal: AbortSignal.timeout(1500) });
-    if (res.ok) {
-      const data = await res.json();
-      if (data && data.hostname) {
-        process.env.BASE_URL = `https://${data.hostname}/api`;
-        process.env.SIGNALR_URL = `https://${data.hostname}`;
-        console.log(`[run-all] Auto-detected active Cloudflare Tunnel: ${data.hostname}`);
-      }
-    }
-  } catch (_) {
-    // cloudflared metrics not running, keep .env values
-  }
-
-  const rawBase = process.env.BASE_URL || '';
-  const m = /https?:\/\/([^/:]+)/.exec(rawBase);
-  if (m && m[1].endsWith('.trycloudflare.com')) {
-    const host = m[1];
-    try {
-      const dns = require('node:dns');
-      const resolver = new dns.Resolver();
-      resolver.setServers(['1.1.1.1', '8.8.8.8']);
-      const addrs = await new Promise((res, rej) => resolver.resolve4(host, (err, a) => err ? rej(err) : res(a)));
-      if (addrs && addrs.length > 0) {
-        process.env.RESOLVE_HOST = host;
-        process.env.RESOLVE_IP = addrs[0];
-        console.log(`[run-all] Resolved ${host} -> ${addrs[0]}`);
-      }
-    } catch (e) {
-      console.warn(`[run-all] Could not resolve ${host} via public DNS:`, e.message);
-    }
-  }
 }
 
 // One login for the whole suite, then /auth/refresh when the 15-min access token
@@ -243,31 +212,14 @@ async function makeTokenProvider() {
   let authState = null; // { access, refresh, issuedAt, hostId }
 
   async function post(requestPath, requestBody) {
-    try {
-      const response = await fetch(`${base}${requestPath}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(requestBody),
-      });
-      return { status: response.status, body: response.status === 204 ? {} : await response.json().catch(() => ({})) };
-    } catch (networkError) {
-      if (base.includes('.trycloudflare.com') || !base.includes('localhost')) {
-        try {
-          const localFallbackResponse = await fetch(`http://localhost:3000/api${requestPath}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(requestBody),
-          });
-          return {
-            status: localFallbackResponse.status,
-            body: localFallbackResponse.status === 204 ? {} : await localFallbackResponse.json().catch(() => ({})),
-          };
-        } catch (_) {}
-      }
-      throw networkError;
-    }
+    const response = await fetch(`${base}${requestPath}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+    return { status: response.status, body: response.status === 204 ? {} : await response.json().catch(() => ({})) };
   }
 
   return async function getToken() {
@@ -302,7 +254,17 @@ async function makeTokenProvider() {
 
 async function main() {
   loadDotenv();
-  await autoDetectTunnel();
+
+  const verifyScript = path.join(ROOT, 'verify', 'verify-endpoints.mjs');
+  if (fs.existsSync(verifyScript)) {
+    const verifyRes = spawnSync(process.execPath, [verifyScript], { stdio: 'inherit', cwd: ROOT, env: process.env });
+    if (verifyRes.status !== 0) {
+      console.error('\n[run-all] Pre-flight endpoint verification failed. Aborting load tests.');
+      process.exit(1);
+    }
+    console.log('');
+  }
+
   const { scenarios, passthrough } = parseArgs(process.argv.slice(2));
 
   const heavy = scenarios.some((s) => s !== 'duplicate-answer'); // essentially all

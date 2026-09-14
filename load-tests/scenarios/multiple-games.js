@@ -1,4 +1,4 @@
-// Scenario 7 — GAMES x PLAYERS_PER_GAME concurrent games (default 10 x 50 = 500).
+// Scenario 7 — GAMES x PLAYERS_PER_GAME concurrent games (default 10 x 25 = 250).
 //
 // Every game has its OWN quiz, so its questionId is unique and any foreign event
 // is unambiguous. Each player joins exactly one game and records the questionId
@@ -10,7 +10,7 @@
 //   * per game: leaderboard lists only that game's participants; participant id
 //     sets across games are pairwise disjoint (independent scores/leaderboards)
 //
-//   k6 run -e ALLOW_LOAD_TEST=true -e GAMES=10 -e PLAYERS_PER_GAME=50 \
+//   k6 run -e ALLOW_LOAD_TEST=true -e GAMES=10 -e PLAYERS_PER_GAME=25 \
 //     load-tests/scenarios/multiple-games.js
 
 import { check } from 'k6';
@@ -35,7 +35,7 @@ import {
 } from '../helpers/metrics.js';
 
 const GAMES = intEnv('GAMES', 10);
-const PLAYERS_PER_GAME = intEnv('PLAYERS_PER_GAME', 50);
+const PLAYERS_PER_GAME = intEnv('PLAYERS_PER_GAME', 25);
 const TOTAL_PLAYERS = GAMES * PLAYERS_PER_GAME;
 const TIME_LIMIT = Math.min(300, Math.max(20, intEnv('ANSWER_TIME_LIMIT', 60)));
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';

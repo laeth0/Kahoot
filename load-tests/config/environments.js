@@ -1,16 +1,24 @@
 import { fail } from 'k6';
 
-// Resolves the target from BASE_URL / SIGNALR_URL. Defaults to the local dev API
+// Resolves the target from TARGET_URL / BASE_URL / SIGNALR_URL. Defaults to the local dev API
 // (http://localhost:5048). Nothing here is environment-specific in source — all
 // URLs come from `-e` flags / the process environment (NFR-9).
 export function resolveEnv() {
-  const rawBase = (__ENV.BASE_URL || 'http://localhost:5048/api').replace(/\/+$/, '');
+  const targetUrl = (__ENV.TARGET_URL || '').replace(/\/+$/, '');
+  const rawBase = (__ENV.BASE_URL || (targetUrl ? `${targetUrl}/api` : 'http://localhost:5048/api')).replace(/\/+$/, '');
   const apiBase = /\/api$/.test(rawBase) ? rawBase : `${rawBase}/api`;
   const origin = apiBase.replace(/\/api$/, '');
-  const signalr = (__ENV.SIGNALR_URL || origin).replace(/\/+$/, '');
+  const signalr = (__ENV.SIGNALR_URL || (targetUrl ? targetUrl : origin)).replace(/\/+$/, '');
   const host = origin.replace(/^https?:\/\//, '').split('/')[0].split(':')[0];
   const isLocal = ['localhost', '127.0.0.1', '::1', '0.0.0.0'].includes(host);
-  const looksProd = /prod|production|railway\.app/i.test(`${apiBase} ${signalr}`) && !isLocal;
+  const looksProd = !isLocal || /prod|production|azure|railway\.app/i.test(`${apiBase} ${signalr}`);
+
+  if ((__ENV.TARGET_PRODUCTION_ONLY === 'true' || __ENV.REQUIRE_PROD === 'true') && isLocal) {
+    fail(
+      `Execution blocked: tests are configured to target production only (TARGET_PRODUCTION_ONLY=true), ` +
+        `but resolved target is local (${apiBase}). Set TARGET_URL=http://... or BASE_URL=... pointing to production.`,
+    );
+  }
 
   return {
     apiBase,

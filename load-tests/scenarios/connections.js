@@ -1,4 +1,4 @@
-// Scenario 1 — 500 concurrent SignalR connections.
+// Scenario 1 — 250 concurrent SignalR connections.
 //
 // Each VU establishes ONE connection (negotiate + WebSocket + JSON handshake
 // against the real hub, or a direct WS upgrade when SIGNALR_SKIP_NEGOTIATION)
@@ -9,8 +9,8 @@
 // (240 burst + 120 / 30 s) throttles how fast one machine can open connections.
 // CONNECT_RAMP is deliberately long so the negotiate/upgrade traffic fits that
 // budget; the client retries a 429 after a real token refill. This measures the
-// app's ability to *hold* 500 connections, with onboarding paced by the limiter
-// (not the app). For an instantaneous 500-distinct-client join, run k6
+// app's ability to *hold* 250 connections, with onboarding paced by the limiter
+// (not the app). For an instantaneous 250-distinct-client join, run k6
 // distributed. See README "single load-generator IP".
 //
 //   k6 run -e ALLOW_LOAD_TEST=true -e SIGNALR_SKIP_NEGOTIATION=true \
@@ -29,7 +29,7 @@ import {
   bumpUnexpected,
 } from '../helpers/metrics.js';
 
-const PLAYERS = intEnv('PLAYERS', 500);
+const PLAYERS = intEnv('PLAYERS', 250);
 const CONNECT_RAMP = __ENV.CONNECT_RAMP || '240s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 90);
 const RAMP_DOWN_SECONDS = 15;

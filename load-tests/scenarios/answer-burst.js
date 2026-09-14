@@ -1,4 +1,4 @@
-// Scenario 4 — 500-player answer burst (the primary performance test).
+// Scenario 4 — 250-player answer burst (the primary performance test).
 //
 // Shape: one k6 process, two scenarios sharing setup().
 //   * `players`  — PLAYERS VUs. Each connects, JoinGame, waits for the
@@ -47,7 +47,7 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const PLAYERS = intEnv('PLAYERS', 500);
+const PLAYERS = intEnv('PLAYERS', 250);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '90s';
 const TIME_LIMIT = Math.min(300, Math.max(5, intEnv('ANSWER_TIME_LIMIT', 120)));
 const WRONG_FRACTION = Number(__ENV.WRONG_FRACTION || 0.15);

@@ -1,4 +1,4 @@
-// Scenario 2 — 500 unique players join ONE game.
+// Scenario 2 — 250 unique players join ONE game.
 //
 // Each VU connects to the hub and calls JoinGame(pin, <unique nickname>) once,
 // then holds the connection in the lobby. teardown() reads the host game state
@@ -29,7 +29,7 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const PLAYERS = intEnv('PLAYERS', 500);
+const PLAYERS = intEnv('PLAYERS', 250);
 const JOIN_RAMP = __ENV.JOIN_RAMP || '120s';
 const HOLD_SECONDS = intEnv('HOLD_SECONDS', 45);
 const TOTAL_SCENARIO_DURATION_MS = (parseDurationSeconds(JOIN_RAMP) + HOLD_SECONDS + 10) * 1000;

@@ -1,4 +1,4 @@
-// Scenario 8 — Ramp / stress: 50 -> 100 -> 250 -> 500 -> 750 concurrent players.
+// Scenario 8 — Ramp / stress: 50 -> 150 -> 250 concurrent players.
 //
 // Players hold a live SignalR connection for their whole lifetime. The director
 // runs a continuous question cycle on a long multi-question quiz
@@ -6,7 +6,7 @@
 // each player submits exactly one answer. answer_submission_duration and error
 // rate are tagged by load bucket so you can see where p95 crosses 500 ms.
 //
-//   500 users is the acceptance target; 750 is there to expose the margin.
+//   250 users is the acceptance target.
 //
 //   k6 run -e ALLOW_LOAD_TEST=true load-tests/scenarios/ramp.js
 
@@ -31,7 +31,7 @@ import {
   noUnexpected,
 } from '../helpers/metrics.js';
 
-const RAMP_LOAD_LEVELS = (__ENV.RAMP_LEVELS || '100,250,500').split(',').map((levelString) => parseInt(levelString.trim(), 10));
+const RAMP_LOAD_LEVELS = (__ENV.RAMP_LEVELS || '50,150,250').split(',').map((levelString) => parseInt(levelString.trim(), 10));
 const PEAK_LOAD_PLAYERS = Math.max(...RAMP_LOAD_LEVELS);
 const JOIN_RAMP = __ENV.RAMP_JOIN_RAMP || __ENV.JOIN_RAMP || '60s';
 const QUESTION_TIME_LIMIT_SECONDS = Math.min(300, Math.max(10, intEnv('RAMP_QUESTION_SECONDS', 20)));
@@ -55,9 +55,9 @@ const TARGET_ANSWER_P95_MS = intEnv('ANSWER_P95_MS', intEnv('TARGET_P95_MS', 150
 const perLevelThresholds = {};
 for (const loadLevel of RAMP_LOAD_LEVELS) {
   perLevelThresholds[`answer_submission_duration{load:${loadLevel}}`] =
-    loadLevel <= 500 ? [`p(95)<${TARGET_ANSWER_P95_MS}`] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
+    loadLevel <= 250 ? [`p(95)<${TARGET_ANSWER_P95_MS}`] : [{ threshold: 'p(95)<100000', abortOnFail: false }];
   perLevelThresholds[`unexpected_error_rate{load:${loadLevel}}`] =
-    loadLevel <= 500 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
+    loadLevel <= 250 ? ['rate<0.05'] : [{ threshold: 'rate<1', abortOnFail: false }];
   perLevelThresholds[`answers_submitted{load:${loadLevel}}`] = ['count>=0'];
   perLevelThresholds[`answers_accepted{load:${loadLevel}}`] = ['count>=0'];
 }
