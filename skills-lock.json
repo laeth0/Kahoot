@@ -19,6 +19,12 @@
       "skillPath": "skills/grafana-k6/k6-docs/SKILL.md",
       "computedHash": "2ad5b850cf6dda90cebb4f4f3f60fdbcce4b9a8c1112e3b3049ca84863111551"
     },
+    "opentelemetry-net-instrumentation": {
+      "source": "aaronontheweb/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "skills/opentelementry-dotnet-instrumentation/SKILL.md",
+      "computedHash": "9bab91303597d6579244744fc2b6ef3e161d6d0902e985519b5787067e31f1ed"
+    },
     "performance-testing": {
       "source": "aj-geddes/useful-ai-prompts",
       "sourceType": "github",
