@@ -6,11 +6,18 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-13 (remove ngrok configuration, skills, and headers from repository)
+> Last updated: 2026-09-14 (repository-wide production-readiness audit and Gemini execution plan)
 
 ---
 
 ## ✅ Done
+
+- **Production-readiness audit and Gemini handoff (plan only):**
+  - Replaced `prompt.md` with an ordered, file-specific implementation plan; no application fixes, deployment, credential rotation, history rewrite, or load execution was performed.
+  - Confirmed release blockers include tracked credential/private-key exposure, nonfunctional public TLS, refresh-token/browser-storage weaknesses, SignalR authorization/removal races, mutable game history, the per-answer aggregate hot path, missing off-host restore proof, and load-test false-pass conditions.
+  - Current tracked full-suite results do not prove capacity: broadcast/isolation, answer-burst, duplicate-answer, and reconnect acceptance failures remain. The older single-scenario success entry below must not be treated as release evidence.
+  - Local diagnostics passed after a clean install: backend build (0 warnings/errors), package vulnerability checks, EF pending-model check, frontend format/lint/build, production dependency audit, and explicit Compose rendering.
+  - Next action: give `prompt.md` to Gemini, answer its six owner gates, and do not declare production readiness until credential rotation, HTTPS renewal, restore, and the corrected complete 500-player suite are proven at one release commit.
 
 - **PostgreSQL 18 Upgrade (Completed & Verified):**
   - Upgraded PostgreSQL container image to `postgres:18-alpine` in `docker-compose.yml`.
