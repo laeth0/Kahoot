@@ -242,6 +242,7 @@ follow the more specific rule without weakening the requirements in this file.
 - Never rely on hardcoded development URLs (e.g. localhost), default weak credentials, or ephemeral storage in production environments.
 - `.env` files containing environment-specific configurations and secrets must be ignored by `.gitignore` and never committed to version control. Use `.env.example` and `.env.production.example` templates instead.
 - In `.gitignore`, only put `.env`. Do NOT put `.env.*`, `!.env.example`, or `!.env.production.example` inside `.gitignore`.
+- Always keep the variables inside `.env`, `.env.example`, and `.env.production.example` strictly synchronized so there are no missing variables in any file. The values of the variables can change based on the environment (e.g. local dev vs. production vs. template placeholders), but the exact set of variables must remain 100% consistent across all three files.
 
 
 <!-- openwolf:begin -->
