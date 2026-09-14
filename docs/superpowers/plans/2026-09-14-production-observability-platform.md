@@ -856,7 +856,7 @@ git commit -m "feat: deploy private observability services"
 - Private upstream: `http://grafana:3000`
 - Authentication: Grafana built-in login only
 
-- [ ] **Step 1: Configure Grafana's subpath and local authentication**
+- [x] **Step 1: Configure Grafana's subpath and local authentication**
 
 Pass these settings through Compose:
 
@@ -880,7 +880,7 @@ GF_ANALYTICS_CHECK_FOR_UPDATES=false
 
 Do not add any `GF_AUTH_AZUREAD`, generic OAuth, SAML, LDAP, auth proxy, or SMTP setting. Bootstrap credentials come only from the untracked production environment. Document that changing the admin environment variables does not rotate an already-created Grafana database user; use the documented Grafana CLI/API rotation procedure after first boot.
 
-- [ ] **Step 2: Add safe Nginx observability logging and upgrade mapping**
+- [x] **Step 2: Add safe Nginx observability logging and upgrade mapping**
 
 At `http` scope, add a JSON `log_format observability escape=json` containing only ISO time, request ID, method, `$uri` (not `$request_uri`), status, bytes sent, request time, upstream response time, upstream status, and host. Add:
 
@@ -893,7 +893,7 @@ map $http_upgrade $connection_upgrade {
 
 Write the JSON format to `/var/log/nginx/access-observability.json`, backed by the shared log volume. Preserve the existing human-readable error log.
 
-- [ ] **Step 3: Add exact subpath routing**
+- [x] **Step 3: Add exact subpath routing**
 
 In the existing server block:
 
@@ -917,11 +917,11 @@ location /grafana/ {
 
 Add a more-specific `/grafana/api/live/` location with the same rewrite/upstream headers plus `Upgrade $http_upgrade` and `Connection $connection_upgrade`. Preserve every existing frontend/API/SignalR route and ordering.
 
-- [ ] **Step 4: Add headers and login throttling without breaking Grafana**
+- [x] **Step 4: Add headers and login throttling without breaking Grafana**
 
 On Grafana responses add `X-Content-Type-Options nosniff`, `Referrer-Policy no-referrer`, `X-Frame-Options SAMEORIGIN`, and a restrictive `Permissions-Policy`. Do not add an untested Content Security Policy because Grafana plugins/assets require a version-specific policy. Create a small `limit_req_zone` keyed by client address and apply it to the exact Grafana login route with a burst that permits normal retries; return 429 when exceeded. Nginx throttling supplements rather than replaces Grafana authentication.
 
-- [ ] **Step 5: Validate configuration and route behavior**
+- [x] **Step 5: Validate configuration and route behavior**
 
 Run:
 
@@ -932,7 +932,7 @@ docker run --rm -v "$PWD/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" -v "$PWD/ngi
 
 If the standalone Nginx check cannot resolve Compose-only upstream names, run `docker compose ... run --rm --no-deps nginx nginx -t` on the created network instead. Expected: syntax passes and existing application locations are unchanged.
 
-- [ ] **Step 6: Commit authenticated subpath access**
+- [x] **Step 6: Commit authenticated subpath access**
 
 ```bash
 git add nginx/nginx.conf nginx/default.conf docker-compose.yml docker-compose.prod.yml

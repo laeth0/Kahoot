@@ -265,6 +265,13 @@ budget_tokens: 1000
   - Verified with `docker compose config` on both dev and prod environments; verified zero forbidden published ports match `(3000|3100|4317|4318|8888|8889|9090|9100|9115|9187|16686)`; verified only Nginx publishes ports in production.
   - Committed with `feat: deploy private observability services` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 10 Expose Authenticated Grafana Through Existing Nginx (Completed & Verified):**
+  - Updated `nginx/nginx.conf`: added JSON `log_format observability escape=json` writing to `/var/log/nginx/access-observability.json`, added `map $http_upgrade $connection_upgrade`, and configured client IP rate limiting zone `limit_req_zone $binary_remote_addr zone=grafana_login:10m rate=5r/m` with status 429.
+  - Updated `nginx/default.conf`: added exact `/grafana` 301 redirect to `/grafana/`, configured `/grafana/` reverse proxy to `http://grafana:3000` with path rewrite `^/grafana/(.*) /$1 break`, configured `/grafana/api/live/` WebSocket upgrade mapping, applied rate limiting to `/grafana/login` (`burst=5 nodelay`), and added security response headers (`X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, `X-Frame-Options: SAMEORIGIN`, and `Permissions-Policy`).
+  - Verified Nginx configuration syntax with `nginx -t` in `nginx:alpine` container (exit code 0).
+  - Verified Compose production configuration rendering with `docker compose config --quiet` (exit code 0).
+  - Committed with `feat: proxy authenticated Grafana subpath` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -280,7 +287,8 @@ budget_tokens: 1000
 - Task 7: Completed.
 - Task 8: Completed.
 - Task 9: Completed.
-- Task 10: Expose Authenticated Grafana Through the Existing Nginx (`nginx/nginx.conf`, `nginx/default.conf`, `docker-compose.yml`, `docker-compose.prod.yml`).
+- Task 10: Completed.
+- Task 11: Provision Grafana Data Sources and Dashboard Loading (`observability/grafana/provisioning/datasources/datasources.yml`, `observability/grafana/provisioning/dashboards/dashboards.yml`).
 
 ---
 
