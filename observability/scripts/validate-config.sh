@@ -253,26 +253,35 @@ for (const file of trackedFiles) {
 console.log("PASS: Secret hygiene clean; zero forbidden OAuth/SMTP/webhook settings found.");
 ' "$REPO_ROOT"
 
-echo "=== 6. Checking Grafana root URL, anonymous auth, and pinned images ==="
+echo "=== 6. Checking Grafana, dev observability config, and prod absence ==="
 node -e '
 const fs = require("fs");
 const path = require("path");
 const repoRoot = process.argv[1];
 
+// Verify Grafana in dev compose
+const devContent = fs.readFileSync(path.join(repoRoot, "docker-compose.yml"), "utf8");
+
+if (!/GF_SERVER_ROOT_URL:\s*["\x27]?http:\/\/[^/]+\/grafana\/["\x27]?/.test(devContent)) {
+  console.error("FAIL: docker-compose.yml does not configure GF_SERVER_ROOT_URL with trailing /grafana/");
+  process.exit(1);
+}
+
+if (!/GF_AUTH_ANONYMOUS_ENABLED:\s*["\x27]?false["\x27]?/.test(devContent)) {
+  console.error("FAIL: docker-compose.yml must set GF_AUTH_ANONYMOUS_ENABLED to false");
+  process.exit(1);
+}
+
+// Verify production compose does NOT contain dev-only observability services (Grafana, Prometheus, Loki)
+const prodContent = fs.readFileSync(path.join(repoRoot, "docker-compose.prod.yml"), "utf8");
+if (/^\s*(grafana|prometheus|loki):/m.test(prodContent)) {
+  console.error("FAIL: docker-compose.prod.yml must not contain dev-only observability services (grafana, prometheus, loki)");
+  process.exit(1);
+}
+
+// Verify observability images are pinned (no :latest)
 for (const composeFile of ["docker-compose.yml", "docker-compose.prod.yml"]) {
   const content = fs.readFileSync(path.join(repoRoot, composeFile), "utf8");
-
-  if (!/GF_SERVER_ROOT_URL:\s*["\x27]?http:\/\/[^/]+\/grafana\/["\x27]?/.test(content)) {
-    console.error(`FAIL: ${composeFile} does not configure GF_SERVER_ROOT_URL with trailing /grafana/`);
-    process.exit(1);
-  }
-
-  if (!/GF_AUTH_ANONYMOUS_ENABLED:\s*["\x27]?false["\x27]?/.test(content)) {
-    console.error(`FAIL: ${composeFile} must set GF_AUTH_ANONYMOUS_ENABLED to false`);
-    process.exit(1);
-  }
-
-  // Verify newly introduced observability images are pinned (no :latest)
   const images = content.match(/image:\s*["\x27]?([^"\x27\s]+)/g) || [];
   for (const imgStr of images) {
     const img = imgStr.replace(/image:\s*["\x27]?/, "").trim();
@@ -284,7 +293,7 @@ for (const composeFile of ["docker-compose.yml", "docker-compose.prod.yml"]) {
     }
   }
 }
-console.log("PASS: Grafana root URL /grafana/, anonymous auth false, and pinned images verified.");
+console.log("PASS: Grafana dev config, absence in prod, and pinned images verified.");
 ' "$REPO_ROOT"
 
 echo "=== 7. Checking retention invariants (Prometheus 7d/4GB, Loki 168h, Jaeger 72h) ==="
@@ -293,9 +302,9 @@ const fs = require("fs");
 const path = require("path");
 const repoRoot = process.argv[1];
 
-const prodCompose = fs.readFileSync(path.join(repoRoot, "docker-compose.prod.yml"), "utf8");
-if (!prodCompose.includes("--storage.tsdb.retention.time=7d") || (!prodCompose.includes("--storage.tsdb.retention.size=4GB") && !prodCompose.includes("--storage.tsdb.retention.max-bytes=4GB"))) {
-  console.error("FAIL: Prometheus in docker-compose.prod.yml missing 7d retention or 4GB cap");
+const devCompose = fs.readFileSync(path.join(repoRoot, "docker-compose.yml"), "utf8");
+if (!devCompose.includes("--storage.tsdb.retention.time=7d") || (!devCompose.includes("--storage.tsdb.retention.size=4GB") && !devCompose.includes("--storage.tsdb.retention.max-bytes=4GB"))) {
+  console.error("FAIL: Prometheus in docker-compose.yml missing 7d retention or 4GB cap");
   process.exit(1);
 }
 
