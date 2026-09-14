@@ -127,9 +127,9 @@ if [[ "$APP_ROOT_STATUS" != "200" && "$APP_ROOT_STATUS" != "304" ]]; then
   exit 1
 fi
 
-APP_HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${HOST_TARGET}/api/health")
+APP_HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${HOST_TARGET}/health")
 if [[ "$APP_HEALTH_STATUS" != "200" ]]; then
-  echo "FAIL: Application /api/health returned HTTP ${APP_HEALTH_STATUS}, expected 200" >&2
+  echo "FAIL: Application /health returned HTTP ${APP_HEALTH_STATUS}, expected 200" >&2
   exit 1
 fi
 
@@ -144,6 +144,6 @@ if [[ "$APP_HUB_STATUS" != "200" && "$APP_HUB_STATUS" != "401" ]]; then
   echo "FAIL: SignalR negotiate returned unexpected HTTP ${APP_HUB_STATUS}, expected 200 or 401" >&2
   exit 1
 fi
-echo "PASS: Existing application endpoints (root, /api/health, /api/auth/login, /hubs/game/negotiate) behave as expected"
+echo "PASS: Existing application endpoints (root, /health, /api/auth/login, /hubs/game/negotiate) behave as expected"
 
 echo "PASS: All observability validation checks succeeded."

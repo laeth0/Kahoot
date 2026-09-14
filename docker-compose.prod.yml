@@ -148,7 +148,7 @@ services:
         max-size: "10m"
         max-file: "3"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:80/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:80/health || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -209,7 +209,6 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
       - '--storage.tsdb.retention.size=4GB'
-      - '--web.enable-lifecycle=false'
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/prometheus/rules:/etc/prometheus/rules:ro
@@ -261,6 +260,7 @@ services:
     image: jaegertracing/jaeger:2.20.0
     container_name: kahoot-jaeger
     restart: unless-stopped
+    user: "0:0"
     command:
       - '--config=/etc/jaeger/jaeger-config.yml'
     volumes:

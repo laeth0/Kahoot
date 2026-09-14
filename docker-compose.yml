@@ -213,7 +213,6 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=7d'
       - '--storage.tsdb.retention.size=4GB'
-      - '--web.enable-lifecycle=false'
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ./observability/prometheus/rules:/etc/prometheus/rules:ro
@@ -265,6 +264,7 @@ services:
     image: jaegertracing/jaeger:2.20.0
     container_name: kahoot-jaeger
     restart: unless-stopped
+    user: "0:0"
     command:
       - '--config=/etc/jaeger/jaeger-config.yml'
     volumes:

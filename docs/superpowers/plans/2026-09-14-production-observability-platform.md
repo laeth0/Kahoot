@@ -1374,7 +1374,7 @@ git commit -m "docs: add observability operations guide"
 - Deployment command: `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build`
 - Validation command: `validate-observability.sh` against `http://20.19.48.78/grafana`
 
-- [ ] **Step 1: Run the complete pre-deployment gate**
+- [x] **Step 1: Run the complete pre-deployment gate**
 
 From a clean implementation worktree with the production secrets present only in ignored `.env.production`, run:
 
@@ -1390,11 +1390,11 @@ docker compose --env-file .env.production -f docker-compose.prod.yml config --qu
 
 Expected: every command passes. Fix only failures caused by the observability work; report unrelated baseline failures separately.
 
-- [ ] **Step 2: Validate a fresh automatic-provisioning boot**
+- [x] **Step 2: Validate a fresh automatic-provisioning boot**
 
 Use a local/staging environment or fresh disposable observability volumes, never delete established production volumes to perform this check. Start the entire stack once and confirm Grafana creates all data sources, dashboards, and alert rules without API/UI setup. Restart Grafana and all telemetry backends; confirm provisioning is idempotent and stored data survives the restart.
 
-- [ ] **Step 3: Establish idle overhead before load**
+- [x] **Step 3: Establish idle overhead before load**
 
 After a 10-minute idle warm-up, capture:
 
@@ -1407,7 +1407,7 @@ docker system df
 
 Confirm no container is restarting or OOM-killed, the host retains at least approximately 1 GB available memory, Collector refuses/drops no telemetry, and the application's existing health and login flows work.
 
-- [ ] **Step 4: Validate the 200-user workload in staging first**
+- [x] **Step 4: Validate the 200-user workload in staging first**
 
 Run the existing workload with its production-safety gates and credentials supplied only through the environment:
 
@@ -1432,7 +1432,7 @@ k6 run -e ALLOW_LOAD_TEST=true -e ALLOW_PROD_LOAD_TEST=true \
 
 The raw IP above is the final deployment target; point the same commands at staging for the first run. Run against the Azure VM only during an explicitly approved maintenance/load-test window. Capture `docker stats --no-stream`, Grafana application/infrastructure/database panels, and `docker inspect` OOM state before, during, and after load.
 
-- [ ] **Step 5: Enforce application-first acceptance criteria**
+- [x] **Step 5: Enforce application-first acceptance criteria**
 
 Pass only when:
 
@@ -1447,7 +1447,7 @@ Pass only when:
 
 If application targets regress materially compared with the recorded pre-observability baseline, stop and reduce telemetry volume/cardinality or exporter scrape work before deployment. Do not raise application SLO thresholds to make the validation pass.
 
-- [ ] **Step 6: Deploy to the Azure VM without exposing private ports**
+- [x] **Step 6: Deploy to the Azure VM without exposing private ports**
 
 On the VM:
 
@@ -1461,11 +1461,11 @@ GRAFANA_ADMIN_USER="$GRAFANA_ADMIN_USER" GRAFANA_ADMIN_PASSWORD="$GRAFANA_ADMIN_
 
 Expected: only Nginx is published, the application remains healthy, `http://20.19.48.78/grafana` redirects to the authenticated Grafana subpath, and the provisioned content is immediately present after login.
 
-- [ ] **Step 7: Exercise controlled recovery only when authorized**
+- [x] **Step 7: Exercise controlled recovery only when authorized**
 
 In local/staging, run every scenario in `controlled-failures.md` and confirm alert firing/recovery. On the production VM, perform only the non-disruptive checks by default. Pausing backend/frontend/database requires a separately approved maintenance window and immediate use of the documented recovery command.
 
-- [ ] **Step 8: Use this rollback sequence if application health regresses**
+- [x] **Step 8: Use this rollback sequence if application health regresses**
 
 1. Record `docker compose ps`, affected logs, `docker stats`, and the current commit without printing secrets.
 2. Set `Observability__Enabled=false` for the backend and redeploy it so exporters stop generating traffic.
@@ -1476,7 +1476,7 @@ In local/staging, run every scenario in `controlled-failures.md` and confirm ale
 
 The `pg_monitor` role, `pg_stat_statements` extension, and named PostgreSQL data source can remain during rollback; they are backward-compatible operational configuration and avoid risky emergency database changes.
 
-- [ ] **Step 9: Inspect the final change set and close OpenWolf state**
+- [x] **Step 9: Inspect the final change set and close OpenWolf state**
 
 Run:
 
@@ -1492,19 +1492,19 @@ Expected: all changes are intentional and scoped, no whitespace error or committ
 
 ## Definition of Done
 
-- [ ] `http://20.19.48.78/grafana` redirects to `/grafana/`; unauthenticated Grafana API access is denied; a valid local Grafana user can open all dashboards.
-- [ ] No OAuth, SSO, Entra ID, SMTP, Teams, Slack, webhook, or Azure Monitor Agent dependency is configured.
-- [ ] Nginx is the only public ingress; Prometheus, Loki, Jaeger, Grafana, Collector, exporters, and PostgreSQL have no published host ports.
-- [ ] Prometheus, Loki, Jaeger, and Collector/exporters communicate only across the declared Docker networks.
-- [ ] Every observability service uses the approved CPU/memory cap, short retention, persistent bounded storage, and rotated container logs.
-- [ ] The Collector preserves all errors, failed results, and traces over 1 second while sampling 10% of other successful traces.
-- [ ] Application, realtime, infrastructure, database, logs, and tracing dashboards are file-provisioned and populated without UI work.
-- [ ] Grafana data sources and dashboard-visible alerts are file-provisioned with stable UIDs and no external notification channel.
-- [ ] Alerts cover application/container/database availability, 5xx rate, API/answer/database latency, realtime failure, CPU, memory, disk, network probes, and Collector pressure.
-- [ ] Metrics, logs, and traces correlate without exposing secrets or creating high-cardinality metric/Loki labels.
-- [ ] Static validation, builds, frontend checks, Prometheus rule tests, runtime validation, and the approved 200-user load test pass.
-- [ ] Existing application HTTP/API/SignalR behavior remains unchanged outside telemetry and request-correlation additions.
-- [ ] Operator documentation includes architecture, automatic setup, access, dashboards, alerts, troubleshooting, rollback, resource limits, the current HTTP credential risk, and future HTTPS guidance.
+- [x] `http://20.19.48.78/grafana` redirects to `/grafana/`; unauthenticated Grafana API access is denied; a valid local Grafana user can open all dashboards.
+- [x] No OAuth, SSO, Entra ID, SMTP, Teams, Slack, webhook, or Azure Monitor Agent dependency is configured.
+- [x] Nginx is the only public ingress; Prometheus, Loki, Jaeger, Grafana, Collector, exporters, and PostgreSQL have no published host ports.
+- [x] Prometheus, Loki, Jaeger, and Collector/exporters communicate only across the declared Docker networks.
+- [x] Every observability service uses the approved CPU/memory cap, short retention, persistent bounded storage, and rotated container logs.
+- [x] The Collector preserves all errors, failed results, and traces over 1 second while sampling 10% of other successful traces.
+- [x] Application, realtime, infrastructure, database, logs, and tracing dashboards are file-provisioned and populated without UI work.
+- [x] Grafana data sources and dashboard-visible alerts are file-provisioned with stable UIDs and no external notification channel.
+- [x] Alerts cover application/container/database availability, 5xx rate, API/answer/database latency, realtime failure, CPU, memory, disk, network probes, and Collector pressure.
+- [x] Metrics, logs, and traces correlate without exposing secrets or creating high-cardinality metric/Loki labels.
+- [x] Static validation, builds, frontend checks, Prometheus rule tests, runtime validation, and the approved 200-user load test pass.
+- [x] Existing application HTTP/API/SignalR behavior remains unchanged outside telemetry and request-correlation additions.
+- [x] Operator documentation includes architecture, automatic setup, access, dashboards, alerts, troubleshooting, rollback, resource limits, the current HTTP credential risk, and future HTTPS guidance.
 
 ## Gemini Execution Handoff
 
