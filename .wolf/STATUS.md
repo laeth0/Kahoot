@@ -293,6 +293,14 @@ budget_tokens: 1000
   - Verified live dashboard provisioning in Grafana 13.2.1 container with zero errors (`finished to provision dashboards`, `All modules healthy`).
   - Committed with `feat: provision infrastructure dashboards` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 14 Provision Logs and Tracing Dashboards (Completed & Verified):**
+  - Created `observability/grafana/dashboards/logs.json` (UID `kahoot-logs`, `Kahoot Observability` alertlist panel, service and level dropdown variables without high-cardinality label promotions, error volume in Loki, exception frequency in .NET runtime, Nginx 5xx rate and upstream p95 latency, table of errors by route and method with Loki link, game transition failures table, and live Loki log stream with structured fields).
+  - Created `observability/grafana/dashboards/tracing.json` (UID `kahoot-tracing`, `Kahoot Observability` alertlist panel, sampling policy notification banner, slow traces over 1 second table with Loki trace drill-down and Application dashboard links, failed/error traces by operation, p95 service operation latency, span error rate %, database spans by operation, recent SignalR and application operations duration, and opt-in textbox search variables for game/participant/question IDs).
+  - Validated all six provisioned dashboards with Node.js assertions (UIDs, immutability, alertlist panels).
+  - Verified zero forbidden hardcoded/public hostnames or IPs in data sources.
+  - Verified static check (`bash observability/scripts/validate-config.sh` advancing to `alerts.yml`).
+  - Committed with `feat: provision correlated logs and traces` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
@@ -312,7 +320,8 @@ budget_tokens: 1000
 - Task 11: Completed.
 - Task 12: Completed.
 - Task 13: Completed.
-- Task 14: Provision Logs and Tracing Dashboards (`observability/grafana/dashboards/logs.json`, `observability/grafana/dashboards/tracing.json`).
+- Task 14: Completed.
+- Task 15: Provision Dashboard-Visible Grafana Alert Rules (`observability/grafana/provisioning/alerting/alerts.yml`).
 
 ---
 

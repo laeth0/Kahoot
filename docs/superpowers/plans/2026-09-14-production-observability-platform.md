@@ -1134,21 +1134,21 @@ git commit -m "feat: provision infrastructure dashboards"
 - Dashboard UIDs: `kahoot-logs` and `kahoot-tracing`
 - Cross-links use fixed data source UIDs and preserve dashboard time range
 
-- [ ] **Step 1: Build the Logs and Exceptions dashboard**
+- [x] **Step 1: Build the Logs and Exceptions dashboard**
 
 Add variables only for bounded service name and severity. Add the shared alert list plus error volume, exception frequency, errors by safe route/event/error code, Nginx 5xx and upstream latency, and a live log panel. Use structured-field filters and line formatting that surface timestamp, level, service, request ID, route, status, trace ID, and safe message. Add links from every trace ID to Jaeger and from request ID to a narrowed log view. Confirm the query does not promote request IDs, trace IDs, or entity IDs into stream labels.
 
-- [ ] **Step 2: Build the Distributed Tracing dashboard**
+- [x] **Step 2: Build the Distributed Tracing dashboard**
 
 Add the shared alert list plus Jaeger trace search, slow traces over 1 second, failed/error traces, service operation latency, span error rate, service dependency graph, database spans, and recent SignalR/application operations. Search tags may use trace-only `game.id`, `participant.id`, or `question.id` as an opt-in textbox variable; default them empty and never interpolate them into Prometheus or Loki label selectors.
 
 Add data links from failed/slow trace rows to Loki using trace ID and from service graph nodes to the Application/Database dashboards. Display the visible note: “Normal successful traces are sampled at 10%; errors and traces over 1 second are retained.”
 
-- [ ] **Step 3: Verify correlation on real emitted data**
+- [x] **Step 3: Verify correlation on real emitted data**
 
 After a local stack start, make one successful API request and one safe validation failure. In Grafana Explore/API, confirm: the error log has a trace ID; the trace opens from the log; trace-to-logs returns its log; a latency exemplar opens Jaeger; and service graph nodes have metrics. If a field name differs after OTLP normalization, change the Collector, datasource provisioning, and dashboard queries together.
 
-- [ ] **Step 4: Parse all six dashboards and reject manual dependencies**
+- [x] **Step 4: Parse all six dashboards and reject manual dependencies**
 
 Run:
 
@@ -1160,7 +1160,7 @@ bash observability/scripts/validate-config.sh
 
 Expected: six dashboards parse, are immutable, contain alert-state panels, use only fixed private datasource UIDs/URLs, and static validation reaches the alerting file if it is not yet present.
 
-- [ ] **Step 5: Commit logs and tracing dashboards**
+- [x] **Step 5: Commit logs and tracing dashboards**
 
 ```bash
 git add observability/grafana/dashboards/logs.json observability/grafana/dashboards/tracing.json
