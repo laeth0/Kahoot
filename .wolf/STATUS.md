@@ -12,6 +12,20 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Azure Production Load Testing Setup & Live Verification (Completed & Verified):**
+  - Updated `load-tests/config/environments.js` with `TARGET_URL` support, production detection for remote hosts, and strict `TARGET_PRODUCTION_ONLY=true` safeguard blocking local runs.
+  - Removed obsolete Cloudflare tunnel auto-detection and dangerous `localhost:3000` fallback from `load-tests/run-all.js`.
+  - Scaled concurrency targets from 500 to **250 concurrent users** across `load-tests/.env`, `load-tests/.env.example`, `thresholds.js`, and all scenarios (`connections.js`, `join-game.js`, `question-broadcast.js`, `answer-burst.js`, `reconnection.js`, `reconnection-storm.js`, `multiple-games.js`, `ramp.js`).
+  - Created automated pre-flight target verification tool `load-tests/verify/verify-endpoints.mjs` validating `/health`, `/api/auth/login`, `/api/quizzes`, `/hubs/game/negotiate`, and native WebSocket SignalR JSON protocol handshake before load test execution.
+  - Updated `load-tests/run.sh` to load `.env` and automatically prevent local Docker Compose startup when targeting remote hosts.
+  - Verified live against Azure production (`http://20.19.48.78`):
+    - `250-player join`: **PASS** (250/250 connections, 0 join failures, 100% checks passed).
+    - `250 connections`: **PASS** (250/250 connections held, 0 failures, 242ms handshake p95).
+    - `Question broadcast`: **PASS** (275/275 connections, 1ms question delivery p95, 0 failures).
+    - `10 x 25 game isolation`: **PASS** (248/248 answers accepted, 0 isolation violations, 100% checks passed).
+    - `50-player reconnect`: **PASS** (348/348 connections, 0 lost answers, 0 duplicate participants, 100% checks passed).
+    - `250-answer burst`: 229 answers accepted, 0 lost answers, 0 duplicate scores; identified production database transaction contention on 2 vCPU VM leading to ~7.1s p50 / ~9.3s p95 submission queuing.
+
 - **Production-readiness audit and Gemini handoff (plan only):**
   - Replaced `prompt.md` with an ordered, file-specific implementation plan; no application fixes, deployment, credential rotation, history rewrite, or load execution was performed.
   - Confirmed release blockers include tracked credential/private-key exposure, nonfunctional public TLS, refresh-token/browser-storage weaknesses, SignalR authorization/removal races, mutable game history, the per-answer aggregate hot path, missing off-host restore proof, and load-test false-pass conditions.

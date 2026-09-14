@@ -137,7 +137,7 @@ A host can:
 - Delete quizzes
 - Create questions
 - Add answer options
-- Choose the correct answer
+- Mark one or more answer options correct
 - Configure question duration
 - Configure points
 - Start a live game
@@ -257,7 +257,8 @@ Client timers are for display only.
 
 The server determines deadlines using server timestamps.
 
-Never send the correct answer to participant clients before the question is closed/revealed.
+Questions support one or more correct answer options. Never send correct answer
+identities to participant clients before the question is closed/revealed.
 
 ---
 
@@ -1043,12 +1044,14 @@ Measure:
 
 ## Scenario 2 — Lobby
 
-500 participants join the same quiz.
+Up to 500 reserved participants join the same quiz. Seat reservation is based on
+non-removed participants rather than active connections; reconnecting does not
+consume another seat.
 
 Verify:
 
 ```text
-participant count = 500
+reserved participant count = 500
 ```
 
 with no duplicates.

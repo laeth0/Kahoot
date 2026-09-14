@@ -1,14 +1,16 @@
 # Non-Functional Requirements — Kahoot-like Platform
 
 > Living specification. Keep this file synchronized with every architectural / quality change.
-> The verbatim original brief is preserved in [`Kahoot-like Platform.md`](./Kahoot-like%20Platform.md).
+> The original brief is preserved in [`Kahoot-like-Platform.md`](./Kahoot-like-Platform.md).
 > Functional requirements live in [`functional-requirements.md`](./functional-requirements.md).
 
 ---
 
 ## NFR-1 Scale & Performance
 
-Primary target: reliably support at least **500 concurrent players in one live game** without losing answers, duplicating scores, corrupting state, or becoming unacceptably slow.
+Primary target: reliably support a game with its **500 reserved participant seats**
+and up to 500 concurrent player connections without losing answers, duplicating
+scores, corrupting state, or becoming unacceptably slow.
 
 Design for:
 
@@ -43,6 +45,10 @@ Targets (to be validated by load tests, not assumed):
 ## NFR-3 Server-Authoritative Design
 
 The backend is the source of truth. Clients never decide: answer correctness, whether an answer was on time, the official timer, points earned, current game state, current question, whether a player already answered, the leaderboard, whether a question is open, or whether the game ended. Client timers are display-only, driven by the server's `questionEndsAt`.
+
+This includes reserved-seat, connected-participant, and question-eligibility
+counts. Presence events carry absolute server-calculated counts; clients do not
+derive authoritative counts by incrementing or decrementing a local value.
 
 ---
 
@@ -91,6 +97,11 @@ The backend is the source of truth. Clients never decide: answer correctness, wh
 - Pending EF Core migrations are applied on startup by a hosted service; failure fails startup (fail fast), runs async with the startup cancellation token, and stays out of `Program.cs`.
 - Seeding runs as a separate hosted service after migration, is idempotent, and skips (with a warning) when its configuration is absent — it never blocks startup on its own.
 - Handle and document: duplicate messages/requests, host double-click, simultaneous transitions, network loss, reconnect-after-answer, DB timeout/slowness, invalid/expired PIN, answer after / exactly at deadline, backend restart, mass reconnection.
+- A command is successful once its authoritative state change is durably committed.
+  SignalR fan-out happens only after that point and is best-effort: a fan-out
+  failure is recorded and measured but cannot turn the committed command into an
+  apparent rollback or failure. Event delivery is not a durable queue; hosts
+  resynchronize through REST and players through `Reconnect` state.
 
 ---
 

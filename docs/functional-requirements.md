@@ -1,7 +1,7 @@
 # Functional Requirements — Kahoot-like Platform
 
 > Living specification. Keep this file synchronized with every behavioural change.
-> The verbatim original brief is preserved in [`Kahoot-like Platform.md`](./Kahoot-like%20Platform.md).
+> The original brief is preserved in [`Kahoot-like-Platform.md`](./Kahoot-like-Platform.md).
 > Non-functional requirements live in [`non-functional-requirements.md`](./non-functional-requirements.md).
 
 ---
@@ -69,7 +69,9 @@ A player:
 - A quiz has a title, an optional description, an `isPublished` flag, and an ordered list of questions.
 - A question has text, an optional image, an order, a time limit, base points, and 2–6 choices.
 - A choice has text and/or an image (at least one), and an `isCorrect` flag.
-- Exactly one choice per question is the correct one.
+- **G2 — correct-answer cardinality:** one or more choices per question may be
+  marked correct. A submitted answer is correct when its selected choice is one
+  of those marked choices.
 - A quiz must be **published** before a game can be started from it. Publishing requires the quiz to be valid (see FR-3.2).
 - A quiz that has ever been used to run a game cannot be deleted (historical results are preserved).
 - A quiz with a game session that is not finished cannot be edited.
@@ -125,7 +127,19 @@ Allowed transitions (all others are rejected server-side):
 - Players join with a game PIN (embedded in the shared link or typed on the join page) plus a handle name.
 - The PIN is short, generated server-side, and unique among games that are not finished.
 - A handle name must be unique within its game (case-insensitive) and pass validation/sanitization.
-- The host sees each join in real time and may remove a player; a removed player cannot rejoin the same game with the same handle.
+- The host receives `ParticipantJoined` in real time only after a participant
+  successfully attaches through the hub (`JoinGame` or `Reconnect`). A REST-only
+  join reserves a seat without broadcasting; the host recovers that reservation
+  through `GET /api/games/{id}` state.
+- The host may remove a player; a removed player cannot rejoin the same game with
+  the same handle.
+- A game has at most **500 reserved participant seats**. A successful first join
+  reserves one seat; a reconnect restores that same participant and never reserves
+  another seat. The reservation count is the number of non-removed participants,
+  not the number with an active SignalR connection.
+- Before the game starts, removing a participant releases their seat. Once the
+  game has started, no new joins are accepted and neither a disconnect nor a
+  removal creates a joinable seat.
 
 ---
 
@@ -143,7 +157,20 @@ Allowed transitions (all others are rejected server-side):
 ### FR-6.1 Questions
 
 - When the host starts a question the server records `questionStartedAt` and `questionEndsAt` (server clock).
-- The correct answer is never sent to player clients before the question is closed/revealed.
+- The server snapshots the set of non-removed reserved participants at question
+  activation. This is the question's eligibility denominator; a later disconnect
+  does not reduce it.
+- During an active question, removing a non-removed eligible participant who has
+  not submitted an accepted answer **must** decrement the effective eligibility
+  denominator exactly once. The removal, decrement, and any resulting early-close
+  decision must be atomic. A repeated removal is idempotent and must not decrement
+  the denominator again. A participant who already answered remains in the
+  denominator and their accepted answer remains in the results.
+- The question closes at its deadline, on an explicit host close, or when every
+  effective eligible participant has an accepted answer. A disconnect alone never
+  causes an early close.
+- The correct answer(s) are never sent to player clients before the question is
+  closed/revealed.
 
 ### FR-6.2 Answer submission
 
@@ -162,6 +189,10 @@ Allowed transitions (all others are rejected server-side):
 
 - After a question closes the host can show per-question statistics (answer counts per choice) and the leaderboard.
 - The full leaderboard is not broadcast after every answer; standings are computed when a question closes (throttled/snapshot strategy).
+- `QuestionResultsResponse.participantCount` is the effective eligibility
+  denominator for that question, not a live connection or current non-removed
+  participant count. `answerCount` is the number of accepted answers and is never
+  decremented by a later removal.
 
 ---
 
@@ -169,6 +200,8 @@ Allowed transitions (all others are rejected server-side):
 
 - A player reconnecting after a network drop keeps their identity via a secure session token — **not** the transient real-time connection id.
 - Reconnection must not create a second player record (the session-token hash is uniquely indexed; `Reconnect` never inserts a `Participant`).
+- Reconnection neither consumes a new reserved seat nor changes the active
+  question's eligibility denominator.
 - On reconnect the server restores: player identity, game, current state, current question, question deadline, whether the player already answered, current score and rank. During `QuestionResults` / `Leaderboard` it also returns the revealed question results; during `QuestionResults` / `Leaderboard` / `Finished` it returns the leaderboard snapshot.
 
 ---
@@ -180,6 +213,9 @@ Allowed transitions (all others are rejected server-side):
 - Idempotent operations: submit answer, start game, start question, end question, next question, end game (host double-clicks and network retries must not corrupt state).
 - Every use case is implemented in `Kahoot.Application` as a MediatR command/query returning `Result` / `Result<T>`. Host game-control runs through the REST controllers (the hub cannot resolve the authenticated host); the hub serves player actions (`JoinGame`, `Reconnect`, `SubmitAnswer`) and the host subscription (`JoinAsHost`), and controllers broadcast the outcome to the group.
 - The question-start payload sent to players excludes the correct answer (`QuestionStartedResponse.Player`); the host receives it separately (`QuestionStartedResponse.Host`).
+- Presence counts and post-commit delivery semantics are defined centrally in
+  [`realtime-protocol.md`](./realtime-protocol.md); clients use its absolute
+  counts and resynchronization paths instead of maintaining local count deltas.
 
 ---
 

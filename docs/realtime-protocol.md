@@ -2,8 +2,8 @@
 
 > Living specification for the API layer. The Application layer is transport-agnostic:
 > every use case is a MediatR command/query returning `Result` / `Result<T>`.
-> Controllers and `GameHub` call `ISender.Send(...)`; on success the controller
-> broadcasts the outcome to the SignalR group through `GameNotifier`
+> Controllers and `GameHub` call `ISender.Send(...)`; after a successful durable
+> command they attempt to broadcast the outcome through `GameNotifier`
 > (`IHubContext<GameHub, IGameClient>`). This file defines the transport contract.
 
 ---
@@ -21,7 +21,38 @@
 - A **host** connection joins `game:{gameId}:host` after a successful `JoinAsHost`
   hub call (`Authorize`d with the host JWT; game ownership is verified).
 - On (re)connect the hub sets `Participant.ConnectionId`; on disconnect it clears it
-  and raises `ParticipantLeft` to the host group.
+  and raises `ParticipantLeft` to both game groups. A disconnect changes presence,
+  not seat reservation or active-question eligibility.
+
+### Authoritative counts and event delivery
+
+- `reservedParticipantCount` is the number of non-removed participant seats. It
+  has a maximum of 500 and does not depend on SignalR connectivity.
+- `connectedParticipantCount` is the number of non-removed participants with an
+  active connection. It is a presence count, not a capacity count.
+- Every presence event carries post-change absolute values for both counts. Clients
+  replace their displayed values with these server values; they never infer counts
+  by applying an event delta.
+- A state-changing command commits before its event fan-out is attempted. Fan-out
+  is best-effort and does not change a committed command response to failure.
+  Clients treat events as timely notifications, not a durable delivery guarantee:
+  hosts recover through `GET /api/games/{id}` and players through `Reconnect`.
+
+Presence payloads are:
+
+```text
+ParticipantJoinedResponse {
+  participant: GameParticipantResponse,
+  connectedParticipantCount: int,
+  reservedParticipantCount: int
+}
+
+ParticipantPresenceResponse {
+  participantId: Guid,
+  connectedParticipantCount: int,
+  reservedParticipantCount: int
+}
+```
 
 ### Why host game-control is REST-only
 
@@ -77,18 +108,35 @@ the Application response records (`Kahoot.Application.Games.Common`).
 
 | Method | Target group(s) | Trigger | Payload |
 |---|---|---|---|
-| `ParticipantJoined` | players + host | `JoinGame` hub / `POST /api/games/join` | `GameParticipantResponse` |
-| `ParticipantLeft` | host | hub disconnect | `Guid participantId` |
-| `ParticipantRemoved` | players + host | `RemoveParticipantCommand` | `Guid participantId` |
-| `QuestionStarted` | players | `StartGameCommand` / `StartNextQuestionCommand` | `PlayerQuestionResponse` (**no correct answer**) |
-| `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceIds`) |
-| `QuestionEnded` | players + host | `EndQuestionCommand` | `QuestionResultsResponse` |
+| `ParticipantJoined` | players + host | successful `JoinGame` hub call or `Reconnect` after connection attachment | `ParticipantJoinedResponse` |
+| `ParticipantLeft` | players + host | a matching hub disconnect clears presence | `ParticipantPresenceResponse` |
+| `ParticipantRemoved` | players + host | committed `RemoveParticipantCommand` | `ParticipantPresenceResponse` |
+| `QuestionStarted` | players | committed `StartGameCommand` / `StartNextQuestionCommand` | `PlayerQuestionResponse` (**no correct answer(s)**) |
+| `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceIds` and `eligibleParticipantCount`) |
+| `QuestionEnded` | players + host | committed `EndQuestionCommand` or automatic close | `QuestionResultsResponse` |
 | `LeaderboardUpdated` | players + host | `ShowLeaderboardCommand` | `LeaderboardResponse` |
 | `GameEnded` | players + host | `EndGameCommand` | `LeaderboardResponse` (final) |
+
+`POST /api/games/join` reserves a seat and returns its session token but does not
+attach a SignalR connection and does not broadcast `ParticipantJoined`. The client
+must then call `Reconnect(sessionToken)` to attach and receive authoritative state.
+The host receives real-time presence only after that successful attachment; until
+then, `GET /api/games/{id}` is the authoritative source for the reservation.
 
 **Players never receive `correctChoiceIds` or per-choice `isCorrect` before the
 question is closed** — the players group only ever gets `PlayerQuestionResponse`
 for `QuestionStarted`; `HostQuestionResponse` goes solely to the host group.
+
+At question activation, the server snapshots all non-removed reserved participants
+as the eligible set and sends the host its `eligibleParticipantCount`. The same
+effective denominator is returned as `QuestionResultsResponse.participantCount`.
+Disconnects never alter it. Removing a non-removed eligible participant who has
+not submitted an accepted answer **must** decrement it exactly once, atomically
+with the removal and automatic-close check. A repeated removal is idempotent and
+does not decrement it again. An already accepted answer remains counted and its
+participant remains in the denominator. Auto-end occurs only after a committed
+accepted answer or qualifying removal leaves no eligible unanswered participants,
+never merely because a participant disconnected.
 
 The full leaderboard is not broadcast per answer; it is computed and persisted once
 per question close (`ShowLeaderboardCommand` / `EndGameCommand`).
@@ -119,13 +167,13 @@ Auth: `host` = valid host JWT (`Authorize`); `none` = anonymous.
 | `GET /api/games/{id}` | host | `GetHostGameStateQuery` | | 200 `HostGameStateResponse` |
 | `GET /api/games/{id}/questions/{questionId}/results` | host | `GetQuestionResultsQuery` | | 200 `QuestionResultsResponse` |
 | `GET /api/games/{id}/leaderboard` | host | `GetLeaderboardQuery` | | 200 `LeaderboardResponse` |
-| `POST /api/games/{id}/start` | host | `StartGameCommand` | broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
-| `POST /api/games/{id}/advance` | host | `StartNextQuestionCommand` | valid from `QuestionResults` or `Leaderboard` (leaderboard optional); idempotent re-entry while `QuestionActive`; `xmin` concurrency-guarded; `409 Game.NoMoreQuestions` past the last question; broadcasts `QuestionStarted` / `QuestionStartedForHost` | 200 `QuestionStartedResponse` |
-| `POST /api/games/{id}/end-question` | host | `EndQuestionCommand` | early-closes window; broadcasts `QuestionEnded` | 200 `QuestionResultsResponse` |
-| `POST /api/games/{id}/leaderboard` | host | `ShowLeaderboardCommand` | persists ranks; broadcasts `LeaderboardUpdated` | 200 `LeaderboardResponse` |
-| `POST /api/games/{id}/end` | host | `EndGameCommand` | broadcasts `GameEnded` | 200 `LeaderboardResponse` |
-| `DELETE /api/games/{id}/participants/{participantId}` | host | `RemoveParticipantCommand` | idempotent; broadcasts `ParticipantRemoved` | 204 |
-| `POST /api/games/join` | none | `JoinGameRequest` → `JoinGameCommand` | join page before opening the socket; broadcasts `ParticipantJoined` | 200 `JoinGameResponse` |
+| `POST /api/games/{id}/start` | host | `StartGameCommand` | commits the question and its eligibility snapshot; then best-effort broadcasts `QuestionStarted(ForHost)` | 200 `QuestionStartedResponse` |
+| `POST /api/games/{id}/advance` | host | `StartNextQuestionCommand` | valid from `QuestionResults` or `Leaderboard` (leaderboard optional); idempotent re-entry while `QuestionActive`; `xmin` concurrency-guarded; `409 Game.NoMoreQuestions` past the last question; commits then best-effort broadcasts `QuestionStarted` / `QuestionStartedForHost` | 200 `QuestionStartedResponse` |
+| `POST /api/games/{id}/end-question` | host | `EndQuestionCommand` | commits the early close; then best-effort broadcasts `QuestionEnded` | 200 `QuestionResultsResponse` |
+| `POST /api/games/{id}/leaderboard` | host | `ShowLeaderboardCommand` | persists ranks; then best-effort broadcasts `LeaderboardUpdated` | 200 `LeaderboardResponse` |
+| `POST /api/games/{id}/end` | host | `EndGameCommand` | commits end state; then best-effort broadcasts `GameEnded` | 200 `LeaderboardResponse` |
+| `DELETE /api/games/{id}/participants/{participantId}` | host | `RemoveParticipantCommand` | idempotent; the first removal of a non-removed, unanswered eligible participant atomically decrements eligibility exactly once before best-effort `ParticipantRemoved` / possible `QuestionEnded` broadcasts; repeated removal does not decrement again | 204 |
+| `POST /api/games/join` | none | `JoinGameRequest` → `JoinGameCommand` | reserves one of at most 500 seats while the game is in the lobby; no SignalR attachment or broadcast | 200 `JoinGameResponse` |
 
 There is **no registration endpoint** — the only host account is the configuration
 seed (`Seeding:Host`). Players never authenticate.
@@ -154,6 +202,11 @@ carries, for the post-question phases:
 
 `currentQuestion` (`PlayerQuestionResponse`, no correct answer) is still only set
 while a question is active.
+
+`PlayerGameStateResponse` also includes `connectedParticipantCount` and
+`reservedParticipantCount`; `HostGameStateResponse` includes those same counts and,
+while a question is active, `eligibleParticipantCount`. These fields are the
+resynchronization source for presence and answer-progress displays.
 
 ---
 
