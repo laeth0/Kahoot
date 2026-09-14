@@ -301,27 +301,26 @@ budget_tokens: 1000
   - Verified static check (`bash observability/scripts/validate-config.sh` advancing to `alerts.yml`).
   - Committed with `feat: provision correlated logs and traces` and pushed to GitHub `origin/main`.
 
+- **Production Observability Platform — Task 15 Provision Dashboard-Visible Grafana Alert Rules (Completed & Verified):**
+  - Created `observability/grafana/provisioning/alerting/alerts.yml` containing 18 unified alert rules in `Kahoot Observability` folder across 5 one-minute evaluation groups: `Availability`, `Application`, `Realtime`, `Database`, and `Infrastructure`.
+  - Implemented stable UIDs (`kahoot-backend-down`, `kahoot-frontend-down`, `kahoot-container-backend-missing`, `kahoot-container-frontend-missing`, `kahoot-container-nginx-missing`, `kahoot-high-error-rate`, `kahoot-high-latency`, `kahoot-answer-latency`, `kahoot-realtime-collapse`, `kahoot-realtime-failures`, `kahoot-database-down`, `kahoot-database-slow`, `kahoot-database-errors`, `kahoot-vm-cpu-high`, `kahoot-vm-memory-high`, `kahoot-vm-disk-high`, `kahoot-network-probe-failed`, `kahoot-collector-dropping`).
+  - Standardized 3-stage Grafana expressions: ref `A` (Prometheus query), ref `B` (reduce with `last`), ref `C` (threshold comparison with `condition: C` and `execErrState: Alerting`).
+  - Verified no-data behaviors: availability rules fail closed with `noDataState: Alerting`, while traffic-dependent rules evaluate `noDataState: OK` to prevent false alarms during idle periods.
+  - Added runbook links pointing to `docs/observability/alerts.md` and `__dashboardUid__`/`__panelId__` annotations linking to primary dashboard panels.
+  - Zero external notification channels/contact points configured, maintaining dashboard-only visibility.
+  - Validated live provisioning in Grafana 13.2.1 container (`msg="finished to provision alerting"`, 0 errors).
+  - Validated static configuration with `bash observability/scripts/validate-config.sh` (16 of 16 required files pass).
+  - Committed with `feat: provision dashboard-visible alerts` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
 
 **Active Quest:** Production Observability Platform (`docs/superpowers/plans/2026-09-14-production-observability-platform.md`)
-- Task 0: Completed.
-- Task 1: Completed.
-- Task 2: Completed.
-- Task 3: Completed.
-- Task 4: Completed.
-- Task 5: Completed.
-- Task 6: Completed.
-- Task 7: Completed.
-- Task 8: Completed.
-- Task 9: Completed.
-- Task 10: Completed.
-- Task 11: Completed.
-- Task 12: Completed.
-- Task 13: Completed.
-- Task 14: Completed.
-- Task 15: Provision Dashboard-Visible Grafana Alert Rules (`observability/grafana/provisioning/alerting/alerts.yml`).
+- Task 0 to 15: Completed.
+- Task 16: Add Static, Runtime, and Controlled-Failure Validation (`observability/scripts/validate-config.sh`, `validate-observability.sh`, `controlled-failures.md`, `recording-rules.test.yml`).
+- Task 17: Document Architecture, Access, Operations, and Security.
+- Task 18: Prove Capacity, Deploy Safely, and Record Rollback.
 
 ---
 

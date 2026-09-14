@@ -1177,11 +1177,11 @@ git commit -m "feat: provision correlated logs and traces"
 - Evaluator: Grafana-managed alerting against Prometheus UID `prometheus`
 - Output: alert state in Grafana alert lists and Alerting pages only; no contact points or external notifications
 
-- [ ] **Step 1: Create fixed alert groups and metadata**
+- [x] **Step 1: Create fixed alert groups and metadata**
 
 Use one-minute evaluation groups named `Availability`, `Application`, `Realtime`, `Database`, and `Infrastructure` in the provisioned `Kahoot Observability` folder. Give every rule a stable UID, `severity=critical|warning`, `component`, concise summary, runbook URL pointing to the matching section in `docs/observability/alerts.md`, and `__dashboardUid__`/`__panelId__` annotations linking it to its primary dashboard panel.
 
-- [ ] **Step 2: Provision this exact initial rule set**
+- [x] **Step 2: Provision this exact initial rule set**
 
 | UID/title | PromQL condition | For | Severity | No-data behavior |
 |---|---|---:|---|---|
@@ -1206,19 +1206,19 @@ Use one-minute evaluation groups named `Availability`, `Application`, `Realtime`
 
 Resolve the pinned Collector refused/dropped metric names by querying Prometheus after first local emission, then write the full explicit expression into the YAML. Do not ship the prose phrase “increase in” or a guessed series name. Confirm `kahoot:db_errors:rate5m` receives failed Npgsql client spans. If a Collector pressure series is absent, omit only `kahoot-collector-dropping`, record the exact missing series in implementation notes, and keep Collector health panels plus backend availability coverage.
 
-- [ ] **Step 3: Use stable Grafana expression stages**
+- [x] **Step 3: Use stable Grafana expression stages**
 
 For every rule, query Prometheus as ref `A`, reduce with `last` as ref `B`, and compare the numeric threshold as ref `C`; set `condition: C`. Use `execErrState: Alerting`. Use the table's no-data behavior so missing availability data fails closed while idle traffic does not create false alerts.
 
-- [ ] **Step 4: Keep notification design extensible but empty**
+- [x] **Step 4: Keep notification design extensible but empty**
 
 Do not provision contact points, notification policies, SMTP, Microsoft Teams, Slack, webhooks, or mute timings. Keep severity/component labels and runbook annotations stable so a later notification policy can route existing rules without redesigning them. Document that dashboard-only alerts cannot notify an operator who is not viewing Grafana and cannot report that Grafana itself is unreachable.
 
-- [ ] **Step 5: Validate alert provisioning**
+- [x] **Step 5: Validate alert provisioning**
 
 Start Grafana/Prometheus, then authenticate to Grafana's provisioning API and assert all expected UIDs are returned. Inspect Grafana logs for rule parse/evaluation errors and Prometheus for missing recording rules. Confirm each alert-list panel displays the rules and every dashboard/panel annotation link resolves.
 
-- [ ] **Step 6: Commit alert rules**
+- [x] **Step 6: Commit alert rules**
 
 ```bash
 git add observability/grafana/provisioning/alerting/alerts.yml observability/grafana/dashboards

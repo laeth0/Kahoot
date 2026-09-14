@@ -1,0 +1,1413 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Availability
+    folder: Kahoot Observability
+    interval: 1m
+    rules:
+      - uid: kahoot-backend-down
+        title: Backend unavailable
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: probe_success{job="blackbox",instance="http://backend:8080/health"} == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Backend health endpoint failed probe.
+          runbook_url: docs/observability/alerts.md#kahoot-backend-down
+          __dashboardUid__: kahoot-application
+          __panelId__: "2"
+        labels:
+          severity: critical
+          component: backend
+
+      - uid: kahoot-frontend-down
+        title: Frontend unavailable
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: probe_success{job="blackbox",instance="http://frontend:80/"} == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Frontend container root failed probe.
+          runbook_url: docs/observability/alerts.md#kahoot-frontend-down
+          __dashboardUid__: kahoot-application
+          __panelId__: "3"
+        labels:
+          severity: critical
+          component: frontend
+
+      - uid: kahoot-container-backend-missing
+        title: Backend container missing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: absent(container_last_seen{container_label_com_docker_compose_project="kahoot",container_label_com_docker_compose_service="backend"})
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Backend Docker container is not reporting metrics.
+          runbook_url: docs/observability/alerts.md#kahoot-container-backend-missing
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "9"
+        labels:
+          severity: critical
+          component: backend
+
+      - uid: kahoot-container-frontend-missing
+        title: Frontend container missing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: absent(container_last_seen{container_label_com_docker_compose_project="kahoot",container_label_com_docker_compose_service="frontend"})
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Frontend Docker container is not reporting metrics.
+          runbook_url: docs/observability/alerts.md#kahoot-container-frontend-missing
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "9"
+        labels:
+          severity: critical
+          component: frontend
+
+      - uid: kahoot-container-nginx-missing
+        title: Nginx container missing
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: absent(container_last_seen{container_label_com_docker_compose_project="kahoot",container_label_com_docker_compose_service="nginx"})
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Nginx reverse proxy Docker container is missing.
+          runbook_url: docs/observability/alerts.md#kahoot-container-nginx-missing
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "9"
+        labels:
+          severity: critical
+          component: nginx
+
+      - uid: kahoot-network-probe-failed
+        title: Internal route probe failure
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: min(probe_success) == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 3m
+        annotations:
+          summary: One or more internal blackbox network route probes failed.
+          runbook_url: docs/observability/alerts.md#kahoot-network-probe-failed
+          __dashboardUid__: kahoot-application
+          __panelId__: "2"
+        labels:
+          severity: warning
+          component: network
+
+  - orgId: 1
+    name: Application
+    folder: Kahoot Observability
+    interval: 1m
+    rules:
+      - uid: kahoot-high-error-rate
+        title: HTTP 5xx above 2%
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:http_requests:rate5m > 0.1 and kahoot:http_5xx:ratio5m > 0.02
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: HTTP 5xx error ratio exceeded 2% under load.
+          runbook_url: docs/observability/alerts.md#kahoot-high-error-rate
+          __dashboardUid__: kahoot-application
+          __panelId__: "5"
+        labels:
+          severity: warning
+          component: backend
+
+      - uid: kahoot-high-latency
+        title: API p95 above 1 second
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:http_latency:p95_5m > 1
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Backend HTTP p95 latency exceeded 1 second.
+          runbook_url: docs/observability/alerts.md#kahoot-high-latency
+          __dashboardUid__: kahoot-application
+          __panelId__: "6"
+        labels:
+          severity: warning
+          component: backend
+
+  - orgId: 1
+    name: Realtime
+    folder: Kahoot Observability
+    interval: 1m
+    rules:
+      - uid: kahoot-answer-latency
+        title: Answer p95 above 500 ms
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:answer_latency:p95_5m > 0.5
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Game answer processing p95 latency exceeded 500 ms target.
+          runbook_url: docs/observability/alerts.md#kahoot-answer-latency
+          __dashboardUid__: kahoot-realtime
+          __panelId__: "9"
+        labels:
+          severity: warning
+          component: game
+
+      - uid: kahoot-realtime-collapse
+        title: Players present without SignalR connections
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot_players_connected > 0 and kahoot:signalr_connections == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 2m
+        annotations:
+          summary: Active game participants exist but zero active SignalR connections recorded.
+          runbook_url: docs/observability/alerts.md#kahoot-realtime-collapse
+          __dashboardUid__: kahoot-realtime
+          __panelId__: "4"
+        labels:
+          severity: critical
+          component: realtime
+
+      - uid: kahoot-realtime-failures
+        title: Realtime event failures
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(kahoot_signalr_events_sent_total{outcome="failure"}[5m])) > 0.05
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: SignalR broadcast delivery failure rate exceeded 0.05 events/sec.
+          runbook_url: docs/observability/alerts.md#kahoot-realtime-failures
+          __dashboardUid__: kahoot-realtime
+          __panelId__: "11"
+        labels:
+          severity: warning
+          component: realtime
+
+  - orgId: 1
+    name: Database
+    folder: Kahoot Observability
+    interval: 1m
+    rules:
+      - uid: kahoot-database-down
+        title: PostgreSQL unavailable
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: up{job="postgres"} == 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 1m
+        annotations:
+          summary: PostgreSQL scrape target is reporting down.
+          runbook_url: docs/observability/alerts.md#kahoot-database-down
+          __dashboardUid__: kahoot-database
+          __panelId__: "2"
+        labels:
+          severity: critical
+          component: database
+
+      - uid: kahoot-database-slow
+        title: Database p95 above 1 second
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:db_latency:p95_5m > 1
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Database query client latency p95 exceeded 1 second.
+          runbook_url: docs/observability/alerts.md#kahoot-database-slow
+          __dashboardUid__: kahoot-database
+          __panelId__: "4"
+        labels:
+          severity: warning
+          component: database
+
+      - uid: kahoot-database-errors
+        title: Database connection or operation failures
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:db_errors:rate5m > 0.05
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Database connection or client operation error rate exceeded 0.05/sec.
+          runbook_url: docs/observability/alerts.md#kahoot-database-errors
+          __dashboardUid__: kahoot-database
+          __panelId__: "7"
+        labels:
+          severity: warning
+          component: database
+
+  - orgId: 1
+    name: Infrastructure
+    folder: Kahoot Observability
+    interval: 1m
+    rules:
+      - uid: kahoot-vm-cpu-high
+        title: VM CPU above 80%
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:vm_cpu:ratio5m > 0.80
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 10m
+        annotations:
+          summary: Azure VM CPU utilization has been sustained above 80%.
+          runbook_url: docs/observability/alerts.md#kahoot-vm-cpu-high
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "2"
+        labels:
+          severity: warning
+          component: host
+
+      - uid: kahoot-vm-memory-high
+        title: VM memory above 90%
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:vm_memory:ratio > 0.90
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Azure VM memory usage exceeded 90% critical threshold.
+          runbook_url: docs/observability/alerts.md#kahoot-vm-memory-high
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "3"
+        labels:
+          severity: critical
+          component: host
+
+      - uid: kahoot-vm-disk-high
+        title: Root disk above 90%
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: kahoot:vm_disk:ratio > 0.90
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: Alerting
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: Root filesystem disk utilization exceeded 90%.
+          runbook_url: docs/observability/alerts.md#kahoot-vm-disk-high
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "4"
+        labels:
+          severity: critical
+          component: host
+
+      - uid: kahoot-collector-dropping
+        title: Collector refusing telemetry
+        condition: C
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 300
+              to: 0
+            datasourceUid: prometheus
+            model:
+              editorMode: code
+              expr: sum(rate(otelcol_receiver_refused_spans_total[5m])) > 0 or sum(rate(otelcol_exporter_enqueue_failed_spans_total[5m])) > 0
+              instant: true
+              intervalMs: 1000
+              maxDataPoints: 43200
+              range: false
+              refId: A
+          - refId: B
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params: []
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - B
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: A
+              reducer: last
+              refId: B
+              type: reduce
+          - refId: C
+            datasourceUid: __expr__
+            model:
+              conditions:
+                - evaluator:
+                    params:
+                      - 0
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params:
+                      - C
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                name: Expression
+                type: __expr__
+                uid: __expr__
+              expression: $B > 0
+              refId: C
+              type: math
+        noDataState: OK
+        execErrState: Alerting
+        for: 5m
+        annotations:
+          summary: OpenTelemetry Collector is refusing or dropping telemetry.
+          runbook_url: docs/observability/alerts.md#kahoot-collector-dropping
+          __dashboardUid__: kahoot-infrastructure
+          __panelId__: "10"
+        labels:
+          severity: warning
+          component: collector
