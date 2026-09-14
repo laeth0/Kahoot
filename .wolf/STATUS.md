@@ -340,7 +340,7 @@ budget_tokens: 1000
 
 ## 🚀 Next phase
 
-**Quest Complete:** Production Observability Platform (`docs/superpowers/plans/2026-09-14-production-observability-platform.md`)
+**Quest Complete:** Production Observability Platform
 - All 19 tasks (Task 0 through Task 18) are fully implemented, verified, documented, and committed.
 - Ready for production Azure VM deployment using `docs/observability/setup.md` and `docs/azure-vm-deployment.md`.
 
