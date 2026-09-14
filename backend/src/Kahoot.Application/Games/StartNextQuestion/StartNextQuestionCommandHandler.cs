@@ -6,7 +6,6 @@ using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
-using Kahoot.Domain.Quizzes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Application.Games.StartNextQuestion;
@@ -37,13 +36,13 @@ internal sealed class StartNextQuestionCommandHandler(
             return Result.Failure<QuestionStartedResponse>(GameErrors.InvalidStateTransition);
         }
 
-        int totalQuestions = await dbContext.Questions
-            .CountAsync(question => question.QuizId == game.QuizId, cancellationToken);
+        int totalQuestions = await dbContext.GameQuestionSnapshots
+            .CountAsync(question => question.GameSessionId == game.Id, cancellationToken);
 
         if (reentry)
         {
-            Question? current = await LoadQuestionAsync(
-                game.QuizId, game.CurrentQuestionIndex ?? 0, cancellationToken);
+            GameQuestionSnapshot? current = await LoadQuestionAsync(
+                game.Id, game.CurrentQuestionIndex ?? 0, cancellationToken);
 
             if (current is null)
             {
@@ -63,15 +62,18 @@ internal sealed class StartNextQuestionCommandHandler(
             return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
         }
 
-        Question? question = await LoadQuestionAsync(game.QuizId, nextIndex, cancellationToken);
+        GameQuestionSnapshot? question = await LoadQuestionAsync(game.Id, nextIndex, cancellationToken);
         if (question is null)
         {
             return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
         }
 
+        int eligibleCount = await dbContext.Participants
+            .CountAsync(participant => participant.GameSessionId == game.Id && !participant.IsRemoved, cancellationToken);
+
         GameStatus sourceState = game.Status;
         QuestionStartedResponse response = QuestionActivation.Activate(
-            game, question, nextIndex, totalQuestions, timeProvider.GetUtcNow());
+            game, question, nextIndex, totalQuestions, eligibleCount, timeProvider.GetUtcNow());
 
         try
         {
@@ -91,11 +93,11 @@ internal sealed class StartNextQuestionCommandHandler(
         return Result.Success(response);
     }
 
-    private Task<Question?> LoadQuestionAsync(Guid quizId, int orderIndex, CancellationToken cancellationToken) =>
-        dbContext.Questions
+    private Task<GameQuestionSnapshot?> LoadQuestionAsync(Guid gameSessionId, int orderIndex, CancellationToken cancellationToken) =>
+        dbContext.GameQuestionSnapshots
             .AsNoTracking()
             .Include(question => question.Choices)
             .FirstOrDefaultAsync(
-                question => question.QuizId == quizId && question.OrderIndex == orderIndex,
+                question => question.GameSessionId == gameSessionId && question.OrderIndex == orderIndex,
                 cancellationToken);
 }

@@ -22,12 +22,12 @@ public sealed class AnswerConfiguration : IEntityTypeConfiguration<Answer>
         builder.HasIndex(answer => answer.SelectedChoiceId).HasDatabaseName("ix_answer_selected_choice_id");
 
         builder.HasOne(answer => answer.Question)
-            .WithMany()
+            .WithMany(question => question.Answers)
             .HasForeignKey(answer => answer.QuestionId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(answer => answer.SelectedChoice)
-            .WithMany()
+            .WithMany(choice => choice.Answers)
             .HasForeignKey(answer => answer.SelectedChoiceId)
             .OnDelete(DeleteBehavior.Restrict);
 

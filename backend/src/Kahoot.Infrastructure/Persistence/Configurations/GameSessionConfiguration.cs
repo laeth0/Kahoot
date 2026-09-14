@@ -13,6 +13,9 @@ public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSess
         builder.Property(session => session.Id).ValueGeneratedNever();
 
         builder.Property(session => session.Pin).HasMaxLength(8).IsRequired();
+        builder.Property(session => session.QuizTitle).HasMaxLength(200).IsRequired();
+        builder.Property(session => session.CurrentQuestionEligibleCount).HasDefaultValue(0);
+        builder.Property(session => session.CurrentQuestionAnsweredCount).HasDefaultValue(0);
 
         builder.Property(session => session.Status)
             .HasConversion<string>()
@@ -45,10 +48,15 @@ public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSess
             .HasForeignKey(session => session.HostId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<Question>()
+        builder.HasOne(session => session.CurrentQuestion)
             .WithMany()
             .HasForeignKey(session => session.CurrentQuestionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(session => session.QuestionSnapshots)
+            .WithOne(snapshot => snapshot.GameSession)
+            .HasForeignKey(snapshot => snapshot.GameSessionId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(session => session.Participants)
             .WithOne(participant => participant.GameSession)

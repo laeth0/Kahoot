@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using Kahoot.Application.Common.Abstractions;
+using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
-using Kahoot.Domain.Quizzes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Application.Games.StartGame;
@@ -19,14 +19,21 @@ internal sealed class StartGameCommandHandler(
 {
     public async Task<Result<QuestionStartedResponse>> Handle(StartGameCommand command, CancellationToken cancellationToken)
     {
-        Result<GameSession> gameResult = await HostGameGuard.LoadOwnedGameAsync(
-            dbContext, currentUser, command.GameId, cancellationToken);
-        if (gameResult.IsFailure)
+        if (currentUser.HostId is not { } hostId)
         {
-            return Result.Failure<QuestionStartedResponse>(gameResult.Error);
+            return Result.Failure<QuestionStartedResponse>(SharedErrors.Unauthorized);
         }
 
-        GameSession game = gameResult.Value;
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        GameSession? game = await dbContext.GameSessions
+            .FromSqlInterpolated($"SELECT * FROM game_sessions WHERE id = {command.GameId} AND host_id = {hostId} FOR UPDATE")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (game is null)
+        {
+            return Result.Failure<QuestionStartedResponse>(GameErrors.NotFound);
+        }
 
         bool alreadyOnFirstQuestion = game.Status == GameStatus.QuestionActive && game.CurrentQuestionIndex == 0;
         if (!alreadyOnFirstQuestion && !GameStateMachine.CanFire(game.Status, GameTransition.StartFirstQuestion))
@@ -35,8 +42,8 @@ internal sealed class StartGameCommandHandler(
             return Result.Failure<QuestionStartedResponse>(GameErrors.InvalidStateTransition);
         }
 
-        int totalQuestions = await dbContext.Questions
-            .CountAsync(question => question.QuizId == game.QuizId, cancellationToken);
+        int totalQuestions = await dbContext.GameQuestionSnapshots
+            .CountAsync(question => question.GameSessionId == game.Id, cancellationToken);
         if (totalQuestions == 0)
         {
             return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
@@ -44,7 +51,7 @@ internal sealed class StartGameCommandHandler(
 
         int targetIndex = alreadyOnFirstQuestion ? game.CurrentQuestionIndex ?? 0 : 0;
 
-        Question? question = await LoadQuestionAsync(game.QuizId, targetIndex, cancellationToken);
+        GameQuestionSnapshot? question = await LoadQuestionAsync(game.Id, targetIndex, cancellationToken);
         if (question is null)
         {
             return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
@@ -59,13 +66,18 @@ internal sealed class StartGameCommandHandler(
             return Result.Success(QuestionActivation.Rebuild(game, question, totalQuestions));
         }
 
+        int eligibleCount = await dbContext.Participants
+            .CountAsync(participant => participant.GameSessionId == game.Id && !participant.IsRemoved, cancellationToken);
+
         GameStatus sourceState = game.Status;
         QuestionStartedResponse response = QuestionActivation.Activate(
-            game, question, 0, totalQuestions, timeProvider.GetUtcNow());
+            game, question, 0, totalQuestions, eligibleCount, timeProvider.GetUtcNow());
 
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
             Activity.Current?.SetTag("game.id", game.Id);
             Activity.Current?.SetTag("transition", "StartFirstQuestion");
             Activity.Current?.SetTag("game.source_state", sourceState.ToString());
@@ -81,11 +93,11 @@ internal sealed class StartGameCommandHandler(
         return Result.Success(response);
     }
 
-    private Task<Question?> LoadQuestionAsync(Guid quizId, int orderIndex, CancellationToken cancellationToken) =>
-        dbContext.Questions
+    private Task<GameQuestionSnapshot?> LoadQuestionAsync(Guid gameSessionId, int orderIndex, CancellationToken cancellationToken) =>
+        dbContext.GameQuestionSnapshots
             .AsNoTracking()
             .Include(question => question.Choices)
             .FirstOrDefaultAsync(
-                question => question.QuizId == quizId && question.OrderIndex == orderIndex,
+                question => question.GameSessionId == gameSessionId && question.OrderIndex == orderIndex,
                 cancellationToken);
 }

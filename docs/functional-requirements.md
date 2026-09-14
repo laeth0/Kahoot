@@ -69,9 +69,9 @@ A player:
 - A quiz has a title, an optional description, an `isPublished` flag, and an ordered list of questions.
 - A question has text, an optional image, an order, a time limit, base points, and 2–6 choices.
 - A choice has text and/or an image (at least one), and an `isCorrect` flag.
-- **G2 — correct-answer cardinality:** one or more choices per question may be
-  marked correct. A submitted answer is correct when its selected choice is one
-  of those marked choices.
+- **G2 — correct-answer cardinality:** exactly one choice per question must be
+  marked correct. A submitted answer is correct when its selected choice is the
+  single correct choice.
 - A quiz must be **published** before a game can be started from it. Publishing requires the quiz to be valid (see FR-3.2).
 - A quiz that has ever been used to run a game cannot be deleted (historical results are preserved).
 - A quiz with a game session that is not finished cannot be edited.
@@ -86,7 +86,7 @@ A player:
 
 ### FR-3.2 Publish validation
 
-- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and at least one correct choice, and every choice has text or an image.
+- A quiz can only be published when every question has valid text, a time limit in range, non-negative points, 2–6 choices, and exactly one correct choice, and every choice has text or an image.
 
 ---
 

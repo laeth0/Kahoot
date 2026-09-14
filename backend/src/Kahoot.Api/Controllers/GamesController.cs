@@ -158,11 +158,11 @@ public sealed class GamesController(ISender sender, GameNotifier notifier) : Api
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveParticipant(Guid id, Guid participantId, CancellationToken cancellationToken)
     {
-        Result result = await sender.Send(new RemoveParticipantCommand(id, participantId), cancellationToken);
+        Result<RemoveParticipantResponse> result = await sender.Send(new RemoveParticipantCommand(id, participantId), cancellationToken);
 
         if (result.IsSuccess)
         {
-            await notifier.ParticipantRemovedAsync(id, participantId);
+            await notifier.ParticipantRemovedAsync(id, participantId, result.Value.ConnectionId);
 
             Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
                 new TryAutoEndQuestionCommand(id, null),

@@ -19,6 +19,12 @@ public sealed class GameSession
 
     public int? CurrentQuestionIndex { get; set; }
 
+    public string QuizTitle { get; set; } = null!;
+
+    public int CurrentQuestionEligibleCount { get; set; }
+
+    public int CurrentQuestionAnsweredCount { get; set; }
+
     public DateTime? CurrentQuestionStartedAt { get; set; }
 
     public DateTime? CurrentQuestionEndsAt { get; set; }
@@ -30,6 +36,10 @@ public sealed class GameSession
     public Quiz? Quiz { get; set; }
 
     public Host? Host { get; set; }
+
+    public GameQuestionSnapshot? CurrentQuestion { get; set; }
+
+    public ICollection<GameQuestionSnapshot> QuestionSnapshots { get; set; } = [];
 
     public ICollection<Participant> Participants { get; set; } = [];
 

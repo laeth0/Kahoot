@@ -12,9 +12,9 @@ internal static class QuestionResultsBuilder
         int questionIndex,
         CancellationToken cancellationToken)
     {
-        var choices = await dbContext.Choices
+        var choices = await dbContext.GameChoiceSnapshots
             .AsNoTracking()
-            .Where(choice => choice.QuestionId == questionId)
+            .Where(choice => choice.QuestionSnapshotId == questionId)
             .OrderBy(choice => choice.OrderIndex)
             .Select(choice => new { choice.Id, choice.Text, choice.ImageUrl, choice.IsCorrect })
             .ToListAsync(cancellationToken);

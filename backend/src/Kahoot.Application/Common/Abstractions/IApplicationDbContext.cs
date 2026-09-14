@@ -24,6 +24,12 @@ public interface IApplicationDbContext
 
     DbSet<Answer> Answers { get; }
 
+    DbSet<GameQuestionSnapshot> GameQuestionSnapshots { get; }
+
+    DbSet<GameChoiceSnapshot> GameChoiceSnapshots { get; }
+
+    Microsoft.EntityFrameworkCore.ChangeTracking.ChangeTracker ChangeTracker { get; }
+
     DatabaseFacade Database { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

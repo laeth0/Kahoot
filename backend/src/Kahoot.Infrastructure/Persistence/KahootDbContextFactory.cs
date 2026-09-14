@@ -17,9 +17,18 @@ public sealed class KahootDbContextFactory : IDesignTimeDbContextFactory<KahootD
             .AddJsonFile("appsettings.json", optional: false)
             .Build();
 
-        string connectionString = configuration.GetConnectionString("DefaultConnection")
-            ?? throw new InvalidOperationException(
-                $"Connection string 'DefaultConnection' was not found in {ApiProjectName}/appsettings.json.");
+        string? envConnection = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection");
+        string connectionString = !string.IsNullOrWhiteSpace(envConnection)
+            ? envConnection
+            : configuration.GetConnectionString("DefaultConnection")
+                ?? throw new InvalidOperationException(
+                    $"Connection string 'DefaultConnection' was not found in {ApiProjectName}/appsettings.json.");
+
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new InvalidOperationException(
+                "Connection string 'DefaultConnection' is empty. Set ConnectionStrings__DefaultConnection environment variable.");
+        }
 
         DbContextOptions<KahootDbContext> options = new DbContextOptionsBuilder<KahootDbContext>()
             .UseNpgsql(connectionString)

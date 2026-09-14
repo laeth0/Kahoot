@@ -1,17 +1,17 @@
-using Kahoot.Domain.Quizzes;
+using Kahoot.Domain.Games;
 
 namespace Kahoot.Application.Games.Common;
 
 internal static class GameQuestionMapper
 {
     public static QuestionStartedResponse BuildStarted(
-        Question question,
+        GameQuestionSnapshot question,
         int questionIndex,
         int totalQuestions,
         DateTimeOffset startedAt,
         DateTimeOffset endsAt)
     {
-        Choice[] ordered = [.. question.Choices.OrderBy(choice => choice.OrderIndex)];
+        GameChoiceSnapshot[] ordered = [.. question.Choices.OrderBy(choice => choice.OrderIndex)];
         IReadOnlyList<Guid> correctChoiceIds = [.. ordered.Where(choice => choice.IsCorrect).Select(choice => choice.Id)];
 
         PlayerQuestionResponse player = new(
@@ -40,7 +40,7 @@ internal static class GameQuestionMapper
     }
 
     public static PlayerQuestionResponse BuildPlayerView(
-        Question question,
+        GameQuestionSnapshot question,
         int questionIndex,
         int totalQuestions,
         DateTimeOffset endsAt) =>

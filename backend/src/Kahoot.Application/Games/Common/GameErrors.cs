@@ -19,6 +19,9 @@ public static class GameErrors
     public static readonly Error NotJoinable =
         new("Game.NotJoinable", "This game is no longer accepting players.");
 
+    public static readonly Error SessionFull =
+        new("Game.SessionFull", "This game has reached the maximum capacity of 500 players.");
+
     public static readonly Error NicknameTaken =
         new("Game.NicknameTaken", "That nickname is already taken in this game.");
 

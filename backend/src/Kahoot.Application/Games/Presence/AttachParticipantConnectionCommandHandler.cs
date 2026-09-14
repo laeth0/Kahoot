@@ -1,5 +1,6 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,14 +14,16 @@ internal sealed class AttachParticipantConnectionCommandHandler(
     {
         DateTime now = timeProvider.GetUtcNow().UtcDateTime;
 
-        await dbContext.Participants
-            .Where(participant => participant.Id == command.ParticipantId)
+        int updated = await dbContext.Participants
+            .Where(participant => participant.Id == command.ParticipantId && !participant.IsRemoved)
             .ExecuteUpdateAsync(
                 setters => setters
                     .SetProperty(participant => participant.ConnectionId, command.ConnectionId)
                     .SetProperty(participant => participant.LastSeenAt, now),
                 cancellationToken);
 
-        return Result.Success();
+        return updated > 0
+            ? Result.Success()
+            : Result.Failure(GameErrors.ParticipantRemoved);
     }
 }

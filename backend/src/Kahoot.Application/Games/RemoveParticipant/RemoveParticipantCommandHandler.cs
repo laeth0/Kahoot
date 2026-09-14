@@ -11,15 +11,15 @@ namespace Kahoot.Application.Games.RemoveParticipant;
 internal sealed class RemoveParticipantCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
-    TimeProvider timeProvider) : ICommandHandler<RemoveParticipantCommand>
+    TimeProvider timeProvider) : ICommandHandler<RemoveParticipantCommand, RemoveParticipantResponse>
 {
-    public async Task<Result> Handle(RemoveParticipantCommand command, CancellationToken cancellationToken)
+    public async Task<Result<RemoveParticipantResponse>> Handle(RemoveParticipantCommand command, CancellationToken cancellationToken)
     {
         Result<GameSession> gameResult = await HostGameGuard.LoadOwnedGameAsync(
             dbContext, currentUser, command.GameId, cancellationToken);
         if (gameResult.IsFailure)
         {
-            return Result.Failure(gameResult.Error);
+            return Result.Failure<RemoveParticipantResponse>(gameResult.Error);
         }
 
         Participant? participant = await dbContext.Participants
@@ -28,14 +28,15 @@ internal sealed class RemoveParticipantCommandHandler(
                 cancellationToken);
         if (participant is null)
         {
-            return Result.Failure(GameErrors.ParticipantNotFound);
+            return Result.Failure<RemoveParticipantResponse>(GameErrors.ParticipantNotFound);
         }
 
         if (participant.IsRemoved)
         {
-            return Result.Success();
+            return Result.Success(new RemoveParticipantResponse(null));
         }
 
+        string? connectionId = participant.ConnectionId;
         DateTime now = timeProvider.GetUtcNow().UtcDateTime;
         participant.IsRemoved = true;
         participant.RemovedAt = now;
@@ -44,6 +45,6 @@ internal sealed class RemoveParticipantCommandHandler(
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Result.Success();
+        return Result.Success(new RemoveParticipantResponse(connectionId));
     }
 }

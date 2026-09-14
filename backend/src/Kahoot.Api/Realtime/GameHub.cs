@@ -39,7 +39,12 @@ public sealed class GameHub(
         }
 
         JoinGameResponse value = result.Value;
-        await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, value.SessionToken);
+        Result trackResult = await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, value.SessionToken);
+        if (trackResult.IsFailure)
+        {
+            return RealtimeResponse<JoinGameResponse>.Failure(trackResult.Error);
+        }
+
         await notifier.ParticipantJoinedAsync(
             value.GameId,
             new GameParticipantResponse(value.ParticipantId, value.Nickname, 0, null, true, false));
@@ -62,7 +67,12 @@ public sealed class GameHub(
             }
 
             PlayerGameStateResponse value = result.Value;
-            await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
+            Result trackResult = await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
+            if (trackResult.IsFailure)
+            {
+                return RealtimeResponse<PlayerGameStateResponse>.Failure(trackResult.Error);
+            }
+
             await notifier.ParticipantJoinedAsync(
                 value.GameId,
                 new GameParticipantResponse(value.ParticipantId, value.Nickname, value.TotalScore, value.Rank, true, false));
@@ -163,16 +173,23 @@ public sealed class GameHub(
         }
     }
 
-    private async Task TrackPlayerConnectionAsync(Guid gameId, Guid participantId, string sessionToken)
+    private async Task<Result> TrackPlayerConnectionAsync(Guid gameId, Guid participantId, string sessionToken)
     {
+        Result attachResult = await sender.Send(
+            new AttachParticipantConnectionCommand(participantId, Context.ConnectionId),
+            Context.ConnectionAborted);
+
+        if (attachResult.IsFailure)
+        {
+            return attachResult;
+        }
+
         Context.Items[GameIdItem] = gameId;
         Context.Items[ParticipantIdItem] = participantId;
         Context.Items[SessionTokenItem] = sessionToken;
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GameGroups.Players(gameId), Context.ConnectionAborted);
-        await sender.Send(
-            new AttachParticipantConnectionCommand(participantId, Context.ConnectionId),
-            Context.ConnectionAborted);
+        return Result.Success();
     }
 
     private bool AllowSubmit()

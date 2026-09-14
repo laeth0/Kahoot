@@ -12,6 +12,31 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Phase 0, Phase 1, & Phase 2 Implementation (Completed & Verified):**
+  - **Phase 0 — Credential Hygiene & Validation:**
+    - Untracked and removed tracked secret-bearing files (`kahoot-server_key.pem`, `frontend/.env.production`, `load-tests/.env`).
+    - Stripped default database password values from `Kahoot.Api/appsettings.json` and `appsettings.Production.json`.
+    - Made `KahootDbContextFactory` resilient using `Environment.GetEnvironmentVariable` for `ConnectionStrings__DefaultConnection`.
+    - Replaced hardcoded password with placeholder in `load-tests/.env.example`.
+    - Upgraded `observability/scripts/validate-config.sh`: fixed variable names, added private key detection, barred tracked non-example `.env` files, added binary file exclusion, and verified 100% pass.
+  - **Phase 1 — Invariant Contracts & Immutable Quiz Snapshots:**
+    - Locked Gate G2: enforced strictly exactly one correct choice per question across `QuestionValidationRules`, `PublishQuizCommandHandler`, `QuestionFormDialog.tsx`, and `checklistUtils.ts`. Updated functional requirements.
+    - Implemented immutable quiz snapshots via `GameQuestionSnapshot` and `GameChoiceSnapshot` domain models and EF Core configurations.
+    - Added `QuizTitle`, `CurrentQuestionEligibleCount`, `CurrentQuestionAnsweredCount`, and snapshot question foreign keys to `GameSession` and `Answer`.
+    - Updated `backend/projectSchema.dbml` (zero comments) and validated via `dbml2sql` (pass).
+    - Generated forward EF Core migration `20260914200007_AddGameSnapshotsAndCounters` (zero comments, immutable migrations preserved).
+    - Updated `CreateGameCommandHandler` to snapshot quiz questions and choices in the game creation transaction.
+    - Rewrote `QuestionActivation`, `GameQuestionMapper`, `QuestionResultsBuilder`, `StartGameCommandHandler`, `StartNextQuestionCommandHandler`, `GetHostGameStateQueryHandler`, and `GetQuestionResultsQueryHandler` to operate on snapshots.
+  - **Phase 2 — Concurrency Linearization, Durable Counters, & Realtime Hardening:**
+    - Linearized `JoinGameCommandHandler` and `StartGameCommandHandler` with PostgreSQL `SELECT ... FOR UPDATE` row-level locks, eliminating races between player joins and game start.
+    - Enforced 500-player maximum capacity in `JoinGameCommandHandler` returning `GameErrors.SessionFull`.
+    - Replaced expensive per-answer aggregate queries (`COUNT(*)` on answers and anti-join on participants) with durable session counters (`CurrentQuestionEligibleCount` and `CurrentQuestionAnsweredCount`).
+    - Made answer submission atomically increment `CurrentQuestionAnsweredCount` in the same transaction as score update.
+    - Optimized `TryAutoEndQuestionCommandHandler` to an O(1) counter comparison.
+    - Pre-authorized player connections in `GameHub` by executing `AttachParticipantConnectionCommand` before adding to SignalR group; rejected disconnected or removed participants.
+    - Evicted kicked players from SignalR groups in `GameNotifier` upon host removal.
+    - Decoupled committed database state from realtime notifications by catching broadcast exceptions in `GameNotifier` and logging warnings rather than failing the request.
+
 - **Observability Stack Production Removal & Dev-Only Isolation (Completed & Verified):**
   - Removed Grafana, Prometheus, Loki, Jaeger, OTel Collector, cAdvisor, Node Exporter, Postgres Exporter, and Blackbox Exporter from `docker-compose.prod.yml`.
   - Configured `backend` in `docker-compose.prod.yml` with `Observability__Enabled: ${OBSERVABILITY_ENABLED:-false}`.

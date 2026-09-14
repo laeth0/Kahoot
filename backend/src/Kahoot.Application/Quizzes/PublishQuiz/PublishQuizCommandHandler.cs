@@ -50,11 +50,11 @@ internal sealed class PublishQuizCommandHandler(IApplicationDbContext dbContext,
         {
             int choiceCount = question.Choices.Count;
             bool validChoiceCount = choiceCount is >= QuestionValidationRules.MinChoices and <= QuestionValidationRules.MaxChoices;
-            bool hasCorrectChoice = question.Choices.Any(choice => choice.IsCorrect);
+            bool hasExactlyOneCorrectChoice = question.Choices.Count(choice => choice.IsCorrect) == 1;
             bool everyChoiceHasContent = question.Choices.All(choice =>
                 !string.IsNullOrWhiteSpace(choice.Text) || !string.IsNullOrWhiteSpace(choice.ImageUrl));
 
-            if (!validChoiceCount || !hasCorrectChoice || !everyChoiceHasContent)
+            if (!validChoiceCount || !hasExactlyOneCorrectChoice || !everyChoiceHasContent)
             {
                 return false;
             }

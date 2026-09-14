@@ -115,12 +115,15 @@ Table game_sessions {
   id uuid [pk]
   quiz_id uuid [not null, ref: > quizzes.id, note: 'ON DELETE RESTRICT']
   host_id uuid [not null, ref: > hosts.id, note: 'Denormalized owner copied from quizzes.host_id at creation so ownership checks need no join. ON DELETE RESTRICT']
+  quiz_title varchar(200) [not null, note: 'Copied from quizzes.title at creation so quiz mutations do not affect live or historical game sessions']
   pin varchar(8) [not null, note: '6-digit numeric join code generated server-side']
   status game_status [not null, default: 'Created']
-  current_question_id uuid [null, ref: > questions.id, note: 'Active / most-recent question. ON DELETE RESTRICT']
+  current_question_id uuid [null, ref: > game_question_snapshots.id, note: 'Active / most-recent question snapshot. ON DELETE RESTRICT']
   current_question_index int [null, note: '0-based pointer into the ordered question list']
   current_question_started_at timestamptz [null, note: 'Server timestamp set when the question opens']
   current_question_ends_at timestamptz [null, note: 'Server-authoritative deadline = current_question_started_at + time_limit_seconds']
+  current_question_eligible_count int [not null, default: 0, note: 'Count of eligible participants when question was opened']
+  current_question_answered_count int [not null, default: 0, note: 'Durable running count of accepted answers for current question']
   started_at timestamptz [null, note: 'Set once, when the first question starts']
   finished_at timestamptz [null]
 
@@ -146,6 +149,39 @@ Table game_sessions {
     current_question_ends_at IS NULL OR current_question_started_at IS NULL
     OR current_question_ends_at >= current_question_started_at
   '''
+}
+
+Table game_question_snapshots {
+  id uuid [pk]
+  game_session_id uuid [not null, ref: > game_sessions.id, note: 'ON DELETE CASCADE']
+  order_index int [not null, note: '0-based position within the game session']
+  text varchar(500) [not null]
+  image_url varchar(2048) [null]
+  time_limit_seconds int [not null]
+  points int [not null]
+
+  indexes {
+    (game_session_id, order_index) [unique, name: 'uq_game_question_snapshot_order']
+    game_session_id [name: 'ix_game_question_snapshot_game_session_id']
+  }
+
+  Note: 'Immutable question snapshot copied from the quiz when the game session is created.'
+}
+
+Table game_choice_snapshots {
+  id uuid [pk]
+  game_question_snapshot_id uuid [not null, ref: > game_question_snapshots.id, note: 'ON DELETE CASCADE']
+  order_index int [not null, note: '0-based position within the snapshot question (0..5)']
+  text varchar(300) [null]
+  image_url varchar(2048) [null]
+  is_correct boolean [not null, default: false]
+
+  indexes {
+    (game_question_snapshot_id, order_index) [unique, name: 'uq_game_choice_snapshot_order']
+    game_question_snapshot_id [name: 'ix_game_choice_snapshot_question_id']
+  }
+
+  Note: 'Immutable choice snapshot copied from the quiz question choices when the game session is created.'
 }
 
 Table participants {
@@ -175,9 +211,9 @@ Table participants {
 Table answers {
   id uuid [pk]
   game_session_id uuid [not null, ref: > game_sessions.id, note: 'ON DELETE CASCADE. Answers are always scoped to their session']
-  question_id uuid [not null, ref: > questions.id, note: 'ON DELETE RESTRICT']
+  question_id uuid [not null, ref: > game_question_snapshots.id, note: 'ON DELETE RESTRICT']
   participant_id uuid [not null, ref: > participants.id, note: 'ON DELETE RESTRICT - players are soft-removed, never hard-deleted']
-  selected_choice_id uuid [not null, ref: > choices.id, note: 'ON DELETE RESTRICT. An answer row always records a selected choice']
+  selected_choice_id uuid [not null, ref: > game_choice_snapshots.id, note: 'ON DELETE RESTRICT. An answer row always records a selected choice']
   is_correct boolean [not null, note: 'Server-evaluated at submission']
   points_awarded int [not null, default: 0, note: 'Server-calculated final points for this answer. CHECK >= 0']
   response_time_ms int [not null, note: 'server submitted_at - current_question_started_at. CHECK >= 0']

@@ -32,13 +32,14 @@ internal sealed class GetHostGameStateQueryHandler(
             {
                 session.Id,
                 session.Pin,
-                QuizTitle = session.Quiz!.Title,
+                session.QuizTitle,
                 session.Status,
                 session.CurrentQuestionId,
                 session.CurrentQuestionIndex,
                 session.CurrentQuestionStartedAt,
                 session.CurrentQuestionEndsAt,
-                TotalQuestions = session.Quiz.Questions.Count
+                session.CurrentQuestionAnsweredCount,
+                TotalQuestions = session.QuestionSnapshots.Count
             })
             .FirstOrDefaultAsync(cancellationToken);
 
@@ -61,11 +62,7 @@ internal sealed class GetHostGameStateQueryHandler(
                 participant.IsRemoved))
             .ToListAsync(cancellationToken);
 
-        int answeredCount = game.CurrentQuestionId is { } questionId
-            ? await dbContext.Answers.CountAsync(
-                answer => answer.GameSessionId == game.Id && answer.QuestionId == questionId,
-                cancellationToken)
-            : 0;
+        int answeredCount = game.CurrentQuestionAnsweredCount;
 
         string joinUrl = joinUrlGenerator.GenerateJoinUrl(game.Pin);
 

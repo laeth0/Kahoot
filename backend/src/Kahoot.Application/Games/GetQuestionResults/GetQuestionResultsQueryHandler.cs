@@ -20,20 +20,18 @@ internal sealed class GetQuestionResultsQueryHandler(IApplicationDbContext dbCon
             return Result.Failure<QuestionResultsResponse>(SharedErrors.Unauthorized);
         }
 
-        var game = await dbContext.GameSessions
+        bool ownsGame = await dbContext.GameSessions
             .AsNoTracking()
-            .Where(session => session.Id == query.GameId && session.HostId == hostId)
-            .Select(session => new { session.QuizId })
-            .FirstOrDefaultAsync(cancellationToken);
+            .AnyAsync(session => session.Id == query.GameId && session.HostId == hostId, cancellationToken);
 
-        if (game is null)
+        if (!ownsGame)
         {
             return Result.Failure<QuestionResultsResponse>(GameErrors.NotFound);
         }
 
-        int? questionIndex = await dbContext.Questions
+        int? questionIndex = await dbContext.GameQuestionSnapshots
             .AsNoTracking()
-            .Where(question => question.Id == query.QuestionId && question.QuizId == game.QuizId)
+            .Where(question => question.Id == query.QuestionId && question.GameSessionId == query.GameId)
             .Select(question => (int?)question.OrderIndex)
             .FirstOrDefaultAsync(cancellationToken);
 

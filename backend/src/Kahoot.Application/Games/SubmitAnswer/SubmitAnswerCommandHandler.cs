@@ -43,7 +43,7 @@ internal sealed class SubmitAnswerCommandHandler(
                         .Where(participant => participant.SessionTokenHash == tokenHash)
                         .Select(participant => new { participant.Id, participant.IsRemoved })
                         .FirstOrDefault(),
-                    Question = session.Quiz!.Questions
+                    Question = session.QuestionSnapshots
                         .Where(question => question.Id == command.QuestionId)
                         .Select(question => new
                         {
@@ -121,23 +121,6 @@ internal sealed class SubmitAnswerCommandHandler(
 
             dbContext.Answers.Add(answer);
 
-            if (pointsAwarded <= 0)
-            {
-                try
-                {
-                    await dbContext.SaveChangesAsync(cancellationToken);
-                }
-                catch (DbUpdateException exception)
-                    when (dbExceptionInterpreter.IsUniqueViolation(exception, "uq_answer_participant_question"))
-                {
-                    outcome = "duplicate";
-                    return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: true));
-                }
-
-                outcome = "accepted";
-                return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: false));
-            }
-
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
             try
@@ -152,12 +135,23 @@ internal sealed class SubmitAnswerCommandHandler(
                 return Result.Success(new AnswerAckResponse(Accepted: true, AlreadyAnswered: true));
             }
 
-            await dbContext.Participants
-                .Where(participant => participant.Id == snapshot.Participant.Id)
+            if (pointsAwarded > 0)
+            {
+                await dbContext.Participants
+                    .Where(participant => participant.Id == snapshot.Participant.Id)
+                    .ExecuteUpdateAsync(
+                        setters => setters.SetProperty(
+                            participant => participant.TotalScore,
+                            participant => participant.TotalScore + pointsAwarded),
+                        cancellationToken);
+            }
+
+            await dbContext.GameSessions
+                .Where(session => session.Id == command.GameId)
                 .ExecuteUpdateAsync(
                     setters => setters.SetProperty(
-                        participant => participant.TotalScore,
-                        participant => participant.TotalScore + pointsAwarded),
+                        session => session.CurrentQuestionAnsweredCount,
+                        session => session.CurrentQuestionAnsweredCount + 1),
                     cancellationToken);
 
             await transaction.CommitAsync(cancellationToken);

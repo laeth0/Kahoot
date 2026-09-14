@@ -9,6 +9,7 @@ using Kahoot.Application.Games.Common;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
+using Kahoot.Domain.Quizzes;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kahoot.Application.Games.CreateGame;
@@ -30,17 +31,18 @@ internal sealed class CreateGameCommandHandler(
             return Result.Failure<CreateGameResponse>(SharedErrors.Unauthorized);
         }
 
-        bool? isPublished = await dbContext.Quizzes
-            .Where(quiz => quiz.Id == command.QuizId && quiz.HostId == hostId)
-            .Select(quiz => (bool?)quiz.IsPublished)
-            .FirstOrDefaultAsync(cancellationToken);
+        Quiz? quiz = await dbContext.Quizzes
+            .AsNoTracking()
+            .Include(candidate => candidate.Questions)
+            .ThenInclude(question => question.Choices)
+            .FirstOrDefaultAsync(candidate => candidate.Id == command.QuizId && candidate.HostId == hostId, cancellationToken);
 
-        if (isPublished is null)
+        if (quiz is null)
         {
             return Result.Failure<CreateGameResponse>(QuizErrors.NotFound);
         }
 
-        if (isPublished is false)
+        if (!quiz.IsPublished)
         {
             return Result.Failure<CreateGameResponse>(GameErrors.QuizNotPublished);
         }
@@ -53,9 +55,41 @@ internal sealed class CreateGameCommandHandler(
             {
                 QuizId = command.QuizId,
                 HostId = hostId,
+                QuizTitle = quiz.Title,
                 Pin = pin,
                 Status = GameStatus.Lobby
             };
+
+            foreach (Question question in quiz.Questions.OrderBy(q => q.OrderIndex))
+            {
+                GameQuestionSnapshot questionSnapshot = new()
+                {
+                    GameSession = game,
+                    SourceQuestionId = question.Id,
+                    OrderIndex = question.OrderIndex,
+                    Text = question.Text,
+                    ImageUrl = question.ImageUrl,
+                    TimeLimitSeconds = question.TimeLimitSeconds,
+                    Points = question.Points
+                };
+
+                foreach (Choice choice in question.Choices.OrderBy(c => c.OrderIndex))
+                {
+                    GameChoiceSnapshot choiceSnapshot = new()
+                    {
+                        QuestionSnapshot = questionSnapshot,
+                        SourceChoiceId = choice.Id,
+                        OrderIndex = choice.OrderIndex,
+                        Text = choice.Text,
+                        ImageUrl = choice.ImageUrl,
+                        IsCorrect = choice.IsCorrect
+                    };
+                    questionSnapshot.Choices.Add(choiceSnapshot);
+                }
+
+                game.QuestionSnapshots.Add(questionSnapshot);
+            }
+
             dbContext.GameSessions.Add(game);
 
             try
@@ -70,7 +104,7 @@ internal sealed class CreateGameCommandHandler(
             catch (DbUpdateException exception)
                 when (dbExceptionInterpreter.IsUniqueViolation(exception, "uq_game_session_active_pin"))
             {
-                dbContext.GameSessions.Remove(game);
+                dbContext.ChangeTracker.Clear();
             }
         }
 

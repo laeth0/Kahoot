@@ -1,5 +1,4 @@
 using Kahoot.Domain.Games;
-using Kahoot.Domain.Quizzes;
 
 namespace Kahoot.Application.Games.Common;
 
@@ -7,9 +6,10 @@ internal static class QuestionActivation
 {
     public static QuestionStartedResponse Activate(
         GameSession game,
-        Question question,
+        GameQuestionSnapshot question,
         int index,
         int totalQuestions,
+        int eligibleCount,
         DateTimeOffset now)
     {
         DateTimeOffset endsAt = now.AddSeconds(question.TimeLimitSeconds);
@@ -19,12 +19,14 @@ internal static class QuestionActivation
         game.CurrentQuestionIndex = index;
         game.CurrentQuestionStartedAt = now.UtcDateTime;
         game.CurrentQuestionEndsAt = endsAt.UtcDateTime;
+        game.CurrentQuestionEligibleCount = eligibleCount;
+        game.CurrentQuestionAnsweredCount = 0;
         game.StartedAt ??= now.UtcDateTime;
 
         return GameQuestionMapper.BuildStarted(question, index, totalQuestions, now, endsAt);
     }
 
-    public static QuestionStartedResponse Rebuild(GameSession game, Question question, int totalQuestions) =>
+    public static QuestionStartedResponse Rebuild(GameSession game, GameQuestionSnapshot question, int totalQuestions) =>
         GameQuestionMapper.BuildStarted(
             question,
             game.CurrentQuestionIndex ?? 0,

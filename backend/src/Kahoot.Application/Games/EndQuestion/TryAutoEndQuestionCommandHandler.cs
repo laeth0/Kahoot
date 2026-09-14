@@ -33,28 +33,7 @@ internal sealed class TryAutoEndQuestionCommandHandler(
             return Result.Success<QuestionResultsResponse?>(null);
         }
 
-        int totalAnswers = await dbContext.Answers
-            .CountAsync(
-                answer => answer.GameSessionId == game.Id && answer.QuestionId == questionId,
-                cancellationToken);
-
-        if (totalAnswers == 0)
-        {
-            return Result.Success<QuestionResultsResponse?>(null);
-        }
-
-        int remainingActiveUnanswered = await dbContext.Participants
-            .CountAsync(
-                participant => participant.GameSessionId == game.Id
-                    && !participant.IsRemoved
-                    && participant.ConnectionId != null
-                    && !dbContext.Answers.Any(answer =>
-                        answer.GameSessionId == game.Id
-                        && answer.QuestionId == questionId
-                        && answer.ParticipantId == participant.Id),
-                cancellationToken);
-
-        if (remainingActiveUnanswered > 0)
+        if (game.CurrentQuestionEligibleCount == 0 || game.CurrentQuestionAnsweredCount < game.CurrentQuestionEligibleCount)
         {
             return Result.Success<QuestionResultsResponse?>(null);
         }

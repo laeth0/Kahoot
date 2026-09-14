@@ -99,7 +99,7 @@ console.log("PASS: All 6 dashboards valid (unique UIDs, immutable, alertlist pre
 ' "$REPO_ROOT"
 
 echo "=== 3. Validating Compose configs and port isolation ==="
-VAL_ENV="GRAFANA_ADMIN_PASSWORD=val_grafana_pass POSTGRES_MONITOR_PASSWORD=val_mon_pass JWT_SECRET_KEY=12345678901234567890123456789012 SEEDING_HOST_PASSWORD=val_seed_pass POSTGRES_PASSWORD=val_pg_pass"
+VAL_ENV="GRAFANA_ADMIN_PASSWORD=val_grafana_pass POSTGRES_MONITOR_PASSWORD=val_mon_pass JWT_SIGNING_KEY=12345678901234567890123456789012 HOST_SEED_PASSWORD=val_seed_pass POSTGRES_PASSWORD=val_pg_pass"
 
 # Check dev compose
 env $VAL_ENV docker compose -f "${REPO_ROOT}/docker-compose.yml" config --quiet
@@ -112,8 +112,8 @@ const env = {
   ...process.env,
   GRAFANA_ADMIN_PASSWORD: "val_grafana_pass",
   POSTGRES_MONITOR_PASSWORD: "val_mon_pass",
-  JWT_SECRET_KEY: "12345678901234567890123456789012",
-  SEEDING_HOST_PASSWORD: "val_seed_pass",
+  JWT_SIGNING_KEY: "12345678901234567890123456789012",
+  HOST_SEED_PASSWORD: "val_seed_pass",
   POSTGRES_PASSWORD: "val_pg_pass"
 };
 
@@ -208,8 +208,45 @@ const ignoredFiles = [
   "README.md"
 ];
 
+const binaryExts = [".exe", ".dll", ".so", ".dylib", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico", ".pdf", ".woff", ".woff2", ".ttf", ".eot", ".zip", ".tar", ".gz", ".db"];
+
+// 1. Private key and tracked env file hygiene check
 for (const file of trackedFiles) {
   if (!fs.existsSync(file)) continue;
+  if (binaryExts.includes(path.extname(file).toLowerCase())) continue;
+  const base = path.basename(file);
+
+  if (base.includes(".env") && !base.endsWith(".example")) {
+    console.error(`FAIL: Non-example environment file tracked in Git: ${file}`);
+    process.exit(1);
+  }
+
+  const content = fs.readFileSync(file, "utf8");
+  if (/-----BEGIN (?:RSA |OPENSSH |EC |DSA |ENCRYPTED )?PRIVATE KEY-----/.test(content)) {
+    console.error(`FAIL: Private key detected in tracked file: ${file}`);
+    process.exit(1);
+  }
+
+  if (base.endsWith(".example")) {
+    const envLines = content.split("\n");
+    for (let i = 0; i < envLines.length; i++) {
+      const line = envLines[i].trim();
+      const match = line.match(/^(?:[A-Z0-9_]*(?:PASSWORD|KEY|SECRET)[A-Z0-9_]*)=(.*)$/);
+      if (match) {
+        const val = match[1].trim();
+        if (val && !val.startsWith("replace_with_") && !val.startsWith("<") && !val.startsWith("val_") && val.length > 20 && !val.includes("replace")) {
+          console.error(`FAIL: Potential live credential found in example template ${file}:${i + 1}`);
+          process.exit(1);
+        }
+      }
+    }
+  }
+}
+
+// 2. Secret patterns check in source code
+for (const file of trackedFiles) {
+  if (!fs.existsSync(file)) continue;
+  if (binaryExts.includes(path.extname(file).toLowerCase())) continue;
   const base = path.basename(file);
   if (base.startsWith(".env") || file.includes("/docs/") || file.includes("\\docs\\") || file.includes("/.wolf/") || file.includes("\\.wolf\\") || ignoredFiles.some(f => file.endsWith(f))) continue;
   const content = fs.readFileSync(file, "utf8");
@@ -219,7 +256,7 @@ for (const file of trackedFiles) {
     if (match) {
       const val = (match[1] || match[2] || "").trim();
       if (val && val !== "\"\"" && val !== "..." && !val.startsWith("$") && !val.startsWith("<") && !val.startsWith("val_")) {
-        console.error(`FAIL: Committed secret detected in ${file}:${i + 1}: ${lines[i].trim()}`);
+        console.error(`FAIL: Committed secret detected in ${file}:${i + 1}`);
         process.exit(1);
       }
     }

@@ -24,9 +24,9 @@ public sealed class Answer
 
     public GameSession? GameSession { get; set; }
 
-    public Question? Question { get; set; }
+    public GameQuestionSnapshot? Question { get; set; }
 
     public Participant? Participant { get; set; }
 
-    public Choice? SelectedChoice { get; set; }
+    public GameChoiceSnapshot? SelectedChoice { get; set; }
 }
