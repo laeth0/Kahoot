@@ -1,6 +1,7 @@
 using System.Text;
 using Kahoot.Api.Common;
 using Kahoot.Api.Endpoints;
+using Kahoot.Api.Observability;
 using Kahoot.Api.Realtime;
 using Kahoot.Application;
 using Kahoot.Application.Authentication.Common;
@@ -118,6 +119,8 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.AddKahootObservability();
 
 var fileStorageOptions = builder.Configuration.GetSection(FileStorageOptions.SectionName).Get<FileStorageOptions>()
                          ?? new FileStorageOptions();
