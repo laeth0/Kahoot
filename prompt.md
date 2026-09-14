@@ -4,7 +4,7 @@
 
 Act as a senior cloud architect and backend/platform engineer responsible for preparing this project for production deployment on Azure.
 
-Your goal is not to deploy immediately. First, perform a complete production readiness audit of the existing codebase, infrastructure, configuration, real-time communication layer, and deployment setup.
+Your goal is to perform a complete production readiness audit of the existing codebase, infrastructure, configuration, real-time communication layer, and deployment setup — and then directly implement all necessary fixes.
 
 The target environment:
 
@@ -35,9 +35,7 @@ Analyze:
 - Security concerns
 - Azure deployment readiness
 
-Do not make random changes immediately.
-
-First understand the current architecture, then produce a detailed production improvement plan.
+First understand the current architecture. Then implement the fixes directly — do not just document them.
 
 ---
 
@@ -292,168 +290,50 @@ Identify:
 
 ---
 
-# Output Requirement
+# Implementation Requirement
 
-Create a file:
+After completing the audit, implement all necessary fixes directly in the codebase.
 
-```
+Work through the following phases in order:
 
-production.md
+**Phase 1 — Critical fixes (implement first):**
+- Fix any secrets or credentials exposed in code or committed files
+- Fix insecure or missing environment variable handling
+- Fix authentication and authorization issues
+- Fix startup failures or unsafe migration handling
 
-````
+**Phase 2 — Performance and reliability:**
+- Fix N+1 queries, missing indexes, and inefficient EF Core usage
+- Fix blocking async calls and memory leaks
+- Fix real-time connection management issues
+- Add connection pooling where missing
 
-This file should contain the complete production readiness report.
+**Phase 3 — Observability and operations:**
+- Add or fix structured logging
+- Add health check endpoints
+- Add or fix Docker resource limits, restart policies, and health checks
+- Ensure production environment configuration is correctly separated
 
-Structure:
-
-```md
-# Production Readiness Report
-
-## Executive Summary
-
-Current production readiness:
-- Ready
-- Partially ready
-- Not ready
-
-Main risks:
-
----
-
-# Critical Issues
-
-Issues that must be fixed before deployment.
-
-For each issue:
-
-## Problem
-
-Explain the issue.
-
-## Impact
-
-Explain what can happen in production.
-
-## Recommended Fix
-
-Explain the solution.
-
-## Priority
-
-Critical / High / Medium / Low
-
----
-
-# Performance Review
-
-## Current Architecture
-
-Explain current behavior.
-
-## Bottlenecks
-
-List possible bottlenecks.
-
-## Recommendations
-
-Explain improvements.
-
----
-
-# Real-Time System Review
-
-## Current Design
-
-Explain how real-time communication works.
-
-## Risks
-
-Explain scalability concerns.
-
-## Recommendations
-
----
-
-# Azure Deployment Recommendations
-
-Recommended architecture:
-
-Explain:
-
-- Services
-- Networking
-- Environment configuration
-- Scaling strategy
-
----
-
-# Security Improvements
-
-List required security changes.
-
----
-
-# Observability Improvements
-
-List monitoring and tracing improvements.
-
----
-
-# Deployment Checklist
-
-Before deployment:
-
-- [ ] Environment variables configured
-- [ ] Secrets moved outside code
-- [ ] Database production configuration ready
-- [ ] Health checks added
-- [ ] Logging configured
-- [ ] Monitoring enabled
-- [ ] Load testing completed
-
----
-
-# Implementation Priority
-
-Provide a prioritized roadmap:
-
-Phase 1:
-Critical fixes before production
-
-Phase 2:
-Performance improvements
-
-Phase 3:
-Operational improvements
-
-Phase 4:
-Future scalability improvements
-````
+**Phase 4 — Azure readiness:**
+- Apply necessary configuration changes for Azure deployment
+- Ensure no hardcoded localhost or development URLs remain
+- Validate CORS, JWT, and networking settings for production
 
 ---
 
 # Important Rules
 
-* Do not modify the code yet.
-* Only review and document findings.
+* Read and understand the existing code before making changes.
 * Do not assume something is correct without checking the implementation.
-* Base every recommendation on the actual project.
-* Mention when something is already implemented correctly.
+* Base every fix on the actual project — do not introduce changes that are not needed.
+* Mention when something is already implemented correctly and skip it.
 * Avoid unnecessary architecture changes.
 * Prefer simple production solutions before introducing complex infrastructure.
+* Keep changes focused — do not refactor unrelated code.
+* Do not introduce new dependencies without a concrete benefit.
 
-For every recommendation explain:
+For every change made, briefly explain:
 
-1. What is wrong?
-2. Why does it matter?
-3. How should it be fixed?
-4. What is the tradeoff?
-
----
-
-After creating `production.md`, summarize the top 10 production risks and the recommended order to fix them.
-
-```
-
-This version is designed for an agent that will **inspect first, avoid unnecessary refactoring, and produce an actionable production audit** instead of blindly changing files.
-```
+1. What was wrong?
+2. Why it matters in production.
+3. What was changed and why.
