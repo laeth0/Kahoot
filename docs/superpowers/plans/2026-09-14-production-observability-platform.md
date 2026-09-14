@@ -152,7 +152,7 @@ If the pinned exporters normalize a label differently, adjust the recording rule
 - Consumes: current Git worktree and installed Docker/.NET/Node/Gemini tools
 - Produces: recorded baseline commands, confirmed image/package pins, and a known-good pre-change application
 
-- [ ] **Step 1: Inspect the working tree without changing it**
+- [x] **Step 1: Inspect the working tree without changing it**
 
 Run:
 
@@ -163,7 +163,7 @@ git diff -- backend/src/Kahoot.Api/Kahoot.Api.csproj backend/src/Kahoot.Applicat
 
 Expected: existing changes are understood. If an overlapping change cannot be preserved, stop and ask the user instead of resetting, stashing, or overwriting it.
 
-- [ ] **Step 2: Record baseline versions and validate the selected pins exist**
+- [x] **Step 2: Record baseline versions and validate the selected pins exist**
 
 Run:
 
@@ -184,7 +184,7 @@ docker manifest inspect quay.io/prometheus/blackbox-exporter:v0.28.0 >/dev/null
 
 Expected: .NET 10 SDK, Docker Compose v2+, and every manifest command exits zero.
 
-- [ ] **Step 3: Run the pre-change quality gates**
+- [x] **Step 3: Run the pre-change quality gates**
 
 Run:
 
@@ -199,7 +199,7 @@ docker compose --env-file .env.production.example -f docker-compose.prod.yml con
 
 Expected: record exact pass/fail results. Do not fix unrelated baseline failures in this task.
 
-- [ ] **Step 4: Record the rollback point**
+- [x] **Step 4: Record the rollback point**
 
 Run:
 
@@ -222,7 +222,7 @@ Expected: copy the commit ID into the implementation session notes and `.wolf/ST
 - Consumes: existing ASP.NET Core environment-variable binding and Docker Compose interpolation
 - Produces: `Observability` settings, required production secret variables, and a reusable static validator
 
-- [ ] **Step 1: Create a validator that initially fails because required observability files do not exist**
+- [x] **Step 1: Create a validator that initially fails because required observability files do not exist**
 
 The script must use `set -euo pipefail`, calculate the repository root from its own location, and assert all planned YAML/JSON/dashboard files exist. It must also reject public `ports:` under `grafana`, `prometheus`, `loki`, `jaeger`, `otel-collector`, and exporters after the compose work is present.
 
@@ -234,7 +234,7 @@ bash observability/scripts/validate-config.sh
 
 Expected: FAIL naming `observability/otel/collector-config.yml` as the first missing file.
 
-- [ ] **Step 2: Add non-secret environment contracts**
+- [x] **Step 2: Add non-secret environment contracts**
 
 Add these keys to both templates, using empty values for secrets:
 
@@ -250,7 +250,7 @@ POSTGRES_MONITOR_PASSWORD=
 
 Production Compose must use `${GRAFANA_ADMIN_PASSWORD:?Grafana admin password is required}` and `${POSTGRES_MONITOR_PASSWORD:?PostgreSQL monitoring password is required}` so blank secrets fail before containers start.
 
-- [ ] **Step 3: Remove committed runtime secrets and bind safe observability defaults**
+- [x] **Step 3: Remove committed runtime secrets and bind safe observability defaults**
 
 In `appsettings.json`, remove the literal JWT signing key and bootstrap password values. Keep their keys empty so options validation or the existing seeder fails/skips safely when environment variables are absent. Add:
 
@@ -263,11 +263,11 @@ In `appsettings.json`, remove the literal JWT signing key and bootstrap password
 }
 ```
 
-- [ ] **Step 4: Remove the committed load-test password fallback**
+- [x] **Step 4: Remove the committed load-test password fallback**
 
 Change `hostCredentials()` so `HOST_USERNAME` and `HOST_PASSWORD` are required and `fail()` explains which environment variable is missing. Keep credentials in the untracked `load-tests/.env`; do not print either value.
 
-- [ ] **Step 5: Verify secret hygiene and existing builds**
+- [x] **Step 5: Verify secret hygiene and existing builds**
 
 Run:
 
@@ -279,7 +279,7 @@ node --check load-tests/config/environments.js
 
 Expected: the secret search returns no match; build and syntax check pass.
 
-- [ ] **Step 6: Commit the configuration contract**
+- [x] **Step 6: Commit the configuration contract**
 
 ```bash
 git add .env.example .env.production.example backend/src/Kahoot.Api/appsettings.json load-tests/config/environments.js observability/scripts/validate-config.sh
@@ -298,7 +298,7 @@ git commit -m "chore: define secure observability configuration"
 - Consumes: `Observability` configuration, `Kahoot.Application` source/meter names, standard ASP.NET/Npgsql meters
 - Produces: `AddKahootObservability(IHostApplicationBuilder)` and OTLP export to the configured Collector
 
-- [ ] **Step 1: Add the pinned packages**
+- [x] **Step 1: Add the pinned packages**
 
 Add these package references to `Kahoot.Api.csproj` without changing unrelated versions:
 
@@ -310,11 +310,11 @@ Add these package references to `Kahoot.Api.csproj` without changing unrelated v
 <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
 ```
 
-- [ ] **Step 2: Add validated options**
+- [x] **Step 2: Add validated options**
 
 `ObservabilityOptions` must expose `Enabled`, `ServiceName`, `OtlpEndpoint`, and `BusinessSnapshotIntervalSeconds`; validate service name as non-empty, endpoint as an absolute HTTP URI, and interval in the inclusive range 15–300 seconds.
 
-- [ ] **Step 3: Register traces, metrics, logs, and resource attributes**
+- [x] **Step 3: Register traces, metrics, logs, and resource attributes**
 
 Implement `AddKahootObservability` with this effective provider shape:
 
@@ -353,15 +353,15 @@ services.AddOpenTelemetry()
 
 Configure `builder.Logging.AddJsonConsole()` and `builder.Logging.AddOpenTelemetry()` with scopes, parsed state values, formatted messages, the same resource, and the same OTLP endpoint. Do not clear the existing logging providers.
 
-- [ ] **Step 4: Keep observability optional to application startup**
+- [x] **Step 4: Keep observability optional to application startup**
 
 When `Observability:Enabled` is false, bind and validate options but do not register exporters. When true, fail startup on an invalid endpoint but do not require the Collector to be reachable during startup; exporter retries must remain asynchronous.
 
-- [ ] **Step 5: Wire the extension into `Program.cs`**
+- [x] **Step 5: Wire the extension into `Program.cs`**
 
 Call `builder.AddKahootObservability()` after logging/configuration creation and before `builder.Build()`. Keep `Program.cs` focused by leaving all provider details in the extension.
 
-- [ ] **Step 6: Verify disabled and enabled startup behavior**
+- [x] **Step 6: Verify disabled and enabled startup behavior**
 
 Run:
 
@@ -372,7 +372,7 @@ Observability__Enabled=false dotnet run --project backend/src/Kahoot.Api/Kahoot.
 
 Expected: build succeeds and the API starts without requiring a Collector. Stop the foreground API after `/health` returns 200. Repeat with an invalid enabled endpoint and expect startup validation to fail with a safe message containing no secret.
 
-- [ ] **Step 7: Commit SDK registration**
+- [x] **Step 7: Commit SDK registration**
 
 ```bash
 git add backend/src/Kahoot.Api/Kahoot.Api.csproj backend/src/Kahoot.Api/Program.cs backend/src/Kahoot.Api/Observability
@@ -391,7 +391,7 @@ git commit -m "feat: register OpenTelemetry SDK"
 - Produces: `ObservabilityNames.ActivitySourceName`, `ObservabilityNames.MeterName`, and `IKahootTelemetry`
 - Produces exact methods: `StartOperation`, `RecordOperation`, `RecordGameCreated`, `RecordGameEnded`, `RecordPlayerJoined`, `RecordQuestionServed`, `RecordAnswer`, `RecordReconnect`, `RecordDisconnect`, `RecordBroadcast`, `RecordTransitionFailure`, `UpdateBusinessSnapshot`, `RecordSnapshotFailure`
 
-- [ ] **Step 1: Define the narrow telemetry interface**
+- [x] **Step 1: Define the narrow telemetry interface**
 
 Use BCL types only in the Application project:
 
@@ -414,11 +414,11 @@ public interface IKahootTelemetry
 }
 ```
 
-- [ ] **Step 2: Implement bounded instruments and thread-safe gauges**
+- [x] **Step 2: Implement bounded instruments and thread-safe gauges**
 
 Create one `ActivitySource` and one `Meter` for the singleton lifetime. Store snapshot values using `Volatile.Read/Write` or immutable replacement, expose one active-games observation per enum state, and dispose both sources when the singleton is disposed. Reject arbitrary outcome/event strings inside the implementation; callers use only the finite values in the metric contract.
 
-- [ ] **Step 3: Register the singleton explicitly**
+- [x] **Step 3: Register the singleton explicitly**
 
 Add:
 
@@ -428,11 +428,11 @@ services.AddSingleton<IKahootTelemetry, KahootTelemetry>();
 
 Do not add marker interfaces solely to obtain registration.
 
-- [ ] **Step 4: Wrap every MediatR request in an application span**
+- [x] **Step 4: Wrap every MediatR request in an application span**
 
 Extend `RequestLoggingBehavior` so it starts `application.<RequestType>`, records `kahoot.request.name`, sets `kahoot.result=success|failure|exception`, tags safe failure codes, records duration in `finally`, preserves the existing warning log, and rethrows unexpected exceptions unchanged. A returned `Result.Failure` is marked as an error so the Collector retains the failed trace.
 
-- [ ] **Step 5: Verify behavior remains transparent**
+- [x] **Step 5: Verify behavior remains transparent**
 
 Run:
 
@@ -443,7 +443,7 @@ rg -n "password|token|nickname|request\.ToString|CommandText" backend/src/Kahoot
 
 Expected: build passes and the search finds no sensitive-value logging/tagging logic.
 
-- [ ] **Step 6: Commit the telemetry contract**
+- [x] **Step 6: Commit the telemetry contract**
 
 ```bash
 git add backend/src/Kahoot.Application/Common/Observability backend/src/Kahoot.Application/Common/Behaviors/RequestLoggingBehavior.cs backend/src/Kahoot.Application/DependencyInjection.cs
@@ -468,11 +468,11 @@ git commit -m "feat: trace application operations"
 - Consumes: `IKahootTelemetry` from Task 3 and the current `Activity` created by `RequestLoggingBehavior`
 - Produces: business counters/histograms, safe trace tags, SignalR event timings, and no domain/API contract changes
 
-- [ ] **Step 1: Instrument game creation and joining**
+- [x] **Step 1: Instrument game creation and joining**
 
 Inject `IKahootTelemetry`. After a newly persisted game, tag `game.id` and `quiz.id`, then call `RecordGameCreated()`. After a newly persisted participant, tag `game.id` and `participant.id`, then call `RecordPlayerJoined()`. Never tag the PIN, nickname, token, token hash, or host identity.
 
-- [ ] **Step 2: Instrument state transitions without double counting idempotent re-entry**
+- [x] **Step 2: Instrument state transitions without double counting idempotent re-entry**
 
 For Start, Advance, EndQuestion, ShowLeaderboard, and EndGame:
 
@@ -483,19 +483,19 @@ For Start, Advance, EndQuestion, ShowLeaderboard, and EndGame:
 - call `RecordTransitionFailure(transition, error.Code)` on invalid/concurrent transitions;
 - do not increment counters on existing idempotent response paths.
 
-- [ ] **Step 3: Instrument answer handling with one timing observation per invocation**
+- [x] **Step 3: Instrument answer handling with one timing observation per invocation**
 
 At handler entry, capture a timestamp and initialize outcome to `rejected`. Before each existing return, set only the bounded outcome: `late` for `QuestionClosed`, `duplicate` for the unique-answer path, `accepted` for a new answer, `rejected` for other Result failures, and `exception` only in a catch/rethrow boundary. In `finally`, call `RecordAnswer(outcome, elapsedSeconds)`. Tag only `game.id`, `question.id`, and the resolved `participant.id`.
 
-- [ ] **Step 4: Instrument SignalR reconnect/disconnect lifecycle**
+- [x] **Step 4: Instrument SignalR reconnect/disconnect lifecycle**
 
 In `GameHub`, call `RecordReconnect("success"|"failure")` once per `Reconnect` invocation and `RecordDisconnect("normal"|"error")` once per `OnDisconnectedAsync`. Preserve all existing connection cleanup, group membership, rate limiting, and cancellation behavior.
 
-- [ ] **Step 5: Instrument typed broadcasts centrally**
+- [x] **Step 5: Instrument typed broadcasts centrally**
 
 In `GameNotifier`, route every typed event through one private async helper that measures duration, calls `RecordBroadcast` with a constant event name, records failure before rethrowing, and never serializes the payload into telemetry. Cover these exact names: `ParticipantJoined`, `ParticipantLeft`, `ParticipantRemoved`, `QuestionStarted`, `QuestionEnded`, `LeaderboardUpdated`, and `GameEnded`.
 
-- [ ] **Step 6: Verify behavior and prohibited cardinality**
+- [x] **Step 6: Verify behavior and prohibited cardinality**
 
 Run:
 
@@ -506,7 +506,7 @@ rg -n "Add\([^\n]*(gameId|participantId|questionId|connectionId|nickname|pin|tok
 
 Expected: build passes; no metric instrument call uses a high-cardinality ID or sensitive value as a tag.
 
-- [ ] **Step 7: Commit business instrumentation**
+- [x] **Step 7: Commit business instrumentation**
 
 ```bash
 git add backend/src/Kahoot.Application/Games backend/src/Kahoot.Api/Realtime
@@ -525,27 +525,27 @@ git commit -m "feat: instrument game and realtime flows"
 - Consumes: incoming `X-Request-ID`, `ObservabilityOptions.BusinessSnapshotIntervalSeconds`, `ApplicationDbContext`, and `IKahootTelemetry`
 - Produces: validated request correlation across Nginx/logs/traces and restart-safe gauges for active games and connected players
 
-- [ ] **Step 1: Add bounded request correlation**
+- [x] **Step 1: Add bounded request correlation**
 
 Create middleware that accepts `X-Request-ID` only when it is 1–64 characters and contains ASCII letters, digits, `.`, `_`, or `-`; otherwise generate `ActivityTraceId.CreateRandom().ToString()`. Set the validated value on the response, add it to the logging scope as `request.id`, and add it to the current activity. Never copy another request header into telemetry.
 
-- [ ] **Step 2: Place correlation at the correct pipeline boundary**
+- [x] **Step 2: Place correlation at the correct pipeline boundary**
 
 Register the middleware after forwarded headers and before exception handling, request logging, authentication, authorization, rate limiting, and endpoint execution. Confirm the existing middleware order and behavior remain otherwise unchanged.
 
-- [ ] **Step 3: Give the Npgsql pool a non-sensitive name**
+- [x] **Step 3: Give the Npgsql pool a non-sensitive name**
 
 In `Infrastructure.DependencyInjection`, create one singleton `NpgsqlDataSource` from the existing connection string, set `Name = "kahoot-db"`, and pass it to `UseNpgsql`. Do not expose the connection string as the pool name, a log property, or a telemetry attribute. Preserve existing DbContext lifetime, interceptors, migrations, and retry behavior.
 
-- [ ] **Step 4: Reconcile observable gauges every 30 seconds**
+- [x] **Step 4: Reconcile observable gauges every 30 seconds**
 
 Implement `BusinessMetricsSnapshotHostedService` using `IServiceScopeFactory` and `PeriodicTimer`. On each tick, create a scope, query active game counts grouped by `GameStatus`, query the number of participants with an active connection, and call `UpdateBusinessSnapshot`. Use `AsNoTracking`, cancellation tokens, and one short-lived scope per iteration. On failure, log one structured warning without identifiers, increment `kahoot.observability.snapshot.failures`, keep the previous snapshot, and continue on the next tick.
 
-- [ ] **Step 5: Register snapshot collection only when observability is enabled**
+- [x] **Step 5: Register snapshot collection only when observability is enabled**
 
 Register the hosted service conditionally from the validated options. Shutdown must cancel promptly, dispose the timer, and never delay application termination waiting for a database retry.
 
-- [ ] **Step 6: Verify the backend**
+- [x] **Step 6: Verify the backend**
 
 Run:
 
@@ -556,7 +556,7 @@ rg -n "ConnectionString|Host=|Password=|X-Request-ID" backend/src/Kahoot.Api/Com
 
 Expected: build passes; request ID appears only in validation/correlation logic, and no connection string or password is logged or tagged.
 
-- [ ] **Step 7: Commit request and database correlation**
+- [x] **Step 7: Commit request and database correlation**
 
 ```bash
 git add backend/src/Kahoot.Api/Common/RequestCorrelationMiddleware.cs backend/src/Kahoot.Api/Program.cs backend/src/Kahoot.Infrastructure/DependencyInjection.cs backend/src/Kahoot.Infrastructure/Observability
@@ -572,11 +572,11 @@ git commit -m "feat: correlate requests and business gauges"
 - Listens privately on: OTLP gRPC `4317`, OTLP HTTP `4318`, Prometheus application export `8889`, health check `13133`, and Collector telemetry `8888`
 - Sends: metrics to Prometheus by scraping, logs to `http://loki:3100/otlp`, and sampled traces to `jaeger:4317`
 
-- [ ] **Step 1: Add receivers and health extension**
+- [x] **Step 1: Add receivers and health extension**
 
 Configure `otlp` on `0.0.0.0:4317` and `0.0.0.0:4318`, `filelog/nginx` against `/var/log/nginx/access-observability.json`, and `health_check` on `0.0.0.0:13133`. The file receiver must parse one JSON object per line, set `service.name=nginx`, retain `request_id`, `uri`, `status`, `request_time`, `upstream_response_time`, and `method`, and exclude query strings, IP addresses, referers, user agents, authorization, and cookies.
 
-- [ ] **Step 2: Bound Collector memory and batches**
+- [x] **Step 2: Bound Collector memory and batches**
 
 Use these processor settings:
 
@@ -594,7 +594,7 @@ processors:
 
 Add an attribute/transform sanitization processor that deletes authorization, cookie, password, token, token hash, query-string, request-body, SQL-parameter, nickname, and client-address keys before export. Apply it to traces and logs. Do not delete `trace_id`, `span_id`, `request.id`, safe route, status, duration, or the explicitly approved trace-only entity IDs.
 
-- [ ] **Step 3: Configure the required tail-sampling union**
+- [x] **Step 3: Configure the required tail-sampling union**
 
 Set `decision_wait: 10s`, `num_traces: 10000`, and `expected_new_traces_per_sec: 500`. Define four top-level policies so a trace is kept when any policy matches:
 
@@ -619,11 +619,11 @@ policies:
 
 The application SDK remains `AlwaysOn`; sampling occurs only in this single stateful Collector so errors and slow requests are eligible for retention.
 
-- [ ] **Step 4: Derive unbiased RED and dependency metrics before sampling**
+- [x] **Step 4: Derive unbiased RED and dependency metrics before sampling**
 
 Configure `span_metrics` with namespace `traces.span.metrics`, duration unit `s`, explicit latency buckets, exemplars enabled, `collector.instance.id` excluded, and only bounded `http.route`, HTTP method/status, `db.system.name`, and `db.operation.name` dimensions. Configure `servicegraph` with bounded service dimensions. Feed the same OTLP traces to a derivation pipeline before `tail_sampling`, then receive connector output in the metrics pipeline. Do not add game, participant, question, connection, raw URL, or database statement as a metric dimension. Keep Npgsql's default database-name span naming; never configure SQL command text as a span name.
 
-- [ ] **Step 5: Configure exporters and pipelines**
+- [x] **Step 5: Configure exporters and pipelines**
 
 Use a Prometheus exporter on `0.0.0.0:8889` with OpenMetrics and resource-to-telemetry conversion enabled; `otlphttp/loki` with endpoint `http://loki:3100/otlp`; and `otlp/jaeger` with endpoint `jaeger:4317` and insecure internal TLS. Assemble:
 
@@ -636,7 +636,7 @@ logs:           otlp, filelog/nginx -> memory_limiter -> sanitization -> batch -
 
 Set Collector internal telemetry to `info` logs and Prometheus metrics at `0.0.0.0:8888`. Do not enable debug exporters in production.
 
-- [ ] **Step 6: Validate the configuration in the pinned image**
+- [x] **Step 6: Validate the configuration in the pinned image**
 
 Run:
 
@@ -646,7 +646,7 @@ docker run --rm -v "$PWD/observability/otel/collector-config.yml:/etc/otelcol-co
 
 Expected: configuration validation succeeds with no unknown component or key.
 
-- [ ] **Step 7: Commit Collector configuration**
+- [x] **Step 7: Commit Collector configuration**
 
 ```bash
 git add observability/otel/collector-config.yml

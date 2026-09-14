@@ -1,0 +1,184 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+  filelog/nginx:
+    include:
+      - /var/log/nginx/access-observability.json
+    start_at: end
+    operators:
+      - type: json_parser
+        parse_to: attributes
+      - type: add
+        field: resource["service.name"]
+        value: nginx
+      - type: retain
+        fields:
+          - attributes.request_id
+          - attributes.uri
+          - attributes.status
+          - attributes.request_time
+          - attributes.upstream_response_time
+          - attributes.method
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  batch:
+    timeout: 5s
+    send_batch_size: 1024
+    send_batch_max_size: 2048
+  transform/sanitize:
+    error_mode: ignore
+    trace_statements:
+      - context: span
+        statements:
+          - delete_matching_keys(attributes, "(?i).*(authorization|cookie|password|token|token_hash|token-hash|query_string|query-string|request_body|request-body|sql_parameter|sql-parameter|nickname|client_address|client-address|remote_addr|client_ip).*")
+          - delete_key(attributes, "http.request.header.authorization")
+          - delete_key(attributes, "http.request.header.cookie")
+          - delete_key(attributes, "http.response.header.set-cookie")
+          - delete_key(attributes, "url.query")
+          - delete_key(attributes, "http.query")
+          - delete_key(attributes, "client.address")
+          - delete_key(attributes, "client.ip")
+          - delete_key(attributes, "network.peer.address")
+          - delete_key(attributes, "network.client.address")
+    log_statements:
+      - context: log
+        statements:
+          - delete_matching_keys(attributes, "(?i).*(authorization|cookie|password|token|token_hash|token-hash|query_string|query-string|request_body|request-body|sql_parameter|sql-parameter|nickname|client_address|client-address|remote_addr|client_ip).*")
+          - delete_key(attributes, "http.request.header.authorization")
+          - delete_key(attributes, "http.request.header.cookie")
+          - delete_key(attributes, "http.response.header.set-cookie")
+          - delete_key(attributes, "url.query")
+          - delete_key(attributes, "http.query")
+          - delete_key(attributes, "client.address")
+          - delete_key(attributes, "client.ip")
+          - delete_key(attributes, "network.peer.address")
+          - delete_key(attributes, "network.client.address")
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 10000
+    expected_new_traces_per_sec: 500
+    policies:
+      - name: errors
+        type: status_code
+        status_code:
+          status_codes:
+            - ERROR
+      - name: http-5xx
+        type: string_attribute
+        string_attribute:
+          key: http.response.status_code
+          values:
+            - '5[0-9][0-9]'
+          enabled_regex_matching: true
+      - name: slow
+        type: latency
+        latency:
+          threshold_ms: 1000
+      - name: baseline
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 10
+
+connectors:
+  span_metrics:
+    namespace: traces.span.metrics
+    histogram:
+      unit: s
+      explicit:
+        buckets: [0.005s, 0.01s, 0.025s, 0.05s, 0.075s, 0.1s, 0.25s, 0.5s, 0.75s, 1s, 2.5s, 5s, 7.5s, 10s]
+    dimensions:
+      - name: http.route
+      - name: http.request.method
+      - name: http.response.status_code
+      - name: db.system.name
+      - name: db.operation.name
+    exemplars:
+      enabled: true
+    exclude_dimensions:
+      - collector.instance.id
+  servicegraph:
+    dimensions:
+      - http.request.method
+      - http.response.status_code
+
+exporters:
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    enable_open_metrics: true
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+    tls:
+      insecure: true
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+
+service:
+  extensions:
+    - health_check
+  telemetry:
+    logs:
+      level: info
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
+  pipelines:
+    traces/derive:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/sanitize
+        - batch
+      exporters:
+        - span_metrics
+        - servicegraph
+    traces/store:
+      receivers:
+        - otlp
+      processors:
+        - memory_limiter
+        - transform/sanitize
+        - tail_sampling
+        - batch
+      exporters:
+        - otlp/jaeger
+    metrics:
+      receivers:
+        - otlp
+        - span_metrics
+        - servicegraph
+      processors:
+        - memory_limiter
+        - batch
+      exporters:
+        - prometheus
+    logs:
+      receivers:
+        - otlp
+        - filelog/nginx
+      processors:
+        - memory_limiter
+        - transform/sanitize
+        - batch
+      exporters:
+        - otlphttp/loki

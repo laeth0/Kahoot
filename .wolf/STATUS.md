@@ -180,11 +180,81 @@ budget_tokens: 1000
   - **Docker Compose Configuration:** Configured build args (`VITE_API_URL`, `VITE_SIGNALR_URL`) in `frontend/Dockerfile` and `docker-compose.yml`.
   - **Quality Gates:** 0 ESLint errors (`eslint .`), 100% Prettier compliant (`prettier --check .`), 0 TypeScript compiler errors (`tsc -b && vite build`), clean .NET build (`dotnet build backend/Kahoot.slnx`).
 
+- **Production Observability Platform — Task 0 Baseline (Completed & Verified):**
+  - Inspected working tree: clean, 0 uncommitted changes.
+  - Recorded tool versions: .NET SDK `10.0.401`, Node `v25.8.0`, Docker Compose `v5.5.1`.
+  - Verified Docker image manifests (all exit code 0): `grafana/grafana:13.2.1`, `grafana/loki:3.7.7`, `prom/prometheus:v3.14.0`, `otel/opentelemetry-collector-contrib:0.160.0`, `jaegertracing/jaeger:2.20.0`, `quay.io/prometheus/node-exporter:v1.12.1`, `ghcr.io/google/cadvisor:v0.60.5`, `quay.io/prometheuscommunity/postgres-exporter:v0.20.1`, `quay.io/prometheus/blackbox-exporter:v0.28.0`.
+  - Verified pre-change quality gates: `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors), `npm run format:check` (clean), `npm run lint` (0 errors), `npm run build` (clean), and both `docker-compose.yml` and `docker-compose.prod.yml` compose config validation (0 exit code).
+  - Rollback point recorded: `2857739b716234127d43895b9faad680d9b5765d`.
+
+- **Production Observability Platform — Task 1 Configuration & Validation Scaffolding (Completed & Verified):**
+  - Created `observability/scripts/validate-config.sh`: asserts required planned observability files and enforces rejection of public ports on observability/database services. Tested initial run which safely failed with missing `observability/otel/collector-config.yml` (exit code 1).
+  - Added non-secret observability contracts (`OBSERVABILITY_ENABLED`, `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `GRAFANA_ADMIN_USER`, `GRAFANA_ADMIN_PASSWORD=`, `POSTGRES_MONITOR_USER`, `POSTGRES_MONITOR_PASSWORD=`) to `.env.example` and `.env.production.example`.
+  - Cleared committed runtime secrets (`Password: ""` and `SigningKey: ""`) and bound safe `Observability` defaults in `backend/src/Kahoot.Api/appsettings.json`.
+  - Removed committed load-test password fallback from `load-tests/config/environments.js` and required `HOST_USERNAME` and `HOST_PASSWORD` via `fail()`.
+  - Verified secret hygiene, .NET 10 solution build (`dotnet build backend/Kahoot.slnx` - 0 errors, 0 warnings), Node syntax check, and compose configurations.
+  - Committed with `chore: define secure observability configuration` (`647f2f9`).
+
+- **Production Observability Platform — Task 2 OpenTelemetry SDK Registration in ASP.NET Core (Completed & Verified):**
+  - Added pinned NuGet dependencies to `backend/src/Kahoot.Api/Kahoot.Api.csproj`: `Npgsql.OpenTelemetry` (10.0.3), `OpenTelemetry.Exporter.OpenTelemetryProtocol` (1.18.0), `OpenTelemetry.Extensions.Hosting` (1.18.0), `OpenTelemetry.Instrumentation.AspNetCore` (1.18.0), `OpenTelemetry.Instrumentation.Runtime` (1.18.0).
+  - Implemented `ObservabilityOptions` and `ObservabilityNames` in `backend/src/Kahoot.Api/Observability/ObservabilityOptions.cs` with validation for non-empty ServiceName, absolute HTTP/HTTPS URI OtlpEndpoint, and 15–300s snapshot interval.
+  - Implemented `AddKahootObservability` in `backend/src/Kahoot.Api/Observability/ObservabilityExtensions.cs` registering OpenTelemetry tracing, metrics, json console logging, and logs OTLP exporting with safe resource attributes and async exporter behavior.
+  - Wired `builder.AddKahootObservability()` into `backend/src/Kahoot.Api/Program.cs`.
+  - Verified disabled startup: API booted cleanly, rendered structured JSON logs, and responded 200 OK on `/health`.
+  - Verified enabled startup validation: invalid endpoint (`ftp://invalid`) threw `OptionsValidationException` with safe message without exposing secrets.
+  - Committed with `feat: register OpenTelemetry SDK` (`5f60c81`) and pushed to GitHub `origin/main`.
+
+- **Production Observability Platform — Task 3 Application Telemetry Contract and MediatR Spans (Completed & Verified):**
+  - Created `IKahootTelemetry` and `KahootTelemetry` in `backend/src/Kahoot.Application/Common/Observability/` with BCL types only (`System.Diagnostics`, `System.Diagnostics.Metrics`).
+  - Defined instruments for game sessions created/ended, players joined, questions served, answers submitted (with duration), SignalR reconnections, disconnects, events sent, broadcast duration, transition failures, application operation duration, and snapshot failures.
+  - Implemented thread-safe observable gauges (`kahoot.game.sessions.active`, `kahoot.players.connected`) with volatile snapshot reads/writes and per-enum state tags.
+  - Registered `services.AddSingleton<IKahootTelemetry, KahootTelemetry>()` in `Kahoot.Application/DependencyInjection.cs`.
+  - Extended `RequestLoggingBehavior` to wrap MediatR requests in `application.<RequestType>` activities with `kahoot.request.name`, `kahoot.result` (`success|failure|exception`), error status tagging, duration histograms in `finally`, and clean rethrow of exceptions.
+  - Verified with `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors) and confirmed zero sensitive-data logging/tagging and zero code comments.
+  - Committed with `feat: trace application operations` (`40e293b`) and pushed to GitHub `origin/main`.
+
+- **Production Observability Platform — Task 4 Instrument Game and Realtime Business Flows (Completed & Verified):**
+  - Instrumented game creation (`CreateGameCommandHandler`) and player joins (`JoinGameCommandHandler`): sets safe trace tags (`game.id`, `quiz.id`, `participant.id`) and calls `RecordGameCreated()` and `RecordPlayerJoined()`, strictly excluding PIN, nickname, and tokens from tags.
+  - Instrumented state transitions (`StartGameCommandHandler`, `StartNextQuestionCommandHandler`, `EndQuestionCommandHandler`, `ShowLeaderboardCommandHandler`, `EndGameCommandHandler`): sets `game.id`, `transition`, `game.source_state`, `game.resulting_state` tags, records `RecordQuestionServed("start")` and `RecordQuestionServed("advance")`, records `RecordGameEnded()` on final transition to `Finished`, records `RecordTransitionFailure(transition, errorCode)` on invalid or concurrent transitions, and avoids double-counting idempotent re-entries.
+  - Instrumented answer submission (`SubmitAnswerCommandHandler`): captures single timing observation per invocation, maps bounded outcomes (`late`, `duplicate`, `accepted`, `rejected`, `exception`), tags only `game.id`, `question.id`, and `participant.id`, and calls `RecordAnswer(outcome, elapsedSeconds)` in `finally`.
+  - Instrumented SignalR reconnect/disconnect lifecycle in `GameHub`: calls `RecordReconnect("success"|"failure")` once per `Reconnect` and `RecordDisconnect("normal"|"error")` once per `OnDisconnectedAsync`.
+  - Instrumented typed broadcasts centrally in `GameNotifier`: routed all 7 events (`ParticipantJoined`, `ParticipantLeft`, `ParticipantRemoved`, `QuestionStarted`, `QuestionEnded`, `LeaderboardUpdated`, `GameEnded`) through `BroadcastAsync`, measuring duration, recording `RecordBroadcast`, and safely rethrowing on failure without serializing payloads.
+  - Verified with `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors), confirmed 0 high-cardinality/sensitive metric tags, and 0 code comments.
+  - Committed with `feat: instrument game and realtime flows` (`20b58fc`) and pushed to GitHub `origin/main`.
+
+- **Production Observability Platform — Task 5 Correlate Requests and Reconcile Business Gauges (Completed & Verified):**
+  - Created `RequestCorrelationMiddleware` in `backend/src/Kahoot.Api/Common/`: validates `X-Request-ID` (1–64 ASCII alphanumeric + `.-_`) or generates `ActivityTraceId.CreateRandom()`, sets it on the response header, logging scope (`request.id`), and active trace tag.
+  - Placed `RequestCorrelationMiddleware` immediately after `UseForwardedHeaders` and before exception handling in `Program.cs`.
+  - Configured non-sensitive Npgsql pool name `kahoot-db` using a singleton `NpgsqlDataSource` in `Kahoot.Infrastructure/DependencyInjection.cs`.
+  - Created `BusinessMetricsSnapshotHostedService` in `backend/src/Kahoot.Infrastructure/Observability/`: periodically runs via `PeriodicTimer`, queries active games by `GameStatus` and connected players, updates business snapshot gauges, handles cancellation cleanly, and records failures.
+  - Registered `BusinessMetricsSnapshotHostedService` conditionally in `Program.cs` only when observability is enabled.
+  - Verified with `dotnet build backend/Kahoot.slnx` (0 warnings, 0 errors), confirmed no connection strings/passwords in telemetry, and 0 code comments.
+  - Committed with `feat: correlate requests and business gauges` (`d258169`) and pushed to GitHub `origin/main`.
+
+- **Production Observability Platform — Task 6 Configure the OpenTelemetry Collector (Completed & Verified):**
+  - Created `observability/otel/collector-config.yml` pinned for `otel/opentelemetry-collector-contrib:0.160.0`.
+  - Configured `otlp` gRPC (4317) and HTTP (4318) receivers, `health_check` (13133) extension, and `filelog/nginx` receiver parsing JSON access logs from `/var/log/nginx/access-observability.json` with `service.name=nginx` and retaining only safe fields (`request_id`, `uri`, `status`, `request_time`, `upstream_response_time`, `method`).
+  - Configured `memory_limiter` (256 MiB limit, 64 MiB spike limit, 1s interval), `batch` processor (5s timeout, 1024–2048 batch size), and OTTL `transform/sanitize` processor stripping sensitive keys (`authorization`, `cookie`, `password`, `token`, `hash`, `query_string`, `request_body`, `sql_parameter`, `nickname`, `client_address`) from traces and logs.
+  - Implemented tail-sampling union with 10s decision wait, 10000 trace buffer, 500 new traces/sec, and 4 policies (`errors` on ERROR status, `http-5xx` on 5xx status codes, `slow` on latency >= 1000ms, and `baseline` on 10% probabilistic sampling).
+  - Configured pre-sampling derivation pipeline for RED and dependency metrics using `span_metrics` (namespace `traces.span.metrics`, seconds duration unit with explicit buckets, exemplars enabled, excluded collector instance ID, and bounded routes/methods/statuses/db dimensions) and `servicegraph`.
+  - Configured exporters: Prometheus exporter on `0.0.0.0:8889` (with OpenMetrics and resource conversion), `otlphttp/loki` at `http://loki:3100/otlp`, and `otlp/jaeger` at `jaeger:4317`.
+  - Configured Collector internal telemetry with `info` logs and Prometheus metrics pull reader at `0.0.0.0:8888`.
+  - Verified configuration using `docker run --rm -v ... otel/opentelemetry-collector-contrib:0.160.0 validate --config=...` (exit code 0).
+  - Committed with `feat: configure bounded telemetry collection` and pushed to GitHub `origin/main`.
+
 ---
 
 ## 🚀 Next phase
 
-**Status:** All planned phases (Phase 1 through Phase 7) are 100% complete and verified. Ready for production deployment on Railway / Docker Compose.
+**Active Quest:** Production Observability Platform (`docs/superpowers/plans/2026-09-14-production-observability-platform.md`)
+- Task 0: Completed.
+- Task 1: Completed.
+- Task 2: Completed.
+- Task 3: Completed.
+- Task 4: Completed.
+- Task 5: Completed.
+- Task 6: Completed.
+- Task 7: Configure Loki and Jaeger Retention (`observability/loki/loki-config.yml`, `observability/jaeger/jaeger-config.yml`).
 
 ---
 
