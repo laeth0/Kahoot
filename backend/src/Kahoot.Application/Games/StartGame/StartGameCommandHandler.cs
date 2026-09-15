@@ -8,6 +8,7 @@ using Kahoot.Application.Games.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Kahoot.Application.Games.StartGame;
 
@@ -15,7 +16,8 @@ internal sealed class StartGameCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
     TimeProvider timeProvider,
-    IKahootTelemetry telemetry) : ICommandHandler<StartGameCommand, QuestionStartedResponse>
+    IKahootTelemetry telemetry,
+    ILogger<StartGameCommandHandler> logger) : ICommandHandler<StartGameCommand, QuestionStartedResponse>
 {
     public async Task<Result<QuestionStartedResponse>> Handle(StartGameCommand command, CancellationToken cancellationToken)
     {
@@ -50,10 +52,19 @@ internal sealed class StartGameCommandHandler(
 
         int targetIndex = alreadyOnFirstQuestion ? game.CurrentQuestionIndex ?? 0 : 0;
 
-        GameQuestionSnapshot? question = await LoadQuestionAsync(game.Id, targetIndex, cancellationToken);
+        GameQuestionSnapshot? question = alreadyOnFirstQuestion && game.CurrentQuestionId is { } currentQuestionId
+            ? await LoadQuestionAsync(game.Id, currentQuestionId, cancellationToken)
+            : await LoadQuestionAtPositionAsync(game.Id, targetIndex, cancellationToken);
         if (question is null)
         {
-            return Result.Failure<QuestionStartedResponse>(GameErrors.NoMoreQuestions);
+            telemetry.RecordTransitionFailure("StartFirstQuestion", GameErrors.InvalidStateTransition.Code);
+            logger.LogError(
+                "Cannot start game {GameId}: question sequence is inconsistent for current question {CurrentQuestionId}, index {CurrentQuestionIndex}, and total {TotalQuestions}",
+                game.Id,
+                game.CurrentQuestionId,
+                game.CurrentQuestionIndex,
+                totalQuestions);
+            return Result.Failure<QuestionStartedResponse>(GameErrors.InvalidStateTransition);
         }
 
         if (alreadyOnFirstQuestion)
@@ -92,11 +103,26 @@ internal sealed class StartGameCommandHandler(
         return Result.Success(response);
     }
 
-    private Task<GameQuestionSnapshot?> LoadQuestionAsync(Guid gameSessionId, int orderIndex, CancellationToken cancellationToken) =>
+    private Task<GameQuestionSnapshot?> LoadQuestionAsync(
+        Guid gameSessionId,
+        Guid questionId,
+        CancellationToken cancellationToken) =>
         dbContext.GameQuestionSnapshots
             .AsNoTracking()
             .Include(question => question.Choices)
             .FirstOrDefaultAsync(
-                question => question.GameSessionId == gameSessionId && question.OrderIndex == orderIndex,
+                question => question.GameSessionId == gameSessionId && question.Id == questionId,
                 cancellationToken);
+
+    private Task<GameQuestionSnapshot?> LoadQuestionAtPositionAsync(
+        Guid gameSessionId,
+        int position,
+        CancellationToken cancellationToken) =>
+        dbContext.GameQuestionSnapshots
+            .AsNoTracking()
+            .Where(question => question.GameSessionId == gameSessionId)
+            .OrderBy(question => question.OrderIndex)
+            .Skip(position)
+            .Include(question => question.Choices)
+            .FirstOrDefaultAsync(cancellationToken);
 }

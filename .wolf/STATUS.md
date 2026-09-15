@@ -6,11 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-15 (refresh-session 401 diagnosis)
+> Last updated: 2026-09-15 (19-question advance flow repair)
 
 ---
 
 ## ✅ Done
+
+- **Sparse question-order game-flow repair:** Confirmed the affected quiz and game snapshots contained indexes `0..5,7..19`; question 7 failed because advance treated logical position 6 as an exact stored order index. Start/advance now select snapshots by ordered position, re-entry resolves by snapshot ID, newly created games normalize indexes, and deletion compacts subsequent quiz indexes transactionally. Advance failures now log structured game state and index/count context. An isolated PostgreSQL/API run verified Q1→Q2, Q6→Q7, Q18→Q19, Q19→Results, final-only `Game.NoMoreQuestions`, and Results→Leaderboard→Finished with 19 questions. Backend publish and targeted formatting passed; the repository-wide formatter still reports only the pre-existing immutable migration whitespace findings.
 
 - **Configurable refresh-cookie security for HTTP Azure deployment:** Added typed `Auth:SecureCookies` configuration with a secure code/Compose default and set `AUTH_SECURE_COOKIES=false` in the synchronized current environment files. `AuthController` uses it for cookie creation and deletion without changing HttpOnly, SameSite=Lax, path, rotation, CSRF/origin validation, or frontend storage. Deployed the backend and live-verified login 200, HTTP cookie attributes, two cookie-only 200 refresh rotations, logout 204 plus cookie expiry, and zero refresh-token storage writes. Future HTTPS migration only requires setting `AUTH_SECURE_COOKIES=true`.
 

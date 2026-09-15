@@ -60,13 +60,15 @@ internal sealed class CreateGameCommandHandler(
                 Status = GameStatus.Lobby
             };
 
-            foreach (Question question in quiz.Questions.OrderBy(q => q.OrderIndex))
+            List<Question> orderedQuestions = [.. quiz.Questions.OrderBy(question => question.OrderIndex)];
+            for (int questionIndex = 0; questionIndex < orderedQuestions.Count; questionIndex++)
             {
+                Question question = orderedQuestions[questionIndex];
                 GameQuestionSnapshot questionSnapshot = new()
                 {
                     GameSession = game,
                     SourceQuestionId = question.Id,
-                    OrderIndex = question.OrderIndex,
+                    OrderIndex = questionIndex,
                     Text = question.Text,
                     ImageUrl = question.ImageUrl,
                     TimeLimitSeconds = question.TimeLimitSeconds,

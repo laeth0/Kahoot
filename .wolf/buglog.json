@@ -1269,6 +1269,40 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-15T14:12:54Z"
+    },
+    {
+      "id": "bug-080",
+      "timestamp": "2026-09-15T16:20:06Z",
+      "error_message": "CS0136: A local or parameter named 'currentQuestionIndex' cannot be declared in this scope",
+      "file": "backend/src/Kahoot.Application/Games/StartNextQuestion/StartNextQuestionCommandHandler.cs",
+      "root_cause": "Two pattern variables in sibling control-flow branches used the same name, and C# pattern-variable scope made the earlier declaration conflict with the later declaration.",
+      "fix": "Renamed the re-entry branch variable to activeQuestionIndex and retained currentQuestionIndex for the normal advance branch.",
+      "tags": [
+        "backend",
+        "csharp",
+        "build",
+        "game-flow"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T16:20:06Z"
+    },
+    {
+      "id": "bug-081",
+      "timestamp": "2026-09-15T16:20:06Z",
+      "error_message": "POST /api/games/{id}/advance returned 409 Game.NoMoreQuestions after question 6 of a 19-question game",
+      "file": "backend/src/Kahoot.Application/Games/StartNextQuestion/StartNextQuestionCommandHandler.cs",
+      "root_cause": "Deleting a quiz question left a gap in its OrderIndex values, CreateGame copied the sparse values into immutable snapshots, and StartNextQuestion treated the next logical zero-based position as an exact stored OrderIndex. The affected sequence was 0 through 5 followed by 7 through 19, so lookup of index 6 failed even though 13 questions remained.",
+      "fix": "Advance and start now load the Nth ordered snapshot, re-entry resolves the current snapshot by ID, new game snapshots receive contiguous logical indexes, question deletion compacts subsequent indexes transactionally, and advance conflicts emit structured state/index/count diagnostics.",
+      "tags": [
+        "backend",
+        "game-flow",
+        "question-order",
+        "state-machine",
+        "409",
+        "frontend"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T16:20:06Z"
     }
   ]
 }

@@ -17,6 +17,8 @@ internal sealed class DeleteQuestionCommandHandler(
     TimeProvider timeProvider)
     : ICommandHandler<DeleteQuestionCommand>
 {
+    private const int TemporaryOffset = 1_000_000;
+
     public async Task<Result> Handle(DeleteQuestionCommand command, CancellationToken cancellationToken)
     {
         Result<Quiz> quizResult = await QuizEditGuard.LoadEditableQuizAsync(
@@ -35,9 +37,32 @@ internal sealed class DeleteQuestionCommandHandler(
             return Result.Failure(QuizErrors.QuestionNotFound);
         }
 
+        int deletedOrderIndex = question.OrderIndex;
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         dbContext.Questions.Remove(question);
         quizResult.Value.IsPublished = false;
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        await dbContext.Questions
+            .Where(candidate => candidate.QuizId == command.QuizId && candidate.OrderIndex > deletedOrderIndex)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    candidate => candidate.OrderIndex,
+                    candidate => candidate.OrderIndex + TemporaryOffset),
+                cancellationToken);
+
+        await dbContext.Questions
+            .Where(candidate =>
+                candidate.QuizId == command.QuizId &&
+                candidate.OrderIndex > deletedOrderIndex + TemporaryOffset)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(
+                    candidate => candidate.OrderIndex,
+                    candidate => candidate.OrderIndex - TemporaryOffset - 1),
+                cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }
