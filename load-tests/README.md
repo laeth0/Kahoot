@@ -1,7 +1,11 @@
 # Kahoot-like Platform — k6 load-testing suite
 
-Verifies the non-functional requirements in
-[`../docs/non-functional-requirements.md`](../docs/non-functional-requirements.md):
+Verifies the documented
+[capacity](../docs/non-functional-requirements/capacity-and-scalability.md),
+[real-time performance](../docs/non-functional-requirements/realtime-performance.md),
+[API and database performance](../docs/non-functional-requirements/api-and-database-performance.md),
+and [data-integrity](../docs/non-functional-requirements/concurrency-reliability-and-data-integrity.md)
+requirements:
 
 | Requirement | Target |
 |---|---|

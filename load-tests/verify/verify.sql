@@ -6,7 +6,7 @@
 --   psql "$DATABASE_URL" -f verify/verify.sql                       -- all games
 --
 -- Every query below should return ZERO rows on a healthy system. Any row is a
--- violation of non-functional-requirements.md.
+-- violation of docs/non-functional-requirements/concurrency-reliability-and-data-integrity.md.
 
 \set ON_ERROR_STOP on
 \if :{?game}

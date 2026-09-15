@@ -1,4 +1,4 @@
-// Threshold sets derived from non-functional-requirements.md (NFR-1 / NFR-2).
+// Threshold sets derived from docs/non-functional-requirements/ (NFR-1 / NFR-2).
 // k6 exits non-zero (code 99) if any threshold fails, so a violated requirement
 // makes the whole run FAIL — the brief's "must exit as failed" rule.
 
