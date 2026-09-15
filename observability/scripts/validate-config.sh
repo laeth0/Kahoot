@@ -114,7 +114,9 @@ const env = {
   POSTGRES_MONITOR_PASSWORD: "val_mon_pass",
   JWT_SIGNING_KEY: "12345678901234567890123456789012",
   HOST_SEED_PASSWORD: "val_seed_pass",
-  POSTGRES_PASSWORD: "val_pg_pass"
+  POSTGRES_PASSWORD: "val_pg_pass",
+  CLIENT_BASE_URL: "http://val-host",
+  CORS_ALLOWED_ORIGINS: "http://val-host"
 };
 
 const output = execSync(`docker compose -f "${repoRoot}/docker-compose.prod.yml" config --format json`, { env }).toString();
@@ -128,14 +130,14 @@ for (const [name, service] of Object.entries(config.services)) {
   if (name === "nginx") {
     const published = (service.ports || []).map(p => typeof p === "object" ? String(p.published) : String(p));
     for (const p of published) {
-      if (!p.includes("80") && !p.includes("443")) {
+      if (!p.includes("80")) {
         console.error(`FAIL: Nginx in docker-compose.prod.yml exposes unexpected port: ${p}`);
         process.exit(1);
       }
     }
   }
 }
-console.log("PASS: Compose rendered; only Nginx 80/443 exposed in production.");
+console.log("PASS: Compose rendered; only Nginx port 80 (HTTP) exposed in production.");
 ' "$REPO_ROOT"
 
 echo "=== 4. Pinned tool validations (Prometheus, Loki, Collector, Nginx, Jaeger) ==="
@@ -170,12 +172,36 @@ $DOCKER_BIN run --rm \
   -v "${HOST_DIR}/observability/otel/collector-config.yml:/etc/otelcol-contrib/config.yaml:ro" \
   otel/opentelemetry-collector-contrib:0.160.0 validate --config=/etc/otelcol-contrib/config.yaml >/dev/null 2>&1
 
-# Nginx check syntax
+# Nginx check syntax (dev config)
 $DOCKER_BIN run --rm \
   --add-host backend:127.0.0.1 --add-host frontend:127.0.0.1 --add-host grafana:127.0.0.1 \
   -v "${HOST_DIR}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
   -v "${HOST_DIR}/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro" \
-  nginx:alpine nginx -t -c /etc/nginx/nginx.conf >/dev/null 2>&1
+  nginx:1.27.5-alpine nginx -t -c /etc/nginx/nginx.conf >/dev/null 2>&1
+
+# Nginx check syntax (prod config)
+$DOCKER_BIN run --rm \
+  --add-host backend:127.0.0.1 --add-host frontend:127.0.0.1 --add-host grafana:127.0.0.1 \
+  -v "${HOST_DIR}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro" \
+  -v "${HOST_DIR}/nginx/default.prod.conf:/etc/nginx/conf.d/default.conf:ro" \
+  nginx:1.27.5-alpine nginx -t -c /etc/nginx/nginx.conf >/dev/null 2>&1
+
+# Assert prod config has no HTTPS redirect or listen 443 (HTTP-only deployment)
+node -e '
+const fs = require("fs");
+const path = require("path");
+const repoRoot = process.argv[1];
+const prodConf = fs.readFileSync(path.join(repoRoot, "nginx/default.prod.conf"), "utf8");
+if (/listen\s+443/.test(prodConf)) {
+  console.error("FAIL: nginx/default.prod.conf contains listen 443 — HTTPS is not configured for this deployment");
+  process.exit(1);
+}
+if (/return\s+301\s+https:/.test(prodConf)) {
+  console.error("FAIL: nginx/default.prod.conf contains an HTTPS redirect — not expected for HTTP-only deployment");
+  process.exit(1);
+}
+console.log("PASS: Prod Nginx config is HTTP-only (no listen 443, no HTTPS redirect).");
+' "$REPO_ROOT"
 
 # Jaeger validate
 $DOCKER_BIN run --rm \

@@ -1,6 +1,6 @@
 # Azure VM Operational & Maintenance Guide
 
-This guide covers operational maintenance, configuration updates, and environment management for the Kahoot platform running on the **Azure Linux Virtual Machine** (`http://20.19.48.78/`) using **Docker Compose** and **Nginx Reverse Proxy**.
+This guide covers operational maintenance, configuration updates, and environment management for the Kahoot platform running on the **Azure Linux Virtual Machine** using **Docker Compose** and **Nginx Reverse Proxy**. The current deployment serves traffic over **HTTP on port 80**. See [Section 11](#11-future-https-migration) for the HTTPS upgrade path once a domain is acquired.
 
 ---
 
@@ -71,10 +71,11 @@ flowchart TD
 ```
 
 ### Security & Network Port Rules:
-- **Only Nginx** is exposed to host ports `80` and `443`.
-- All other services (`backend`, `frontend`, `db`, `grafana`, `prometheus`, `loki`, `jaeger`, `otel-collector`, and exporters) reside strictly on internal Docker networks (`kahoot_internal` and `observability_internal`). They have **zero published host ports** and cannot be probed or scanned from the internet.
-- **Operator Access:** Grafana is accessed securely via subpath proxy at `http://20.19.48.78/grafana/`.
-- **Note on Azure Monitor Agent:** Azure Monitor Agent is not configured or required for this host; host and container telemetry are completely covered by Prometheus Node Exporter and cAdvisor. Azure Monitor Agent remains an optional future cloud integration.
+- **Only Nginx** is exposed to host port `80`.
+- All other services (`backend`, `frontend`, `db`) reside strictly on the `kahoot_internal` Docker bridge network. They have **zero published host ports** and cannot be probed from the internet.
+- **Operator Access:** Grafana is accessed at `http://<VM_IP>/grafana/`. Authentication is required (anonymous access disabled). Note that credentials transit unencrypted over HTTP — this is acceptable for academic/development use. Add a domain and HTTPS before any sensitive production use.
+- **Container hardening (Phase 6):** All application containers (`backend`, `frontend`, `nginx`) run with `no-new-privileges`, read-only root filesystems, and tmpfs scratch mounts. Backend runs as a non-root `app` user; frontend Nginx runs as the `nginx` user.
+- **Connection pool:** Npgsql pool `Maximum Pool Size=64`; PostgreSQL `max_connections=100` (64 app + admin/monitor headroom).
 
 ---
 
@@ -107,8 +108,8 @@ These are non-sensitive configuration keys, URLs, ports, and architectural defau
 | `POSTGRES_USER` | `kahoot_admin` | Database username |
 | `HTTP_PORT` | `80` | Public HTTP port mapped to Nginx |
 | `HTTPS_PORT` | `443` | Public HTTPS port mapped to Nginx |
-| `CLIENT_BASE_URL` | `http://20.19.48.78` | Canonical base URL used by backend `IJoinUrlGenerator` to produce `/join?pin={pin}` |
-| `CORS_ALLOWED_ORIGINS` | `http://20.19.48.78,https://yourdomain.com` | Allowed browser origins for SignalR and API calls |
+| `CLIENT_BASE_URL` | `http://<VM_IP>` | Canonical base URL used by backend `IJoinUrlGenerator` to produce `/join?pin={pin}` |
+| `CORS_ALLOWED_ORIGINS` | `http://<VM_IP>` | Allowed browser origins for SignalR and API calls |
 | `VITE_API_URL` | `/api` | Relative API path proxied through Nginx |
 | `VITE_SIGNALR_URL` | `/hubs/game` | Relative SignalR hub path proxied through Nginx |
 | `JWT_ISSUER` | `kahoot-api` | JWT token issuer |
@@ -174,11 +175,14 @@ docker compose -f docker-compose.prod.yml up -d nginx
 
 ## 5. Editing Domain Name, Public URL, and CORS
 
-When transitioning from the VM IP (`http://20.19.48.78`) to a custom domain (e.g. `https://kahoot.yourdomain.com`):
+When transitioning from the VM IP (`http://<VM_IP>`) to a custom domain (e.g. `https://kahoot.yourdomain.com`):
+
+> [!NOTE]
+> The current deployment uses HTTP only. See [Section 11](#11-future-https-migration) for HTTPS upgrade instructions.
 
 ### 1. Update DNS
 In your DNS registrar (Cloudflare, Namecheap, GoDaddy, Hostinger):
-- Add an **A Record**: `@` (or subdomain `kahoot`) -> `20.19.48.78`.
+- Add an **A Record**: `@` (or subdomain `kahoot`) -> `<VM_IP>`.
 
 ### 2. Update Environment Variables on VM
 In `/home/azureuser/kahoot/.env`:
@@ -195,7 +199,7 @@ docker compose -f docker-compose.prod.yml up -d backend
 
 > [!TIP]
 > **Clipboard API Note**:
-> When using `http://20.19.48.78/` (plain HTTP), modern browsers classify the site as an *insecure context* and disable `navigator.clipboard`. The application automatically uses a built-in `document.execCommand('copy')` fallback.
+> When using `http://<VM_IP>/` (plain HTTP), modern browsers classify the site as an *insecure context* and disable `navigator.clipboard`. The application automatically uses a built-in `document.execCommand('copy')` fallback.
 > Once you switch to a custom domain with HTTPS (`https://kahoot.yourdomain.com`), the browser recognizes it as a *secure context* and automatically re-activates the modern Async Clipboard API.
 
 ---
@@ -396,6 +400,79 @@ docker compose -f docker-compose.prod.yml start backend
 
 ### Fast Health Check Verification Command:
 ```bash
-curl -i http://20.19.48.78/health
+curl -i http://<VM_IP>/health
 # Expected Output: HTTP/1.1 200 OK -> Healthy
+```
+
+---
+
+## 11. Future HTTPS Migration
+
+When a domain name is acquired, upgrade to HTTPS with the following steps:
+
+> [!IMPORTANT]
+> Complete this only after a domain A-record is pointing to the VM and DNS has propagated.
+
+### 1. Obtain a certificate (Let's Encrypt / Certbot)
+```bash
+docker run -it --rm \
+  -v kahoot_certbot_conf:/etc/letsencrypt \
+  -v kahoot_certbot_www:/var/www/certbot \
+  certbot/certbot certonly --webroot \
+  --webroot-path=/var/www/certbot \
+  -d kahoot.yourdomain.com \
+  --email admin@yourdomain.com \
+  --agree-tos --no-eff-email
+```
+
+### 2. Update `docker-compose.prod.yml`
+- Add `certbot_conf` and `certbot_www` volumes back to the `nginx` service.
+- Add port `443:443` to the `nginx` ports mapping.
+
+### 3. Update `nginx/default.prod.conf`
+Replace the single HTTP server block with two blocks:
+
+```nginx
+server {
+    listen 80;
+    server_name kahoot.yourdomain.com;
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    server_name kahoot.yourdomain.com;
+
+    ssl_certificate /etc/letsencrypt/live/kahoot.yourdomain.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/kahoot.yourdomain.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    # ... all existing location blocks ...
+
+    # Enable HSTS only after first successful automated renewal is confirmed:
+    # add_header Strict-Transport-Security "max-age=63072000; includeSubDomains" always;
+}
+```
+
+### 4. Update environment variables
+```env
+CLIENT_BASE_URL=https://kahoot.yourdomain.com
+CORS_ALLOWED_ORIGINS=https://kahoot.yourdomain.com
+```
+
+### 5. Update CSP `connect-src`
+Change `ws:` to `wss:` in the `Content-Security-Policy` header to allow SignalR over TLS.
+
+### 6. Set up automatic renewal
+```bash
+# Add to crontab:
+0 3 * * * docker run --rm -v kahoot_certbot_conf:/etc/letsencrypt -v kahoot_certbot_www:/var/www/certbot certbot/certbot renew --quiet && docker exec kahoot-nginx nginx -s reload
 ```

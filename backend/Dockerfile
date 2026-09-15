@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0.302 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.401 AS build
 WORKDIR /app
 
 COPY *.sln* ./
@@ -17,6 +17,11 @@ WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
+RUN groupadd -r app && useradd -r -g app app \
+    && mkdir -p /app/uploads \
+    && chown app:app /app/uploads
+
 COPY --from=build /app/publish .
 
+USER app
 ENTRYPOINT ["dotnet", "Kahoot.Api.dll"]
