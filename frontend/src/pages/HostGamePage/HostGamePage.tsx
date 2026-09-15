@@ -68,7 +68,9 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
     actionError,
     isActionPending,
     hubConnectionStatus,
+    dataSyncState,
     retryHub,
+    retrySync,
     refetch,
     startGame,
     advanceQuestion,
@@ -199,7 +201,12 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
         sx={{ maxWidth: 1400, mx: 'auto', pb: { xs: 2, sm: 'clamp(16px, 2.5vh, 32px)' } }}
       >
         <LiveRegion message={liveAnnouncement?.message} politeness={liveAnnouncement?.politeness} />
-        <ConnectionStatusBanner status={hubConnectionStatus} onRetry={retryHub} />
+        <ConnectionStatusBanner
+          status={hubConnectionStatus}
+          onRetry={retryHub}
+          dataSyncState={dataSyncState}
+          onSyncRetry={retrySync}
+        />
 
         <Box sx={{ mb: { xs: 1.5, sm: 'clamp(10px, 1.5vh, 20px)' } }}>
           <GamePhaseIndicator
@@ -248,6 +255,7 @@ function HostGameSession({ gameId }: { gameId: string | undefined }) {
 
             <ParticipantGrid
               participants={participants}
+              participantCount={participantCount}
               onRemoveParticipant={removeParticipant}
               isRemoving={isActionPending}
             />

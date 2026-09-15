@@ -4,9 +4,7 @@ namespace Kahoot.Api.Realtime;
 
 public interface IGameClient
 {
-    Task ParticipantJoined(GameParticipantResponse participant);
-
-    Task ParticipantLeft(Guid participantId);
+    Task ParticipantPresenceChanged(ParticipantPresenceResponse presence);
 
     Task ParticipantRemoved(Guid participantId);
 

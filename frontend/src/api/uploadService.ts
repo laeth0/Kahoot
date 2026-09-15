@@ -8,7 +8,7 @@ export interface UploadImageResult {
 }
 
 export const uploadService = {
-  async uploadImage(file: File): Promise<UploadImageResult> {
+  async uploadImage(file: File, signal?: AbortSignal): Promise<UploadImageResult> {
     if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
       throw new Error('Unsupported image format. Please select a JPEG, PNG, WebP, or GIF image.');
     }
@@ -21,6 +21,8 @@ export const uploadService = {
     formData.append('file', file);
 
     const response = await axiosClient.post<UploadImageResult>('/uploads/images', formData, {
+      signal,
+      timeout: 60000,
       headers: {
         'Content-Type': 'multipart/form-data',
       },

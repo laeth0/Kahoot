@@ -49,7 +49,6 @@ export function useGameHubConnection(requireHostAuth = false) {
       if (hubConnection.state !== HubConnectionState.Disconnected) {
         hubConnection.stop().catch(() => {});
       }
-      setConnection(null);
     };
   }, [requireHostAuth, retryTrigger]);
 

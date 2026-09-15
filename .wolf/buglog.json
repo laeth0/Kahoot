@@ -1072,6 +1072,153 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-13T12:46:15.151661+00:00"
+    },
+    {
+      "id": "bug-068",
+      "timestamp": "2026-09-15T07:15:00+00:00",
+      "error_message": "CS0246 ParticipantPresenceMutationResponse could not be found",
+      "file": "backend/src/Kahoot.Application/Games/Presence/AttachParticipantConnectionCommand.cs",
+      "root_cause": "The feature request records referenced new contracts from Kahoot.Application.Games.Common without importing that namespace.",
+      "fix": "Imported Kahoot.Application.Games.Common in the attach, detach, and removal request contract files.",
+      "tags": [
+        "backend",
+        "build",
+        "namespace",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T07:15:00+00:00"
+    },
+    {
+      "id": "bug-069",
+      "timestamp": "2026-09-15T07:18:00+00:00",
+      "error_message": "Connection string 'DefaultConnection' is empty during dotnet ef migrations add",
+      "file": "backend/src/Kahoot.Infrastructure/Persistence/KahootDbContextFactory.cs",
+      "root_cause": "The hardened design-time context factory requires an explicit connection string and the migration command was run without ConnectionStrings__DefaultConnection.",
+      "fix": "Reran migration generation with a non-secret local design-time connection string supplied only to the command environment.",
+      "tags": [
+        "backend",
+        "ef-core",
+        "migration",
+        "configuration",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T07:18:00+00:00"
+    },
+    {
+      "id": "bug-070",
+      "timestamp": "2026-09-15T08:10:00+00:00",
+      "error_message": "Frontend Prettier check reported six unformatted files",
+      "file": "frontend/src/api/axiosClient.ts",
+      "root_cause": "Phase 5 edits and pre-existing source formatting did not match the repository Prettier configuration.",
+      "fix": "Format the five in-scope files, preserve the unrelated file, and rerun targeted and repository formatting validation.",
+      "tags": [
+        "frontend",
+        "formatting",
+        "verification",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:10:00+00:00"
+    },
+    {
+      "id": "bug-071",
+      "timestamp": "2026-09-15T08:18:00+00:00",
+      "error_message": "Clean Node 22.12 install reported unsupported engine requirements for ESLint 10",
+      "file": "frontend/Dockerfile",
+      "root_cause": "The resolved ESLint 10 packages require Node 22.13 or newer even though the Rolldown plugin only requires 22.12.",
+      "fix": "Raised the Node 22 minimum, .nvmrc, and Docker build image consistently to 22.13.0.",
+      "tags": [
+        "frontend",
+        "node",
+        "toolchain",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:18:00+00:00"
+    },
+    {
+      "id": "bug-072",
+      "timestamp": "2026-09-15T08:24:00+00:00",
+      "error_message": "Backend Docker build could not resolve mcr.microsoft.com/dotnet/sdk:10.0.112",
+      "file": "backend/Dockerfile",
+      "root_cause": "The locally installed .NET SDK patch number was assumed to be an available Microsoft container tag, but MCR does not publish that exact tag.",
+      "fix": "Verified Microsoft container metadata, pinned the build image to the published SDK 10.0.302 tag while retaining the root 10.0.1xx SDK policy, and retained the available ASP.NET 10.0.12 runtime tag.",
+      "tags": [
+        "backend",
+        "docker",
+        "dotnet",
+        "toolchain",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:24:00+00:00"
+    },
+    {
+      "id": "bug-073",
+      "timestamp": "2026-09-15T08:31:00+00:00",
+      "error_message": "Rebuilt backend container entered a restart loop with exit code 139",
+      "file": "backend/Dockerfile",
+      "root_cause": "Under investigation after the first startup attempt with the corrected SDK and runtime image tags.",
+      "fix": "Inspect startup logs and runtime configuration, correct the verified cause, then rerun health and migration checks.",
+      "tags": [
+        "backend",
+        "docker",
+        "runtime",
+        "verification",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:31:00+00:00"
+    },
+    {
+      "id": "bug-074",
+      "timestamp": "2026-09-15T08:38:00+00:00",
+      "error_message": "Docker could not address the previous backend and frontend image identifiers during local stack restoration",
+      "file": "docker-compose.yml",
+      "root_cause": "The image identifiers recorded in the old container labels were no longer present as locally addressable image objects after replacement.",
+      "fix": "Inspect remaining local image metadata and restore the prior stack without modifying its database; use isolated Phase 5 containers for validation.",
+      "tags": [
+        "docker",
+        "local-environment",
+        "verification",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:38:00+00:00"
+    },
+    {
+      "id": "bug-075",
+      "timestamp": "2026-09-15T08:43:00+00:00",
+      "error_message": "Isolated frontend Nginx could not resolve its expected backend upstream and the readiness curl lingered",
+      "file": "frontend/nginx.conf",
+      "root_cause": "The temporary backend container lacked the network alias expected by the production Nginx configuration, and the ad hoc readiness curl had no maximum duration.",
+      "fix": "Attach the isolated backend with the expected temporary network alias, restart the frontend, and use bounded curl readiness checks.",
+      "tags": [
+        "frontend",
+        "docker",
+        "smoke-test",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:43:00+00:00"
+    },
+    {
+      "id": "bug-076",
+      "timestamp": "2026-09-15T08:48:00+00:00",
+      "error_message": "Isolated API scenario setup failed because jq is not installed",
+      "file": "docs/superpowers/plans/2026-09-15-phase-5-frontend-resilience.md",
+      "root_cause": "The ad hoc smoke setup assumed jq was available in the local shell.",
+      "fix": "Parse the small JSON responses with the already installed Node runtime instead of adding a system dependency.",
+      "tags": [
+        "tooling",
+        "smoke-test",
+        "verification",
+        "phase-5"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T08:48:00+00:00"
     }
   ]
 }

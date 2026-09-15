@@ -31,6 +31,9 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                 candidate.GameSession.CurrentQuestionId,
                 candidate.GameSession.CurrentQuestionIndex,
                 candidate.GameSession.CurrentQuestionEndsAt,
+                candidate.GameSession.PresenceVersion,
+                ParticipantCount = candidate.GameSession.Participants.Count(gameParticipant =>
+                    gameParticipant.ConnectionId != null && !gameParticipant.IsRemoved),
                 candidate.GameSession.QuizId
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -120,6 +123,8 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
             participant.Nickname,
             participant.TotalScore,
             participant.LastRank,
+            participant.ParticipantCount,
+            participant.PresenceVersion,
             alreadyAnswered,
             currentQuestion,
             lastQuestionResults,

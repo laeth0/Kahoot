@@ -128,9 +128,9 @@ Allowed transitions (all others are rejected server-side):
 - Players join with a game PIN (embedded in the shared link or typed on the join page) plus a handle name.
 - The PIN is short, generated server-side, and unique among games that are not finished.
 - A handle name must be unique within its game (case-insensitive) and pass validation/sanitization.
-- The host receives `ParticipantJoined` in real time only after a participant
+- The host receives `ParticipantPresenceChanged` in real time only after a participant
   successfully attaches through the hub (`JoinGame` or `Reconnect`). A REST-only
-  join reserves a seat without broadcasting; the host recovers that reservation
+  join reserves a seat without broadcasting; the host recovers current presence
   through `GET /api/games/{id}` state.
 - The host may remove a player; a removed player cannot rejoin the same game with
   the same handle.

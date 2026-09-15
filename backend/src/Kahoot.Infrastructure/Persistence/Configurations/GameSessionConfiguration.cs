@@ -16,6 +16,7 @@ public sealed class GameSessionConfiguration : IEntityTypeConfiguration<GameSess
         builder.Property(session => session.QuizTitle).HasMaxLength(200).IsRequired();
         builder.Property(session => session.CurrentQuestionEligibleCount).HasDefaultValue(0);
         builder.Property(session => session.CurrentQuestionAnsweredCount).HasDefaultValue(0);
+        builder.Property(session => session.PresenceVersion).HasDefaultValue(0L);
 
         builder.Property(session => session.Status)
             .HasConversion<string>()

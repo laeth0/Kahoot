@@ -73,7 +73,6 @@ frontend/
 │   ├── styles/                 # Design tokens, CSS variables, and global resets
 │   ├── theme/                  # Material UI theme setup (palette, typography, overrides)
 │   ├── utils/                  # Shared helper functions and utility libraries
-│   ├── App.css                 # Application-level styles
 │   ├── App.tsx                 # Root application component
 │   ├── index.css               # Global base styles and font declarations
 │   └── main.tsx                # Application entry point mounting to the DOM

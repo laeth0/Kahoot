@@ -5,20 +5,58 @@ import WifiOffIcon from '@mui/icons-material/WifiOff';
 import { Alert, Box, Button, CircularProgress, Paper, Stack, Typography } from '@mui/material';
 
 import type { HubConnectionStatus } from '../../hooks/useGameHubConnection.ts';
+import type { GameDataSyncState } from '../../realtime/events.ts';
 
 export interface ConnectionStatusBannerProps {
   status: HubConnectionStatus;
   onRetry?: () => void;
+  dataSyncState?: GameDataSyncState;
+  onSyncRetry?: () => void;
 }
 
-export function ConnectionStatusBanner({ status, onRetry }: ConnectionStatusBannerProps) {
-  if (status === 'connected') {
+export function ConnectionStatusBanner({
+  status,
+  onRetry,
+  dataSyncState,
+  onSyncRetry,
+}: ConnectionStatusBannerProps) {
+  if (status === 'connected' && dataSyncState?.status !== 'stale') {
     return null;
   }
 
   const isReconnecting = status === 'reconnecting';
   const isConnecting = status === 'connecting';
   const isDisconnected = status === 'disconnected';
+
+  if (status === 'connected' && dataSyncState?.status === 'stale') {
+    const lastSuccessfulSync = dataSyncState.lastSuccessfulAt
+      ? new Date(dataSyncState.lastSuccessfulAt).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        })
+      : null;
+
+    return (
+      <Alert
+        severity="warning"
+        role="status"
+        action={
+          onSyncRetry ? (
+            <Button color="inherit" size="small" onClick={onSyncRetry} startIcon={<RefreshIcon />}>
+              Sync Now
+            </Button>
+          ) : undefined
+        }
+        sx={{ mb: 2, alignItems: 'center', borderRadius: 2, fontWeight: 500 }}
+      >
+        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+          {dataSyncState.message ?? 'Live data may be out of date. Last known state is shown.'}
+          {lastSuccessfulSync ? ` Last synchronized at ${lastSuccessfulSync}.` : ''}
+        </Typography>
+      </Alert>
+    );
+  }
 
   if (isDisconnected) {
     return (

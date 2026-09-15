@@ -40,15 +40,20 @@ public sealed class GameHub(
         }
 
         JoinGameResponse value = result.Value;
-        Result trackResult = await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, value.SessionToken);
+        Result<ParticipantPresenceMutationResponse> trackResult = await TrackPlayerConnectionAsync(
+            value.GameId,
+            value.ParticipantId,
+            value.SessionToken,
+            ParticipantPresenceReasons.Joined);
         if (trackResult.IsFailure)
         {
             return RealtimeResponse<JoinGameResponse>.Failure(trackResult.Error);
         }
 
-        await notifier.ParticipantJoinedAsync(
-            value.GameId,
-            new GameParticipantResponse(value.ParticipantId, value.Nickname, 0, null, true, false));
+        if (trackResult.Value.Changed)
+        {
+            await notifier.ParticipantPresenceChangedAsync(value.GameId, trackResult.Value.Presence);
+        }
 
         return RealtimeResponse<JoinGameResponse>.Ok(value);
     }
@@ -68,15 +73,27 @@ public sealed class GameHub(
             }
 
             PlayerGameStateResponse value = result.Value;
-            Result trackResult = await TrackPlayerConnectionAsync(value.GameId, value.ParticipantId, sessionToken);
+            Result<ParticipantPresenceMutationResponse> trackResult = await TrackPlayerConnectionAsync(
+                value.GameId,
+                value.ParticipantId,
+                sessionToken,
+                ParticipantPresenceReasons.Reconnected);
             if (trackResult.IsFailure)
             {
                 return RealtimeResponse<PlayerGameStateResponse>.Failure(trackResult.Error);
             }
 
-            await notifier.ParticipantJoinedAsync(
-                value.GameId,
-                new GameParticipantResponse(value.ParticipantId, value.Nickname, value.TotalScore, value.Rank, true, false));
+            ParticipantPresenceMutationResponse mutation = trackResult.Value;
+            value = value with
+            {
+                ParticipantCount = mutation.Presence.ParticipantCount,
+                PresenceVersion = mutation.Presence.PresenceVersion
+            };
+
+            if (mutation.Changed)
+            {
+                await notifier.ParticipantPresenceChangedAsync(value.GameId, mutation.Presence);
+            }
 
             outcome = "success";
             return RealtimeResponse<PlayerGameStateResponse>.Ok(value);
@@ -182,10 +199,11 @@ public sealed class GameHub(
         {
             if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
             {
-                Result<bool> detachResult = await sender.Send(new DetachParticipantConnectionCommand(participantId, Context.ConnectionId));
-                if (detachResult.IsSuccess && detachResult.Value)
+                Result<ParticipantPresenceMutationResponse?> detachResult = await sender.Send(
+                    new DetachParticipantConnectionCommand(gameId, participantId, Context.ConnectionId));
+                if (detachResult.IsSuccess && detachResult.Value is { } mutation)
                 {
-                    await notifier.ParticipantLeftAsync(gameId, participantId);
+                    await notifier.ParticipantPresenceChangedAsync(gameId, mutation.Presence);
 
                     Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
                         new TryAutoEndQuestionCommand(gameId, null),
@@ -206,15 +224,19 @@ public sealed class GameHub(
         }
     }
 
-    private async Task<Result> TrackPlayerConnectionAsync(Guid gameId, Guid participantId, string sessionToken)
+    private async Task<Result<ParticipantPresenceMutationResponse>> TrackPlayerConnectionAsync(
+        Guid gameId,
+        Guid participantId,
+        string sessionToken,
+        string reason)
     {
-        Result attachResult = await sender.Send(
-            new AttachParticipantConnectionCommand(participantId, Context.ConnectionId),
+        Result<ParticipantPresenceMutationResponse> attachResult = await sender.Send(
+            new AttachParticipantConnectionCommand(gameId, participantId, Context.ConnectionId, reason),
             Context.ConnectionAborted);
 
         if (attachResult.IsFailure)
         {
-            return attachResult;
+            return Result.Failure<ParticipantPresenceMutationResponse>(attachResult.Error);
         }
 
         Context.Items[GameIdItem] = gameId;
@@ -222,7 +244,7 @@ public sealed class GameHub(
         Context.Items[SessionTokenItem] = sessionToken;
 
         await Groups.AddToGroupAsync(Context.ConnectionId, GameGroups.Players(gameId), Context.ConnectionAborted);
-        return Result.Success();
+        return attachResult;
     }
 
     private bool AllowSubmit()

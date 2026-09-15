@@ -1,6 +1,6 @@
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { Box, Chip, Stack, Typography } from '@mui/material';
-import { motion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import React from 'react';
 
 import type { LeaderboardEntryResponse } from '../../realtime/events.ts';
@@ -48,6 +48,7 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
   isYou,
   isProjector,
 }) => {
+  const shouldReduceMotion = useReducedMotion();
   const avatarBg = getAvatarColor(entry.nickname, rank);
 
   const resolvedHeight =
@@ -67,12 +68,12 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
         : { xs: 'clamp(32px, 5vh, 50px)', sm: 'clamp(38px, 6vh, 58px)' });
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 40, scale: 0.9 }}
+    <m.div
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 40, scale: 0.9 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{
-        duration: 0.55,
-        delay: delaySec,
+        duration: shouldReduceMotion ? 0 : 0.55,
+        delay: shouldReduceMotion ? 0 : delaySec,
         ease: [0.34, 1.56, 0.64, 1],
       }}
       style={{
@@ -265,7 +266,7 @@ export const PodiumSlot: React.FC<PodiumSlotProps> = ({
           </Typography>
         </Box>
       </Stack>
-    </motion.div>
+    </m.div>
   );
 };
 

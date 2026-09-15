@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Button, Paper, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
 
 import { AnswerFeedbackScreen } from '../../components/AnswerFeedbackScreen/index.ts';
 import { ChoiceGrid } from '../../components/ChoiceGrid/index.ts';
@@ -46,8 +46,14 @@ export function PlayerQuestionView({
   const timeUp = countdown.expired;
 
   const currentSelection = isMultiSelect
-    ? selectedChoiceIds.length > 0 ? selectedChoiceIds : pendingSelections
-    : selectedChoiceIds.length > 0 ? selectedChoiceIds : selectedChoiceId ? [selectedChoiceId] : [];
+    ? selectedChoiceIds.length > 0
+      ? selectedChoiceIds
+      : pendingSelections
+    : selectedChoiceIds.length > 0
+      ? selectedChoiceIds
+      : selectedChoiceId
+        ? [selectedChoiceId]
+        : [];
 
   const handleChoiceClick = (choiceId: string) => {
     if (locked) return;
@@ -133,7 +139,8 @@ export function PlayerQuestionView({
                 '&.Mui-disabled': { bgcolor: '#E2E8F0', color: '#94A3B8' },
               }}
             >
-              Submit Answer {pendingSelections.length > 0 ? `(${pendingSelections.length} selected)` : ''}
+              Submit Answer{' '}
+              {pendingSelections.length > 0 ? `(${pendingSelections.length} selected)` : ''}
             </Button>
           )}
         </Stack>

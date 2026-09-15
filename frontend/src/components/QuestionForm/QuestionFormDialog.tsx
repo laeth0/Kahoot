@@ -131,9 +131,7 @@ function QuestionFormContent({
   const [validationError, setValidationError] = useState<string | null>(null);
 
   const handleChoiceChange = (draftId: string, updated: ChoiceInput) => {
-    setChoices((prev) =>
-      prev.map((c) => (c.draftId === draftId ? { ...c, ...updated } : c)),
-    );
+    setChoices((prev) => prev.map((c) => (c.draftId === draftId ? { ...c, ...updated } : c)));
     if (validationError) setValidationError(null);
   };
 
@@ -212,7 +210,11 @@ function QuestionFormContent({
       imageUrl,
       timeLimitSeconds,
       points: finalPoints,
-      choices: choices.map(({ draftId: _, ...rest }) => rest),
+      choices: choices.map((choice) => ({
+        id: choice.id,
+        text: choice.text,
+        isCorrect: choice.isCorrect,
+      })),
     });
   };
 

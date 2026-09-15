@@ -11,8 +11,9 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
-import { type ChangeEvent, useRef, useState } from 'react';
+import { type ChangeEvent, useEffect, useRef, useState } from 'react';
 
+import { isApiRequestCanceled } from '../../api/axiosClient.ts';
 import { resolveMediaUrl } from '../../api/media.ts';
 import { uploadService } from '../../api/uploadService.ts';
 
@@ -30,12 +31,21 @@ export function ImageUploadField({
   disabled = false,
 }: ImageUploadFieldProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const uploadControllerRef = useRef<AbortController | null>(null);
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [failedValue, setFailedValue] = useState<string | null>(null);
 
   const previewSrc = resolveMediaUrl(value) ?? value;
   const previewError = Boolean(value && failedValue === value);
+
+  useEffect(() => {
+    return () => {
+      const controller = uploadControllerRef.current;
+      uploadControllerRef.current = null;
+      controller?.abort();
+    };
+  }, []);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -46,19 +56,27 @@ export function ImageUploadField({
     if (!files || files.length === 0) return;
 
     const file = files[0];
+    uploadControllerRef.current?.abort();
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
     setError(null);
     setIsUploading(true);
 
     try {
-      const result = await uploadService.uploadImage(file);
+      const result = await uploadService.uploadImage(file, controller.signal);
       onChange(result.url);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Image upload failed';
-      setError(msg);
+      if (!isApiRequestCanceled(err)) {
+        const msg = err instanceof Error ? err.message : 'Image upload failed';
+        setError(msg);
+      }
     } finally {
-      setIsUploading(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (uploadControllerRef.current === controller) {
+        uploadControllerRef.current = null;
+        setIsUploading(false);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
       }
     }
   };

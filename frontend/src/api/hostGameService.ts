@@ -30,6 +30,8 @@ export interface HostGameStateResponse {
   currentQuestionStartedAt: string | null;
   currentQuestionEndsAt: string | null;
   answeredCount: number;
+  participantCount: number;
+  presenceVersion: number;
   participants: GameParticipantResponse[];
   joinUrl?: string;
 }
@@ -40,8 +42,8 @@ export const hostGameService = {
     return response.data;
   },
 
-  async getState(gameId: string): Promise<HostGameStateResponse> {
-    const response = await axiosClient.get<HostGameStateResponse>(`/games/${gameId}`);
+  async getState(gameId: string, signal?: AbortSignal): Promise<HostGameStateResponse> {
+    const response = await axiosClient.get<HostGameStateResponse>(`/games/${gameId}`, { signal });
     return response.data;
   },
 
@@ -76,15 +78,22 @@ export const hostGameService = {
     await axiosClient.delete(`/games/${gameId}/participants/${participantId}`);
   },
 
-  async getQuestionResults(gameId: string, questionId: string): Promise<QuestionResultsResponse> {
+  async getQuestionResults(
+    gameId: string,
+    questionId: string,
+    signal?: AbortSignal,
+  ): Promise<QuestionResultsResponse> {
     const response = await axiosClient.get<QuestionResultsResponse>(
       `/games/${gameId}/questions/${questionId}/results`,
+      { signal },
     );
     return response.data;
   },
 
-  async getLeaderboard(gameId: string): Promise<LeaderboardResponse> {
-    const response = await axiosClient.get<LeaderboardResponse>(`/games/${gameId}/leaderboard`);
+  async getLeaderboard(gameId: string, signal?: AbortSignal): Promise<LeaderboardResponse> {
+    const response = await axiosClient.get<LeaderboardResponse>(`/games/${gameId}/leaderboard`, {
+      signal,
+    });
     return response.data;
   },
 };

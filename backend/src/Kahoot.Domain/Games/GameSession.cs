@@ -25,6 +25,8 @@ public sealed class GameSession
 
     public int CurrentQuestionAnsweredCount { get; set; }
 
+    public long PresenceVersion { get; set; }
+
     public DateTime? CurrentQuestionStartedAt { get; set; }
 
     public DateTime? CurrentQuestionEndsAt { get; set; }

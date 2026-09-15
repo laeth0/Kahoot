@@ -11,20 +11,31 @@ public sealed class GameNotifier(
     IKahootTelemetry telemetry,
     ILogger<GameNotifier> logger)
 {
-    public Task ParticipantJoinedAsync(Guid gameId, GameParticipantResponse participant) =>
-        BroadcastAsync("ParticipantJoined", () => Everyone(gameId).ParticipantJoined(participant));
+    public Task ParticipantPresenceChangedAsync(Guid gameId, ParticipantPresenceResponse presence) =>
+        BroadcastAsync(
+            "ParticipantPresenceChanged",
+            () => Everyone(gameId).ParticipantPresenceChanged(presence));
 
-    public Task ParticipantLeftAsync(Guid gameId, Guid participantId) =>
-        BroadcastAsync("ParticipantLeft", () => Everyone(gameId).ParticipantLeft(participantId));
-
-    public async Task ParticipantRemovedAsync(Guid gameId, Guid participantId, string? connectionId = null)
+    public async Task ParticipantRemovedAsync(
+        Guid gameId,
+        Guid participantId,
+        ParticipantPresenceResponse presence,
+        string? connectionId = null)
     {
         if (!string.IsNullOrEmpty(connectionId))
         {
             try
             {
-                await hub.Groups.RemoveFromGroupAsync(connectionId, GameGroups.Players(gameId));
                 await hub.Clients.Client(connectionId).ParticipantRemoved(participantId);
+            }
+            catch (Exception exception)
+            {
+                logger.LogWarning(exception, "Failed to notify kicked connection {ConnectionId}", connectionId);
+            }
+
+            try
+            {
+                await hub.Groups.RemoveFromGroupAsync(connectionId, GameGroups.Players(gameId));
             }
             catch (Exception exception)
             {
@@ -32,7 +43,7 @@ public sealed class GameNotifier(
             }
         }
 
-        await BroadcastAsync("ParticipantRemoved", () => Everyone(gameId).ParticipantRemoved(participantId));
+        await ParticipantPresenceChangedAsync(gameId, presence);
     }
 
     public Task QuestionStartedAsync(Guid gameId, QuestionStartedResponse question) =>

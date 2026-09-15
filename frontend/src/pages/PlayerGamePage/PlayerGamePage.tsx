@@ -98,7 +98,9 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
     isLoading,
     error,
     hubStatus,
+    dataSyncState,
     retryHub,
+    retrySync,
     leaveGame,
     submitAnswer,
     answerState,
@@ -259,7 +261,14 @@ function PlayerGameSession({ gameId }: { gameId: string | undefined }) {
           flexDirection: 'column',
         }}
       >
-        {!isKicked && <ConnectionStatusBanner status={hubStatus} onRetry={retryHub} />}
+        {!isKicked && (
+          <ConnectionStatusBanner
+            status={hubStatus}
+            onRetry={retryHub}
+            dataSyncState={dataSyncState}
+            onSyncRetry={retrySync}
+          />
+        )}
 
         <Box
           sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}

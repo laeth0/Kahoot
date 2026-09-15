@@ -128,6 +128,7 @@ Table game_sessions {
   current_question_ends_at timestamptz [null, note: 'Server-authoritative deadline = current_question_started_at + time_limit_seconds']
   current_question_eligible_count int [not null, default: 0, note: 'Count of eligible participants when question was opened']
   current_question_answered_count int [not null, default: 0, note: 'Durable running count of accepted answers for current question']
+  presence_version bigint [not null, default: 0, note: 'Monotonic version for committed participant presence changes']
   started_at timestamptz [null, note: 'Set once, when the first question starts']
   finished_at timestamptz [null]
 
@@ -251,4 +252,3 @@ Table answer_selected_choices {
 
   Note: 'Stores 1..N selected choices for an accepted answer submission.'
 }
-

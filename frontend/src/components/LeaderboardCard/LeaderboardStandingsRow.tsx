@@ -1,5 +1,5 @@
 import { Box, Chip, Stack, Typography } from '@mui/material';
-import { motion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import React from 'react';
 
 import type { LeaderboardEntryResponse } from '../../realtime/events.ts';
@@ -39,16 +39,17 @@ export const LeaderboardStandingsRow: React.FC<LeaderboardStandingsRowProps> = (
   isYou,
   isProjector = false,
 }) => {
+  const shouldReduceMotion = useReducedMotion();
   const avatarColor = getRowAvatarColor(entry.nickname, entry.rank);
   const avatarSize = isProjector ? 38 : 32;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: -16 }}
+    <m.div
+      initial={shouldReduceMotion ? false : { opacity: 0, x: -16 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{
-        duration: 0.35,
-        delay: 0.35 + index * 0.06,
+        duration: shouldReduceMotion ? 0 : 0.35,
+        delay: shouldReduceMotion ? 0 : 0.35 + index * 0.06,
         ease: [0.16, 1, 0.3, 1],
       }}
       style={{ width: '100%' }}
@@ -142,7 +143,7 @@ export const LeaderboardStandingsRow: React.FC<LeaderboardStandingsRowProps> = (
           {entry.totalScore.toLocaleString()} pts
         </Typography>
       </Stack>
-    </motion.div>
+    </m.div>
   );
 };
 

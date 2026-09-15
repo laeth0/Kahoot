@@ -3,7 +3,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getFriendlyErrorMessage } from '../constants/errorCodes.ts';
 import { type NormalizedGameStatus, normalizeGameStatus } from '../constants/gameStatus.ts';
 import type {
+  GameDataSyncState,
   LeaderboardResponse,
+  ParticipantPresenceResponse,
   PlayerGameStateResponse,
   PlayerQuestionResponse,
   QuestionResultsResponse,
@@ -17,6 +19,8 @@ const INVALID_SESSION_CODE = 'Game.InvalidSessionToken';
 const TOO_LATE_CODES = new Set(['Game.QuestionClosed', 'Game.QuestionNotActive']);
 const MISSING_GAME_MESSAGE = 'This game link is missing its session id.';
 const MISSING_SESSION_MESSAGE = "We couldn't find your player session for this game.";
+const MAX_SYNC_RETRY_DELAY_MS = 15000;
+const STALE_FAILURE_THRESHOLD = 2;
 
 export type AnswerState =
   'idle' | 'submitting' | 'accepted' | 'alreadyAnswered' | 'tooLate' | 'rejected' | 'slowDown';
@@ -28,6 +32,7 @@ export interface PlayerState {
   totalScore: number;
   rank: number | null;
   participantCount: number;
+  presenceVersion: number;
   currentQuestion: PlayerQuestionResponse | null;
   alreadyAnswered: boolean;
   lastResults: QuestionResultsResponse | null;
@@ -38,6 +43,11 @@ interface LiveRefs {
   participantId: string | null;
   totalScore: number;
   rank: number | null;
+  presenceVersion: number;
+}
+
+function getSyncRetryDelay(failureCount: number): number {
+  return Math.min(2000 * 2 ** Math.max(0, failureCount - 1), MAX_SYNC_RETRY_DELAY_MS);
 }
 
 function myLeaderboardEntry(board: LeaderboardResponse, participantId: string) {
@@ -57,12 +67,23 @@ export function usePlayerGame(gameId: string | undefined) {
   const [selectedChoiceIds, setSelectedChoiceIds] = useState<string[]>([]);
   const [scoreBeforeQuestion, setScoreBeforeQuestion] = useState(0);
   const [rankDelta, setRankDelta] = useState<number | null>(null);
+  const [syncRetryTrigger, setSyncRetryTrigger] = useState(0);
+  const [dataSyncState, setDataSyncState] = useState<GameDataSyncState>({
+    status: 'current',
+    message: null,
+    lastSuccessfulAt: null,
+  });
   const [liveAnnouncement, setLiveAnnouncement] = useState<{
     message: string;
     politeness: 'polite' | 'assertive';
   } | null>(null);
 
-  const liveRef = useRef<LiveRefs>({ participantId: null, totalScore: 0, rank: null });
+  const liveRef = useRef<LiveRefs>({
+    participantId: null,
+    totalScore: 0,
+    rank: null,
+    presenceVersion: 0,
+  });
   const rankBeforeQuestionRef = useRef<number | null>(null);
   const submitInFlightRef = useRef(false);
   const prevHubStatusRef = useRef(hubStatus);
@@ -87,33 +108,51 @@ export function usePlayerGame(gameId: string | undefined) {
       participantId: playerState?.participantId ?? null,
       totalScore: playerState?.totalScore ?? 0,
       rank: playerState?.rank ?? null,
+      presenceVersion: playerState?.presenceVersion ?? 0,
     };
-  }, [playerState?.participantId, playerState?.totalScore, playerState?.rank]);
+  }, [
+    playerState?.participantId,
+    playerState?.totalScore,
+    playerState?.rank,
+    playerState?.presenceVersion,
+  ]);
 
   const applyState = useCallback((data: PlayerGameStateResponse) => {
+    if (data.presenceVersion < liveRef.current.presenceVersion) {
+      return false;
+    }
     const status = normalizeGameStatus(data.status);
+    liveRef.current = {
+      participantId: data.participantId,
+      totalScore: data.totalScore,
+      rank: data.rank ?? null,
+      presenceVersion: data.presenceVersion,
+    };
     setScoreBeforeQuestion(data.totalScore);
     setRankDelta(null);
     rankBeforeQuestionRef.current = data.rank ?? null;
-    setPlayerState((previous) => ({
+    setPlayerState({
       nickname: data.nickname,
       status,
       participantId: data.participantId,
       totalScore: data.totalScore,
       rank: data.rank ?? null,
-      participantCount: previous?.participantCount ?? 1,
+      participantCount: data.participantCount,
+      presenceVersion: data.presenceVersion,
       currentQuestion: data.currentQuestion ?? null,
       alreadyAnswered: data.alreadyAnsweredCurrentQuestion,
       lastResults: data.lastQuestionResults ?? null,
       leaderboard: data.leaderboard ?? null,
-    }));
+    });
     setHydrateError(null);
+    setDataSyncState({ status: 'current', message: null, lastSuccessfulAt: Date.now() });
     setSelectedChoiceIds([]);
     setAnswerState(
       status === 'QuestionActive' && data.alreadyAnsweredCurrentQuestion
         ? 'alreadyAnswered'
         : 'idle',
     );
+    return true;
   }, []);
 
   useEffect(() => {
@@ -122,14 +161,41 @@ export function usePlayerGame(gameId: string | undefined) {
     }
 
     let active = true;
+    let retryTimeout: ReturnType<typeof setTimeout> | null = null;
+    let failureCount = 0;
+    let hydrateInFlight = false;
 
     const handleKicked = () => {
+      clear();
       setIsKicked(true);
       setLiveAnnouncement({ message: 'You were removed from the game.', politeness: 'assertive' });
       connection.stop().catch(() => {});
     };
 
+    const scheduleHydrateRetry = (message: string) => {
+      failureCount += 1;
+      if (liveRef.current.participantId) {
+        if (failureCount >= STALE_FAILURE_THRESHOLD) {
+          setDataSyncState((previous) => ({
+            ...previous,
+            status: 'stale',
+            message,
+          }));
+        }
+      } else {
+        setHydrateError('Lost connection while joining the game lobby. Retrying automatically.');
+      }
+      retryTimeout = setTimeout(() => {
+        retryTimeout = null;
+        void hydrate();
+      }, getSyncRetryDelay(failureCount));
+    };
+
     const hydrate = async () => {
+      if (hydrateInFlight) {
+        return;
+      }
+      hydrateInFlight = true;
       try {
         const jitter = Math.floor(Math.random() * 300);
         if (jitter > 0) {
@@ -143,7 +209,17 @@ export function usePlayerGame(gameId: string | undefined) {
           return;
         }
         if (response.success && response.data) {
-          applyState(response.data);
+          if (!applyState(response.data)) {
+            scheduleHydrateRetry(
+              'Live state has not caught up yet. Your last known game view is still shown.',
+            );
+            return;
+          }
+          failureCount = 0;
+          if (retryTimeout) {
+            clearTimeout(retryTimeout);
+            retryTimeout = null;
+          }
           setLiveAnnouncement({ message: 'Connected to game session.', politeness: 'polite' });
           return;
         }
@@ -162,24 +238,45 @@ export function usePlayerGame(gameId: string | undefined) {
           setHydrateError('This game session has ended or is no longer available.');
           return;
         }
-        setHydrateError(getFriendlyErrorMessage(code, 'Unable to rejoin the game.'));
+        scheduleHydrateRetry(
+          getFriendlyErrorMessage(
+            code,
+            'Live state may be out of date. Your last known game view is still shown.',
+          ),
+        );
       } catch {
         if (active) {
-          setHydrateError('Lost connection while joining the game lobby.');
+          scheduleHydrateRetry(
+            'Live state may be out of date. Your last known game view is still shown.',
+          );
         }
+      } finally {
+        hydrateInFlight = false;
       }
     };
 
-    const handleParticipantJoined = () => {
-      setPlayerState((previous) =>
-        previous ? { ...previous, participantCount: previous.participantCount + 1 } : previous,
-      );
-    };
-
-    const handleParticipantLeft = () => {
+    const handleParticipantPresenceChanged = (payload: ParticipantPresenceResponse) => {
+      const currentVersion = liveRef.current.presenceVersion;
+      if (payload.presenceVersion <= currentVersion) {
+        return;
+      }
+      if (payload.presenceVersion !== currentVersion + 1) {
+        setDataSyncState((previous) => ({
+          ...previous,
+          status: 'stale',
+          message: 'A live update was missed. Synchronizing authoritative game state.',
+        }));
+        void hydrate();
+        return;
+      }
+      liveRef.current.presenceVersion = payload.presenceVersion;
       setPlayerState((previous) =>
         previous
-          ? { ...previous, participantCount: Math.max(1, previous.participantCount - 1) }
+          ? {
+              ...previous,
+              participantCount: payload.participantCount,
+              presenceVersion: payload.presenceVersion,
+            }
           : previous,
       );
     };
@@ -190,11 +287,6 @@ export function usePlayerGame(gameId: string | undefined) {
         return;
       }
       setLiveAnnouncement({ message: 'A player was removed.', politeness: 'polite' });
-      setPlayerState((previous) =>
-        previous
-          ? { ...previous, participantCount: Math.max(1, previous.participantCount - 1) }
-          : previous,
-      );
     };
 
     const handleQuestionStarted = (question: PlayerQuestionResponse) => {
@@ -260,8 +352,7 @@ export function usePlayerGame(gameId: string | undefined) {
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    connection.on('ParticipantJoined', handleParticipantJoined);
-    connection.on('ParticipantLeft', handleParticipantLeft);
+    connection.on('ParticipantPresenceChanged', handleParticipantPresenceChanged);
     connection.on('ParticipantRemoved', handleParticipantRemoved);
     connection.on('QuestionStarted', handleQuestionStarted);
     connection.on('QuestionEnded', handleQuestionEnded);
@@ -272,16 +363,18 @@ export function usePlayerGame(gameId: string | undefined) {
 
     return () => {
       active = false;
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      connection.off('ParticipantJoined', handleParticipantJoined);
-      connection.off('ParticipantLeft', handleParticipantLeft);
+      connection.off('ParticipantPresenceChanged', handleParticipantPresenceChanged);
       connection.off('ParticipantRemoved', handleParticipantRemoved);
       connection.off('QuestionStarted', handleQuestionStarted);
       connection.off('QuestionEnded', handleQuestionEnded);
       connection.off('LeaderboardUpdated', handleLeaderboardUpdated);
       connection.off('GameEnded', handleGameEnded);
     };
-  }, [connection, hubStatus, sessionToken, isKicked, applyState, clear]);
+  }, [connection, hubStatus, sessionToken, isKicked, applyState, clear, syncRetryTrigger]);
 
   const activeQuestionId = playerState?.currentQuestion?.questionId ?? null;
 
@@ -309,7 +402,12 @@ export function usePlayerGame(gameId: string | undefined) {
         }
         const code = response.error?.code;
         if (code === REMOVED_CODE) {
+          clear();
           setIsKicked(true);
+          setLiveAnnouncement({
+            message: 'You were removed from the game.',
+            politeness: 'assertive',
+          });
           connection.stop().catch(() => {});
           return;
         }
@@ -328,7 +426,7 @@ export function usePlayerGame(gameId: string | undefined) {
         submitInFlightRef.current = false;
       }
     },
-    [connection, activeQuestionId],
+    [connection, activeQuestionId, clear],
   );
 
   const leaveGame = useCallback(async () => {
@@ -337,6 +435,14 @@ export function usePlayerGame(gameId: string | undefined) {
       await connection.stop().catch(() => {});
     }
   }, [clear, connection]);
+
+  const retrySync = useCallback(() => {
+    if (hubStatus !== 'connected') {
+      retryHub();
+      return;
+    }
+    setSyncRetryTrigger((value) => value + 1);
+  }, [hubStatus, retryHub]);
 
   const error = !gameId
     ? MISSING_GAME_MESSAGE
@@ -361,7 +467,9 @@ export function usePlayerGame(gameId: string | undefined) {
     isLoading,
     error,
     hubStatus,
+    dataSyncState,
     retryHub,
+    retrySync,
     leaveGame,
     submitAnswer,
     answerState,

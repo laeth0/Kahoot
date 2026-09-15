@@ -24,12 +24,8 @@ export function useTokenRefresh() {
       const now = Date.now();
       const delay = Math.max(expiresTime - now - REFRESH_MARGIN_MS, MIN_TIMEOUT_MS);
 
-      timerId = setTimeout(async () => {
-        try {
-          await refreshSession();
-        } catch (err) {
-          void err;
-        }
+      timerId = setTimeout(() => {
+        void refreshSession().catch(() => false);
       }, delay);
     };
 
@@ -40,7 +36,7 @@ export function useTokenRefresh() {
         const expiresTime = new Date(accessTokenExpiresAt).getTime();
         const now = Date.now();
         if (expiresTime - now <= REFRESH_MARGIN_MS) {
-          refreshSession();
+          void refreshSession().catch(() => false);
         } else {
           scheduleRefresh();
         }

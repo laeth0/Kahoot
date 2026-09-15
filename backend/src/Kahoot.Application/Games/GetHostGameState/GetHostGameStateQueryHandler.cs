@@ -39,6 +39,9 @@ internal sealed class GetHostGameStateQueryHandler(
                 session.CurrentQuestionStartedAt,
                 session.CurrentQuestionEndsAt,
                 session.CurrentQuestionAnsweredCount,
+                session.PresenceVersion,
+                ParticipantCount = session.Participants.Count(participant =>
+                    participant.ConnectionId != null && !participant.IsRemoved),
                 TotalQuestions = session.QuestionSnapshots.Count
             })
             .FirstOrDefaultAsync(cancellationToken);
@@ -76,6 +79,8 @@ internal sealed class GetHostGameStateQueryHandler(
             game.CurrentQuestionStartedAt is { } startedAt ? startedAt.ToUtcOffset() : null,
             game.CurrentQuestionEndsAt is { } endsAt ? endsAt.ToUtcOffset() : null,
             answeredCount,
+            game.ParticipantCount,
+            game.PresenceVersion,
             participants,
             joinUrl));
     }

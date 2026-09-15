@@ -21,36 +21,35 @@
 - A **host** connection joins `game:{gameId}:host` after a successful `JoinAsHost`
   hub call (`Authorize`d with the host JWT; game ownership is verified).
 - On (re)connect the hub sets `Participant.ConnectionId`; on disconnect it clears it
-  and raises `ParticipantLeft` to both game groups. A disconnect changes presence,
-  not seat reservation or active-question eligibility.
+  and raises `ParticipantPresenceChanged` to both game groups. A disconnect changes
+  presence, not seat reservation or active-question eligibility.
 
 ### Authoritative counts and event delivery
 
-- `reservedParticipantCount` is the number of non-removed participant seats. It
-  has a maximum of 500 and does not depend on SignalR connectivity.
-- `connectedParticipantCount` is the number of non-removed participants with an
-  active connection. It is a presence count, not a capacity count.
-- Every presence event carries post-change absolute values for both counts. Clients
-  replace their displayed values with these server values; they never infer counts
+- `participantCount` is the number of non-removed participants with an active
+  connection. It is an authoritative presence count, not the number of reserved seats.
+- `presenceVersion` is a durable, monotonically increasing value stored on the game
+  session. Connection attachment, detachment, and participant removal update the
+  participant row and increment the game version in the same database transaction.
+- Every presence event carries the post-change absolute count and committed version.
+  Clients replace their displayed count with the server value; they never infer counts
   by applying an event delta.
 - A state-changing command commits before its event fan-out is attempted. Fan-out
   is best-effort and does not change a committed command response to failure.
   Clients treat events as timely notifications, not a durable delivery guarantee:
   hosts recover through `GET /api/games/{id}` and players through `Reconnect`.
+- Clients ignore events whose version is not newer than their current version. A
+  version gap marks local data stale and triggers an authoritative state refresh.
+  Successful reconnect responses also replace both count and version.
 
 Presence payloads are:
 
 ```text
-ParticipantJoinedResponse {
-  participant: GameParticipantResponse,
-  connectedParticipantCount: int,
-  reservedParticipantCount: int
-}
-
 ParticipantPresenceResponse {
-  participantId: Guid,
-  connectedParticipantCount: int,
-  reservedParticipantCount: int
+  participantCount: int,
+  presenceVersion: long,
+  reason: "Joined" | "Reconnected" | "Disconnected" | "Removed",
+  participant: GameParticipantResponse,
 }
 ```
 
@@ -108,9 +107,8 @@ the Application response records (`Kahoot.Application.Games.Common`).
 
 | Method | Target group(s) | Trigger | Payload |
 |---|---|---|---|
-| `ParticipantJoined` | players + host | successful `JoinGame` hub call or `Reconnect` after connection attachment | `ParticipantJoinedResponse` |
-| `ParticipantLeft` | players + host | a matching hub disconnect clears presence | `ParticipantPresenceResponse` |
-| `ParticipantRemoved` | players + host | committed `RemoveParticipantCommand` | `ParticipantPresenceResponse` |
+| `ParticipantPresenceChanged` | players + host | committed connection attachment, matching disconnect, or participant removal | `ParticipantPresenceResponse` |
+| `ParticipantRemoved` | removed connection only | committed `RemoveParticipantCommand` | removed participant `Guid` |
 | `QuestionStarted` | players | committed `StartGameCommand` / `StartNextQuestionCommand` | `PlayerQuestionResponse` (**no correct answer(s)**) |
 | `QuestionStartedForHost` | host | same | `HostQuestionResponse` (**includes** `correctChoiceIds` and `eligibleParticipantCount`) |
 | `QuestionEnded` | players + host | committed `EndQuestionCommand` or automatic close | `QuestionResultsResponse` |
@@ -118,7 +116,7 @@ the Application response records (`Kahoot.Application.Games.Common`).
 | `GameEnded` | players + host | `EndGameCommand` | `LeaderboardResponse` (final) |
 
 `POST /api/games/join` reserves a seat and returns its session token but does not
-attach a SignalR connection and does not broadcast `ParticipantJoined`. The client
+attach a SignalR connection and does not broadcast a presence change. The client
 must then call `Reconnect(sessionToken)` to attach and receive authoritative state.
 The host receives real-time presence only after that successful attachment; until
 then, `GET /api/games/{id}` is the authoritative source for the reservation.
@@ -203,10 +201,9 @@ carries, for the post-question phases:
 `currentQuestion` (`PlayerQuestionResponse`, no correct answer) is still only set
 while a question is active.
 
-`PlayerGameStateResponse` also includes `connectedParticipantCount` and
-`reservedParticipantCount`; `HostGameStateResponse` includes those same counts and,
-while a question is active, `eligibleParticipantCount`. These fields are the
-resynchronization source for presence and answer-progress displays.
+`PlayerGameStateResponse` and `HostGameStateResponse` also include the authoritative
+`participantCount` and durable `presenceVersion`. These fields are the
+resynchronization source for presence displays after reconnects or event gaps.
 
 ---
 

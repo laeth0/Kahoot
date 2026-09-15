@@ -4,31 +4,18 @@ export interface ClipboardCopyResult {
   error?: string;
 }
 
-export async function copyToClipboard(
-  text: string,
-  label: string = 'Content',
-): Promise<ClipboardCopyResult> {
+export async function copyToClipboard(text: string): Promise<ClipboardCopyResult> {
   const isClipboardApiAvailable =
     typeof navigator !== 'undefined' &&
     Boolean(navigator.clipboard && typeof navigator.clipboard.writeText === 'function');
 
-  console.info(`[Clipboard] Copy requested: ${label}`, {
-    environment: import.meta.env.MODE,
-    isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : false,
-    clipboardSupport: isClipboardApiAvailable ? 'Supported' : 'Not Supported (Fallback active)',
-    currentOrigin: typeof window !== 'undefined' ? window.location.origin : 'N/A',
-  });
-
   if (isClipboardApiAvailable) {
-    try {
-      await navigator.clipboard.writeText(text);
-      console.info(`[Clipboard] Copy Operation: Success (Async Clipboard API) for ${label}`);
+    const copiedWithClipboardApi = await navigator.clipboard.writeText(text).then(
+      () => true,
+      () => false,
+    );
+    if (copiedWithClipboardApi) {
       return { success: true, method: 'async-clipboard' };
-    } catch (err) {
-      console.warn(
-        `[Clipboard] Async Clipboard API failed for ${label}, attempting fallback:`,
-        err instanceof Error ? err.message : err,
-      );
     }
   }
 
@@ -58,19 +45,14 @@ export async function copyToClipboard(
       document.body.removeChild(textarea);
 
       if (successful) {
-        console.info(`[Clipboard] Copy Operation: Success (execCommand fallback) for ${label}`);
         return { success: true, method: 'exec-command' };
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err);
-      console.error(`[Clipboard] Copy Operation: Failed for ${label}`, { error: errorMessage });
       return { success: false, method: 'none', error: errorMessage };
     }
   }
 
-  console.error(
-    `[Clipboard] Copy Operation: Failed for ${label} (Clipboard not supported in this environment)`,
-  );
   return {
     success: false,
     method: 'none',

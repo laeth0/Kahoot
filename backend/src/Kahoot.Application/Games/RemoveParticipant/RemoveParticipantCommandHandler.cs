@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Abstractions;
+using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
@@ -15,11 +16,21 @@ internal sealed class RemoveParticipantCommandHandler(
 {
     public async Task<Result<RemoveParticipantResponse>> Handle(RemoveParticipantCommand command, CancellationToken cancellationToken)
     {
-        Result<GameSession> gameResult = await HostGameGuard.LoadOwnedGameAsync(
-            dbContext, currentUser, command.GameId, cancellationToken);
-        if (gameResult.IsFailure)
+        if (currentUser.HostId is not { } hostId)
         {
-            return Result.Failure<RemoveParticipantResponse>(gameResult.Error);
+            return Result.Failure<RemoveParticipantResponse>(SharedErrors.Unauthorized);
+        }
+
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        GameSession? game = await dbContext.GameSessions
+            .FromSqlInterpolated(
+                $"SELECT * FROM game_sessions WHERE id = {command.GameId} AND host_id = {hostId} FOR UPDATE")
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (game is null)
+        {
+            return Result.Failure<RemoveParticipantResponse>(GameErrors.NotFound);
         }
 
         Participant? participant = await dbContext.Participants
@@ -33,7 +44,8 @@ internal sealed class RemoveParticipantCommandHandler(
 
         if (participant.IsRemoved)
         {
-            return Result.Success(new RemoveParticipantResponse(null));
+            await transaction.CommitAsync(cancellationToken);
+            return Result.Success(new RemoveParticipantResponse(null, null));
         }
 
         string? connectionId = participant.ConnectionId;
@@ -42,9 +54,31 @@ internal sealed class RemoveParticipantCommandHandler(
         participant.RemovedAt = now;
         participant.ConnectionId = null;
         participant.LastSeenAt = now;
+        game.PresenceVersion++;
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        return Result.Success(new RemoveParticipantResponse(connectionId));
+        int participantCount = await dbContext.Participants
+            .CountAsync(
+                candidate => candidate.GameSessionId == command.GameId
+                    && candidate.ConnectionId != null
+                    && !candidate.IsRemoved,
+                cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+
+        var presence = new ParticipantPresenceResponse(
+            participantCount,
+            game.PresenceVersion,
+            ParticipantPresenceReasons.Removed,
+            new GameParticipantResponse(
+                participant.Id,
+                participant.Nickname,
+                participant.TotalScore,
+                participant.LastRank,
+                false,
+                true));
+
+        return Result.Success(new RemoveParticipantResponse(connectionId, presence));
     }
 }

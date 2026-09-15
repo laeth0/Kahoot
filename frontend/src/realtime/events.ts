@@ -21,6 +21,21 @@ export interface GameParticipantResponse {
   isRemoved: boolean;
 }
 
+export type ParticipantPresenceReason = 'Joined' | 'Reconnected' | 'Disconnected' | 'Removed';
+
+export interface ParticipantPresenceResponse {
+  participantCount: number;
+  presenceVersion: number;
+  reason: ParticipantPresenceReason;
+  participant: GameParticipantResponse;
+}
+
+export interface GameDataSyncState {
+  status: 'current' | 'stale';
+  message: string | null;
+  lastSuccessfulAt: number | null;
+}
+
 export interface HostChoiceResponse {
   id: string;
   orderIndex: number;
@@ -98,6 +113,8 @@ export interface PlayerGameStateResponse {
   nickname: string;
   totalScore: number;
   rank?: number | null;
+  participantCount: number;
+  presenceVersion: number;
   alreadyAnsweredCurrentQuestion: boolean;
   currentQuestion?: PlayerQuestionResponse | null;
   lastQuestionResults?: QuestionResultsResponse | null;
@@ -105,8 +122,7 @@ export interface PlayerGameStateResponse {
 }
 
 export interface GameClientEvents {
-  ParticipantJoined: (participant: GameParticipantResponse) => void;
-  ParticipantLeft: (participantId: string) => void;
+  ParticipantPresenceChanged: (payload: ParticipantPresenceResponse) => void;
   ParticipantRemoved: (participantId: string) => void;
   QuestionStarted: (payload: PlayerQuestionResponse) => void;
   QuestionStartedForHost: (payload: HostQuestionResponse) => void;

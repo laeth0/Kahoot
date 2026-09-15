@@ -160,9 +160,9 @@ public sealed class GamesController(ISender sender, GameNotifier notifier) : Api
     {
         Result<RemoveParticipantResponse> result = await sender.Send(new RemoveParticipantCommand(id, participantId), cancellationToken);
 
-        if (result.IsSuccess)
+        if (result.IsSuccess && result.Value.Presence is { } presence)
         {
-            await notifier.ParticipantRemovedAsync(id, participantId, result.Value.ConnectionId);
+            await notifier.ParticipantRemovedAsync(id, participantId, presence, result.Value.ConnectionId);
 
             Result<QuestionResultsResponse?> autoEndResult = await sender.Send(
                 new TryAutoEndQuestionCommand(id, null),

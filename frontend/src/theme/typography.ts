@@ -1,16 +1,9 @@
 import type { TypographyVariantsOptions } from '@mui/material/styles';
 
 export const typography: TypographyVariantsOptions = {
-  fontFamily: [
-    'Inter',
-    '-apple-system',
-    'BlinkMacSystemFont',
-    '"Segoe UI"',
-    'Roboto',
-    'Helvetica',
-    'Arial',
-    'sans-serif',
-  ].join(','),
+  fontFamily: ['system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'].join(
+    ',',
+  ),
   h1: {
     fontSize: '2.5rem',
     fontWeight: 700,

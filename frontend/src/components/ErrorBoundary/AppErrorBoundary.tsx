@@ -24,7 +24,9 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   public override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('AppErrorBoundary caught an unhandled render error:', error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error('AppErrorBoundary caught an unhandled render error:', error, errorInfo);
+    }
   }
 
   private handleReset = () => {

@@ -9,6 +9,7 @@ import { ParticipantTile } from '../ParticipantTile/index.ts';
 
 export interface ParticipantGridProps {
   participants: GameParticipantResponse[];
+  participantCount: number;
   onRemoveParticipant: (participantId: string) => Promise<void> | void;
   isRemoving?: boolean;
 }
@@ -17,6 +18,7 @@ const MAX_DISPLAY_COUNT = 150;
 
 export function ParticipantGrid({
   participants,
+  participantCount,
   onRemoveParticipant,
   isRemoving = false,
 }: ParticipantGridProps) {
@@ -59,7 +61,7 @@ export function ParticipantGrid({
         }}
       >
         <Typography variant="h6" sx={{ fontWeight: 800, color: '#09131F' }}>
-          Participants ({participants.length})
+          Participants ({participantCount})
         </Typography>
 
         {participants.length > 5 && (
@@ -89,7 +91,7 @@ export function ParticipantGrid({
         )}
       </Stack>
 
-      {participants.length === 0 ? (
+      {participantCount === 0 ? (
         <Card
           sx={{
             py: 8,

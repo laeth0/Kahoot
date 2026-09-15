@@ -1,6 +1,6 @@
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import { Box, Card, Chip, Stack, Typography } from '@mui/material';
-import { motion } from 'motion/react';
+import { m, useReducedMotion } from 'motion/react';
 import React from 'react';
 
 import type { LeaderboardEntryResponse } from '../../realtime/events.ts';
@@ -59,6 +59,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
   subtitle = 'Great job everyone! Here are the current standings',
   maxStandingsRows = 10,
 }) => {
+  const shouldReduceMotion = useReducedMotion();
   const sorted = [...entries].sort((a, b) => a.rank - b.rank);
   const topThree = sorted.filter((e) => e.rank <= 3);
   const remaining = sorted.filter((e) => e.rank > 3);
@@ -244,10 +245,10 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
   ) : null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.96 }}
+    <m.div
+      initial={shouldReduceMotion ? false : { opacity: 0, scale: 0.96 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.45, ease: [0.16, 1, 0.3, 1] }}
       style={{
         width: '100%',
         maxWidth: hasRemaining ? (isProjector ? 1160 : 1000) : isProjector ? 860 : 720,
@@ -306,7 +307,7 @@ export const LeaderboardCard: React.FC<LeaderboardCardProps> = ({
           </Box>
         )}
       </Card>
-    </motion.div>
+    </m.div>
   );
 };
 

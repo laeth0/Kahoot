@@ -16,11 +16,8 @@ public sealed class KahootTelemetry : IKahootTelemetry, IDisposable
 
     private static readonly HashSet<string> AllowedBroadcastEvents =
     [
-        "ParticipantJoined",
-        "ParticipantLeft",
-        "ParticipantRemoved",
+        "ParticipantPresenceChanged",
         "QuestionStarted",
-        "QuestionStartedForHost",
         "QuestionEnded",
         "LeaderboardUpdated",
         "GameEnded"

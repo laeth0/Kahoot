@@ -64,6 +64,24 @@ public sealed record GameParticipantResponse(
     bool IsConnected,
     bool IsRemoved);
 
+public static class ParticipantPresenceReasons
+{
+    public const string Joined = "Joined";
+    public const string Reconnected = "Reconnected";
+    public const string Disconnected = "Disconnected";
+    public const string Removed = "Removed";
+}
+
+public sealed record ParticipantPresenceResponse(
+    int ParticipantCount,
+    long PresenceVersion,
+    string Reason,
+    GameParticipantResponse Participant);
+
+public sealed record ParticipantPresenceMutationResponse(
+    ParticipantPresenceResponse Presence,
+    bool Changed);
+
 public sealed record HostGameStateResponse(
     Guid GameId,
     string Pin,
@@ -74,6 +92,8 @@ public sealed record HostGameStateResponse(
     DateTimeOffset? CurrentQuestionStartedAt,
     DateTimeOffset? CurrentQuestionEndsAt,
     int AnsweredCount,
+    int ParticipantCount,
+    long PresenceVersion,
     IReadOnlyList<GameParticipantResponse> Participants,
     string JoinUrl);
 
@@ -84,6 +104,8 @@ public sealed record PlayerGameStateResponse(
     string Nickname,
     int TotalScore,
     int? Rank,
+    int ParticipantCount,
+    long PresenceVersion,
     bool AlreadyAnsweredCurrentQuestion,
     PlayerQuestionResponse? CurrentQuestion,
     QuestionResultsResponse? LastQuestionResults,
