@@ -2,11 +2,25 @@ import {
   HttpTransportType,
   type HubConnection,
   HubConnectionBuilder,
+  type ILogger,
   LogLevel,
 } from '@microsoft/signalr';
 
 import { authService } from '../api/authService.ts';
 import type { AnswerAckResponse, PlayerGameStateResponse, RealtimeResponse } from './events.ts';
+
+const signalRLogger: ILogger = {
+  log(logLevel: LogLevel, message: string) {
+    if (message.includes('The connection was stopped during negotiation')) {
+      return;
+    }
+    if (logLevel >= LogLevel.Error) {
+      console.error(message);
+    } else if (logLevel >= LogLevel.Warning) {
+      console.warn(message);
+    }
+  },
+};
 
 function getHubUrl(): string {
   const configuredSignalR = import.meta.env.VITE_SIGNALR_URL?.trim();
@@ -46,7 +60,7 @@ export function createGameHubConnection(requireHostAuth = false): HubConnection 
         return 12000 + jitter;
       },
     })
-    .configureLogging(LogLevel.Warning);
+    .configureLogging(signalRLogger);
 
   return builder.build();
 }

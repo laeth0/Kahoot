@@ -70,12 +70,20 @@ function setSessionState(dto: HostAuthResponseDto | null): AuthResponse | null {
   };
 }
 
+const SESSION_HINT_KEY = 'kahoot_has_session';
+
 export const authService = {
   async login(payload: LoginPayload): Promise<AuthResponse> {
     const response = await axiosClient.post<HostAuthResponseDto>('/auth/login', payload, {
       withCredentials: true,
     });
     const auth = setSessionState(response.data)!;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(SESSION_HINT_KEY, '1');
+      } catch {
+      }
+    }
     authChannel?.postMessage({ type: 'AUTH_LOGIN', host: auth.host });
     return auth;
   },
@@ -98,8 +106,23 @@ export const authService = {
       )
       .then((response) => {
         const auth = setSessionState(response.data)!;
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem(SESSION_HINT_KEY, '1');
+          } catch {
+          }
+        }
         authChannel?.postMessage({ type: 'AUTH_REFRESH', host: auth.host });
         return auth;
+      })
+      .catch((error) => {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.removeItem(SESSION_HINT_KEY);
+          } catch {
+          }
+        }
+        throw error;
       });
 
     try {
@@ -110,9 +133,25 @@ export const authService = {
   },
 
   async bootstrap(): Promise<AuthResponse | null> {
+    if (typeof window !== 'undefined') {
+      try {
+        if (!localStorage.getItem(SESSION_HINT_KEY)) {
+          return null;
+        }
+      } catch {
+        return null;
+      }
+    }
+
     try {
       return await this.refresh();
     } catch {
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem(SESSION_HINT_KEY);
+        } catch {
+        }
+      }
       setSessionState(null);
       return null;
     }
@@ -147,6 +186,12 @@ export const authService = {
   },
 
   async logout(): Promise<void> {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(SESSION_HINT_KEY);
+      } catch {
+      }
+    }
     await axiosClient
       .post(
         '/auth/logout',
@@ -164,6 +209,12 @@ export const authService = {
   },
 
   clearSession(): void {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(SESSION_HINT_KEY);
+      } catch {
+      }
+    }
     setSessionState(null);
   },
 };

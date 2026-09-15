@@ -29,7 +29,7 @@ export function useGameHubConnection(requireHostAuth = false) {
       }
     });
 
-    hubConnection
+    const startPromise = hubConnection
       .start()
       .then(() => {
         if (!isCancelled) {
@@ -46,9 +46,11 @@ export function useGameHubConnection(requireHostAuth = false) {
 
     return () => {
       isCancelled = true;
-      if (hubConnection.state !== HubConnectionState.Disconnected) {
-        hubConnection.stop().catch(() => {});
-      }
+      startPromise.finally(() => {
+        if (hubConnection.state !== HubConnectionState.Disconnected) {
+          hubConnection.stop().catch(() => {});
+        }
+      });
     };
   }, [requireHostAuth, retryTrigger]);
 
