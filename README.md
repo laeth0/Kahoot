@@ -98,6 +98,7 @@ In production (`docker-compose.prod.yml`), Nginx acts as the single public entry
 In development, Docker Compose builds and starts the database, backend API, and frontend container:
 
 ```bash
+docker compose down -v
 docker compose up -d --build
 ```
 
@@ -108,7 +109,7 @@ docker compose ps
 You should see:
 - `kahoot-db` running on `0.0.0.0:5433->5432/tcp`
 - `kahoot-backend` running on `0.0.0.0:5000->8080/tcp`
-- `kahoot-frontend` running on `0.0.0.0:5173->8080/tcp`
+- `kahoot-frontend` running on `0.0.0.0:5173->5173/tcp`
 
 *(Note: Edge Nginx and monitoring exporters remain disabled by default in development to avoid port 80 conflicts with Apache/IIS).*
 

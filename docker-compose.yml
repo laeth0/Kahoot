@@ -114,16 +114,19 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-      args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
-        VITE_SIGNALR_URL: ${VITE_SIGNALR_URL:-http://localhost:5000/hubs/game}
+      target: development
     container_name: kahoot-frontend
     restart: unless-stopped
     ports:
-      - "${FRONTEND_PORT:-5173}:8080"
-    cpus: 0.20
-    mem_limit: 192m
-    mem_reservation: 96m
+      - "${FRONTEND_PORT:-5173}:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    cpus: 0.50
+    mem_limit: 512m
+    mem_reservation: 256m
     cpu_shares: 768
     logging:
       driver: json-file
