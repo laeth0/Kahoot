@@ -72,6 +72,7 @@ services:
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT signing key must be at least 32 characters}
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-15}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-14}
+      Auth__SecureCookies: ${AUTH_SECURE_COOKIES:-true}
       Seeding__Host__Enabled: ${HOST_SEED_ENABLED:-false}
       Seeding__Host__Username: ${HOST_SEED_USERNAME:-}
       Seeding__Host__Password: ${HOST_SEED_PASSWORD:-}

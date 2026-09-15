@@ -22,6 +22,7 @@ budget_tokens: 2000
 
 ## Key Learnings
 
+- **Refresh-cookie deployment contract:** Host access tokens are memory-only and reload restoration depends on the `kahoot_refresh_token` HttpOnly cookie. Cookie security is controlled by `Auth:SecureCookies`/`AUTH_SECURE_COOKIES`; the owner-approved HTTP-only Azure deployment uses `false`, and HTTPS migration must change it to `true`. Never restore refresh tokens to browser storage or weaken HttpOnly, SameSite, rotation, or CSRF/origin checks.
 - **Frontend CSP:** `canvas-confetti` 1.9.x uses a Blob Web Worker by default. Keep ordinary scripts restricted with `script-src 'self'` and explicitly allow only required workers with `worker-src 'self' blob:` in both Nginx CSP configurations.
 - **Frontend draft IDs:** The production site may be accessed over a raw HTTP IP, where `crypto.randomUUID()` is unavailable because the page is not a secure context. Ephemeral React list keys must not depend on it; use stable existing IDs or component-local counters.
 - **Project:** kahoot

@@ -1252,6 +1252,23 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-15T13:58:12Z"
+    },
+    {
+      "id": "bug-079",
+      "timestamp": "2026-09-15T14:01:31Z",
+      "error_message": "POST http://20.19.48.78/api/auth/refresh returned 401 after page reload",
+      "file": "backend/src/Kahoot.Api/Controllers/AuthController.cs",
+      "root_cause": "Production issues the HttpOnly refresh cookie with Secure=true, but the public deployment exposes only plain HTTP. Chrome therefore does not persist or send the cookie; the frontend sends an empty refresh body and the API returns Auth.InvalidRefreshToken.",
+      "fix": "Added typed Auth:SecureCookies configuration with a secure default, set AUTH_SECURE_COOKIES=false for the explicitly approved HTTP-only deployment, and wired both Compose environments. HttpOnly, SameSite=Lax, CSRF/origin checks, browser storage, and token rotation remain unchanged; HTTPS migration requires setting the value to true.",
+      "tags": [
+        "authentication",
+        "refresh-token",
+        "cookie",
+        "https",
+        "production"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T14:12:54Z"
     }
   ]
 }

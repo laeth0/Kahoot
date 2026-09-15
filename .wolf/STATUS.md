@@ -6,11 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-15 (question-dialog HTTP browser compatibility fix)
+> Last updated: 2026-09-15 (refresh-session 401 diagnosis)
 
 ---
 
 ## ✅ Done
+
+- **Configurable refresh-cookie security for HTTP Azure deployment:** Added typed `Auth:SecureCookies` configuration with a secure code/Compose default and set `AUTH_SECURE_COOKIES=false` in the synchronized current environment files. `AuthController` uses it for cookie creation and deletion without changing HttpOnly, SameSite=Lax, path, rotation, CSRF/origin validation, or frontend storage. Deployed the backend and live-verified login 200, HTTP cookie attributes, two cookie-only 200 refresh rotations, logout 204 plus cookie expiry, and zero refresh-token storage writes. Future HTTPS migration only requires setting `AUTH_SECURE_COOKIES=true`.
 
 - **Confetti worker CSP compatibility:** Added `worker-src 'self' blob:` to the development and production Nginx policies so `canvas-confetti` can create its Blob worker without relaxing `script-src`. The regression assertion passed, `nginx -t` passed, the live proxy was restarted, its response header includes the new directive, and the container is healthy.
 
@@ -420,7 +422,7 @@ budget_tokens: 1000
 
 ## 🚀 Next phase
 
-- Application is live and fully operational on `http://20.19.48.78`.
+- **Future HTTPS migration:** Set `AUTH_SECURE_COOKIES=true` together with the HTTPS public URL/CORS and Nginx TLS changes; no authentication code change is required.
 
 ---
 

@@ -8,6 +8,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 
 namespace Kahoot.Api.Controllers;
 
@@ -16,7 +17,7 @@ namespace Kahoot.Api.Controllers;
 [EnableRateLimiting(RateLimitingExtensions.AuthPolicy)]
 public sealed class AuthController(
     ISender sender,
-    IWebHostEnvironment environment,
+    IOptions<AuthOptions> authOptions,
     IConfiguration configuration) : ApiControllerBase
 {
     private const string RefreshCookieName = "kahoot_refresh_token";
@@ -93,7 +94,7 @@ public sealed class AuthController(
         Response.Cookies.Append(RefreshCookieName, token, new CookieOptions
         {
             HttpOnly = true,
-            Secure = !environment.IsDevelopment(),
+            Secure = authOptions.Value.SecureCookies,
             SameSite = SameSiteMode.Lax,
             Path = "/api/auth",
             Expires = expiresAt
@@ -105,7 +106,7 @@ public sealed class AuthController(
         Response.Cookies.Delete(RefreshCookieName, new CookieOptions
         {
             HttpOnly = true,
-            Secure = !environment.IsDevelopment(),
+            Secure = authOptions.Value.SecureCookies,
             SameSite = SameSiteMode.Lax,
             Path = "/api/auth"
         });

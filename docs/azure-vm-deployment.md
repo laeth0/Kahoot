@@ -116,6 +116,7 @@ These are non-sensitive configuration keys, URLs, ports, and architectural defau
 | `JWT_AUDIENCE` | `kahoot-clients` | JWT token audience |
 | `JWT_ACCESS_TOKEN_MINUTES` | `15` | Access token lifespan |
 | `JWT_REFRESH_TOKEN_DAYS` | `14` | Refresh token lifespan |
+| `AUTH_SECURE_COOKIES` | `false` | Use `false` only while the public deployment is HTTP-only; change to `true` with HTTPS |
 | `HOST_SEED_USERNAME` | `IEEEXtreme Section` | Initial bootstrap admin username |
 
 ### B. Secrets That MUST NEVER Be Committed to Git
@@ -149,7 +150,7 @@ nano .env
 Depending on which variables you changed, use the appropriate update command:
 
 #### Rule A: Backend & Database Variables
-- **Variables**: `CLIENT_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `JWT_*`, `POSTGRES_*`, `HOST_SEED_*`
+- **Variables**: `CLIENT_BASE_URL`, `CORS_ALLOWED_ORIGINS`, `AUTH_SECURE_COOKIES`, `JWT_*`, `POSTGRES_*`, `HOST_SEED_*`
 - **Action**: Backend reads these from runtime environment variables. A quick container restart is sufficient:
 ```bash
 docker compose -f docker-compose.prod.yml up -d
@@ -466,6 +467,7 @@ server {
 ```env
 CLIENT_BASE_URL=https://kahoot.yourdomain.com
 CORS_ALLOWED_ORIGINS=https://kahoot.yourdomain.com
+AUTH_SECURE_COOKIES=true
 ```
 
 ### 5. Update CSP `connect-src`
