@@ -6,7 +6,7 @@ budget_tokens: 2000
 
 > OpenWolf's learning memory. Updated automatically as the AI learns from interactions.
 > Do not edit manually unless correcting an error.
-> Last updated: 2026-09-09
+> Last updated: 2026-09-16
 
 ## User Preferences
 
@@ -16,7 +16,7 @@ budget_tokens: 2000
 - Roles are **Host** (creates/runs games) and **Participant/Player** (plays). Do NOT rename the entities (kept `Host` / `Participant`). "admin"/"user" is loose conversational wording for the same two roles.
 - **No email anywhere in the system.** Host logs in with **username + password**. Participants never log in — they open a shared link, enter a handle name, and wait for the host to start.
 - **Frontend Theme & Branding:** Strictly **Light Theme only** (`mode: 'light'`). No dark theme switchers or dark mode variants. Branding and color palette are derived directly from the IEEEXtreme Palestine Section logo (`frontend/src/assets/logo.jpeg`): Primary is IEEE Ocean Blue `#00629B`, secondary accent is Radar Cyan `#0284C7`, background canvas is `#F4F8FC`, text is `#09131F`.
-- Functional requirements are feature-split under `docs/functional-requirements/`, with its `README.md` as the canonical index and `docs/functional-requirements.md` retained as a compatibility link. Non-functional requirements remain in `docs/non-functional-requirements.md`; keep both living specifications synchronized with behaviour.
+- Functional and non-functional requirements are feature-split under `docs/functional-requirements/` and `docs/non-functional-requirements/`. Do not recreate root compatibility documents or folder-level requirement indexes; keep the focused files synchronized with behavior.
 - `backend/projectSchema.dbml`: keep it free of `//` comments (user asked). DBML `Note:` annotations are allowed (they render in dbdiagram).
 - **Observability Stack Scope:** Grafana, Loki, Prometheus, and companion exporters are strictly for local development (`docker-compose.yml`); production (`docker-compose.prod.yml`) is kept lean with core application services only (`db`, `backend`, `frontend`, `nginx`) to dedicate compute and memory to game processing.
 
@@ -70,7 +70,7 @@ budget_tokens: 2000
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
-- [2026-09-15] Functional requirements backend alignment: `docs/functional-requirements/README.md` now maps every Authentication, Games, and Quizzes command/query plus backend hosted/API use cases to one feature owner. Current backend behavior is authoritative for capacity (500), question-only images, optional fail-fast bootstrap seeding, fixed per-question eligibility, and operational endpoints.
+- [2026-09-16] Requirements documentation layout: all requirement content lives directly in focused files under `docs/functional-requirements/` and `docs/non-functional-requirements/`; there are no root compatibility documents or folder README indexes. NFR release targets explicitly require 500 players, 500 SignalR connections, p95 question delivery below 500 ms, p95 answers below 500 ms, normal API p95 below 300 ms, and zero integrity violations.
 - [2026-09-11] Load Test Suite Realignment: Aligned all 10 k6 load scenarios with ASP.NET Core backend state machines, rate limits, and SignalR contracts.
 - [2026-09-09] Frontend Light-Only Theme & Logo Palette: Configured Material UI theme with palette extracted from `logo.jpeg` (`#00629B` primary, `#0284C7` secondary, `#F4F8FC` canvas, `#09131F` text). Hardcoded light mode only (`mode: 'light'`) to meet user specification. Added typography scale, CSS tokens, and component overrides.
 

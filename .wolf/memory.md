@@ -674,3 +674,9 @@ description: chronological action log per session, consolidated weekly
 | 14:12 | Made refresh-cookie security configurable for the approved HTTP-only deployment, deployed backend, and exercised the live cookie lifecycle | AuthOptions.cs, AuthController.cs, Program.cs, appsettings.json, docker-compose*.yml, .env*, azure-vm-deployment.md | login, two refresh rotations, logout deletion, config migration, storage audit, build, and health checks passed | ~14k |
 | 23:46 | Split the functional requirements into indexed feature documents and updated documentation references | docs/functional-requirements.md, docs/functional-requirements/, docs/Kahoot-like-Platform.md, docs/non-functional-requirements.md | all FR identifiers retained with one owner; structure, links, uniqueness, and whitespace checks passed | ~17k |
 | 23:57 | Audited backend application/API use cases and aligned the functional requirements with current handlers, validation, realtime, startup, and health behavior | backend/src/Kahoot.Application/{Authentication,Games,Quizzes}, backend API entry points, docs/functional-requirements/ | every backend command/query and hosted service mapped; documentation validation passed | ~24k |
+
+## Session: 2026-09-16
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 00:05 | Removed legacy requirement documents and split all non-functional requirements into focused files | docs/functional-requirements/, docs/non-functional-requirements/, load-tests/ | retained all NFR-1 through NFR-12 coverage; focused capacity and SignalR targets; links, identifiers, and scoped whitespace validated | ~14k |

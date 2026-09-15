@@ -6,7 +6,7 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-15 (backend use-case requirements audit)
+> Last updated: 2026-09-16 (requirements documentation reorganization)
 
 ---
 
@@ -14,7 +14,7 @@ budget_tokens: 1000
 
 - **Backend use-case requirements audit:** Read all Authentication, Games, and Quizzes commands, queries, handlers, and validators plus API controllers, SignalR entry points/events, media services, host presence, startup services, home endpoint, and health mappings. Expanded the feature requirements and added a backend coverage matrix. Corrected stale requirements to match the backend: 500-player capacity, question-only images with text-only choices, conditional fail-fast host seeding, fixed question eligibility, session-token answer submission, exact scoring/ranking, host-disconnect auto-end, token cleanup, and liveness/readiness endpoints. Every backend command/query and hosted service now maps to one requirement owner; IDs, stories, sections, links, and scoped whitespace validate.
 
-- **Functional requirements documentation split:** Replaced the large `docs/functional-requirements.md` specification with a compatibility index and 11 feature-focused requirement documents under `docs/functional-requirements/`. Preserved every original `FR-*` identifier with one documented owner, adopted the requested overview/user-story/acceptance-criteria/business-rule/edge-case structure, and updated references from the original brief and non-functional requirements. All local Markdown links resolve; identifier ownership, user-story uniqueness, required sections, and scoped whitespace checks pass.
+- **Requirements documentation reorganization:** All functional requirements remain in 11 feature-focused documents under `docs/functional-requirements/`; the legacy root specification, original platform brief, and functional index were removed as requested. Split all non-functional requirements into seven focused documents under `docs/non-functional-requirements/`, with measurable targets for 500-player capacity, SignalR latency and delivery, API/answer performance, integrity, security, observability, and the Azure VM deployment. All original top-level `NFR-1` through `NFR-12` identifiers remain represented, all local Markdown links resolve, and removed filenames have no remaining references.
 
 - **Sparse question-order game-flow repair:** Confirmed the affected quiz and game snapshots contained indexes `0..5,7..19`; question 7 failed because advance treated logical position 6 as an exact stored order index. Start/advance now select snapshots by ordered position, re-entry resolves by snapshot ID, newly created games normalize indexes, and deletion compacts subsequent quiz indexes transactionally. Advance failures now log structured game state and index/count context. An isolated PostgreSQL/API run verified Q1→Q2, Q6→Q7, Q18→Q19, Q19→Results, final-only `Game.NoMoreQuestions`, and Results→Leaderboard→Finished with 19 questions. Backend publish and targeted formatting passed; the repository-wide formatter still reports only the pre-existing immutable migration whitespace findings.
 
