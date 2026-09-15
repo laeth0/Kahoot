@@ -6,11 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-14 (repository-wide production-readiness audit and Gemini execution plan)
+> Last updated: 2026-09-15 (question-dialog HTTP browser compatibility fix)
 
 ---
 
 ## ✅ Done
+
+- **Question dialog HTTP compatibility:** Removed the `crypto.randomUUID()` dependency from `QuestionFormDialog.tsx`; default choices retain their stable IDs and new draft choices use component-local sequential IDs. Targeted Prettier and ESLint checks passed, the production build passed, and the generated bundle contains no `randomUUID` reference. Repository-wide lint/format still report unrelated pre-existing issues in `authService.ts` and `PlayerResultsView.tsx`.
 
 - **Phase 0, Phase 1, & Phase 2 Implementation (Completed & Verified):**
   - **Phase 0 — Credential Hygiene & Validation:**
@@ -425,4 +427,3 @@ budget_tokens: 1000
 - **Backend:** .NET 10 Clean Architecture, EF Core 10, Npgsql, PostgreSQL 17, MediatR, FluentValidation, SignalR.
 - **Frontend:** React 19 + TypeScript + Vite, Material UI v9, Emotion, React Router DOM 7, Axios, SignalR.
 - **Patterns:** Strictly Light Theme (`#00629B` IEEE Ocean Blue, `#0284C7` Radar Cyan, `#F4F8FC` canvas, `#09131F` text), centralized routing, custom hooks, accessible landmarks, zero comments across `frontend/src` and `backend/src`.
-

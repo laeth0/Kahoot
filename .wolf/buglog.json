@@ -1219,6 +1219,22 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-15T08:48:00+00:00"
+    },
+    {
+      "id": "bug-077",
+      "timestamp": "2026-09-15T13:49:38Z",
+      "error_message": "TypeError: crypto.randomUUID is not a function",
+      "file": "frontend/src/components/QuestionForm/QuestionFormDialog.tsx",
+      "root_cause": "The question dialog used crypto.randomUUID for ephemeral React keys, but randomUUID is unavailable when the application is served from a non-secure HTTP origin.",
+      "fix": "Use the existing stable default IDs and component-local sequential IDs for newly added draft choices, removing the secure-context dependency.",
+      "tags": [
+        "frontend",
+        "browser-compatibility",
+        "react",
+        "secure-context"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T13:49:38Z"
     }
   ]
 }

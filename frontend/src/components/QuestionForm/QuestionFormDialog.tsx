@@ -24,7 +24,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useRef, useState } from 'react';
 
 import type { ChoiceInput, SaveQuestionPayload } from '../../api/quizQuestionService.ts';
 import type { QuestionResponse } from '../../api/quizService.ts';
@@ -93,6 +93,7 @@ function QuestionFormContent({
   onSubmit,
   isSaving,
 }: QuestionFormContentProps) {
+  const nextDraftChoiceId = useRef(1);
   const initialPoints = initialData?.points ?? 1000;
   const isPresetPoint = PRESET_POINTS.includes(initialPoints as (typeof PRESET_POINTS)[number]);
 
@@ -126,7 +127,7 @@ function QuestionFormContent({
           text: c.text,
           isCorrect: c.isCorrect,
         }))
-      : DEFAULT_CHOICES.map((c) => ({ ...c, draftId: crypto.randomUUID() })),
+      : DEFAULT_CHOICES.map((c) => ({ ...c })),
   );
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -144,10 +145,9 @@ function QuestionFormContent({
 
   const handleAddChoice = () => {
     if (choices.length >= 6) return;
-    setChoices((prev) => [
-      ...prev,
-      { draftId: crypto.randomUUID(), id: null, text: '', isCorrect: false },
-    ]);
+    const draftId = `new-${nextDraftChoiceId.current}`;
+    nextDraftChoiceId.current += 1;
+    setChoices((prev) => [...prev, { draftId, id: null, text: '', isCorrect: false }]);
   };
 
   const handleRemoveChoice = (draftId: string) => {

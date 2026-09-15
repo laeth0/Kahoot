@@ -664,3 +664,8 @@ description: chronological action log per session, consolidated weekly
 | 13:08 | Verified production readiness: synchronized 31 env variables across .env, .env.example, .env.production.example, enabled HOST_SEED_ENABLED in .env, disabled OBSERVABILITY_ENABLED in .env to match lean prod compose, verified frontend/.env, updated appsettings.Production.json with GameLifecycle | .env, .env.example, .env.production.example, frontend/.env, appsettings.Production.json, docker-compose.prod.yml | success; 100% verified and ready for docker compose up | ~8k |
 | 13:35 | Resolved frontend tmpfs permission error (removed USER nginx in frontend/Dockerfile), restarted frontend and nginx, live verified all 4 containers healthy, login, health, and SignalR | frontend/Dockerfile, docker-compose.prod.yml | success; 100% live verified | ~5k |
 
+## Session: 2026-09-15 13:49
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 13:49 | Replaced secure-context-only UUID calls with component-local draft choice IDs and verified the production bundle | frontend/src/components/QuestionForm/QuestionFormDialog.tsx | targeted format/lint and production build passed; unrelated full-check issues recorded | ~12k |
