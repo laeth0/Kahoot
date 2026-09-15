@@ -30,6 +30,9 @@ services:
       - kahoot_internal
 
   postgres-monitor-init:
+    profiles:
+      - monitoring
+      - observability
     image: postgres:18-alpine
     container_name: kahoot-postgres-monitor-init
     restart: "no"
@@ -78,7 +81,7 @@ services:
       Seeding__Host__Password: ${HOST_SEED_PASSWORD:-}
       Cors__AllowedOrigins: ${CORS_ALLOWED_ORIGINS:-}
       Client__BaseUrl: ${CLIENT_BASE_URL:-http://localhost:3000}
-      Observability__Enabled: ${OBSERVABILITY_ENABLED:-true}
+      Observability__Enabled: ${OBSERVABILITY_ENABLED:-false}
       Observability__ServiceName: ${OTEL_SERVICE_NAME:-kahoot-backend}
       Observability__OtlpEndpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
     ports:
@@ -165,6 +168,9 @@ services:
       - observability_internal
 
   grafana:
+    profiles:
+      - monitoring
+      - observability
     image: grafana/grafana:13.2.1
     container_name: kahoot-grafana
     restart: unless-stopped
@@ -208,6 +214,9 @@ services:
       - observability_internal
 
   prometheus:
+    profiles:
+      - monitoring
+      - observability
     image: prom/prometheus:v3.14.0
     container_name: kahoot-prometheus
     restart: unless-stopped
@@ -240,6 +249,9 @@ services:
       - observability_internal
 
   loki:
+    profiles:
+      - monitoring
+      - observability
     image: grafana/loki:3.7.7
     container_name: kahoot-loki
     restart: unless-stopped
@@ -268,6 +280,9 @@ services:
       - observability_internal
 
   jaeger:
+    profiles:
+      - monitoring
+      - observability
     image: jaegertracing/jaeger:2.20.0
     container_name: kahoot-jaeger
     restart: unless-stopped
@@ -297,6 +312,9 @@ services:
       - observability_internal
 
   otel-collector:
+    profiles:
+      - monitoring
+      - observability
     image: otel/opentelemetry-collector-contrib:0.160.0
     container_name: kahoot-otel-collector
     restart: unless-stopped
@@ -323,6 +341,9 @@ services:
       - observability_internal
 
   cadvisor:
+    profiles:
+      - monitoring
+      - observability
     image: ghcr.io/google/cadvisor:v0.60.5
     container_name: kahoot-cadvisor
     restart: unless-stopped
@@ -350,6 +371,9 @@ services:
       - observability_internal
 
   node-exporter:
+    profiles:
+      - monitoring
+      - observability
     image: quay.io/prometheus/node-exporter:v1.12.1
     container_name: kahoot-node-exporter
     restart: unless-stopped
@@ -379,6 +403,9 @@ services:
       - observability_internal
 
   postgres-exporter:
+    profiles:
+      - monitoring
+      - observability
     image: quay.io/prometheuscommunity/postgres-exporter:v0.20.1
     container_name: kahoot-postgres-exporter
     restart: unless-stopped
@@ -410,6 +437,9 @@ services:
       - observability_internal
 
   blackbox-exporter:
+    profiles:
+      - monitoring
+      - observability
     image: quay.io/prometheus/blackbox-exporter:v0.28.0
     container_name: kahoot-blackbox-exporter
     restart: unless-stopped
