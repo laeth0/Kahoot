@@ -3,7 +3,7 @@ services:
     image: postgres:18-alpine
     container_name: kahoot-db
     restart: unless-stopped
-    command: postgres -c shared_preload_libraries=pg_stat_statements -c track_io_timing=on -c max_connections=100 -c shared_buffers=512MB -c work_mem=16MB -c maintenance_work_mem=128MB -c effective_cache_size=1536MB
+    command: postgres -c shared_preload_libraries=pg_stat_statements -c track_io_timing=on -c max_connections=120 -c shared_buffers=768MB -c work_mem=16MB -c maintenance_work_mem=256MB -c effective_cache_size=2048MB -c wal_buffers=16MB -c min_wal_size=512MB -c max_wal_size=2GB -c checkpoint_completion_target=0.9 -c random_page_cost=1.1 -c effective_io_concurrency=200
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-kahoot}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -11,8 +11,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql
     cpus: "1.5"
-    mem_limit: 2560m
-    mem_reservation: 1024m
+    mem_limit: 3g
+    mem_reservation: 1g
     cpu_shares: 1024
     stop_grace_period: 30s
     logging:
@@ -41,7 +41,7 @@ services:
       - /tmp:size=64m
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-kahoot};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD};Maximum Pool Size=64;"
+      ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-kahoot};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD};Minimum Pool Size=10;Maximum Pool Size=90;Connection Idle Lifetime=30;Connection Lifetime=300;Timeout=15;"
       Jwt__Issuer: ${JWT_ISSUER:-kahoot-api}
       Jwt__Audience: ${JWT_AUDIENCE:-kahoot-clients}
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?JWT signing key must be at least 32 characters}
@@ -57,10 +57,10 @@ services:
       Observability__OtlpEndpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
     volumes:
       - uploads_data:/app/uploads
-    cpus: "1.5"
-    mem_limit: 2048m
-    mem_reservation: 512m
-    cpu_shares: 1024
+    cpus: "3"
+    mem_limit: 4g
+    mem_reservation: 1g
+    cpu_shares: 2048
     stop_grace_period: 30s
     logging:
       driver: json-file

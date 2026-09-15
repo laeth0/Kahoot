@@ -26,7 +26,18 @@ using Scalar.AspNetCore;
 
 const string gameHubPath = "/hubs/game";
 
+ThreadPool.SetMinThreads(100, 100);
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+    options.Limits.MaxConcurrentConnections = 1000;
+    options.Limits.MaxConcurrentUpgradedConnections = 500;
+    options.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(2);
+    options.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(30);
+});
 
 var port = builder.Configuration["PORT"] ?? builder.Configuration["WEBSITES_PORT"];
 if (!string.IsNullOrEmpty(port))
@@ -40,6 +51,11 @@ builder.Host.UseDefaultServiceProvider((_, options) =>
 {
     options.ValidateScopes = true;
     options.ValidateOnBuild = true;
+});
+
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.ShutdownTimeout = TimeSpan.FromSeconds(30);
 });
 
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
@@ -64,6 +80,8 @@ builder.Services.AddSignalR(options =>
     options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
     options.KeepAliveInterval = TimeSpan.FromSeconds(15);
     options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+    options.MaximumParallelInvocationsPerClient = 2;
+    options.StreamBufferCapacity = 16;
 });
 builder.Services.AddSingleton<GameNotifier>();
 builder.Services.AddHealthChecks()
