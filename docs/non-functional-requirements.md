@@ -2,7 +2,8 @@
 
 > Living specification. Keep this file synchronized with every architectural / quality change.
 > The original brief is preserved in [`Kahoot-like-Platform.md`](./Kahoot-like-Platform.md).
-> Functional requirements live in [`functional-requirements.md`](./functional-requirements.md).
+> Functional requirements live in the
+> [`functional-requirements/`](./functional-requirements/README.md) directory.
 
 ---
 

@@ -6,11 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-15 (19-question advance flow repair)
+> Last updated: 2026-09-15 (functional requirements documentation split)
 
 ---
 
 ## ✅ Done
+
+- **Functional requirements documentation split:** Replaced the large `docs/functional-requirements.md` specification with a compatibility index and 11 feature-focused requirement documents under `docs/functional-requirements/`. Preserved every original `FR-*` identifier with one documented owner, adopted the requested overview/user-story/acceptance-criteria/business-rule/edge-case structure, and updated references from the original brief and non-functional requirements. All local Markdown links resolve; identifier ownership, user-story uniqueness, required sections, and scoped whitespace checks pass.
 
 - **Sparse question-order game-flow repair:** Confirmed the affected quiz and game snapshots contained indexes `0..5,7..19`; question 7 failed because advance treated logical position 6 as an exact stored order index. Start/advance now select snapshots by ordered position, re-entry resolves by snapshot ID, newly created games normalize indexes, and deletion compacts subsequent quiz indexes transactionally. Advance failures now log structured game state and index/count context. An isolated PostgreSQL/API run verified Q1→Q2, Q6→Q7, Q18→Q19, Q19→Results, final-only `Game.NoMoreQuestions`, and Results→Leaderboard→Finished with 19 questions. Backend publish and targeted formatting passed; the repository-wide formatter still reports only the pre-existing immutable migration whitespace findings.
 

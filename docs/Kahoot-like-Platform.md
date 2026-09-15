@@ -203,7 +203,8 @@ FINISHED
 The leaderboard step is optional: the host may go
 `QUESTION_RESULTS → QUESTION_ACTIVE` directly, or
 `QUESTION_RESULTS → LEADERBOARD → QUESTION_ACTIVE`.
-See `functional-requirements.md` FR-4 for the authoritative transition table.
+See [FR-4 in the game lifecycle requirements](./functional-requirements/game-lifecycle.md#fr-4-state-machine)
+for the authoritative transition table.
 
 Do not manage this using random boolean fields such as:
 
