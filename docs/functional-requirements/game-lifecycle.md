@@ -59,7 +59,7 @@ the session can recover from reloads and does not remain open indefinitely.
 - Given a repeated advance request while a question is already active, when the request is processed, then the current question is rebroadcast without starting another question.
 - Given multiple runs of the same quiz, when data is read or written for one run, then no participant, answer, score, leaderboard, or state from another run is read or changed.
 - Given an owned published quiz, when the host creates a game, then a distinct lobby session is returned with a unique active PIN, a join URL, and an immutable copy of the quiz title, questions, choices, order, timing, points, and correctness data.
-- Given an owned game, when the host retrieves its state, then the response includes its PIN, snapshotted quiz title, status, current question timing and index, total questions, answered count, connected-player count, presence version, participant details, and join URL.
+- Given an owned game, when the host retrieves its state, then the response includes its PIN, snapshotted quiz title, status, current question timing and index, total questions, answered count, connected-player count, presence version, all participant records including removal and connection state, and join URL.
 - Given a hosted unfinished game, when its last host connection is lost and none reconnects within the configured grace period, then the game finishes and its final leaderboard is broadcast.
 
 ## Business Rules

@@ -55,6 +55,7 @@ my answer can be accepted and scored fairly.
 ### FR-6.2: Answer submission
 
 - Answers are submitted through the realtime channel after a successful join or reconnect has associated the connection with a game and session token.
+- The realtime method accepts one choice ID or an array of choice IDs and normalizes valid string or JSON GUID representations before dispatch.
 - Every answer must select at least one choice.
 - Duplicate choice IDs in a submission are deduplicated.
 - Every submitted choice ID must belong to the active question.

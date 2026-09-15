@@ -70,6 +70,7 @@ budget_tokens: 2000
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
+- [2026-09-15] Functional requirements backend alignment: `docs/functional-requirements/README.md` now maps every Authentication, Games, and Quizzes command/query plus backend hosted/API use cases to one feature owner. Current backend behavior is authoritative for capacity (500), question-only images, optional fail-fast bootstrap seeding, fixed per-question eligibility, and operational endpoints.
 - [2026-09-11] Load Test Suite Realignment: Aligned all 10 k6 load scenarios with ASP.NET Core backend state machines, rate limits, and SignalR contracts.
 - [2026-09-09] Frontend Light-Only Theme & Logo Palette: Configured Material UI theme with palette extracted from `logo.jpeg` (`#00629B` primary, `#0284C7` secondary, `#F4F8FC` canvas, `#09131F` text). Hardcoded light mode only (`mode: 'light'`) to meet user specification. Added typography scale, CSS tokens, and component overrides.
 

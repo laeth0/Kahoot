@@ -21,7 +21,7 @@ single-file specification. Each identifier is owned by exactly one document.
 | Requirements | Feature document | Scope |
 |---|---|---|
 | FR-1, FR-1.1, FR-1.2 | [Roles and access](./roles-and-access.md) | Host and player roles and capabilities |
-| FR-2, FR-2.1–FR-2.4 | [Authentication](./authentication.md) | Host login, refresh, logout, ownership, and bootstrap account |
+| FR-2, FR-2.1–FR-2.5 | [Authentication](./authentication.md) | Host login, refresh, logout, bootstrap account, and token retention |
 | FR-3, FR-3.2–FR-3.5 | [Quiz and question management](./quiz-and-question-management.md) | Quiz queries, authoring, question rules, publishing, ordering, editing, and deletion |
 | FR-3.1 | [Media management](./media-management.md) | Question image validation, sanitization, upload, and storage |
 | FR-4, FR-4.1–FR-4.3, FR-5a | [Game lifecycle](./game-lifecycle.md) | Session creation, snapshots, state transitions, host state, automatic termination, and isolation |
@@ -40,20 +40,25 @@ is a traceability aid, not a substitute for the detailed requirements.
 | Backend use cases | Requirement owner |
 |---|---|
 | `LoginCommand`, `RefreshTokenCommand`, `LogoutCommand` | [Authentication](./authentication.md) |
-| Bootstrap host seeding | [Authentication](./authentication.md) and [Platform operations](./platform-operations.md) |
+| Bootstrap host seeding | [Authentication](./authentication.md) |
+| `TokenCleanupHostedService` | [Authentication](./authentication.md) |
 | `ListQuizzesQuery`, `GetQuizQuery` | [Quiz and question management](./quiz-and-question-management.md) |
 | `CreateQuizCommand`, `UpdateQuizCommand`, `DeleteQuizCommand`, `PublishQuizCommand` | [Quiz and question management](./quiz-and-question-management.md) |
 | `AddQuestionCommand`, `UpdateQuestionCommand`, `DeleteQuestionCommand`, `ReorderQuestionsCommand` | [Quiz and question management](./quiz-and-question-management.md) |
 | Image upload and stored-media validation | [Media management](./media-management.md) |
 | `CreateGameCommand`, `GetHostGameStateQuery` | [Game lifecycle](./game-lifecycle.md) |
 | `StartGameCommand`, `StartNextQuestionCommand`, `EndQuestionCommand`, `ShowLeaderboardCommand`, `EndGameCommand` | [Game lifecycle](./game-lifecycle.md) |
-| `AutoEndGameCommand`, `TryAutoEndQuestionCommand` | [Game lifecycle](./game-lifecycle.md) and [Live gameplay](./live-gameplay.md) |
+| `AutoEndGameCommand` | [Game lifecycle](./game-lifecycle.md) |
+| `TryAutoEndQuestionCommand` | [Live gameplay](./live-gameplay.md) |
 | `JoinGameCommand`, `RemoveParticipantCommand` | [Joining and lobby](./joining-and-lobby.md) |
-| `AttachParticipantConnectionCommand`, `DetachParticipantConnectionCommand`, `AuthorizeHostGameQuery` | [Joining and lobby](./joining-and-lobby.md) and [Realtime features](./realtime-features.md) |
-| `SubmitAnswerCommand` | [Live gameplay](./live-gameplay.md) and [Scoring and leaderboards](./scoring-and-leaderboards.md) |
+| `AttachParticipantConnectionCommand`, `DetachParticipantConnectionCommand` | [Joining and lobby](./joining-and-lobby.md) |
+| `AuthorizeHostGameQuery` | [Realtime features](./realtime-features.md) |
+| `SubmitAnswerCommand` | [Live gameplay](./live-gameplay.md) |
+| `ScoringService`, `LeaderboardService` | [Scoring and leaderboards](./scoring-and-leaderboards.md) |
 | `GetQuestionResultsQuery`, `GetLeaderboardQuery` | [Scoring and leaderboards](./scoring-and-leaderboards.md) |
 | `ReconnectParticipantCommand` | [Reconnection](./reconnection.md) |
 | SignalR `JoinGame`, `Reconnect`, `SubmitAnswer`, and `JoinAsHost` | [Realtime features](./realtime-features.md) |
+| `DatabaseMigrationHostedService`, `DatabaseSeederHostedService` | [Platform operations](./platform-operations.md) |
 | Root information page and health endpoints | [Platform operations](./platform-operations.md) |
 
 ## Maintenance

@@ -47,7 +47,7 @@ I can quickly find its health endpoint, realtime hub, and development API refere
 - Given successful migrations, when startup continues, then the separate seeding hosted service runs.
 - Given a request to `/health`, when the endpoint responds, then it reports liveness without disclosing sensitive information.
 - Given a request to `/health/live`, when the endpoint responds, then it evaluates only liveness checks.
-- Given a request to `/health/ready`, when the endpoint responds, then it evaluates only readiness checks.
+- Given a request to `/health/ready`, when the endpoint responds, then it evaluates database and file-storage readiness checks.
 - Given an anonymous request to `/`, when the endpoint responds, then it returns the service information page and links to health and the realtime hub.
 - Given the Development environment, when the root page is rendered, then it links to the interactive API reference; outside Development, that reference is not advertised or mapped.
 
@@ -65,14 +65,14 @@ I can quickly find its health endpoint, realtime hub, and development API refere
 ### FR-9.2: Seeding
 
 - Seeding runs in a separate hosted service after migrations complete.
-- Startup seeding currently creates only the bootstrap host account defined by FR-2.1.
+- Startup seeding currently creates only the optional bootstrap host account defined by FR-2.1.
 - Development seed data, test data, and production reference data remain separate concerns.
 
 ### FR-10: Operational endpoints
 
 - `/health` evaluates all registered health checks without exposing sensitive information.
-- `/health/live` evaluates checks tagged `live`.
-- `/health/ready` evaluates checks tagged `ready`.
+- `/health/live` evaluates the self-check tagged `live`.
+- `/health/ready` evaluates the database and file-storage checks tagged `ready`.
 - Health endpoints are exempt from rate limiting.
 
 ### FR-10.1: Service information endpoint

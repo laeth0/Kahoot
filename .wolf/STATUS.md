@@ -6,11 +6,13 @@ budget_tokens: 1000
 
 > Single source of truth for resuming work. Read this FIRST when starting a session.
 > Update this file at the end of every work phase so the next `/clear` resumes in 1 read.
-> Last updated: 2026-09-15 (functional requirements documentation split)
+> Last updated: 2026-09-15 (backend use-case requirements audit)
 
 ---
 
 ## ✅ Done
+
+- **Backend use-case requirements audit:** Read all Authentication, Games, and Quizzes commands, queries, handlers, and validators plus API controllers, SignalR entry points/events, media services, host presence, startup services, home endpoint, and health mappings. Expanded the feature requirements and added a backend coverage matrix. Corrected stale requirements to match the backend: 500-player capacity, question-only images with text-only choices, conditional fail-fast host seeding, fixed question eligibility, session-token answer submission, exact scoring/ranking, host-disconnect auto-end, token cleanup, and liveness/readiness endpoints. Every backend command/query and hosted service now maps to one requirement owner; IDs, stories, sections, links, and scoped whitespace validate.
 
 - **Functional requirements documentation split:** Replaced the large `docs/functional-requirements.md` specification with a compatibility index and 11 feature-focused requirement documents under `docs/functional-requirements/`. Preserved every original `FR-*` identifier with one documented owner, adopted the requested overview/user-story/acceptance-criteria/business-rule/edge-case structure, and updated references from the original brief and non-functional requirements. All local Markdown links resolve; identifier ownership, user-story uniqueness, required sections, and scoped whitespace checks pass.
 

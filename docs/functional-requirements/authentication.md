@@ -45,7 +45,7 @@ I can stay signed in safely and deliberately revoke my session.
 - Given valid host credentials, when the host logs in, then the system issues a short-lived access token and a rotating refresh token.
 - Given a host operation, when the request has no valid access token, then the operation is rejected.
 - Given a valid host token, when the host attempts to control a game started from another host's quiz, then access is denied.
-- Given configured bootstrap credentials and no matching account, when the application starts, then the bootstrap host account is created.
+- Given enabled bootstrap seeding, valid configured credentials, and no matching account, when the application starts, then the bootstrap host account is created.
 - Given an existing account with the configured bootstrap username, when seeding runs, then the account is left unchanged.
 - Given a valid unexpired refresh token, when the host refreshes the session, then the old token is revoked, a replacement in the same token family is stored, and a new access token and refresh cookie are issued.
 - Given a host refresh-token family, when the host logs out with any token from that family, then every unrevoked token in the family is revoked and the refresh cookie is deleted.
@@ -63,8 +63,10 @@ I can stay signed in safely and deliberately revoke my session.
 
 ### FR-2.1: Bootstrap host account
 
-- On application startup, the system ensures that a bootstrap host account exists.
+- When bootstrap seeding is enabled, application startup ensures that the configured bootstrap host account exists.
 - The bootstrap username and password come from configuration or environment variables and are never hard-coded.
+- The bootstrap username is trimmed and normalized to lowercase.
+- The bootstrap password must contain at least 12 characters including uppercase, lowercase, numeric, and special characters.
 - Seeding is idempotent.
 - Seeding is separate from schema migration as defined in FR-9.
 
@@ -91,9 +93,17 @@ I can stay signed in safely and deliberately revoke my session.
 - Logout is idempotent when the token is missing or unknown.
 - A successful logout deletes the refresh cookie and returns no content.
 
+### FR-2.5: Refresh-token retention
+
+- Expired tokens and revoked tokens are retained for seven days before they become eligible for deletion.
+- Cleanup runs when the background service starts and then hourly.
+- Each cleanup deletes at most 100 eligible tokens, oldest expiration first.
+- A cleanup failure is logged and does not terminate the background service.
+
 ## Edge Cases
 
-- If bootstrap credentials are not configured, seeding is skipped with a warning and application startup still succeeds.
+- If bootstrap seeding is disabled, startup skips it without requiring credentials.
+- If seeding is enabled with a missing username, missing password, or password that fails the complexity rules, application startup fails.
 - An expired refresh token is revoked and rejected.
 - A concurrent refresh within the 10-second grace window returns `Auth.RefreshRace`; reuse after that window returns `Auth.RefreshTokenReuse` and revokes the token family.
 - Cookie-based refresh or logout without the required CSRF header, or from a disallowed origin, is forbidden.
