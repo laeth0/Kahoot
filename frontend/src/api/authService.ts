@@ -116,7 +116,10 @@ export const authService = {
         return auth;
       })
       .catch((error) => {
-        if (typeof window !== 'undefined') {
+        const status =
+          (error as { status?: number })?.status ??
+          (error as { response?: { status?: number } })?.response?.status;
+        if ((status === 401 || status === 403) && typeof window !== 'undefined') {
           try {
             localStorage.removeItem(SESSION_HINT_KEY);
           } catch {
@@ -145,8 +148,11 @@ export const authService = {
 
     try {
       return await this.refresh();
-    } catch {
-      if (typeof window !== 'undefined') {
+    } catch (error) {
+      const status =
+        (error as { status?: number })?.status ??
+        (error as { response?: { status?: number } })?.response?.status;
+      if ((status === 401 || status === 403) && typeof window !== 'undefined') {
         try {
           localStorage.removeItem(SESSION_HINT_KEY);
         } catch {

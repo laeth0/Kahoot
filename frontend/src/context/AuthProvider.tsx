@@ -99,8 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.accessToken);
       setAccessTokenExpiresAt(response.accessTokenExpiresAt);
       return true;
-    } catch {
-      await logout();
+    } catch (error: unknown) {
+      const status =
+        (error as { status?: number })?.status ??
+        (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403) {
+        await logout();
+      }
       return false;
     }
   }, [logout]);

@@ -76,6 +76,11 @@ internal sealed class RefreshTokenCommandHandler(
             now,
             stored.FamilyId);
 
+        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        dbContext.RefreshTokens.Add(rotated);
+        await dbContext.SaveChangesAsync(cancellationToken);
+
         int rotatedRows = await dbContext.RefreshTokens
             .Where(token => token.Id == stored.Id && token.RevokedAt == null)
             .ExecuteUpdateAsync(
@@ -86,11 +91,11 @@ internal sealed class RefreshTokenCommandHandler(
 
         if (rotatedRows == 0)
         {
+            await transaction.RollbackAsync(cancellationToken);
             return Result.Failure<AuthenticationResponse>(AuthenticationErrors.RefreshRace);
         }
 
-        dbContext.RefreshTokens.Add(rotated);
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success(response);
     }
