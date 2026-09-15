@@ -1,47 +1,11 @@
 {
   "version": 1,
   "skills": {
-    "configuring-opentelemetry-dotnet": {
-      "source": "dotnet/skills",
-      "sourceType": "github",
-      "skillPath": "plugins/dotnet-aspnetcore/skills/configuring-opentelemetry-dotnet/SKILL.md",
-      "computedHash": "736b7476710267bd46154714f38e16f5bac5498ce6a9aa980eb1d0a214960890"
-    },
     "docker-compose-production": {
       "source": "thebushidocollective/han",
       "sourceType": "github",
       "skillPath": "plugins/tools/docker-compose/skills/docker-compose-production/SKILL.md",
       "computedHash": "71eabff15298ed1751cf7a6e71e3b27269eaff07e8084dbdf8de5fff813044f6"
-    },
-    "k6": {
-      "source": "grafana/skills",
-      "sourceType": "github",
-      "skillPath": "skills/grafana-k6/k6/SKILL.md",
-      "computedHash": "3b8f48ee2938a95e5508b71b74eb812f9c48173445fbb02a7bd81a38fc4bded4"
-    },
-    "k6-docs": {
-      "source": "grafana/skills",
-      "sourceType": "github",
-      "skillPath": "skills/grafana-k6/k6-docs/SKILL.md",
-      "computedHash": "2ad5b850cf6dda90cebb4f4f3f60fdbcce4b9a8c1112e3b3049ca84863111551"
-    },
-    "opentelemetry-net-instrumentation": {
-      "source": "aaronontheweb/dotnet-skills",
-      "sourceType": "github",
-      "skillPath": "skills/opentelementry-dotnet-instrumentation/SKILL.md",
-      "computedHash": "9bab91303597d6579244744fc2b6ef3e161d6d0902e985519b5787067e31f1ed"
-    },
-    "performance-testing": {
-      "source": "aj-geddes/useful-ai-prompts",
-      "sourceType": "github",
-      "skillPath": "skills/performance-testing/SKILL.md",
-      "computedHash": "e004e22948d397e2d706e14b3e74b80e51cd0b021d3ffb6eed98aeb101f44953"
-    },
-    "vercel-react-best-practices": {
-      "source": "vercel-labs/agent-skills",
-      "sourceType": "github",
-      "skillPath": "skills/react-best-practices/SKILL.md",
-      "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
     }
   }
 }
