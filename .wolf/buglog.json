@@ -1235,6 +1235,23 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-15T13:49:38Z"
+    },
+    {
+      "id": "bug-078",
+      "timestamp": "2026-09-15T13:58:12Z",
+      "error_message": "Creating a worker from blob: violates Content Security Policy directive script-src 'self'",
+      "file": "nginx/default.prod.conf",
+      "root_cause": "canvas-confetti creates a Blob Web Worker, but the Nginx CSP omitted worker-src and therefore fell back to script-src, which did not allow blob workers.",
+      "fix": "Add an explicit worker-src 'self' blob: directive to both development and production Nginx CSP headers.",
+      "tags": [
+        "frontend",
+        "nginx",
+        "csp",
+        "web-worker",
+        "canvas-confetti"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-15T13:58:12Z"
     }
   ]
 }

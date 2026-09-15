@@ -669,3 +669,4 @@ description: chronological action log per session, consolidated weekly
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
 | 13:49 | Replaced secure-context-only UUID calls with component-local draft choice IDs and verified the production bundle | frontend/src/components/QuestionForm/QuestionFormDialog.tsx | targeted format/lint and production build passed; unrelated full-check issues recorded | ~12k |
+| 13:58 | Allowed the required canvas-confetti Blob worker in both Nginx CSP policies and restarted the live proxy | nginx/default.conf, nginx/default.prod.conf | CSP assertion and nginx syntax passed; live header updated and proxy healthy | ~7k |

@@ -12,6 +12,8 @@ budget_tokens: 1000
 
 ## ✅ Done
 
+- **Confetti worker CSP compatibility:** Added `worker-src 'self' blob:` to the development and production Nginx policies so `canvas-confetti` can create its Blob worker without relaxing `script-src`. The regression assertion passed, `nginx -t` passed, the live proxy was restarted, its response header includes the new directive, and the container is healthy.
+
 - **Question dialog HTTP compatibility:** Removed the `crypto.randomUUID()` dependency from `QuestionFormDialog.tsx`; default choices retain their stable IDs and new draft choices use component-local sequential IDs. Targeted Prettier and ESLint checks passed, the production build passed, and the generated bundle contains no `randomUUID` reference. Repository-wide lint/format still report unrelated pre-existing issues in `authService.ts` and `PlayerResultsView.tsx`.
 
 - **Phase 0, Phase 1, & Phase 2 Implementation (Completed & Verified):**

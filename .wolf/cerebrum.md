@@ -22,6 +22,7 @@ budget_tokens: 2000
 
 ## Key Learnings
 
+- **Frontend CSP:** `canvas-confetti` 1.9.x uses a Blob Web Worker by default. Keep ordinary scripts restricted with `script-src 'self'` and explicitly allow only required workers with `worker-src 'self' blob:` in both Nginx CSP configurations.
 - **Frontend draft IDs:** The production site may be accessed over a raw HTTP IP, where `crypto.randomUUID()` is unavailable because the page is not a secure context. Ephemeral React list keys must not depend on it; use stable existing IDs or component-local counters.
 - **Project:** kahoot
 - **Frontend Theme Configuration:** MUI v9 theme is configured in `frontend/src/theme/` (`palette.ts`, `typography.ts`, `components.ts`, `index.ts`) with tokens in `frontend/src/styles/tokens.css`.
