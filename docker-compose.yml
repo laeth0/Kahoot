@@ -111,16 +111,16 @@ services:
       - observability_internal
 
   frontend:
-    profiles:
-      - frontend-static
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-/api}
-        VITE_SIGNALR_URL: ${VITE_SIGNALR_URL:-/hubs/game}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:5000/api}
+        VITE_SIGNALR_URL: ${VITE_SIGNALR_URL:-http://localhost:5000/hubs/game}
     container_name: kahoot-frontend
     restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:8080"
     cpus: 0.20
     mem_limit: 192m
     mem_reservation: 96m

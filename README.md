@@ -93,12 +93,12 @@ In production (`docker-compose.prod.yml`), Nginx acts as the single public entry
 
 ---
 
-### Step 2: Start Backend and Database (via Docker Compose)
+### Step 2: Start the Full Development Stack (via Docker Compose)
 
-In development, Docker Compose starts **only** the database and backend API (Nginx and monitoring services remain disabled by default):
+In development, Docker Compose builds and starts the database, backend API, and frontend container:
 
 ```bash
-docker compose up -d
+docker compose up -d --build
 ```
 
 Verify the services are running:
@@ -108,24 +108,26 @@ docker compose ps
 You should see:
 - `kahoot-db` running on `0.0.0.0:5433->5432/tcp`
 - `kahoot-backend` running on `0.0.0.0:5000->8080/tcp`
+- `kahoot-frontend` running on `0.0.0.0:5173->8080/tcp`
 
-Verify backend health:
-```bash
-curl http://localhost:5000/health
-```
-*(Expected response: `Healthy`)*
+*(Note: Edge Nginx and monitoring exporters remain disabled by default in development to avoid port 80 conflicts with Apache/IIS).*
 
 ---
 
-### Step 3: Start the Frontend Development Server
+### Step 3: Frontend Development Modes
 
-```bash
-cd frontend
-npm install
-npm run dev
-```
+You have two options for running the frontend:
 
-The Vite dev server will start on [http://localhost:5173](http://localhost:5173).
+- **Option A: Containerized (from Step 2 above):**
+  The container is already running on [http://localhost:5173](http://localhost:5173).
+- **Option B: Vite Dev Server with Fast HMR (Local UI Development):**
+  If you want live Hot Module Replacement while writing frontend code:
+  ```bash
+  cd frontend
+  npm install
+  npm run dev
+  ```
+  The Vite dev server runs on [http://localhost:5173](http://localhost:5173).
 
 ---
 
