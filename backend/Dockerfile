@@ -17,8 +17,7 @@ WORKDIR /app
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
 
-RUN groupadd -r app && useradd -r -g app app \
-    && mkdir -p /app/uploads \
+RUN mkdir -p /app/uploads \
     && chown app:app /app/uploads
 
 COPY --from=build /app/publish .
