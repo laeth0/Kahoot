@@ -41,7 +41,6 @@ internal sealed class GetQuizQueryHandler(IApplicationDbContext dbContext, ICurr
                                 choice.Id,
                                 choice.OrderIndex,
                                 choice.Text,
-                                choice.ImageUrl,
                                 choice.IsCorrect))
                             .ToList()))
                     .ToList()))

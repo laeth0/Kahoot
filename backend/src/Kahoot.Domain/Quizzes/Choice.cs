@@ -8,9 +8,7 @@ public sealed class Choice
 
     public int OrderIndex { get; set; }
 
-    public string? Text { get; set; }
-
-    public string? ImageUrl { get; set; }
+    public string Text { get; set; } = string.Empty;
 
     public bool IsCorrect { get; set; }
 

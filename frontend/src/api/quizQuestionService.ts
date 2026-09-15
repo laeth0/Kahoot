@@ -2,8 +2,7 @@ import { axiosClient } from './axiosClient.ts';
 
 export interface ChoiceInput {
   id?: string | null;
-  text: string | null;
-  imageUrl: string | null;
+  text: string;
   isCorrect: boolean;
 }
 

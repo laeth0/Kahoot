@@ -40,7 +40,6 @@ export function provisionGames(env, options = {}) {
       points,
       choices: CHOICE_LABELS.map((label, choiceIndex) => ({
         text: `Choice ${label}`,
-        imageUrl: null,
         isCorrect: choiceIndex === 0, // "Choice A" is always the correct one
       })),
     });
@@ -111,7 +110,6 @@ export function provisionPerGameQuizzes(env, options = {}) {
         points,
         choices: CHOICE_LABELS.map((label, choiceIndex) => ({
           text: `G${gameIndex + 1} Choice ${label}`,
-          imageUrl: null,
           isCorrect: choiceIndex === 0,
         })),
       });

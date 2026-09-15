@@ -104,8 +104,7 @@ Table choices {
   id uuid [pk]
   question_id uuid [not null, ref: > questions.id, note: 'ON DELETE CASCADE']
   order_index int [not null, note: '0-based position within the question (0..5)']
-  text varchar(300) [null, note: 'Nullable: a choice may be image-only. Application requires text OR image_url']
-  image_url varchar(2048) [null, note: 'Optional choice image; a relative path served by the API under FileStorage.PublicBasePath']
+  text varchar(300) [not null]
   is_correct boolean [not null, default: false]
 
   indexes {
@@ -113,7 +112,7 @@ Table choices {
     question_id [name: 'ix_choice_question_id']
   }
 
-  Note: 'is_correct lives here but is never serialized to player clients before the question is revealed.'
+  Note: 'is_correct lives here but is never serialized to player clients before the question is revealed. Choices are text-only.'
 }
 
 Table game_sessions {
@@ -177,8 +176,7 @@ Table game_choice_snapshots {
   id uuid [pk]
   game_question_snapshot_id uuid [not null, ref: > game_question_snapshots.id, note: 'ON DELETE CASCADE']
   order_index int [not null, note: '0-based position within the snapshot question (0..5)']
-  text varchar(300) [null]
-  image_url varchar(2048) [null]
+  text varchar(300) [not null]
   is_correct boolean [not null, default: false]
 
   indexes {

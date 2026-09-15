@@ -11,8 +11,7 @@ export interface QuizSummaryResponse {
 export interface ChoiceResponse {
   id: string;
   orderIndex: number;
-  text: string | null;
-  imageUrl: string | null;
+  text: string;
   isCorrect: boolean;
 }
 

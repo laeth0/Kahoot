@@ -10,7 +10,9 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
         RuleFor(command => command.QuizId).NotEmpty();
         RuleFor(command => command.QuestionId).NotEmpty();
         RuleFor(command => command.Text).NotEmpty().MaximumLength(QuestionValidationRules.MaxQuestionTextLength);
-        RuleFor(command => command.ImageUrl).MaximumLength(QuestionValidationRules.MaxImageUrlLength);
+        RuleFor(command => command.ImageUrl)
+            .MaximumLength(QuestionValidationRules.MaxImageUrlLength)
+            .ValidCanonicalMediaUrl();
         RuleFor(command => command.TimeLimitSeconds)
             .InclusiveBetween(QuestionValidationRules.MinTimeLimitSeconds, QuestionValidationRules.MaxTimeLimitSeconds);
         RuleFor(command => command.Points).GreaterThanOrEqualTo(0);

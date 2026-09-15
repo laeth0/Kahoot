@@ -12,6 +12,57 @@ public static class QuestionValidationRules
     public const int MaxChoiceTextLength = 300;
     public const int MaxImageUrlLength = 2048;
 
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg", ".jpeg", ".png", ".webp"
+    };
+
+    public static bool IsValidCanonicalMediaUrl(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url))
+        {
+            return true;
+        }
+
+        if (url.Length > MaxImageUrlLength)
+        {
+            return false;
+        }
+
+        if (!url.StartsWith("/uploads/", StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string relative = url["/uploads/".Length..];
+        if (string.IsNullOrWhiteSpace(relative) || relative.Contains('/') || relative.Contains('\\') || relative.Contains(".."))
+        {
+            return false;
+        }
+
+        int dotIndex = relative.LastIndexOf('.');
+        if (dotIndex <= 0 || dotIndex == relative.Length - 1)
+        {
+            return false;
+        }
+
+        string rawGuid = relative[..dotIndex];
+        string extension = relative[dotIndex..];
+
+        if (!AllowedExtensions.Contains(extension))
+        {
+            return false;
+        }
+
+        return Guid.TryParse(rawGuid, out _);
+    }
+
+    public static IRuleBuilderOptions<T, string?> ValidCanonicalMediaUrl<T>(
+        this IRuleBuilder<T, string?> ruleBuilder) =>
+        ruleBuilder
+            .Must(IsValidCanonicalMediaUrl)
+            .WithMessage("Media URL must be a valid server-generated path in the format /uploads/<guid>.<extension> with an allowed extension (.jpg, .jpeg, .png, .webp).");
+
     public static IRuleBuilderOptions<T, IReadOnlyList<ChoiceInput>> ValidChoiceSet<T>(
         this IRuleBuilder<T, IReadOnlyList<ChoiceInput>> ruleBuilder) =>
         ruleBuilder

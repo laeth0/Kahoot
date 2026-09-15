@@ -68,7 +68,6 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                             choice.Id,
                             choice.OrderIndex,
                             choice.Text,
-                            choice.ImageUrl,
                             choice.IsCorrect
                         })
                         .ToList()
@@ -85,7 +84,7 @@ internal sealed class ReconnectParticipantCommandHandler(ITokenHasher tokenHashe
                     question.ImageUrl,
                     question.TimeLimitSeconds,
                     (participant.CurrentQuestionEndsAt ?? default).ToUtcOffset(),
-                    [.. question.Choices.Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text, choice.ImageUrl))],
+                    [.. question.Choices.Select(choice => new PlayerChoiceResponse(choice.Id, choice.OrderIndex, choice.Text))],
                     question.Choices.Count(choice => choice.IsCorrect) > 1);
             }
 

@@ -21,7 +21,6 @@ internal static class ImageSignature
         {
             "image/jpeg" => header[0] == 0xFF && header[1] == 0xD8 && header[2] == 0xFF,
             "image/png" => header[..8].SequenceEqual(Png),
-            "image/gif" => header[..4].SequenceEqual("GIF8"u8),
             "image/webp" => header[..4].SequenceEqual("RIFF"u8) && header[8..12].SequenceEqual("WEBP"u8),
             _ => false
         };

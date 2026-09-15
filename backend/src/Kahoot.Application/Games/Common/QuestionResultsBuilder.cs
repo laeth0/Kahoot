@@ -16,7 +16,7 @@ internal static class QuestionResultsBuilder
             .AsNoTracking()
             .Where(choice => choice.QuestionSnapshotId == questionId)
             .OrderBy(choice => choice.OrderIndex)
-            .Select(choice => new { choice.Id, choice.Text, choice.ImageUrl, choice.IsCorrect })
+            .Select(choice => new { choice.Id, choice.Text, choice.IsCorrect })
             .ToListAsync(cancellationToken);
 
         if (choices.Count == 0 || choices.All(choice => !choice.IsCorrect))
@@ -47,8 +47,7 @@ internal static class QuestionResultsBuilder
                 choice.Id,
                 choice.Text,
                 countByChoice.GetValueOrDefault(choice.Id),
-                choice.IsCorrect,
-                choice.ImageUrl))
+                choice.IsCorrect))
         ];
 
         return new QuestionResultsResponse(

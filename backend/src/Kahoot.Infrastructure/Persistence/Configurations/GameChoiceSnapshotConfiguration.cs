@@ -11,8 +11,7 @@ public sealed class GameChoiceSnapshotConfiguration : IEntityTypeConfiguration<G
         builder.HasKey(choice => choice.Id);
         builder.Property(choice => choice.Id).ValueGeneratedNever();
 
-        builder.Property(choice => choice.Text).HasMaxLength(300);
-        builder.Property(choice => choice.ImageUrl).HasMaxLength(2048);
+        builder.Property(choice => choice.Text).IsRequired().HasMaxLength(300);
         builder.Property(choice => choice.IsCorrect).HasDefaultValue(false);
 
         builder.HasIndex(choice => new { choice.QuestionSnapshotId, choice.OrderIndex })

@@ -24,4 +24,7 @@ public static class QuizErrors
 
     public static readonly Error QuestionSetMismatch =
         new("Quiz.QuestionSetMismatch", "The provided question list does not match this quiz's questions.");
+
+    public static readonly Error InvalidMediaReference =
+        new("Quiz.InvalidMediaReference", "The specified media reference is invalid or does not exist in storage.");
 }

@@ -81,7 +81,6 @@ internal sealed class CreateGameCommandHandler(
                         SourceChoiceId = choice.Id,
                         OrderIndex = choice.OrderIndex,
                         Text = choice.Text,
-                        ImageUrl = choice.ImageUrl,
                         IsCorrect = choice.IsCorrect
                     };
                     questionSnapshot.Choices.Add(choiceSnapshot);

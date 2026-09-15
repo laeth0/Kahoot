@@ -10,8 +10,7 @@ internal static class QuestionMapping
         {
             QuestionId = questionId,
             OrderIndex = index,
-            Text = Normalize(input.Text),
-            ImageUrl = Normalize(input.ImageUrl),
+            Text = Normalize(input.Text) ?? string.Empty,
             IsCorrect = input.IsCorrect
         })];
 

@@ -26,8 +26,7 @@ public sealed record QuestionResponse(
 public sealed record ChoiceResponse(
     Guid Id,
     int OrderIndex,
-    string? Text,
-    string? ImageUrl,
+    string Text,
     bool IsCorrect);
 
-public sealed record ChoiceInput(string? Text, string? ImageUrl, bool IsCorrect, Guid? Id = null);
+public sealed record ChoiceInput(string Text, bool IsCorrect, Guid? Id = null);

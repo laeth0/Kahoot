@@ -39,11 +39,15 @@ export interface QuestionFormDialogProps {
   isSaving?: boolean;
 }
 
-const DEFAULT_CHOICES: ChoiceInput[] = [
-  { text: '', imageUrl: null, isCorrect: true },
-  { text: '', imageUrl: null, isCorrect: false },
-  { text: '', imageUrl: null, isCorrect: false },
-  { text: '', imageUrl: null, isCorrect: false },
+interface DraftChoice extends ChoiceInput {
+  draftId: string;
+}
+
+const DEFAULT_CHOICES: DraftChoice[] = [
+  { draftId: 'default-1', text: '', isCorrect: true },
+  { draftId: 'default-2', text: '', isCorrect: false },
+  { draftId: 'default-3', text: '', isCorrect: false },
+  { draftId: 'default-4', text: '', isCorrect: false },
 ];
 
 const TIME_LIMIT_OPTIONS = [5, 10, 20, 30, 60, 90, 120, 240, 300];
@@ -114,45 +118,46 @@ function QuestionFormContent({
     setCustomPointsInput(val);
     if (validationError) setValidationError(null);
   };
-  const [choices, setChoices] = useState<ChoiceInput[]>(() =>
+  const [choices, setChoices] = useState<DraftChoice[]>(() =>
     initialData
-      ? initialData.choices.map((c) => ({
+      ? initialData.choices.map((c, i) => ({
+          draftId: c.id || `init-${i}`,
           id: c.id,
           text: c.text,
-          imageUrl: null,
           isCorrect: c.isCorrect,
         }))
-      : DEFAULT_CHOICES,
+      : DEFAULT_CHOICES.map((c) => ({ ...c, draftId: crypto.randomUUID() })),
   );
   const [validationError, setValidationError] = useState<string | null>(null);
 
-  const handleChoiceChange = (index: number, updated: ChoiceInput) => {
-    setChoices((prev) => {
-      const next = [...prev];
-      next[index] = updated;
-      return next;
-    });
+  const handleChoiceChange = (draftId: string, updated: ChoiceInput) => {
+    setChoices((prev) =>
+      prev.map((c) => (c.draftId === draftId ? { ...c, ...updated } : c)),
+    );
     if (validationError) setValidationError(null);
   };
 
-  const handleToggleCorrect = (index: number) => {
+  const handleToggleCorrect = (draftId: string) => {
     setChoices((prev) =>
-      prev.map((c, i) => (i === index ? { ...c, isCorrect: !c.isCorrect } : c)),
+      prev.map((c) => (c.draftId === draftId ? { ...c, isCorrect: !c.isCorrect } : c)),
     );
     if (validationError) setValidationError(null);
   };
 
   const handleAddChoice = () => {
     if (choices.length >= 6) return;
-    setChoices((prev) => [...prev, { id: null, text: '', imageUrl: null, isCorrect: false }]);
+    setChoices((prev) => [
+      ...prev,
+      { draftId: crypto.randomUUID(), id: null, text: '', isCorrect: false },
+    ]);
   };
 
-  const handleRemoveChoice = (index: number) => {
+  const handleRemoveChoice = (draftId: string) => {
     if (choices.length <= 2) return;
     setChoices((prev) => {
-      const next = prev.filter((_, i) => i !== index);
+      const next = prev.filter((c) => c.draftId !== draftId);
       if (!next.some((c) => c.isCorrect) && next.length > 0) {
-        next[0].isCorrect = true;
+        return next.map((c, i) => (i === 0 ? { ...c, isCorrect: true } : c));
       }
       return next;
     });
@@ -207,7 +212,7 @@ function QuestionFormContent({
       imageUrl,
       timeLimitSeconds,
       points: finalPoints,
-      choices,
+      choices: choices.map(({ draftId: _, ...rest }) => rest),
     });
   };
 
@@ -384,13 +389,13 @@ function QuestionFormContent({
 
               <Grid container spacing={2}>
                 {choices.map((choice, index) => (
-                  <Grid key={index} size={{ xs: 12, md: 6 }}>
+                  <Grid key={choice.draftId} size={{ xs: 12, md: 6 }}>
                     <ChoiceEditorRow
                       index={index}
                       choice={choice}
-                      onChange={(updated) => handleChoiceChange(index, updated)}
-                      onRemove={() => handleRemoveChoice(index)}
-                      onToggleCorrect={() => handleToggleCorrect(index)}
+                      onChange={(updated) => handleChoiceChange(choice.draftId, updated)}
+                      onRemove={() => handleRemoveChoice(choice.draftId)}
+                      onToggleCorrect={() => handleToggleCorrect(choice.draftId)}
                       canRemove={choices.length > 2}
                       disabled={isSaving}
                     />

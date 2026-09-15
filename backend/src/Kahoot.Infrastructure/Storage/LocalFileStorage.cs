@@ -28,4 +28,27 @@ public sealed class LocalFileStorage : IFileStorage, ISingletonService
 
         return $"{_publicBasePath}/{fileName}";
     }
+
+    public bool Exists(string publicPath)
+    {
+        if (string.IsNullOrWhiteSpace(publicPath))
+        {
+            return false;
+        }
+
+        string prefix = $"{_publicBasePath}/";
+        if (!publicPath.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        string fileName = publicPath[prefix.Length..];
+        if (string.IsNullOrWhiteSpace(fileName) || fileName.Contains('/') || fileName.Contains('\\') || fileName.Contains(".."))
+        {
+            return false;
+        }
+
+        string absolutePath = Path.Combine(_rootPath, fileName);
+        return File.Exists(absolutePath);
+    }
 }

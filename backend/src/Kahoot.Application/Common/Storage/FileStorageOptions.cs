@@ -17,7 +17,13 @@ public sealed class FileStorageOptions
 
     [Required]
     [MinLength(1)]
-    public string[] AllowedContentTypes { get; set; } = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    public string[] AllowedContentTypes { get; set; } = ["image/jpeg", "image/png", "image/webp"];
+
+    [Range(1, 16384)]
+    public int MaxDimensionPixels { get; set; } = 4096;
+
+    [Range(1, 100_000_000)]
+    public long MaxTotalPixels { get; set; } = 16_777_216;
 
     public string NormalizedPublicBasePath => "/" + PublicBasePath.Trim('/');
 

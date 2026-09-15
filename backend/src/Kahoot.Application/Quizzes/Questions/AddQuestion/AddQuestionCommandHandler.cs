@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
+using Kahoot.Application.Common.Storage;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Application.Quizzes.Questions.Common;
 using Kahoot.Domain.Common;
@@ -12,7 +13,8 @@ namespace Kahoot.Application.Quizzes.Questions.AddQuestion;
 internal sealed class AddQuestionCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
-    IDbExceptionInterpreter dbExceptionInterpreter) : ICommandHandler<AddQuestionCommand, Guid>
+    IDbExceptionInterpreter dbExceptionInterpreter,
+    IFileStorage fileStorage) : ICommandHandler<AddQuestionCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(AddQuestionCommand command, CancellationToken cancellationToken)
     {
@@ -25,6 +27,12 @@ internal sealed class AddQuestionCommandHandler(
 
         Quiz quiz = quizResult.Value;
 
+        string? normalizedImageUrl = QuestionMapping.Normalize(command.ImageUrl);
+        if (!string.IsNullOrWhiteSpace(normalizedImageUrl) && !fileStorage.Exists(normalizedImageUrl))
+        {
+            return Result.Failure<Guid>(QuizErrors.InvalidMediaReference);
+        }
+
         int nextOrderIndex = await dbContext.Questions
             .Where(question => question.QuizId == quiz.Id)
             .Select(question => (int?)question.OrderIndex)
@@ -35,7 +43,7 @@ internal sealed class AddQuestionCommandHandler(
             QuizId = quiz.Id,
             OrderIndex = nextOrderIndex,
             Text = command.Text.Trim(),
-            ImageUrl = QuestionMapping.Normalize(command.ImageUrl),
+            ImageUrl = normalizedImageUrl,
             TimeLimitSeconds = command.TimeLimitSeconds,
             Points = command.Points
         };

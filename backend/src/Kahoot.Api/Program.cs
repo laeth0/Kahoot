@@ -229,7 +229,12 @@ app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new PhysicalFileProvider(uploadsRoot),
     RequestPath = fileStorageOptions.NormalizedPublicBasePath,
-    ServeUnknownFileTypes = false
+    ServeUnknownFileTypes = false,
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+        ctx.Context.Response.Headers.XContentTypeOptions = "nosniff";
+    }
 });
 
 app.UseRateLimiter();

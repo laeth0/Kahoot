@@ -298,33 +298,32 @@ Obtain separate explicit approval for credential rotation in live services, revo
 
 **Acceptance:** a normal restarted production container does not retain or need the seed password; bootstrap cannot overwrite an existing host unexpectedly.
 
-## Phase 4 — Bound and secure media handling
+## Phase 4 — Bound and secure media handling (Question Images Only)
 
-### Task 4.1 — Restrict media references and preserve choice images
+### Task 4.1 — Question images only: restrict media references and remove choice images
 
 **Files:** quiz request/response contracts and validators, question mapping/handlers, `ImageUploadService.cs`, `UploadsController.cs`, frontend `media.ts`, `QuestionFormDialog.tsx`, `ChoiceEditorRow.tsx`, `ImageUploadField.tsx`, CSP config, functional docs.
 
-- [ ] Accept only a server-generated media asset identifier or canonical same-origin `/uploads/<opaque-id>.<allowed-extension>` path. Reject absolute external URLs, protocol-relative values, `data:`, `blob:`, traversal, and unrecognized paths at the API boundary.
+- [ ] **Question Images Only**: Images are allowed only for questions, not for answers/choices. Remove image support from answer choices completely across entities, DTOs/contracts, validation rules, API endpoints, database schema/migrations, and frontend question creation/editing UI.
+- [ ] Choice objects contain only text, correctness state, and required metadata. Choice text is required for every choice.
+- [ ] Question objects optionally contain an image. Preserve existing question images during edits.
+- [ ] Accept only a server-generated media asset identifier or canonical same-origin `/uploads/<opaque-id>.<allowed-extension>` path for questions. Reject absolute external URLs, protocol-relative values, `data:`, `blob:`, traversal, and unrecognized paths at the API boundary.
 - [ ] Make frontend resolution enforce the same allowlist; never turn arbitrary quiz content into a third-party request.
-- [ ] Fix question editing so unchanged existing choice images are preserved instead of mapped to `null`.
-- [ ] If choice images remain a requirement, provide the existing upload UX for choices and allow text and/or image according to the resolved contract. If removed from scope by the owner, remove the contract field consistently.
 - [ ] Fix `QuestionFormDialog`’s state updater so it never mutates an existing choice object. Give draft choices stable client IDs and stop using the array index as the React key.
 
-**Acceptance:** external/traversal URLs fail validation; an edit that changes only question text leaves every existing choice image unchanged; add/reorder/delete operations preserve the correct draft state.
+**Acceptance:** choice image support is completely removed; external/traversal URLs fail validation; an edit preserves existing question images; choice text is required; add/reorder/delete operations preserve the correct draft state.
 
-### Task 4.2 — Decode, normalize, store, and retire uploads safely
+### Task 4.2 — Decode, normalize, and store uploads safely (No Storage Cleanup)
 
-**Files:** storage interfaces/options/implementation, image signature/upload service, persistence model if using assets, Docker/production config, deployment docs, new migration/DBML where needed.
+**Files:** storage interfaces/options/implementation, image signature/upload service, Docker/production config, deployment docs, new migration/DBML.
 
-- [ ] Add a maintained image decoder compatible with pinned .NET only if required; review its license and vulnerability status.
+- [ ] Add a maintained image decoder (`SixLabors.ImageSharp`) compatible with pinned .NET; review its license and vulnerability status.
 - [ ] Enforce encoded byte limit, decoded pixel/dimension limit, content signature, and allowed output formats. Strip metadata and normalize/re-encode server-side. Reject unsafe/animated GIFs or deliberately process a safe first frame.
 - [ ] Generate opaque names server-side; never trust path/extension from the client.
 - [ ] Send immutable cache headers only for content-addressed/opaque immutable assets and `nosniff` with an exact content type.
-- [ ] Implement the storage choice recorded with G3. **Recommended:** Azure Blob private container accessed using the VM’s system-assigned managed identity and least-privilege Blob Data RBAC. Proxy controlled reads through the same origin or use a deliberately bounded delivery mechanism.
-- [ ] Track asset ownership/reference status or implement a safe, bounded orphan cleanup after quiz update/delete. Never delete an object still referenced by another row/snapshot.
-- [ ] If local storage is temporarily retained, define disk quota, free-space alerts, off-host backup, restore, and cleanup before release.
+- [ ] **No Storage Cleanup**: Do not implement migration or cleanup logic to remove existing choice images from storage. Existing uploaded files will be cleaned manually by removing deployment volumes during deployment. Do not add orphan cleanup jobs, background deletion processes, or storage migration scripts. Focus only on removing the business logic and references that allow new choice images.
 
-**Acceptance:** oversized dimensions, malformed/polyglot content, forbidden types, and path tricks fail safely; normalized output contains no source metadata; referenced assets survive edits/snapshots; orphan cleanup is bounded and observable.
+**Acceptance:** oversized dimensions, malformed/polyglot content, forbidden types, and path tricks fail safely; normalized output contains no source metadata; no storage cleanup background processes or migration scripts are created.
 
 ## Phase 5 — Make the frontend resilient, accessible, and reproducible
 

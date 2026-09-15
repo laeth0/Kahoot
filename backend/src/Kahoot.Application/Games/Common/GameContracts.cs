@@ -11,9 +11,9 @@ public sealed record JoinGameResponse(
     string Nickname,
     GameStatus Status);
 
-public sealed record PlayerChoiceResponse(Guid Id, int OrderIndex, string? Text, string? ImageUrl);
+public sealed record PlayerChoiceResponse(Guid Id, int OrderIndex, string Text);
 
-public sealed record HostChoiceResponse(Guid Id, int OrderIndex, string? Text, string? ImageUrl, bool IsCorrect);
+public sealed record HostChoiceResponse(Guid Id, int OrderIndex, string Text, bool IsCorrect);
 
 public sealed record PlayerQuestionResponse(
     Guid QuestionId,
@@ -42,7 +42,7 @@ public sealed record QuestionStartedResponse(HostQuestionResponse Host, PlayerQu
 
 public sealed record AnswerAckResponse(bool Accepted, bool AlreadyAnswered);
 
-public sealed record ChoiceResultResponse(Guid ChoiceId, string? Text, int AnswerCount, bool IsCorrect, string? ImageUrl = null);
+public sealed record ChoiceResultResponse(Guid ChoiceId, string Text, int AnswerCount, bool IsCorrect);
 
 public sealed record QuestionResultsResponse(
     Guid QuestionId,

@@ -24,8 +24,7 @@ export interface GameParticipantResponse {
 export interface HostChoiceResponse {
   id: string;
   orderIndex: number;
-  text?: string | null;
-  imageUrl?: string | null;
+  text: string;
   isCorrect: boolean;
 }
 
@@ -44,8 +43,7 @@ export interface HostQuestionResponse {
 
 export interface ChoiceResultResponse {
   choiceId: string;
-  text?: string | null;
-  imageUrl?: string | null;
+  text: string;
   answerCount: number;
   isCorrect: boolean;
 }
@@ -78,8 +76,7 @@ export interface LeaderboardResponse {
 export interface PlayerChoiceResponse {
   id: string;
   orderIndex: number;
-  text?: string | null;
-  imageUrl?: string | null;
+  text: string;
 }
 
 export interface PlayerQuestionResponse {

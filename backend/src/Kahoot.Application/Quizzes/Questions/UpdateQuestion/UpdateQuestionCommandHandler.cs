@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
+using Kahoot.Application.Common.Storage;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Application.Quizzes.Questions.Common;
 using Kahoot.Domain.Common;
@@ -10,8 +11,10 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Quizzes.Questions.UpdateQuestion;
 
-internal sealed class UpdateQuestionCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser)
-    : ICommandHandler<UpdateQuestionCommand>
+internal sealed class UpdateQuestionCommandHandler(
+    IApplicationDbContext dbContext,
+    ICurrentUser currentUser,
+    IFileStorage fileStorage) : ICommandHandler<UpdateQuestionCommand>
 {
     public async Task<Result> Handle(UpdateQuestionCommand command, CancellationToken cancellationToken)
     {
@@ -32,8 +35,16 @@ internal sealed class UpdateQuestionCommandHandler(IApplicationDbContext dbConte
             return Result.Failure(QuizErrors.QuestionNotFound);
         }
 
+        string? normalizedImageUrl = QuestionMapping.Normalize(command.ImageUrl);
+        if (!string.IsNullOrWhiteSpace(normalizedImageUrl) &&
+            !string.Equals(question.ImageUrl, normalizedImageUrl, StringComparison.Ordinal) &&
+            !fileStorage.Exists(normalizedImageUrl))
+        {
+            return Result.Failure(QuizErrors.InvalidMediaReference);
+        }
+
         question.Text = command.Text.Trim();
-        question.ImageUrl = QuestionMapping.Normalize(command.ImageUrl);
+        question.ImageUrl = normalizedImageUrl;
         question.TimeLimitSeconds = command.TimeLimitSeconds;
         question.Points = command.Points;
         quizResult.Value.IsPublished = false;
@@ -59,8 +70,7 @@ internal sealed class UpdateQuestionCommandHandler(IApplicationDbContext dbConte
 
             if (targetChoice is not null)
             {
-                targetChoice.Text = QuestionMapping.Normalize(input.Text);
-                targetChoice.ImageUrl = QuestionMapping.Normalize(input.ImageUrl);
+                targetChoice.Text = QuestionMapping.Normalize(input.Text) ?? string.Empty;
                 targetChoice.IsCorrect = input.IsCorrect;
                 targetChoice.OrderIndex = i;
                 remainingExisting.Remove(targetChoice);
@@ -73,8 +83,7 @@ internal sealed class UpdateQuestionCommandHandler(IApplicationDbContext dbConte
                     Id = input.Id ?? Guid.CreateVersion7(),
                     QuestionId = question.Id,
                     OrderIndex = i,
-                    Text = QuestionMapping.Normalize(input.Text),
-                    ImageUrl = QuestionMapping.Normalize(input.ImageUrl),
+                    Text = QuestionMapping.Normalize(input.Text) ?? string.Empty,
                     IsCorrect = input.IsCorrect
                 };
                 dbContext.Choices.Add(newChoice);

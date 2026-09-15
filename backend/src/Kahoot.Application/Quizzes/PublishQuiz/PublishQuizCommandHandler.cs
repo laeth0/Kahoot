@@ -52,7 +52,7 @@ internal sealed class PublishQuizCommandHandler(IApplicationDbContext dbContext,
             bool validChoiceCount = choiceCount is >= QuestionValidationRules.MinChoices and <= QuestionValidationRules.MaxChoices;
             bool hasAtLeastOneCorrectChoice = question.Choices.Any(choice => choice.IsCorrect);
             bool everyChoiceHasContent = question.Choices.All(choice =>
-                !string.IsNullOrWhiteSpace(choice.Text) || !string.IsNullOrWhiteSpace(choice.ImageUrl));
+                !string.IsNullOrWhiteSpace(choice.Text));
 
             if (!validChoiceCount || !hasAtLeastOneCorrectChoice || !everyChoiceHasContent)
             {
