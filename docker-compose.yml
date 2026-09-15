@@ -12,10 +12,8 @@ services:
       - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
-    cpus: 0.75
-    mem_limit: 1536m
-    mem_reservation: 1024m
-    cpu_shares: 1024
+    mem_limit: 2048m
+    mem_reservation: 512m
     logging:
       driver: json-file
       options:
@@ -47,10 +45,8 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD:?Database password is required}
     volumes:
       - ./observability/postgres/init-monitoring-role.sh:/init-monitoring-role.sh:ro
-    cpus: 0.05
     mem_limit: 64m
     mem_reservation: 32m
-    cpu_shares: 128
     logging:
       driver: json-file
       options:
@@ -88,10 +84,8 @@ services:
       - "${BACKEND_PORT:-5000}:8080"
     volumes:
       - uploads_data:/app/uploads
-    cpus: 0.75
-    mem_limit: 1536m
-    mem_reservation: 1024m
-    cpu_shares: 1024
+    mem_limit: 2048m
+    mem_reservation: 512m
     logging:
       driver: json-file
       options:
@@ -124,10 +118,8 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    cpus: 0.50
-    mem_limit: 512m
+    mem_limit: 1024m
     mem_reservation: 256m
-    cpu_shares: 768
     logging:
       driver: json-file
       options:
@@ -154,10 +146,8 @@ services:
       - certbot_conf:/etc/letsencrypt
       - certbot_www:/var/www/certbot
       - nginx_logs:/var/log/nginx
-    cpus: 0.20
     mem_limit: 256m
-    mem_reservation: 128m
-    cpu_shares: 768
+    mem_reservation: 64m
     logging:
       driver: json-file
       options:

@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Common.Security;
+using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
@@ -14,6 +15,8 @@ internal static class QuizEditGuard
     public static async Task<Result<Quiz>> LoadEditableQuizAsync(
         IApplicationDbContext dbContext,
         ICurrentUser currentUser,
+        IHostPresenceTracker hostPresenceTracker,
+        TimeProvider timeProvider,
         Guid quizId,
         CancellationToken cancellationToken)
     {
@@ -29,8 +32,28 @@ internal static class QuizEditGuard
             return Result.Failure<Quiz>(QuizErrors.NotFound);
         }
 
-        bool inUse = await dbContext.GameSessions
-            .AnyAsync(session => session.QuizId == quiz.Id && session.Status != GameStatus.Finished, cancellationToken);
+        List<GameSession> unfinishedSessions = await dbContext.GameSessions
+            .Where(session => session.QuizId == quiz.Id && session.Status != GameStatus.Finished)
+            .ToListAsync(cancellationToken);
+
+        bool modified = false;
+        foreach (GameSession session in unfinishedSessions)
+        {
+            if (!hostPresenceTracker.IsHostConnectedOrInGracePeriod(session.Id))
+            {
+                session.Status = GameStatus.Finished;
+                session.FinishedAt = timeProvider.GetUtcNow().UtcDateTime;
+                hostPresenceTracker.RemoveGame(session.Id);
+                modified = true;
+            }
+        }
+
+        if (modified)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+        }
+
+        bool inUse = unfinishedSessions.Any(session => session.Status != GameStatus.Finished);
 
         return inUse ? Result.Failure<Quiz>(QuizErrors.InUse) : Result.Success(quiz);
     }

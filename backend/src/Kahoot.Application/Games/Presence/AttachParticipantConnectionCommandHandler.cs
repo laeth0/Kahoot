@@ -18,8 +18,7 @@ internal sealed class AttachParticipantConnectionCommandHandler(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         GameSession? game = await dbContext.GameSessions
-            .FromSqlInterpolated($"SELECT * FROM game_sessions WHERE id = {command.GameId} FOR UPDATE")
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(session => session.Id == command.GameId, cancellationToken);
 
         if (game is null)
         {

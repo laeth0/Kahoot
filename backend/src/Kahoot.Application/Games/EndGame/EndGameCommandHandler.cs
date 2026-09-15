@@ -5,6 +5,7 @@ using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Games.Common;
 using Kahoot.Application.Games.Leaderboard;
+using Kahoot.Application.Games.Presence;
 using Kahoot.Domain.Common;
 using Kahoot.Domain.Games;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +17,8 @@ internal sealed class EndGameCommandHandler(
     ICurrentUser currentUser,
     ILeaderboardService leaderboardService,
     TimeProvider timeProvider,
-    IKahootTelemetry telemetry) : ICommandHandler<EndGameCommand, LeaderboardResponse>
+    IKahootTelemetry telemetry,
+    IHostPresenceTracker hostPresenceTracker) : ICommandHandler<EndGameCommand, LeaderboardResponse>
 {
     public async Task<Result<LeaderboardResponse>> Handle(EndGameCommand command, CancellationToken cancellationToken)
     {
@@ -61,6 +63,7 @@ internal sealed class EndGameCommandHandler(
             Activity.Current?.SetTag("game.source_state", sourceState.ToString());
             Activity.Current?.SetTag("game.resulting_state", game.Status.ToString());
             telemetry.RecordGameEnded();
+            hostPresenceTracker.RemoveGame(game.Id);
         }
         catch (DbUpdateConcurrencyException)
         {

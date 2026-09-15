@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
+using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Application.Quizzes.Questions.Common;
 using Kahoot.Domain.Common;
@@ -10,7 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Quizzes.Questions.ReorderQuestions;
 
-internal sealed class ReorderQuestionsCommandHandler(IApplicationDbContext dbContext, ICurrentUser currentUser)
+internal sealed class ReorderQuestionsCommandHandler(
+    IApplicationDbContext dbContext,
+    ICurrentUser currentUser,
+    IHostPresenceTracker hostPresenceTracker,
+    TimeProvider timeProvider)
     : ICommandHandler<ReorderQuestionsCommand>
 {
     private const int TemporaryOffset = 1_000_000;
@@ -18,7 +23,7 @@ internal sealed class ReorderQuestionsCommandHandler(IApplicationDbContext dbCon
     public async Task<Result> Handle(ReorderQuestionsCommand command, CancellationToken cancellationToken)
     {
         Result<Quiz> quizResult = await QuizEditGuard.LoadEditableQuizAsync(
-            dbContext, currentUser, command.QuizId, cancellationToken);
+            dbContext, currentUser, hostPresenceTracker, timeProvider, command.QuizId, cancellationToken);
         if (quizResult.IsFailure)
         {
             return Result.Failure(quizResult.Error);

@@ -24,9 +24,7 @@ internal sealed class RemoveParticipantCommandHandler(
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         GameSession? game = await dbContext.GameSessions
-            .FromSqlInterpolated(
-                $"SELECT * FROM game_sessions WHERE id = {command.GameId} AND host_id = {hostId} FOR UPDATE")
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(session => session.Id == command.GameId && session.HostId == hostId, cancellationToken);
 
         if (game is null)
         {

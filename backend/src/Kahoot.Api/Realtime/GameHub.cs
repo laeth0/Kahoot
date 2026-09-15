@@ -2,6 +2,7 @@ using Kahoot.Api.Common;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Common.Observability;
 using Kahoot.Application.Games.Common;
+using Kahoot.Application.Games.EndGame;
 using Kahoot.Application.Games.EndQuestion;
 using Kahoot.Application.Games.JoinGame;
 using Kahoot.Application.Games.Presence;
@@ -12,6 +13,8 @@ using Kahoot.Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Kahoot.Api.Realtime;
 
@@ -19,12 +22,17 @@ public sealed class GameHub(
     ISender sender,
     GameNotifier notifier,
     TimeProvider timeProvider,
-    IKahootTelemetry telemetry) : Hub<IGameClient>
+    IKahootTelemetry telemetry,
+    IHostPresenceTracker hostPresenceTracker,
+    IServiceScopeFactory scopeFactory,
+    ILogger<GameHub> logger) : Hub<IGameClient>
 {
     private const string GameIdItem = "gameId";
     private const string ParticipantIdItem = "participantId";
     private const string SessionTokenItem = "sessionToken";
     private const string SubmitWindowItem = "submitWindow";
+    private const string IsHostItem = "isHost";
+    private const string HostGameIdItem = "hostGameId";
 
     private static readonly TimeSpan SubmitWindow = TimeSpan.FromSeconds(3);
     private const int MaxSubmitsPerWindow = 5;
@@ -188,6 +196,11 @@ public sealed class GameHub(
             return RealtimeResponse<bool>.Failure(GameErrors.NotFound);
         }
 
+        Context.Items[IsHostItem] = true;
+        Context.Items[HostGameIdItem] = gameId;
+
+        hostPresenceTracker.HostConnected(gameId, Context.ConnectionId);
+
         await Groups.AddToGroupAsync(Context.ConnectionId, GameGroups.Host(gameId), Context.ConnectionAborted);
 
         return RealtimeResponse<bool>.Ok(true);
@@ -197,6 +210,14 @@ public sealed class GameHub(
     {
         try
         {
+            if (Context.Items[IsHostItem] is true && Context.Items[HostGameIdItem] is Guid hostGameId)
+            {
+                hostPresenceTracker.HostDisconnected(hostGameId, Context.ConnectionId, async id =>
+                {
+                    await AutoEndGameAsync(id);
+                });
+            }
+
             if (Context.Items[ParticipantIdItem] is Guid participantId && Context.Items[GameIdItem] is Guid gameId)
             {
                 Result<ParticipantPresenceMutationResponse?> detachResult = await sender.Send(
@@ -221,6 +242,28 @@ public sealed class GameHub(
         finally
         {
             telemetry.RecordDisconnect(exception is null ? "normal" : "error");
+        }
+    }
+
+    private async Task AutoEndGameAsync(Guid gameId)
+    {
+        try
+        {
+            await using AsyncServiceScope scope = scopeFactory.CreateAsyncScope();
+            ISender scopeSender = scope.ServiceProvider.GetRequiredService<ISender>();
+            IHostPresenceTracker scopeTracker = scope.ServiceProvider.GetRequiredService<IHostPresenceTracker>();
+
+            Result<LeaderboardResponse?> result = await scopeSender.Send(new AutoEndGameCommand(gameId));
+            scopeTracker.RemoveGame(gameId);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                await notifier.GameEndedAsync(gameId, result.Value);
+            }
+        }
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Failed to auto-end game {GameId} after host disconnect", gameId);
         }
     }
 

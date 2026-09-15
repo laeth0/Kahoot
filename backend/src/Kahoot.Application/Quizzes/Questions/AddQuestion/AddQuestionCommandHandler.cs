@@ -2,6 +2,7 @@ using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Security;
 using Kahoot.Application.Common.Storage;
+using Kahoot.Application.Games.Presence;
 using Kahoot.Application.Quizzes.Common;
 using Kahoot.Application.Quizzes.Questions.Common;
 using Kahoot.Domain.Common;
@@ -14,12 +15,14 @@ internal sealed class AddQuestionCommandHandler(
     IApplicationDbContext dbContext,
     ICurrentUser currentUser,
     IDbExceptionInterpreter dbExceptionInterpreter,
-    IFileStorage fileStorage) : ICommandHandler<AddQuestionCommand, Guid>
+    IFileStorage fileStorage,
+    IHostPresenceTracker hostPresenceTracker,
+    TimeProvider timeProvider) : ICommandHandler<AddQuestionCommand, Guid>
 {
     public async Task<Result<Guid>> Handle(AddQuestionCommand command, CancellationToken cancellationToken)
     {
         Result<Quiz> quizResult = await QuizEditGuard.LoadEditableQuizAsync(
-            dbContext, currentUser, command.QuizId, cancellationToken);
+            dbContext, currentUser, hostPresenceTracker, timeProvider, command.QuizId, cancellationToken);
         if (quizResult.IsFailure)
         {
             return Result.Failure<Guid>(quizResult.Error);

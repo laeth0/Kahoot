@@ -22,11 +22,10 @@ internal sealed class JoinGameCommandHandler(
         string pin = command.Pin.Trim();
         string nickname = command.Nickname.Trim();
 
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
         GameSession? game = await dbContext.GameSessions
-            .FromSqlInterpolated($"SELECT * FROM game_sessions WHERE pin = {pin} AND status != 'Finished' FOR UPDATE")
-            .FirstOrDefaultAsync(cancellationToken);
+            .FirstOrDefaultAsync(
+                session => session.Pin == pin && session.Status != GameStatus.Finished,
+                cancellationToken);
 
         if (game is null)
         {
@@ -38,6 +37,13 @@ internal sealed class JoinGameCommandHandler(
             return Result.Failure<JoinGameResponse>(GameErrors.NotJoinable);
         }
 
+        int participantCount = await dbContext.Participants
+            .CountAsync(p => p.GameSessionId == game.Id && !p.IsRemoved, cancellationToken);
+
+        if (participantCount >= 500)
+        {
+            return Result.Failure<JoinGameResponse>(GameErrors.SessionFull);
+        }
 
         string sessionToken = secureTokenGenerator.GenerateToken();
 
@@ -54,7 +60,6 @@ internal sealed class JoinGameCommandHandler(
         try
         {
             await dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
 
             Activity.Current?.SetTag("game.id", game.Id);
             Activity.Current?.SetTag("participant.id", participant.Id);
