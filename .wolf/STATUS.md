@@ -407,9 +407,16 @@ budget_tokens: 1000
 
 ---
 
+- **Production Deployment & Frontend Tmpfs Fix (Completed & Live Verified):**
+  - **Root Cause Analysis:** `kahoot-frontend` was crashing on startup due to `mkdir() "/var/cache/nginx/client_temp" failed (13: Permission denied)`. The image's `USER nginx` lacked write permissions to the root-owned `tmpfs` mounts defined in `docker-compose.prod.yml`. This caused `kahoot-nginx` to fail resolving `frontend` and exit, closing port 80 and causing `ERR_CONNECTION_REFUSED`.
+  - **Resolution:** Removed `USER nginx` from `frontend/Dockerfile` production stage so that the master process starts as root to initialize tmpfs cache directories and drops worker privileges to `nginx`, matching `kahoot-nginx`.
+  - **Verification:** Rebuilt and restarted `frontend` and `nginx`. Verified all 4 containers (`kahoot-db`, `kahoot-backend`, `kahoot-frontend`, `kahoot-nginx`) are healthy and running. Tested live HTTP endpoints: `/health` (200 Healthy), `/login` (200 OK), `/api/auth/login` (200 authenticated, JWT issued), `/hubs/game/negotiate` (200 SignalR ready).
+
+---
+
 ## 🚀 Next phase
 
-- Ready for execution: `docker compose -f docker-compose.prod.yml up -d --build`
+- Application is live and fully operational on `http://20.19.48.78`.
 
 ---
 
@@ -418,3 +425,4 @@ budget_tokens: 1000
 - **Backend:** .NET 10 Clean Architecture, EF Core 10, Npgsql, PostgreSQL 17, MediatR, FluentValidation, SignalR.
 - **Frontend:** React 19 + TypeScript + Vite, Material UI v9, Emotion, React Router DOM 7, Axios, SignalR.
 - **Patterns:** Strictly Light Theme (`#00629B` IEEE Ocean Blue, `#0284C7` Radar Cyan, `#F4F8FC` canvas, `#09131F` text), centralized routing, custom hooks, accessible landmarks, zero comments across `frontend/src` and `backend/src`.
+
