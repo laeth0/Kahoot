@@ -12,7 +12,8 @@ internal static class AuthTokenFactory
         ISecureTokenGenerator secureTokenGenerator,
         ITokenHasher tokenHasher,
         int refreshTokenDays,
-        DateTimeOffset now)
+        DateTimeOffset now,
+        Guid? familyId = null)
     {
         AccessTokenResult accessToken = jwtTokenService.CreateAccessToken(hostId, username);
 
@@ -21,8 +22,10 @@ internal static class AuthTokenFactory
 
         RefreshToken refreshToken = new()
         {
+            FamilyId = familyId ?? Guid.CreateVersion7(),
             HostId = hostId,
             TokenHash = tokenHasher.Hash(rawRefreshToken),
+            CreatedAt = now.UtcDateTime,
             ExpiresAt = refreshTokenExpiresAt.UtcDateTime
         };
 

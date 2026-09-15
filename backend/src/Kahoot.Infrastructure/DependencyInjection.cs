@@ -2,6 +2,7 @@ using Kahoot.Application.Authentication.Common;
 using Kahoot.Application.Common.Abstractions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Storage;
+using Kahoot.Infrastructure.Authentication;
 using Kahoot.Infrastructure.Options;
 using Kahoot.Infrastructure.Persistence;
 using Kahoot.Infrastructure.Startup;
@@ -49,6 +50,7 @@ public static class DependencyInjection
 
         services.AddHostedService<DatabaseMigrationHostedService>();
         services.AddHostedService<DatabaseSeederHostedService>();
+        services.AddHostedService<TokenCleanupHostedService>();
 
         services.Scan(scan => scan
             .FromAssemblies(AssemblyReference.Assembly, Application.AssemblyReference.Assembly)

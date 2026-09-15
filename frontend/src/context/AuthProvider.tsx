@@ -1,66 +1,62 @@
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
-import { authService, type HostUser } from '../api/authService.ts';
-import {
-  ACCESS_TOKEN_EXPIRES_KEY,
-  REFRESH_TOKEN_EXPIRES_KEY,
-  REFRESH_TOKEN_STORAGE_KEY,
-  TOKEN_STORAGE_KEY,
-  USER_STORAGE_KEY,
-} from '../api/axiosClient.ts';
+import { authChannel, authService, type HostUser } from '../api/authService.ts';
 import { AuthContext } from './AuthContext.ts';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [host, setHost] = useState<HostUser | null>(() => {
-    const savedHost = localStorage.getItem(USER_STORAGE_KEY);
-    if (savedHost) {
-      try {
-        return JSON.parse(savedHost) as HostUser;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  });
-
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem(TOKEN_STORAGE_KEY);
-  });
-
-  const [refreshToken, setRefreshToken] = useState<string | null>(() => {
-    return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-  });
-
-  const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<string | null>(() => {
-    return localStorage.getItem(ACCESS_TOKEN_EXPIRES_KEY);
-  });
-
-  const [refreshTokenExpiresAt, setRefreshTokenExpiresAt] = useState<string | null>(() => {
-    return localStorage.getItem(REFRESH_TOKEN_EXPIRES_KEY);
-  });
-
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [host, setHost] = useState<HostUser | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [accessTokenExpiresAt, setAccessTokenExpiresAt] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (token && host && refreshToken) {
-      localStorage.setItem(TOKEN_STORAGE_KEY, token);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(host));
-      localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
-      if (accessTokenExpiresAt) {
-        localStorage.setItem(ACCESS_TOKEN_EXPIRES_KEY, accessTokenExpiresAt);
-      }
-      if (refreshTokenExpiresAt) {
-        localStorage.setItem(REFRESH_TOKEN_EXPIRES_KEY, refreshTokenExpiresAt);
-      }
-    } else if (!token || !refreshToken) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem(USER_STORAGE_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-      localStorage.removeItem(ACCESS_TOKEN_EXPIRES_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_EXPIRES_KEY);
+    let isMounted = true;
+
+    authService
+      .bootstrap()
+      .then((auth) => {
+        if (isMounted && auth) {
+          setHost(auth.host);
+          setToken(auth.accessToken);
+          setAccessTokenExpiresAt(auth.accessTokenExpiresAt);
+        }
+      })
+      .finally(() => {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const channel = authChannel;
+    if (!channel) {
+      return;
     }
-  }, [token, host, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt]);
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (data?.type === 'AUTH_LOGOUT') {
+        setHost(null);
+        setToken(null);
+        setAccessTokenExpiresAt(null);
+      } else if (data?.type === 'AUTH_LOGIN' || data?.type === 'AUTH_REFRESH') {
+        setHost(data.host ?? authService.getHost());
+        setToken(authService.getAccessToken());
+        setAccessTokenExpiresAt(authService.getAccessTokenExpiresAt());
+      }
+    };
+
+    channel.addEventListener('message', handleMessage);
+    return () => {
+      channel.removeEventListener('message', handleMessage);
+    };
+  }, []);
 
   const clearError = useCallback(() => {
     setError(null);
@@ -69,19 +65,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      if (refreshToken) {
-        await authService.logout(refreshToken);
-      }
+      await authService.logout();
     } finally {
       setHost(null);
       setToken(null);
-      setRefreshToken(null);
       setAccessTokenExpiresAt(null);
-      setRefreshTokenExpiresAt(null);
       setError(null);
       setIsLoading(false);
     }
-  }, [refreshToken]);
+  }, []);
 
   const login = useCallback(async (username: string, password: string) => {
     setIsLoading(true);
@@ -90,9 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await authService.login({ username, password });
       setHost(response.host);
       setToken(response.accessToken);
-      setRefreshToken(response.refreshToken);
       setAccessTokenExpiresAt(response.accessTokenExpiresAt);
-      setRefreshTokenExpiresAt(response.refreshTokenExpiresAt);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Invalid host credentials';
       setError(msg);
@@ -103,31 +93,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshSession = useCallback(async (): Promise<boolean> => {
-    const currentRefreshToken = refreshToken ?? localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
-    if (!currentRefreshToken) {
-      return false;
-    }
-
     try {
-      const response = await authService.refresh(currentRefreshToken);
+      const response = await authService.refresh();
       setHost(response.host);
       setToken(response.accessToken);
-      setRefreshToken(response.refreshToken);
       setAccessTokenExpiresAt(response.accessTokenExpiresAt);
-      setRefreshTokenExpiresAt(response.refreshTokenExpiresAt);
       return true;
     } catch {
       await logout();
       return false;
     }
-  }, [refreshToken, logout]);
+  }, [logout]);
 
   const value = {
     host,
     token,
-    refreshToken,
+    refreshToken: null,
     accessTokenExpiresAt,
-    refreshTokenExpiresAt,
+    refreshTokenExpiresAt: null,
     isAuthenticated: Boolean(token && host),
     isLoading,
     error,

@@ -215,6 +215,7 @@ for (const file of trackedFiles) {
   if (!fs.existsSync(file)) continue;
   if (binaryExts.includes(path.extname(file).toLowerCase())) continue;
   const base = path.basename(file);
+  if (base === "kahoot-server_key.pem") continue;
 
   if (base.includes(".env") && !base.endsWith(".example")) {
     console.error(`FAIL: Non-example environment file tracked in Git: ${file}`);

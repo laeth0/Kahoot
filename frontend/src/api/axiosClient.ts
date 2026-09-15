@@ -20,6 +20,17 @@ export class ApiError extends Error {
   }
 }
 
+let tokenGetter: (() => string | null) | null = null;
+let refreshHandler: (() => Promise<string | null>) | null = null;
+
+export function configureAuthInterceptor(
+  getToken: () => string | null,
+  refreshToken: () => Promise<string | null>,
+): void {
+  tokenGetter = getToken;
+  refreshHandler = refreshToken;
+}
+
 export const axiosClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -30,7 +41,7 @@ export const axiosClient = axios.create({
 
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+    const token = tokenGetter?.();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -51,27 +62,106 @@ interface ProblemDetails {
   code?: string;
 }
 
+let isRefreshing = false;
+let pendingRequestsQueue: Array<{
+  resolve: (token: string) => void;
+  reject: (error: unknown) => void;
+}> = [];
+
+function processPendingQueue(error: unknown, token: string | null = null): void {
+  pendingRequestsQueue.forEach((item) => {
+    if (token) {
+      item.resolve(token);
+    } else {
+      item.reject(error);
+    }
+  });
+  pendingRequestsQueue = [];
+}
+
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ProblemDetails>) => {
+  async (error: AxiosError<ProblemDetails>) => {
     const status = error.response?.status;
     const data = error.response?.data;
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
 
-    if (status === 401) {
-      localStorage.removeItem(TOKEN_STORAGE_KEY);
-      localStorage.removeItem(USER_STORAGE_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
-      localStorage.removeItem(ACCESS_TOKEN_EXPIRES_KEY);
-      localStorage.removeItem(REFRESH_TOKEN_EXPIRES_KEY);
+    if (status === 401 && originalRequest) {
+      const requestUrl = originalRequest.url ?? '';
+      const isAuthEndpoint =
+        requestUrl.includes('/auth/login') ||
+        requestUrl.includes('/auth/refresh') ||
+        requestUrl.includes('/auth/logout');
 
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        sessionStorage.setItem('kahoot_session_expired', 'true');
-        const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
-        window.location.assign(`/login?returnUrl=${returnUrl}`);
+      if (isAuthEndpoint || originalRequest._retry) {
+        if (
+          !isAuthEndpoint &&
+          typeof window !== 'undefined' &&
+          window.location.pathname !== '/login'
+        ) {
+          sessionStorage.setItem('kahoot_session_expired', 'true');
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.assign(`/login?returnUrl=${returnUrl}`);
+        }
+        return Promise.reject(
+          new ApiError(
+            data?.detail ?? data?.message ?? 'Your session has expired. Please sign in again.',
+            data?.code ?? 'Auth.Unauthorized',
+            401,
+          ),
+        );
       }
-      return Promise.reject(
-        new ApiError('Your session has expired. Please sign in again.', 'Auth.Unauthorized', 401),
-      );
+
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          pendingRequestsQueue.push({ resolve, reject });
+        })
+          .then((newToken) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+            }
+            return axiosClient(originalRequest);
+          })
+          .catch((queuedErr) => Promise.reject(queuedErr));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      if (!refreshHandler) {
+        isRefreshing = false;
+        return Promise.reject(
+          new ApiError('Your session has expired. Please sign in again.', 'Auth.Unauthorized', 401),
+        );
+      }
+
+      try {
+        const newToken = await refreshHandler();
+        if (!newToken) {
+          throw new Error('Session refresh failed');
+        }
+
+        processPendingQueue(null, newToken);
+
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        }
+        return await axiosClient(originalRequest);
+      } catch (refreshErr) {
+        processPendingQueue(refreshErr, null);
+        if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+          sessionStorage.setItem('kahoot_session_expired', 'true');
+          const returnUrl = encodeURIComponent(window.location.pathname + window.location.search);
+          window.location.assign(`/login?returnUrl=${returnUrl}`);
+        }
+        return Promise.reject(
+          new ApiError('Your session has expired. Please sign in again.', 'Auth.Unauthorized', 401),
+        );
+      } finally {
+        isRefreshing = false;
+      }
     }
 
     if (status === 403) {
@@ -115,7 +205,7 @@ axiosClient.interceptors.response.use(
     if (status === 429) {
       return Promise.reject(
         new ApiError(
-          'Too many requests. Please wait a moment before trying again.',
+          data?.detail ?? 'Too many requests. Please wait a moment before trying again.',
           data?.code ?? 'Http.RateLimited',
           429,
         ),
@@ -138,10 +228,8 @@ axiosClient.interceptors.response.use(
       data?.message ??
       data?.error ??
       error.message ??
-      'An unexpected network error occurred';
+      'An unexpected error occurred. Please try again.';
 
     return Promise.reject(new ApiError(message, data?.code, status));
   },
 );
-
-export default axiosClient;

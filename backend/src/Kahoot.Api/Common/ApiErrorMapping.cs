@@ -1,4 +1,5 @@
 using System.Collections.Frozen;
+using Kahoot.Application.Authentication.Common;
 using Kahoot.Application.Common.Errors;
 using Kahoot.Application.Games.Common;
 using Kahoot.Application.Quizzes.Common;
@@ -18,6 +19,7 @@ internal static class ApiErrorMapping
 
     private static readonly FrozenSet<string> ConflictCodes = new[]
     {
+        AuthenticationErrors.RefreshRace.Code,
         GameErrors.InvalidStateTransition.Code,
         GameErrors.ConcurrentModification.Code,
         GameErrors.NicknameTaken.Code,
@@ -42,6 +44,11 @@ internal static class ApiErrorMapping
             return StatusCodes.Status403Forbidden;
         }
 
+        if (ConflictCodes.Contains(error.Code))
+        {
+            return StatusCodes.Status409Conflict;
+        }
+
         if (error.Code.StartsWith(AuthCodePrefix, StringComparison.Ordinal))
         {
             return StatusCodes.Status401Unauthorized;
@@ -50,11 +57,6 @@ internal static class ApiErrorMapping
         if (error.Code.EndsWith(NotFoundCodeSuffix, StringComparison.Ordinal) || NotFoundCodes.Contains(error.Code))
         {
             return StatusCodes.Status404NotFound;
-        }
-
-        if (ConflictCodes.Contains(error.Code))
-        {
-            return StatusCodes.Status409Conflict;
         }
 
         return StatusCodes.Status400BadRequest;

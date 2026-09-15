@@ -5,10 +5,10 @@ import { useAuth } from './useAuth.ts';
 const REFRESH_MARGIN_MS = 60 * 1000;
 const MIN_TIMEOUT_MS = 5 * 1000;
 export function useTokenRefresh() {
-  const { isAuthenticated, accessTokenExpiresAt, refreshToken, refreshSession } = useAuth();
+  const { isAuthenticated, accessTokenExpiresAt, refreshSession } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated || !refreshToken || !accessTokenExpiresAt) {
+    if (!isAuthenticated || !accessTokenExpiresAt) {
       return;
     }
 
@@ -53,7 +53,7 @@ export function useTokenRefresh() {
       if (timerId) clearTimeout(timerId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [isAuthenticated, accessTokenExpiresAt, refreshToken, refreshSession]);
+  }, [isAuthenticated, accessTokenExpiresAt, refreshSession]);
 }
 
 export default useTokenRefresh;

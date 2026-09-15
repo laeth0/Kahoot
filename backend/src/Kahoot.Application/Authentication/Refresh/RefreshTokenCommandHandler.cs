@@ -16,6 +16,8 @@ internal sealed class RefreshTokenCommandHandler(
     IOptions<JwtOptions> jwtOptions,
     TimeProvider timeProvider) : ICommandHandler<RefreshTokenCommand, AuthenticationResponse>
 {
+    private static readonly TimeSpan GraceWindow = TimeSpan.FromSeconds(10);
+
     public async Task<Result<AuthenticationResponse>> Handle(
         RefreshTokenCommand command,
         CancellationToken cancellationToken)
@@ -29,6 +31,7 @@ internal sealed class RefreshTokenCommandHandler(
             .Select(token => new
             {
                 token.Id,
+                token.FamilyId,
                 token.HostId,
                 token.ExpiresAt,
                 token.RevokedAt,
@@ -43,7 +46,12 @@ internal sealed class RefreshTokenCommandHandler(
 
         if (stored.RevokedAt is not null)
         {
-            await RevokeChainAsync(stored.HostId, now, cancellationToken);
+            if (now.UtcDateTime - stored.RevokedAt.Value <= GraceWindow)
+            {
+                return Result.Failure<AuthenticationResponse>(AuthenticationErrors.RefreshRace);
+            }
+
+            await RevokeFamilyAsync(stored.FamilyId, now, cancellationToken);
             return Result.Failure<AuthenticationResponse>(AuthenticationErrors.RefreshTokenReuseDetected);
         }
 
@@ -65,10 +73,8 @@ internal sealed class RefreshTokenCommandHandler(
             secureTokenGenerator,
             tokenHasher,
             jwtOptions.Value.RefreshTokenDays,
-            now);
-
-        dbContext.RefreshTokens.Add(rotated);
-        await dbContext.SaveChangesAsync(cancellationToken);
+            now,
+            stored.FamilyId);
 
         int rotatedRows = await dbContext.RefreshTokens
             .Where(token => token.Id == stored.Id && token.RevokedAt == null)
@@ -80,21 +86,18 @@ internal sealed class RefreshTokenCommandHandler(
 
         if (rotatedRows == 0)
         {
-            await dbContext.RefreshTokens
-                .Where(token => token.Id == rotated.Id)
-                .ExecuteUpdateAsync(
-                    setters => setters.SetProperty(token => token.RevokedAt, now.UtcDateTime),
-                    cancellationToken);
-
-            return Result.Failure<AuthenticationResponse>(AuthenticationErrors.InvalidRefreshToken);
+            return Result.Failure<AuthenticationResponse>(AuthenticationErrors.RefreshRace);
         }
+
+        dbContext.RefreshTokens.Add(rotated);
+        await dbContext.SaveChangesAsync(cancellationToken);
 
         return Result.Success(response);
     }
 
-    private Task RevokeChainAsync(Guid hostId, DateTimeOffset now, CancellationToken cancellationToken) =>
+    private Task RevokeFamilyAsync(Guid familyId, DateTimeOffset now, CancellationToken cancellationToken) =>
         dbContext.RefreshTokens
-            .Where(token => token.HostId == hostId && token.RevokedAt == null)
+            .Where(token => token.FamilyId == familyId && token.RevokedAt == null)
             .ExecuteUpdateAsync(
                 setters => setters.SetProperty(token => token.RevokedAt, now.UtcDateTime),
                 cancellationToken);

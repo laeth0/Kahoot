@@ -12,4 +12,7 @@ public static class AuthenticationErrors
 
     public static readonly Error RefreshTokenReuseDetected =
         new("Auth.RefreshTokenReuse", "The refresh token has already been used; the session has been revoked.");
+
+    public static readonly Error RefreshRace =
+        new("Auth.RefreshRace", "A concurrent token refresh was completed. Please retry with the updated token.");
 }

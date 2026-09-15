@@ -108,7 +108,7 @@ export function usePlayerGame(gameId: string | undefined) {
       leaderboard: data.leaderboard ?? null,
     }));
     setHydrateError(null);
-    setSelectedChoiceId(null);
+    setSelectedChoiceIds([]);
     setAnswerState(
       status === 'QuestionActive' && data.alreadyAnsweredCurrentQuestion
         ? 'alreadyAnswered'

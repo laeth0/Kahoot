@@ -85,7 +85,7 @@ public static class ObservabilityExtensions
                     .AddAspNetCoreInstrumentation(instrumentation =>
                     {
                         instrumentation.RecordException = true;
-                        instrumentation.Filter = context => context.Request.Path != "/health";
+                        instrumentation.Filter = context => !context.Request.Path.StartsWithSegments("/health");
                     })
                     .AddNpgsql();
 

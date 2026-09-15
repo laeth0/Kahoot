@@ -4,6 +4,8 @@ public sealed class HostSeedOptions
 {
     public const string SectionName = "Seeding:Host";
 
+    public bool Enabled { get; set; }
+
     public string? Username { get; set; }
 
     public string? Password { get; set; }

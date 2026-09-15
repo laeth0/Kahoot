@@ -1,6 +1,9 @@
+using System.Net;
 using System.Text;
+using System.Text.Json;
 using Kahoot.Api.Common;
 using Kahoot.Api.Endpoints;
+using Kahoot.Api.Health;
 using Kahoot.Api.Observability;
 using Kahoot.Api.Realtime;
 using Kahoot.Application;
@@ -12,8 +15,10 @@ using Kahoot.Application.Common.Storage;
 using Kahoot.Infrastructure;
 using Kahoot.Infrastructure.Observability;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -29,6 +34,8 @@ if (!string.IsNullOrEmpty(port))
     builder.WebHost.UseUrls($"http://+:{port}");
 }
 
+ConfigurationValidator.Validate(builder.Configuration, builder.Environment);
+
 builder.Host.UseDefaultServiceProvider((_, options) =>
 {
     options.ValidateScopes = true;
@@ -38,8 +45,14 @@ builder.Host.UseDefaultServiceProvider((_, options) =>
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.ForwardLimit = 1;
     options.KnownIPNetworks.Clear();
     options.KnownProxies.Clear();
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("127.0.0.1"), 32));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("::1"), 128));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("10.0.0.0"), 8));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("172.16.0.0"), 12));
+    options.KnownIPNetworks.Add(new System.Net.IPNetwork(IPAddress.Parse("192.168.0.0"), 16));
 });
 
 builder.Services.AddControllers();
@@ -53,7 +66,10 @@ builder.Services.AddSignalR(options =>
     options.HandshakeTimeout = TimeSpan.FromSeconds(15);
 });
 builder.Services.AddSingleton<GameNotifier>();
-builder.Services.AddHealthChecks();
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), ["live"])
+    .AddCheck<DatabaseHealthCheck>("database", tags: ["ready"])
+    .AddCheck<FileStorageHealthCheck>("filestorage", tags: ["ready"]);
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 builder.Services.AddScoped<IJoinUrlGenerator, JoinUrlGenerator>();
@@ -173,6 +189,38 @@ app.Use(async (context, next) =>
     await next();
 });
 
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/api/auth") &&
+        context.Request.HasJsonContentType() &&
+        context.Request.ContentLength is > 0 and < 4096)
+    {
+        context.Request.EnableBuffering();
+        using var reader = new StreamReader(context.Request.Body, Encoding.UTF8, leaveOpen: true);
+        string body = await reader.ReadToEndAsync();
+        context.Request.Body.Position = 0;
+        if (!string.IsNullOrEmpty(body))
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(body);
+                if (doc.RootElement.TryGetProperty("username", out var userProp))
+                {
+                    string? user = userProp.GetString();
+                    if (!string.IsNullOrWhiteSpace(user))
+                    {
+                        context.Items["AuthUsername"] = user;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+    }
+    await next();
+});
+
 var uploadsRoot = app.Services.GetRequiredService<IOptions<FileStorageOptions>>().Value
     .ResolveRootPath(app.Environment.ContentRootPath);
 Directory.CreateDirectory(uploadsRoot);
@@ -192,6 +240,20 @@ app.UseAuthorization();
 app.MapHomePage();
 app.MapControllers();
 app.MapHub<GameHub>(gameHubPath);
-app.MapHealthChecks("/health").DisableRateLimiting();
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live")
+}).DisableRateLimiting();
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+}).DisableRateLimiting();
+
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => true
+}).DisableRateLimiting();
 
 app.Run();

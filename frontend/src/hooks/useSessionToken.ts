@@ -32,8 +32,15 @@ function isValidSession(value: unknown): value is PlayerSession {
 
 export function getSession(gameId: string): PlayerSession | null {
   try {
-    const raw =
-      localStorage.getItem(storageKey(gameId)) ?? sessionStorage.getItem(storageKey(gameId));
+    const key = storageKey(gameId);
+    let raw = sessionStorage.getItem(key);
+    if (!raw) {
+      raw = localStorage.getItem(key);
+      if (raw) {
+        sessionStorage.setItem(key, raw);
+        localStorage.removeItem(key);
+      }
+    }
     if (!raw) {
       return null;
     }
@@ -50,13 +57,22 @@ export function getSessionByPin(pin: string): PlayerSession | null {
     if (!normalized) {
       return null;
     }
-    const gameId = localStorage.getItem(pinKey(normalized));
+    const key = pinKey(normalized);
+    let gameId = sessionStorage.getItem(key);
+    if (!gameId) {
+      gameId = localStorage.getItem(key);
+      if (gameId) {
+        sessionStorage.setItem(key, gameId);
+        localStorage.removeItem(key);
+      }
+    }
     if (!gameId) {
       return null;
     }
     const session = getSession(gameId);
     if (!session) {
-      localStorage.removeItem(pinKey(normalized));
+      sessionStorage.removeItem(key);
+      localStorage.removeItem(key);
       return null;
     }
     return session;
@@ -67,12 +83,20 @@ export function getSessionByPin(pin: string): PlayerSession | null {
 
 export function getLatestSession(): PlayerSession | null {
   try {
-    const gameId = localStorage.getItem(latestSessionKey);
+    let gameId = sessionStorage.getItem(latestSessionKey);
+    if (!gameId) {
+      gameId = localStorage.getItem(latestSessionKey);
+      if (gameId) {
+        sessionStorage.setItem(latestSessionKey, gameId);
+        localStorage.removeItem(latestSessionKey);
+      }
+    }
     if (!gameId) {
       return null;
     }
     const session = getSession(gameId);
     if (!session) {
+      sessionStorage.removeItem(latestSessionKey);
       localStorage.removeItem(latestSessionKey);
       return null;
     }
@@ -85,11 +109,15 @@ export function getLatestSession(): PlayerSession | null {
 export function saveSession(gameId: string, data: PlayerSession): boolean {
   try {
     const serialized = JSON.stringify(data);
-    localStorage.setItem(storageKey(gameId), serialized);
     sessionStorage.setItem(storageKey(gameId), serialized);
-    localStorage.setItem(latestSessionKey, gameId);
+    sessionStorage.setItem(latestSessionKey, gameId);
     if (data.pin) {
-      localStorage.setItem(pinKey(data.pin), gameId);
+      sessionStorage.setItem(pinKey(data.pin), gameId);
+    }
+    localStorage.removeItem(storageKey(gameId));
+    localStorage.removeItem(latestSessionKey);
+    if (data.pin) {
+      localStorage.removeItem(pinKey(data.pin));
     }
     return true;
   } catch {
@@ -100,12 +128,12 @@ export function saveSession(gameId: string, data: PlayerSession): boolean {
 export function clearSession(gameId: string): boolean {
   try {
     const existing = getSession(gameId);
-    localStorage.removeItem(storageKey(gameId));
     sessionStorage.removeItem(storageKey(gameId));
-    if (localStorage.getItem(latestSessionKey) === gameId) {
-      localStorage.removeItem(latestSessionKey);
-    }
+    sessionStorage.removeItem(latestSessionKey);
+    localStorage.removeItem(storageKey(gameId));
+    localStorage.removeItem(latestSessionKey);
     if (existing?.pin) {
+      sessionStorage.removeItem(pinKey(existing.pin));
       localStorage.removeItem(pinKey(existing.pin));
     }
     return true;

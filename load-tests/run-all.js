@@ -209,16 +209,28 @@ async function makeTokenProvider() {
     username: process.env.HOST_USERNAME || 'IEEEXtreme Section',
     password: process.env.HOST_PASSWORD || 'IEEEXtreme@123456789',
   };
-  let authState = null; // { access, refresh, issuedAt, hostId }
+  let authState = null;
+  let cookieHeader = null;
 
   async function post(requestPath, requestBody) {
+    const headers = {
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+    if (cookieHeader) {
+      headers['Cookie'] = cookieHeader;
+    }
     const response = await fetch(`${base}${requestPath}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
+    const setCookie = typeof response.headers.getSetCookie === 'function'
+      ? response.headers.getSetCookie()
+      : [response.headers.get('set-cookie')].filter(Boolean);
+    if (setCookie && setCookie.length > 0) {
+      cookieHeader = setCookie.map((c) => c.split(';')[0]).join('; ');
+    }
     return { status: response.status, body: response.status === 204 ? {} : await response.json().catch(() => ({})) };
   }
 
@@ -230,16 +242,14 @@ async function makeTokenProvider() {
         if (loginResponse.status !== 200) throw new Error(`login ${loginResponse.status}`);
         authState = {
           access: loginResponse.body.accessToken,
-          refresh: loginResponse.body.refreshToken,
           issuedAt: Date.now(),
           hostId: loginResponse.body.hostId,
         };
       } else if (tokenAgeMilliseconds > 11 * 60 * 1000) {
-        const refreshResponse = await post('/auth/refresh', { refreshToken: authState.refresh });
+        const refreshResponse = await post('/auth/refresh', {});
         if (refreshResponse.status !== 200) throw new Error(`refresh ${refreshResponse.status}`);
         authState = {
           access: refreshResponse.body.accessToken,
-          refresh: refreshResponse.body.refreshToken,
           issuedAt: Date.now(),
           hostId: authState.hostId,
         };
