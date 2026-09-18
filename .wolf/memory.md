@@ -680,3 +680,11 @@ description: chronological action log per session, consolidated weekly
 | Time | Action | File(s) | Outcome | ~Tokens |
 |------|--------|---------|---------|--------|
 | 00:05 | Removed legacy requirement documents and split all non-functional requirements into focused files | docs/functional-requirements/, docs/non-functional-requirements/, load-tests/ | retained all NFR-1 through NFR-12 coverage; focused capacity and SignalR targets; links, identifiers, and scoped whitespace validated | ~14k |
+
+## Session: 2026-09-18
+
+| Time | Action | File(s) | Outcome | ~Tokens |
+|------|--------|---------|---------|--------|
+| 16:30 | Updated prompts/prompt.md to enforce strict folder organization in docs/ (functional-requirements/ and non-functional-requirements/) | prompts/prompt.md | success; prompt updated across multiple sections and constraints | ~5k |
+| 16:33 | Updated prompts/prompt.md to mandate complete removal of observability, Grafana, Prometheus, Jaeger, and Loki (including deleting docs/observability/ and banning observability additions) | prompts/prompt.md | success; all sections and constraints updated | ~4k |
+| 16:35 | Updated prompts/prompt.md to mandate exhaustive edge case analysis, negative/failure scenarios, concrete test cases, and full functional requirement coverage | prompts/prompt.md | success; added coverage, edge case, and test case directives across all relevant sections | ~4k |

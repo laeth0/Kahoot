@@ -8,6 +8,11 @@ This task is about **requirements and architecture documentation only**.
 
 The final requirements must be suitable for a large-scale SaaS platform that may eventually serve a **large number of tenants, registered users, games, participants, concurrent realtime connections, and requests**.
 
+The resulting documentation in the `docs/` folder must strictly follow this organizational order:
+* In the `docs/` folder, place all functional requirement files inside a dedicated folder for functional requirements (`docs/functional-requirements/`).
+* In the `docs/` folder, place all non-functional requirement files inside a dedicated folder for non-functional requirements (`docs/non-functional-requirements/`).
+* Do not put functional or non-functional requirement files directly in the root of `docs/`.
+
 ---
 
 # 1. Primary Objective
@@ -75,13 +80,22 @@ docs/
 │   ├── realtime-performance.md
 │   └── security-and-privacy.md
 │
-├── observability/
+├── observability/                     <-- DELETE COMPLETELY (remove all files inside)
 │
 ├── azure-vm-deployment.md
 ├── host-bootstrap-and-auth.md
 ├── media-handling.md
 └── realtime-protocol.md
 ```
+
+### Target Structure and Order in `docs/`
+
+The resulting output in the `docs/` directory must strictly follow this order and structure:
+* **Dedicated Functional Requirements Folder**: In `docs/`, maintain a dedicated folder for functional requirements (`docs/functional-requirements/`) and put all functional requirement files inside it.
+* **Dedicated Non-Functional Requirements Folder**: In `docs/`, maintain a dedicated folder for non-functional requirements (`docs/non-functional-requirements/`) and put all non-functional requirement files inside it.
+* Every single functional requirement file must reside inside `docs/functional-requirements/`.
+* Every single non-functional requirement file must reside inside `docs/non-functional-requirements/`.
+* Never place functional or non-functional requirement files directly in the root of `docs/`.
 
 Do **not** assume this list is exhaustive.
 
@@ -115,8 +129,11 @@ Search the repository for other documents related to:
 * Grafana
 * Loki
 * Prometheus
+* Jaeger
+* OpenTelemetry
 * observability
 * monitoring
+* tracing
 
 Read the relevant documents carefully before proposing or making changes.
 
@@ -142,8 +159,21 @@ For every functional and non-functional requirement, ask:
 12. Does it affect scalability or capacity?
 13. Does it conflict with another requirement?
 14. Is it implementation-specific when it should instead describe a required system guarantee?
+15. What are the edge cases and boundary limits (e.g. 0 choices, max choices, 0 players in lobby, 500th player joining, 501st player rejected, countdown timer expiration at 0ms, empty or max-length inputs)?
+16. What are the negative scenarios, failure modes, and error paths (e.g. invalid tokens, expired sessions, forbidden cross-tenant requests, duplicate joins, duplicate answers, actions attempted during the wrong game status)?
+17. What race conditions or concurrency edge cases can occur (e.g. player joining simultaneously with game start, answers submitted concurrently at question close, host disconnecting mid-game)?
+18. What are the concrete test cases and verifiable acceptance criteria that prove this functional requirement is satisfied?
 
 The result must be internally consistent and testable.
+
+## Comprehensive Coverage: Edge Cases, Test Cases, and Failure Scenarios
+
+Do not leave any functional requirement underspecified. You must systematically think through:
+* **All Happy Path Scenarios**: Expected normal end-to-end operation.
+* **All Edge Cases & Boundary Limits**: Extremes, limits, and zero states (e.g., minimum and maximum player counts, character lengths, timeouts, empty lists, rapid successive actions).
+* **All Negative & Failure Cases**: Unauthorized actions, invalid credentials, malformed data, and forbidden cross-tenant attempts, explicitly defining the error behavior and status codes.
+* **All Concurrency & Race Cases**: High-velocity bursts, concurrent join/start operations, answer submissions during state transition, sudden host disconnects.
+* **Clear Test Cases & Acceptance Criteria**: Every functional requirement must define concrete, testable criteria so that automated or manual test suites can verify complete coverage.
 
 ---
 
@@ -804,36 +834,37 @@ Do not unnecessarily paginate small bounded game payloads when existing gameplay
 
 ---
 
-# 26. Observability — Remove It
+# 26. Observability — Complete Removal (Grafana, Prometheus, Jaeger, Loki)
 
-This is a critical instruction.
+This is an absolute, non-negotiable instruction:
 
-**I do NOT want an observability platform in this project.**
+**Observability will NOT be added to this project. Claude Code must completely remove everything related to observability, Grafana, Prometheus, Jaeger, and Loki.**
 
-Do not introduce or preserve dependencies on:
+Do not introduce, retain, or preserve any dependencies, requirements, or architecture documentation for:
 
+* Observability platforms, stacks, or solutions of any kind
 * Grafana
-* Loki
 * Prometheus
-* OpenTelemetry dashboards/stacks
-* metrics scraping infrastructure
-* observability dashboards
-* observability agents
-* dedicated monitoring stacks
-* log aggregation stacks
-* observability-specific deployment infrastructure
+* Jaeger
+* Loki
+* OpenTelemetry (collectors, SDKs, instrumentation, exporters, OTLP pipelines)
+* Metrics scraping infrastructure, Prometheus exporters (Node Exporter, cAdvisor, Postgres Exporter, Blackbox Exporter)
+* Observability dashboards or alert definitions
+* Distributed tracing or span tracking infrastructure
+* Centralized log aggregation stacks
+* Observability-specific deployment configurations, containers, or compose services
 
 Review the **entire repository**, especially `docs/`, for these references.
 
-The existing:
+The entire directory:
 
 ```text
 docs/observability/
 ```
 
-is not part of the intended architecture.
+must be **completely deleted** along with all files inside it (`alerts.md`, `architecture.md`, `dashboards.md`, `grafana-security.md`, `setup.md`, `troubleshooting.md`).
 
-Remove obsolete observability documentation when safe to do so.
+All obsolete observability documentation, requirements, tables, and architectural references must be thoroughly purged from the documentation.
 
 ---
 
@@ -845,39 +876,43 @@ Carefully review:
 docs/non-functional-requirements/observability-and-verification.md
 ```
 
-Do not blindly delete valuable requirements.
+You must **completely purge all observability content** from this file and from the project.
 
 Separate:
 
-### Remove
+### Remove Completely
 
-Requirements specifically dependent on:
+Completely remove every single requirement, metric, reference, or definition related to:
 
-* metrics dashboards
+* Observability platforms or platform goals
 * Grafana
-* Loki
 * Prometheus
-* metrics scraping
-* centralized observability platforms
-* observability dashboards/stacks
+* Jaeger
+* Loki
+* OpenTelemetry
+* Metrics dashboards, metric naming, and metric scraping
+* Distributed tracing
+* Log aggregation platforms
+* Centralized observability infrastructure
 
-### Preserve or relocate where useful
+### Preserve or relocate pure verification requirements
 
-Requirements related to:
+Preserve only pure software verification, correctness, and reliability requirements:
 
-* correctness verification
-* load testing
-* performance testing
-* integrity testing
-* automated verification
-* health checks
-* security validation
-* release acceptance criteria
-* deterministic testability
-* structured application logging needed for debugging/security
-* safe error handling
+* Correctness verification
+* Load testing
+* Performance testing
+* Integrity testing
+* Automated verification
+* Application health checks (`/health`, `/health/live`, `/health/ready`)
+* Security validation
+* Release acceptance criteria
+* Deterministic testability
+* Structured application logging needed for local debugging/security
+* Safe error handling
 
-If the file becomes unnecessary after moving useful verification requirements elsewhere, delete it and fix all references.
+**Do NOT keep any file named `observability*` in the requirements.**
+Rename or replace `observability-and-verification.md` (for example, with `verification-and-testing.md` inside `docs/non-functional-requirements/`), and delete `observability-and-verification.md` so that the word "observability" is completely removed from requirement filenames and contents. If these verification requirements are absorbed into other existing non-functional documents, delete the file and update all references.
 
 ---
 
@@ -964,24 +999,24 @@ Implementation details may be included only when they represent an existing arch
 Requirements must be:
 
 * explicit
-* testable
+* testable (with concrete test cases and acceptance criteria)
+* comprehensive (covering all happy paths, edge cases, and failure scenarios)
 * internally consistent
 * security-conscious
 * implementation-aware
 * suitable for later implementation
 * precise about actors and authorization
-* precise about failure behavior
+* precise about failure behavior, error states, and edge conditions
 
-Where useful, include:
+For every functional requirement, explicitly detail:
 
-* actor
-* preconditions
-* action
-* expected behavior
-* authorization
-* invariants
-* failure conditions
-* edge cases
+* **Actor & Preconditions**: Authorized roles and required initial system state.
+* **Action / Trigger**: The command, query, or realtime event invoked.
+* **Happy Path (Expected Behavior)**: The standard outcome and state changes.
+* **Edge Cases & Boundary Limits**: Minimums, maximums, zero counts, boundary timestamps, and limits.
+* **Negative & Failure Cases**: Unauthorized requests, validation failures, cross-tenant violations, with exact error codes/responses.
+* **Concurrency & Race Conditions**: Behavior under simultaneous or overlapping operations.
+* **Verifiable Test Cases / Acceptance Criteria**: Concrete test scenarios to verify 100% coverage of the requirement.
 
 ---
 
@@ -1111,7 +1146,7 @@ Follow these phases in order.
 
 Read all relevant requirements and architecture documentation.
 
-Search the repository for terminology and architecture related to SaaS conversion and observability removal.
+Search the repository for terminology and architecture related to SaaS conversion and the complete removal of observability, Grafana, Prometheus, Jaeger, and Loki.
 
 Understand the current system before changing files.
 
@@ -1149,10 +1184,12 @@ Determine:
 * which database rules need tenant awareness
 * which realtime rules need tenant isolation
 * which performance requirements need SaaS-scale reconsideration
-* which documents contain stale observability assumptions
+* which documents contain observability, Grafana, Prometheus, Jaeger, or Loki references that must be purged
 * which requirements conflict with each other
 * which terminology is inconsistent
 * which architectural decisions are unresolved
+* which functional edge cases, boundary conditions, or failure modes are missing or underspecified
+* which test cases and acceptance criteria are needed to ensure complete functional coverage
 
 ---
 
@@ -1190,19 +1227,19 @@ Modify only what is necessary to:
 * clarify roles
 * enforce tenant isolation
 * improve large-scale readiness
-* remove obsolete observability requirements
+* completely remove everything related to observability, Grafana, Prometheus, Jaeger, and Loki (including deleting the entire `docs/observability/` folder and eliminating any file named `observability*`)
 * eliminate contradictions
 * improve testability
+* ensure comprehensive functional coverage across all happy paths, edge cases, boundary limits, failure scenarios, and test cases
 
-Create new documentation only when it improves organization.
+### Documentation Organization in `docs/`
 
-For example, something such as:
-
-```text
-docs/functional-requirements/tenant-management.md
-```
-
-may make sense if tenant lifecycle requirements would otherwise make another document confusing.
+The result must strictly follow this folder structure in `docs/`:
+* In the `docs/` directory, put all functional requirement files inside the dedicated functional requirements folder (`docs/functional-requirements/`).
+* In the `docs/` directory, put all non-functional requirement files inside the dedicated non-functional requirements folder (`docs/non-functional-requirements/`).
+* Never place functional or non-functional requirement files loosely in the root `docs/` directory or outside their designated folders.
+* Any new functional requirement file (for example, `docs/functional-requirements/tenant-management.md` if tenant lifecycle requirements would otherwise make another document confusing) must be placed inside `docs/functional-requirements/`.
+* Any new or preserved non-functional requirement file must be placed inside `docs/non-functional-requirements/`.
 
 Do not create unnecessary files.
 
@@ -1229,10 +1266,14 @@ Check for:
 * missing edge cases
 * unbounded SaaS operations
 * incorrect scalability assumptions
+* strict folder placement: all functional requirement files reside inside `docs/functional-requirements/` and all non-functional requirement files reside inside `docs/non-functional-requirements/` (no requirement files in `docs/` root)
+* unhandled edge cases, boundary conditions, or unaddressed failure paths
+* incomplete functional coverage across user, host, participant, or admin journeys
+* lack of testability or missing test cases / verification criteria
 
 ---
 
-## Phase 7 — Observability Cleanup Verification
+## Phase 7 — Observability, Grafana, Prometheus, Jaeger, and Loki Removal Verification
 
 Search the repository again for:
 
@@ -1240,18 +1281,19 @@ Search the repository again for:
 Grafana
 Loki
 Prometheus
+Jaeger
+OpenTelemetry
 observability
 metrics scraping
 dashboard
+tracing
 ```
 
 Review every remaining match.
 
-Remove remaining unwanted dependencies and stale references.
+Completely remove all remaining references, requirements, sections, or documentation related to observability, Grafana, Prometheus, Jaeger, and Loki. Confirm that `docs/observability/` has been deleted, that no file in `docs/` retains "observability" in its name, and that no requirement or active architecture document depends on or mentions an observability stack.
 
-Do not remove the word `observability` blindly when it appears in history, comments, or contexts that should instead be intentionally rewritten.
-
-The resulting architecture must **not depend on an observability stack**.
+The resulting architecture must **not contain or depend on any observability stack**.
 
 ---
 
@@ -1274,13 +1316,20 @@ Before finishing, confirm that:
 * Game PIN behavior is clearly defined or flagged for clarification.
 * Large-scale SaaS concerns have been addressed.
 * Existing valid gameplay behavior has been preserved.
-* Observability-platform dependencies have been removed.
+* Everything related to observability, Grafana, Prometheus, Jaeger, and Loki has been completely removed.
+* The `docs/observability/` directory has been deleted entirely.
 * Grafana has been removed.
 * Loki has been removed.
 * Prometheus has been removed.
+* Jaeger has been removed.
+* OpenTelemetry has been removed.
+* Observability will not be added to the project.
 * Health checks and useful verification requirements remain.
 * Documentation links are valid.
 * Requirements are internally consistent.
+* All functional requirements are comprehensively covered with zero missing workflows or scenarios.
+* Edge cases, boundary conditions, and negative/failure paths are explicitly defined.
+* Test cases and verifiable acceptance criteria are documented for each functional requirement.
 
 ---
 
@@ -1302,7 +1351,7 @@ After all approved modifications are complete, provide a concise summary contain
 12. **Realtime multi-tenant changes**
 13. **Large-scale/scalability changes**
 14. **Existing requirements preserved**
-15. **Observability/Grafana/Loki/Prometheus content removed**
+15. **Observability, Grafana, Prometheus, Jaeger, and Loki completely removed (including deletion of `docs/observability/`)**
 16. **Verification requirements preserved or relocated**
 17. **Architectural/product decisions made from my clarification answers**
 18. **Remaining open questions or risks**
@@ -1333,14 +1382,22 @@ You must follow these rules:
 * Do not choose a database multi-tenancy strategy without sufficient context or my approval.
 * Do not introduce microservices without a requirement.
 * Do not introduce Redis, Kafka, Kubernetes, or similar infrastructure merely because this is SaaS.
-* Do not introduce an observability replacement.
-* Do not use Grafana.
-* Do not use Loki.
-* Do not use Prometheus.
-* Remove obsolete observability-stack requirements and references.
+* Completely remove everything related to observability, Grafana, Prometheus, Jaeger, and Loki. Observability will NOT be added to the project under any circumstances.
+* Delete the `docs/observability/` directory and all files within it.
+* Do not introduce, use, or preserve Grafana.
+* Do not introduce, use, or preserve Prometheus.
+* Do not introduce, use, or preserve Jaeger.
+* Do not introduce, use, or preserve Loki.
+* Do not introduce OpenTelemetry or any observability replacement.
+* Remove all obsolete observability-stack requirements, sections, and references.
 * Preserve normal application logging where useful.
 * Preserve health/readiness checks where useful.
 * Preserve testing, correctness, performance, security, and integrity verification.
+* Strict documentation organization in `docs/`: in the `docs/` folder, put a folder for functional requirements (`docs/functional-requirements/`) and put all functional requirement files inside it. Make another folder for non-functional requirements (`docs/non-functional-requirements/`) and put all non-functional requirement files inside it.
+* Do not place functional or non-functional requirement files directly in the root of `docs/` or outside their respective requirement folders.
+* Systematically analyze and document all cases: happy paths, edge cases, boundary limits, negative/failure scenarios, concurrency races, and error recovery for every feature.
+* Provide 100% comprehensive functional coverage: ensure every functional requirement needed by the SaaS platform is thoroughly detailed with no gaps.
+* Define concrete, testable acceptance criteria and test cases for all functional requirements to guarantee verifiable quality.
 * Ask me before making material assumptions.
 * Do not ask me questions that the repository already answers.
 * Modify the actual repository files after the requirements are sufficiently clear.
