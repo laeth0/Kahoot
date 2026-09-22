@@ -1,8 +1,0 @@
-# Test output
-results/*.json
-!results/.gitkeep
-results/*.txt
-results/*.log
-*.log
-
-node_modules/
