@@ -33,6 +33,8 @@ returns the quiz to Draft status.
 
 ## Folder Structure
 
+For an exhaustive architectural guide and component placement rules, see [FOLDER_STRUCTURE.md](file:///c:/Users/laeth/Desktop/kahoot/frontend/FOLDER_STRUCTURE.md).
+
 ```text
 frontend/
 ├── public/                     # Static public assets (favicons, manifest, etc.)
@@ -40,35 +42,25 @@ frontend/
 │   ├── api/                    # Centralized API clients and feature services
 │   ├── assets/                 # Static images, icons, and media files imported in code
 │   ├── components/             # Reusable shared UI components
-│   │   ├── CameraCapture/      # Camera capture interface
-│   │   ├── ExcuseSubmissionDialog/ # Modal for submitting absence/excuse requests
-│   │   ├── Footer/             # Application footer
-│   │   ├── Navbar/             # Main navigation bar with user actions
-│   │   ├── NotificationBell/   # Real-time notification indicator
-│   │   └── NotificationPopover/# Popover menu for unread notifications
 │   ├── constants/              # Immutable enums, system roles, and status constants
 │   ├── context/                # React Context providers for global application state
 │   ├── hooks/                  # Reusable custom React hooks
 │   ├── layouts/                # Structural layout wrappers for nested routing
-│   │   ├── AuthLayout          # Layout for login, register, and onboarding screens
-│   │   ├── DashboardLayout     # Layout for authenticated navigation and content views
-│   │   └── RootLayout          # Top-level shell layout
+│   │   ├── AuthLayout.tsx      # Centered layout for authentication views
+│   │   ├── GameLayout.tsx      # Immersive layout for live quiz gameplay
+│   │   └── RootLayout.tsx      # Top-level application shell layout
 │   ├── pages/                  # Feature-scoped views and page modules
-│   │   ├── LoginPage/          # Host/user authentication view
+│   │   ├── CreateQuizPage/     # Quiz creation view
+│   │   ├── HomePage/           # Application landing page
+│   │   ├── HostDashboard/      # Host quiz management dashboard
+│   │   ├── HostGamePage/       # Live host game control view
+│   │   ├── JoinPage/           # Participant game PIN & nickname entry
+│   │   ├── LoginPage/          # Host authentication view
 │   │   ├── NotFoundPage/       # 404 route fallback
-│   │   ├── PlaceholderPage/    # Under-construction / pending views
-│   │   ├── RegisterPage/       # User registration and onboarding view
-│   │   ├── StudentCourses/     # Course listings and attendance records
-│   │   ├── StudentDashboard/   # Main student overview and metrics
-│   │   ├── StudentProfile/     # Student settings and face enrollment
-│   │   ├── StudentTakeAttendance/ # Multi-step attendance verification
-│   │   ├── StudentWithdrawal/  # Absence excuses and withdrawal management
-│   │   ├── TeacherAttendance/  # Attendance session controls and roster verification
-│   │   ├── TeacherCourses/     # Teacher course management
-│   │   ├── TeacherDashboard/   # Teacher metrics and trend overview
-│   │   ├── TeacherExcuseReview/# Excuse review and approval queue
-│   │   ├── TeacherProfile/     # Teacher account settings
-│   │   └── TeacherStudents/    # Student roster inspection and course enrollment
+│   │   ├── PlayerGamePage/     # Participant live game view
+│   │   ├── QuizEditorPage/     # Quiz question editor view
+│   │   └── QuizLibraryPage/    # Quiz collection view
+│   ├── realtime/               # SignalR hub connection and real-time event definitions
 │   ├── routes/                 # Route configuration and navigation guards
 │   ├── styles/                 # Design tokens, CSS variables, and global resets
 │   ├── theme/                  # Material UI theme setup (palette, typography, overrides)
@@ -76,8 +68,7 @@ frontend/
 │   ├── App.tsx                 # Root application component
 │   ├── index.css               # Global base styles and font declarations
 │   └── main.tsx                # Application entry point mounting to the DOM
-├── .prettierignore             # Files ignored by Prettier
-├── .prettierrc                 # Prettier formatting configuration
+├── .env.example                # Environment variable configuration template
 ├── eslint.config.js            # ESLint flat configuration (plugins, import sorting)
 ├── index.html                  # HTML entry template
 ├── package.json                # Project dependencies and npm scripts
@@ -91,62 +82,46 @@ frontend/
 
 ## Directory Responsibilities
 
-### `src/api/`
+Detailed guidelines, colocation patterns, and code placement rules are available in [FOLDER_STRUCTURE.md](file:///c:/Users/laeth/Desktop/kahoot/frontend/FOLDER_STRUCTURE.md).
 
-Houses all remote communication logic. Contains the configured Axios client instance (`axiosClient.js`) with request/response interceptors (auth token injection, error handling), SignalR connection helpers, and modular domain services (e.g., auth, courses, attendance). Feature components do not call Axios directly; they consume methods from this layer.
+### `src/api/`
+Houses all remote communication logic. Contains the configured Axios client instance (`axiosClient.ts`) with request/response interceptors (auth token injection, refresh-token rotation, centralized problem details extraction) and modular domain services (`authService.ts`, `quizService.ts`, `hostGameService.ts`, etc.). Feature components do not call Axios directly; they consume methods from this layer.
+
+### `src/assets/`
+Contains static media assets (logos, images, illustrations, audio) bundled and optimized by Vite.
 
 ### `src/components/`
-
-Contains reusable presentational and functional UI components used across multiple pages and layouts. Each component directory colocates its component code, styles, and sub-components (e.g., `Navbar/Navbar.tsx`, `Footer/Footer.tsx`).
+Contains reusable presentational and functional UI components used across multiple pages and layouts. Each component directory colocates its component code, sub-components, and exports (e.g., `ConfirmDialog/`, `Navbar/`, `ParticipantGrid/`, `ServerCountdown/`).
 
 ### `src/constants/`
-
-Stores immutable values, system enumerations, and configuration constants (such as role definitions `Admin`, `Teacher`, `Student`, session states, status codes, and query limits).
+Stores immutable values, system enumerations, and configuration constants (such as `GameStatus`, error codes, validation limits).
 
 ### `src/context/`
-
-Contains React Context providers managing application-wide cross-cutting state (e.g., `AuthContext` for user session tokens, `NotificationsContext` for live alerts).
+Contains React Context providers managing application-wide cross-cutting state (`AuthContext.ts`, `AuthProvider.tsx`).
 
 ### `src/hooks/`
-
-Houses shared custom React hooks that encapsulate reusable stateful behavior, such as `useApi` for request lifecycle management, or common query and event hooks.
+Houses shared custom React hooks that encapsulate reusable stateful behavior and timers (`useAuth`, `useHostGame`, `usePlayerGame`, `useServerCountdown`, `useSessionToken`).
 
 ### `src/layouts/`
-
-Provides structural wrapper components used by React Router to compose nested UI layouts:
-
-- `RootLayout`: Wraps the entire application with providers and metadata.
-- `AuthLayout`: Centered layout for unauthenticated flows.
-- `DashboardLayout`: Responsive sidebar/app-bar shell for authenticated features.
+Provides structural wrapper components used by React Router to compose nested UI layouts (`RootLayout.tsx`, `AuthLayout.tsx`, `GameLayout.tsx`).
 
 ### `src/pages/`
+Contains all feature pages organized by domain view. Each page folder encapsulates the main page component and page-scoped subcomponents, hooks, or types.
 
-Contains all feature pages organized by domain view. Each page folder encapsulates:
-
-- The main page component (e.g., `StudentDashboard.tsx`)
-- Page-scoped sub-components (e.g., dialogs, custom cards)
-- Page-scoped custom hooks (e.g., `useStudentDashboard.ts`)
-- Page-specific styling overrides
+### `src/realtime/`
+Encapsulates real-time SignalR connection lifecycle (`gameHub.ts`) and typed hub event contracts (`events.ts`).
 
 ### `src/routes/`
-
-Centralizes all client routing definitions with React Router DOM v7:
-
-- Route declarations and nested hierarchies
-- `ProtectedRoute`: Role-based route guards redirecting unauthorized visitors
-- Role authorization helpers
+Centralizes client routing definitions with React Router DOM v7 (`routes.tsx`), path constants, and route guards (`ProtectedRoute.tsx`).
 
 ### `src/styles/`
-
 Contains global CSS variables, typography tokens, and CSS reset rules (`tokens.css`).
 
 ### `src/theme/`
-
-Contains the custom Material UI theme definition (`theme.js`), configuring the design system's palette, typography hierarchy, shape border-radii, spacing tokens, and custom component style overrides.
+Contains the custom Material UI theme definition (`palette.ts`, `typography.ts`, `components.ts`, `index.ts`), strictly configured for light mode.
 
 ### `src/utils/`
-
-Contains pure utility and helper functions (e.g., date formatters, string parsers, geolocation utilities) that do not hold state or render UI.
+Contains pure utility and helper functions (e.g., clipboard helpers, rank calculation, formatters) that do not hold state or render UI.
 
 ---
 
