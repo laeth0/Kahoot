@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "dotnet-csharp": {
+      "source": "novotnyllc/dotnet-artisan",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-artisan/skills/dotnet-csharp/SKILL.md",
+      "computedHash": "a5c642373eb317b41cc2ce1f415c825e5eb3b7ce4245296b9ce47eacd189d10c"
+    }
+  }
+}
