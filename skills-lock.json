@@ -7,6 +7,12 @@
       "skillPath": "plugins/dotnet-artisan/skills/dotnet-api/SKILL.md",
       "computedHash": "ee462f157e9bf0bf60e86a6f7471a54ee6329fea8cf4b4bd90312fe0204cc4b5"
     },
+    "dotnet-backend-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "skillPath": "plugins/dotnet-contribution/skills/dotnet-backend-patterns/SKILL.md",
+      "computedHash": "624af9f8faea713dadaa51fc2f2040a4b365b4e083b9b9f82d7e9df1f627ea79"
+    },
     "dotnet-csharp": {
       "source": "novotnyllc/dotnet-artisan",
       "sourceType": "github",
