@@ -16,10 +16,6 @@ requires otherwise:
 - Scrutor for convention-based dependency registration.
 - Scalar for interactive OpenAPI documentation.
 
-> **Version policy:** Always use the latest stable ASP.NET Core and .NET release and the
-> latest stable, mutually compatible versions of all required libraries. Do not use
-> preview or release-candidate versions unless the request explicitly requires them.
-
 Inspect the target framework and pinned package versions before changing code. Use APIs
 compatible with those versions, preserve the solution's established conventions, and do
 not replace a required library with an alternative mapping, validation, mediator,

@@ -1,0 +1,6 @@
+@Kahoot_HostAddress = http://localhost:5298
+
+GET {{Kahoot_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
