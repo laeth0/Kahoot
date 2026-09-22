@@ -11,9 +11,9 @@ public class Result
             throw new InvalidOperationException("A successful result cannot carry an error.");
         }
 
-        if (!isSuccess && error == Error.None)
+        if (!isSuccess && error.Type == ErrorType.None)
         {
-            throw new InvalidOperationException("A failing result requires an error.");
+            throw new InvalidOperationException("A failing result requires an error type other than None.");
         }
 
         IsSuccess = isSuccess;
