@@ -62,40 +62,6 @@ registration, persistence, or API-documentation library.
   credentials, secrets, URLs, and ports out of source code and load them through the
   project's ASP.NET Core configuration patterns.
 
-## Dependency Injection and Scrutor
-
-- Use ASP.NET Core's built-in dependency-injection container. Constructor-inject
-  dependencies and do not resolve application services through `IServiceProvider` in
-  controllers or handlers.
-- Use `ITransientService`, `IScopedService`, and `ISingletonService` marker interfaces to
-  declare conventionally registered service lifetimes.
-- Register marker-interface services with Scrutor using this scan in the appropriate
-  `IServiceCollection` extension method:
-
-```csharp
-services.Scan(scan => scan
-    .FromAssemblies(AssemblyReference.Assembly)
-    .AddClasses(classes => classes.AssignableTo<ITransientService>())
-        .AsImplementedInterfaces()
-        .WithTransientLifetime()
-    .AddClasses(classes => classes.AssignableTo<IScopedService>())
-        .AsImplementedInterfaces()
-        .WithScopedLifetime()
-    .AddClasses(classes => classes.AssignableTo<ISingletonService>())
-        .AsImplementedInterfaces()
-        .WithSingletonLifetime());
-```
-
-- Keep `AssemblyReference.Assembly` in the assembly that owns the implementations being
-  scanned. Add another explicit assembly only when its services must participate in the
-  same scan.
-- Do not manually register a service already covered by the Scrutor conventions unless
-  an intentional override, decorator, keyed registration, factory, or instance-specific
-  setup is required.
-- Choose marker interfaces deliberately: EF Core-dependent and request-specific services
-  are scoped; lightweight stateless services may be transient; singleton services must
-  be thread-safe and must not capture scoped dependencies.
-
 ## CQRS and MediatR
 
 - Represent state changes as MediatR commands and data retrieval as MediatR queries.
