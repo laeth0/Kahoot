@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "backend-dev-guidelines": {
+      "source": "sickn33/agentic-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/backend-dev-guidelines/SKILL.md",
+      "computedHash": "074094e8e4c78e2e767095145b099ffd3a595d7e6898e9f3f62943d03b2ec21c"
+    },
     "dotnet-api": {
       "source": "novotnyllc/dotnet-artisan",
       "sourceType": "github",
