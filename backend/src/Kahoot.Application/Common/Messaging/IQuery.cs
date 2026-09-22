@@ -1,4 +1,4 @@
-using Kahoot.Domain.Common;
+using Kahoot.Application.Common.Results;
 using MediatR;
 
 namespace Kahoot.Application.Common.Messaging;
