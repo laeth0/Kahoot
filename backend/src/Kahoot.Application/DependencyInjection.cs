@@ -1,4 +1,5 @@
 using FluentValidation;
+using Kahoot.Application.Common.Behaviors;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,7 +10,10 @@ public static class DependencyInjection
     public static IServiceCollection AddApplication(this IServiceCollection services)
     {
         services.AddMediatR(config =>
-            config.RegisterServicesFromAssembly(AssemblyReference.Assembly));
+        {
+            config.RegisterServicesFromAssembly(AssemblyReference.Assembly);
+            config.AddOpenBehavior(typeof(ValidationBehavior<,>));
+        });
 
         services.AddValidatorsFromAssembly(AssemblyReference.Assembly);
 

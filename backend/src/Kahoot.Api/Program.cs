@@ -2,7 +2,9 @@ using Kahoot.Api.Authentication;
 using Kahoot.Api.Endpoints;
 using Kahoot.Api.HealthChecks;
 using Kahoot.Api.Middleware;
+using Kahoot.Api.Services;
 using Kahoot.Application;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -19,6 +21,9 @@ builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddCors(options => options.AddPolicy(corsPolicy, policy =>
     policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
 builder.Services.AddJwtAuthentication(builder.Configuration);
+
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);

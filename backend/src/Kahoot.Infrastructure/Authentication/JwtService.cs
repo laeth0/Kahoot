@@ -95,9 +95,12 @@ internal sealed class JwtService : IJwtService
         var updated = await _dbContext.RefreshTokens
             .Where(token => token.Id == currentToken.Id
                 && token.RevokedAt == null
+                && token.RotatedAt == null
                 && token.ExpiresAt > now)
             .ExecuteUpdateAsync(
-                setters => setters.SetProperty(token => token.RevokedAt, now),
+                setters => setters
+                    .SetProperty(token => token.RevokedAt, now)
+                    .SetProperty(token => token.RotatedAt, now),
                 cancellationToken);
 
         if (updated != 1)
@@ -105,7 +108,7 @@ internal sealed class JwtService : IJwtService
             return Result.Failure<TokenPair>(InvalidRefreshToken);
         }
 
-        var (pair, newRefreshToken) = CreateTokens(user, now);
+        var (pair, newRefreshToken) = CreateTokens(user, now, currentToken.TokenFamilyId);
         _dbContext.RefreshTokens.Add(newRefreshToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
@@ -136,7 +139,10 @@ internal sealed class JwtService : IJwtService
         return updated == 1;
     }
 
-    private (TokenPair Pair, RefreshToken RefreshToken) CreateTokens(User user, DateTimeOffset now)
+    private (TokenPair Pair, RefreshToken RefreshToken) CreateTokens(
+        User user,
+        DateTimeOffset now,
+        Guid? tokenFamilyId = null)
     {
         var accessTokenExpiresAt = now.AddMinutes(_options.AccessTokenMinutes);
         var refreshTokenExpiresAt = now.AddDays(_options.RefreshTokenDays);
@@ -145,7 +151,10 @@ internal sealed class JwtService : IJwtService
         var claims = new[]
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString("D")),
+            new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("role", user.Role),
+            new Claim("token_security_version", user.TokenSecurityVersion.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
         };
 
@@ -167,6 +176,7 @@ internal sealed class JwtService : IJwtService
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
+            TokenFamilyId = tokenFamilyId ?? Guid.NewGuid(),
             TokenHash = HashToken(rawRefreshToken),
             CreatedAt = now,
             ExpiresAt = refreshTokenExpiresAt

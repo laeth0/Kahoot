@@ -1,20 +1,30 @@
 Table users {
   id uuid [pk, not null]
-  email text [not null]
-  name text [not null]
+  username varchar(64) [not null, unique]
+  normalized_username varchar(64) [not null, unique]
+  email varchar(256) [not null, unique]
+  name varchar(128) [not null]
   password_hash text [not null]
+  role varchar(32) [not null, default: 'Host']
+  status varchar(32) [not null, default: 'Active']
+  token_security_version int [not null, default: 1]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 }
 
 Table refresh_tokens {
   id uuid [pk, not null]
   user_id uuid [not null]
+  token_family_id uuid [not null]
   token_hash varchar(64) [not null, unique]
   created_at timestamptz [not null]
   expires_at timestamptz [not null]
+  rotated_at timestamptz
   revoked_at timestamptz
 
   indexes {
     user_id
+    token_family_id
   }
 }
 

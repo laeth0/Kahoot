@@ -20,7 +20,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 ## Existing patterns
 
 - Use the existing `ICommand`/`IQuery` and `Result`/`Error` types for application operations where they fit. MediatR handlers and FluentValidation validators are registered by assembly scanning in `Kahoot.Application/DependencyInjection.cs`.
-- API controllers inherit `ApiControllerBase`, which supplies `[ApiController]` and the `api/[controller]` route. Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
+- Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
 - EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
 - Pass `CancellationToken` through async request, database, and service calls. Keep database writes and token rotation atomic where required.
 - Authentication uses JWT bearer validation. Refresh tokens are stored as hashes and rotated or revoked by `JwtService`; preserve those security properties and avoid logging tokens or credentials.
