@@ -23,6 +23,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
 - EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
 - Pass `CancellationToken` through async request, database, and service calls. Avoid logging credentials or sensitive data.
+- **Constructor and Dependency Injection Style:** Always use explicit constructor injection with `private readonly` backing fields (prefixed with `_`) and assignments inside the constructor body. Do not use C# primary constructors on classes for dependency injection.
 
 ## Database and EF Core Migrations
 
