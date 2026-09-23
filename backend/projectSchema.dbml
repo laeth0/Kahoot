@@ -85,31 +85,6 @@ Table refresh_tokens {
   '''
 }
 
-Table security_audit_logs {
-  id uuid [pk, not null]
-
-  actor_account_id uuid [not null, ref: > users.id]
-  actor_role user_role [not null]
-  target_account_id uuid [null, ref: > users.id]
-
-  action varchar(64) [not null]
-  occurred_at timestamptz [not null]
-  request_id varchar(64) [not null]
-  outcome varchar(16) [not null]
-  reason_code varchar(64) [null]
-
-  indexes {
-    occurred_at [name: 'ix_security_audit_logs_occurred_at']
-    (actor_account_id, occurred_at) [name: 'ix_security_audit_logs_actor_time']
-    (target_account_id, occurred_at) [name: 'ix_security_audit_logs_target_time']
-  }
-
-  Note: '''
-  Append-oriented audit table. The application DB role must have SELECT/INSERT
-  but no UPDATE/DELETE permission on this table.
-  '''
-}
-
 Table quizzes {
   id uuid [pk, not null]
   host_account_id uuid [not null, ref: > users.id]

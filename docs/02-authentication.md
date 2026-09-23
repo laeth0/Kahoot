@@ -90,7 +90,7 @@ Authentication manages credentials and cryptographic session authority for two d
   * **Reuse Detection ($\Delta t \ge 10\text{ seconds}$)**:
     If an already-consumed token is presented at or after 10 seconds from rotation:
     * Server identifies this as **Malicious Token Reuse**.
-    * Immediately revokes the **entire token family**, increments account `TokenSecurityVersion`, logs a security audit event, and returns `401 Auth.RefreshTokenReuse`.
+    * Immediately revokes the **entire token family**, increments account `TokenSecurityVersion`, and returns `401 Auth.RefreshTokenReuse`.
 
 ### 2.5 Logout and Global Revocation `[NORMATIVE]`
 * **`AUTH-LOG-001` (Logout)**:
@@ -247,7 +247,7 @@ sequenceDiagram
 | `AUTH-RISK-001` | Database connection pool exhausted during login. | Threads hanging; request pile-up. | Bounded acquisition timeout ($\le 3\text{ s}$); fail fast with `503 Service.Unavailable`. | Backoff with jitter; pool sizing invariants. | `AUTH-TEST-007` |
 | `AUTH-RISK-002` | CPU saturation from simultaneous password hashes. | Thread starvation; denial of service across other routes. | Concurrency throttled to 16 threads; queue capped at 50; excess rejected with `429 Request.RateLimited`. | Load shedding; CPU reserved for gameplay. | `AUTH-TEST-008` |
 | `AUTH-RISK-003` | Two tabs trigger token refresh simultaneously ($< 10\text{s}$). | Second tab fails; user prematurely logged out. | Second request returns `409 Auth.RefreshRace`. Token family preserved; client catches 409 and coordinates. | Rotation race grace window. | `AUTH-TEST-009` |
-| `AUTH-RISK-004` | Malicious token replay after rotation ($\ge 10\text{s}$). | Attacker attempting session hijack via stolen refresh token. | Immediate revocation of entire token family; security version incremented; audit log recorded; returns `401 Auth.RefreshTokenReuse`. | Automatic family revocation. | `AUTH-TEST-010` |
+| `AUTH-RISK-004` | Malicious token replay after rotation ($\ge 10\text{s}$). | Attacker attempting session hijack via stolen refresh token. | Immediate revocation of entire token family; security version incremented; returns `401 Auth.RefreshTokenReuse`. | Automatic family revocation. | `AUTH-TEST-010` |
 | `AUTH-RISK-005` | Process crash during password change transaction. | Half-updated credentials or lingering active sessions. | Wrapped in atomic DB transaction: password update + token family revocation commit together or rollback completely. | Transactional all-or-nothing atomicity. | `AUTH-TEST-004` |
 | `AUTH-RISK-006` | Background refresh token cleanup worker failure. | Accumulation of expired token hashes in database. | Worker retries with exponential backoff (10s, 30s, 60s); backlog tracked via operational metrics. | Resumable bounded batching ($\le 500$ rows). | `AUTH-TEST-011` |
 

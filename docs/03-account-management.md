@@ -1,6 +1,6 @@
 # 03. Platform Account Management and Tenant Lifecycle
 
-This document defines the normative requirements for account lifecycle states, immediate suspension cutoff enforcement, bounded asynchronous game finalization, account reactivation, administrator search/query capabilities, step-up security verification, and the durable security audit log trail. It combines functional specifications and non-functional requirements into a single unified specification.
+This document defines the normative requirements for account lifecycle states, immediate suspension cutoff enforcement, bounded asynchronous game finalization, account reactivation, administrator search/query capabilities, and step-up security verification. It combines functional specifications and non-functional requirements into a single unified specification.
 
 ---
 
@@ -103,29 +103,6 @@ sequenceDiagram
 * **`ACCT-ADMIN-003` (Last-Active-Administrator Invariant)**:
   * The system must transactionally prevent suspending the final active System Administrator account. Attempting to do so returns `409 Account.LastAdministrator`.
 
-### 2.5 Append-Oriented Security Audit Trail `[NORMATIVE]`
-* **`ACCT-AUD-001` (Durable Audit Logging)**:
-  All privileged operations are recorded in an append-oriented, database-enforced audit table within the same transaction as the privileged state change:
-  1. **Audited Actions**: Bootstrap admin initialization, admin creation, admin suspension/reactivation, Host suspension/reactivation, password changes, and global session revocations (`logout-all`).
-  2. **Schema & Immutability**:
-     ```sql
-     -- NON-NORMATIVE REFERENCE EXAMPLE
-     CREATE TABLE SecurityAuditLogs (
-         AuditId UUID PRIMARY KEY,
-         ActorAccountId UUID NOT NULL,
-         ActorKind VARCHAR(32) NOT NULL,
-         TargetAccountId UUID NULL,
-         Action VARCHAR(64) NOT NULL,
-         Timestamp TIMESTAMPTZ NOT NULL,
-         RequestId VARCHAR(64) NOT NULL,
-         Outcome VARCHAR(16) NOT NULL,
-         ReasonCode VARCHAR(64) NULL
-     );
-     ```
-  3. **Privacy Invariant**: Audit records must **never** contain passwords, hashes, raw tokens, auth headers, quiz text, or player answers.
-  4. **API Immutability**: The application database user lacks `UPDATE` and `DELETE` privileges on `SecurityAuditLogs`. Only an authorized platform retention maintenance script may purge records older than the mandatory retention period (default: 365 days).
-  5. **Terminology Specification**: The audit trail is durable, append-oriented, and normal-API immutable; it does not claim cryptographic tamper-evidence (e.g., hash chaining or digital signatures) unless explicitly mandated in an advanced compliance profile.
-
 ---
 
 ## 3. Boundaries, Edge Cases & Negative Validation
@@ -177,10 +154,6 @@ sequenceDiagram
   * High-blast-radius operations (admin creation, admin suspension, Host suspension) require a recent password confirmation or step-up token issued within the last 15 minutes.
   * System Administrator Multi-Factor Authentication (MFA) is identified as an optional future enhancement; email/SMS MFA is explicitly excluded.
 
-### 5.2 Append-Only Database Role Hardening
-* **`ACCT-SEC-002` (Database Permission Fencing)**:
-  * The application database service user (`kahoot_app`) possesses only `SELECT` and `INSERT` privileges on `SecurityAuditLogs`. `UPDATE` and `DELETE` privileges are strictly withheld.
-
 ---
 
 ## 6. Concurrency, Lost-Response & Failure-Mode Contracts
@@ -197,7 +170,6 @@ sequenceDiagram
 | `ACCT-RISK-001` | Host has 50 active games during suspension. | DB lock contention or transaction timeout if executed synchronously. | Phase 1 commits cutoff in single lightweight transaction; Phase 2 materializes games in bounded batches ($\le 10$ games/tx). | Two-phase suspension architecture; returns 202 Accepted. | `ACCT-TEST-002` |
 | `ACCT-RISK-002` | Crash during Phase 2 game finalization. | Games remain in intermediate state; `terminationPending` stuck. | Startup background worker identifies `terminationPending == true` accounts and resumes batch materialization. | Resumable background sweep. | `ACCT-TEST-008` |
 | `ACCT-RISK-003` | Concurrent suspension of two administrators when only two exist. | Risk of zero remaining active administrators. | Serialized DB transaction checks `COUNT(ActiveAdmins) > 1` under row lock; second fails with `409 Account.LastAdministrator`. | Database transactional check. | `ACCT-TEST-005` |
-| `ACCT-RISK-004` | Audit log write fails during admin mutation. | Unaudited privileged change committed. | Audit insert and account mutation are in the **same atomic transaction**; failure in audit insert rolls back entire mutation. | Atomic transactional coupling. | `ACCT-TEST-006` |
 | `ACCT-RISK-005` | Admin attempts to reactivate account while Phase 2 finalization is in-flight. | Race between game termination and account reopening. | Request rejected with `409 Account.TerminationPending`. | Reactivation gate check. | `ACCT-TEST-009` |
 
 ---
@@ -211,7 +183,6 @@ sequenceDiagram
 | `ACCT-TEST-003` | `ACCT-REACT-001` | Functional | Admin reactivates suspended Host after finalization completes. | Account status becomes `Active`; past games remain `FINISHED`; prior tokens remain revoked. |
 | `ACCT-TEST-004` | `ACCT-ADMIN-001` | Functional | Admin creates a second System Administrator. | `201 Created`; new admin can log in; zero tenant boundary created. |
 | `ACCT-TEST-005` | `ACCT-ADMIN-003`, `ACCT-RISK-003` | Concurrency / Boundary | Attempt to suspend the only active System Administrator, or two admins attempt mutual suspension. | Exactly one admin remains active; other attempt rejected with `409 Account.LastAdministrator`. |
-| `ACCT-TEST-006` | `ACCT-AUD-001`, `ACCT-SEC-002`, `ACCT-RISK-004` | Security | Audit log verification on admin mutation, and attempt SQL `UPDATE` / `DELETE` on audit table. | Audit entry created in same tx; direct update/delete denied by database permissions. |
 | `ACCT-TEST-007` | `ACCT-SLO-001`, `ACCT-SLO-002` | Non-Functional | Measure token rejection latency and socket eviction latency post-suspension commit. | Token requests rejected in $\le 100\text{ ms}$ ($p95$); sockets severed in $\le 500\text{ ms}$ ($p95$). |
 | `ACCT-TEST-008` | `ACCT-SUSP-004`, `ACCT-RISK-002` | Fault Injection | Terminate application process mid-way through Phase 2 finalization. | On restart, background finalizer detects `terminationPending`, finishes all games, and clears flag. |
 | `ACCT-TEST-009` | `ACCT-BOUND-005`, `ACCT-RISK-005` | Boundary | Attempt `POST /api/admin/users/{id}/reactivate` while `terminationPending == true`. | Rejected with `409 Account.TerminationPending`. |

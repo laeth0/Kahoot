@@ -37,7 +37,7 @@ The backend enforces this matrix across every REST endpoint, SignalR hub method,
 | **Author / Publish Quizzes & Questions** | Own tenant only | No | No | `QUIZ-AUTH-001` |
 | **Upload / Manage Media** | Own tenant only | No | No | `MED-UPL-001` |
 | **Create & Control Game Sessions** | Own game only | No | No | `GAME-CTRL-001` |
-| **List / Search Accounts & Audit Logs** | No | Yes | No | `ACCT-QUERY-001` |
+| **List / Search Accounts** | No | Yes | No | `ACCT-QUERY-001` |
 | **Suspend / Reactivate Accounts** | No | Yes (last-admin protected) | No | `ACCT-SUSP-001` |
 | **Join Game Lobby via PIN & Nickname** | Public Player flow | Public Player flow | Public flow (no special privilege) | `JOIN-FLOW-001` |
 | **Submit Answers / Reconnect** | Only via Player session | Only via Player session | Own game & participant only | `PLAY-ANS-001` |

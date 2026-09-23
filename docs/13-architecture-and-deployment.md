@@ -7,7 +7,7 @@ This document defines the technical software architecture, containerized infrast
 
 ### 1.2 Actors & Stakeholders
 * **System Operators / DevOps**: Provision container topology, configure production environment variables, execute zero-downtime rolling deployments, monitor system health, and manage backup/restore operations.
-* **System Administrators**: Perform administrative tenant lifecycle operations, manage elevated accounts, and review durable audit trails.
+* **System Administrators**: Perform administrative tenant lifecycle operations and manage elevated accounts.
 * **Registered Hosts**: Access web dashboard, author quizzes, upload question media, and host live games via HTTPS and WSS connections.
 * **Anonymous Players**: Join live game sessions via PIN or join link without registration, receiving question broadcasts and submitting real-time answers via WSS and REST.
 
@@ -63,7 +63,7 @@ graph TD
 
 #### Layer Responsibilities
 1. **`Kahoot.Domain`**:
-   * Contains core entities (`Account`, `Quiz`, `Question`, `GameSession`, `Participant`, `AnswerSubmission`, `SecurityAuditLog`).
+   * Contains core entities (`Account`, `Quiz`, `Question`, `GameSession`, `Participant`, `AnswerSubmission`).
    * Encapsulates domain invariants, state machines, and business rules independent of databases or UI concerns.
 2. **`Kahoot.Application`**:
    * Contains CQRS command/query handlers.
@@ -226,7 +226,7 @@ Production configuration loaded via non-committed `.env` files:
   2. **Authentication & Security Enforcement**: Login, refresh, and immediate suspension checks.
   3. **Player Reconnection & Catch-Up**: Restoring dropped player sessions.
   4. **Normal Interactive APIs**: Quiz authoring, question editing, and lobby joins.
-  5. **Administrative Bulk Queries**: Account listings, search, and audit log inspection.
+  5. **Administrative Bulk Queries**: Account listings and search.
   6. **Background Maintenance**: Media cleanup and expired token purging yield completely during peak load.
 * **`ARCH-OVERLOAD-002` (Overload Invariants)**: Under severe traffic spikes:
   * The system must never corrupt data or accept and then silently drop an answer.

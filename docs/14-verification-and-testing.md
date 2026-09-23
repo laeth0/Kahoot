@@ -3,7 +3,7 @@
 ## 1. Topic Overview & Actors
 
 ### 1.1 Scope and Objective
-This document defines the master quality assurance, verification, load testing, endurance validation, fault injection, and traceability framework for the Kahoot-like live quiz SaaS platform. It establishes testing methodologies, an exhaustive multi-agent concurrency race matrix, performance test profiles, chaos recovery regimes, over-capacity limits, and the master traceability matrix that binds every functional specification and non-functional constraint across all thirteen prior requirement documents into an auditable verification regime.
+This document defines the master quality assurance, verification, load testing, endurance validation, fault injection, and traceability framework for the Kahoot-like live quiz SaaS platform. It establishes testing methodologies, an exhaustive multi-agent concurrency race matrix, performance test profiles, chaos recovery regimes, over-capacity limits, and the master traceability matrix that binds every functional specification and non-functional constraint across all thirteen prior requirement documents into a traceable verification regime.
 
 ### 1.2 Actors & Stakeholders
 * **QA & Test Automation Engineers**: Design, script, and maintain deterministic unit, integration, and load test suites.
@@ -129,7 +129,7 @@ To guarantee absolute mathematical data integrity across multi-threaded and mult
 | `RACE-AUTH-05` | Token Refresh vs. Password Change | Refresh commits first; password change commits next, revoking all refresh families and severing active sessions. | Password change commits first; refresh fails with `401 Auth.InvalidRefreshToken`. | `RACE-VER-005` |
 | `RACE-AUTH-06` | Token Refresh vs. Host Suspension | Refresh commits first; suspension commits next, revoking all families and terminating active games. | Suspension commits first; refresh rejected with `401 Auth.InvalidCredentials`. | `RACE-VER-006` |
 | `RACE-AUTH-07` | JWT Request vs. Host Suspension | Request commits before suspension; output returned. | Suspension commits first; request rejected at authorization check with `403 Auth.AccountSuspended`. | `RACE-VER-007` |
-| `RACE-AUTH-08` | Admin Revocation vs. Privileged Admin Action | Admin action commits before revocation; audit log recorded. | Revocation commits first; admin action fails with `403 Auth.Forbidden`. | `RACE-VER-008` |
+| `RACE-AUTH-08` | Admin Revocation vs. Privileged Admin Action | Admin action commits before revocation. | Revocation commits first; admin action fails with `403 Auth.Forbidden`. | `RACE-VER-008` |
 
 ### 4.2 Quiz & Authoring Races
 | Race ID | Competing Operations | Order A Resolution (First Wins) | Order B Resolution (Second Wins) | Stable Req ID |
@@ -243,7 +243,6 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `ACCT-REACT-001`| 03 | Reactivate host; prior tokens and games stay terminal | `ACCT-TEST-003`, `ACCT-TEST-009` |
 | `ACCT-ADMIN-001`| 03 | System administrator creation | `ACCT-TEST-004` |
 | `ACCT-ADMIN-003`| 03 | Transactional last-active administrator protection | `ACCT-TEST-005` |
-| `ACCT-AUD-001` | 03 | Append-oriented audit logging; DB permissions restricted | `ACCT-TEST-006` |
 | `ACCT-SLO-001` | 03 | Immediate revocation latency $p95 \le 100\text{ ms}$ | `ACCT-TEST-007` |
 | `ACCT-SLO-002` | 03 | Socket eviction latency $p95 \le 500\text{ ms}$ | `ACCT-TEST-007` |
 | `QUIZ-AUTH-001`| 04 | Create unpublished quiz draft | `QUIZ-TEST-001` |
