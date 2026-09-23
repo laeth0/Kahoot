@@ -4,18 +4,18 @@ Project Kahoot {
   Note: '''
   PostgreSQL is the authoritative store.
   Host isolation is represented by HostAccountId:
-  - Host-owned resources reference Accounts.Id directly via HostAccountId.
+  - Host-owned resources reference Users.Id directly via HostAccountId.
   - Host-scoped child relationships use composite foreign keys where practical
     so a child cannot be linked to a parent from another host account.
   '''
 }
 
-Enum account_kind {
+Enum user_role {
   Host
   SystemAdministrator
 }
 
-Enum account_status {
+Enum user_status {
   Active
   Suspended
 }
@@ -34,15 +34,15 @@ Enum game_status {
   FINISHED
 }
 
-Table accounts {
+Table users {
   id uuid [pk, not null]
 
   display_username varchar(64) [not null]
   normalized_username varchar(64) [not null]
   password_hash varchar(512) [not null]
 
-  account_kind account_kind [not null]
-  status account_status [not null]
+  role user_role [not null]
+  status user_status [not null]
 
   token_security_version int [not null, default: 1]
   revision bigint [not null, default: 1]
@@ -52,8 +52,8 @@ Table accounts {
   created_at timestamptz [not null]
 
   indexes {
-    normalized_username [unique, name: 'ux_accounts_normalized_username']
-    (account_kind, status, created_at, id) [name: 'ix_accounts_admin_listing']
+    normalized_username [unique, name: 'ux_users_normalized_username']
+    (role, status, created_at, id) [name: 'ix_users_admin_listing']
   }
 
   Note: '''
@@ -64,7 +64,7 @@ Table accounts {
 
 Table refresh_tokens {
   id uuid [pk, not null]
-  account_id uuid [not null, ref: > accounts.id]
+  user_id uuid [not null, ref: > users.id]
 
   token_family_id uuid [not null]
   family_created_at timestamptz [not null]
@@ -77,7 +77,7 @@ Table refresh_tokens {
 
   indexes {
     token_hash [unique, name: 'ux_refresh_tokens_token_hash']
-    (account_id, token_family_id) [name: 'ix_refresh_tokens_account_family']
+    (user_id, token_family_id) [name: 'ix_refresh_tokens_user_family']
     expires_at [name: 'ix_refresh_tokens_expires_at']
     revoked_at [name: 'ix_refresh_tokens_revoked_at']
   }
@@ -93,9 +93,9 @@ Table refresh_tokens {
 Table security_audit_logs {
   id uuid [pk, not null]
 
-  actor_account_id uuid [not null, ref: > accounts.id]
-  actor_kind account_kind [not null]
-  target_account_id uuid [null, ref: > accounts.id]
+  actor_account_id uuid [not null, ref: > users.id]
+  actor_role user_role [not null]
+  target_account_id uuid [null, ref: > users.id]
 
   action varchar(64) [not null]
   occurred_at timestamptz [not null]
@@ -117,7 +117,7 @@ Table security_audit_logs {
 
 Table quizzes {
   id uuid [pk, not null]
-  host_account_id uuid [not null, ref: > accounts.id]
+  host_account_id uuid [not null, ref: > users.id]
 
   title varchar(200) [not null]
   description varchar(1000) [null]
@@ -134,7 +134,7 @@ Table quizzes {
 
 Table media_items {
   id uuid [pk, not null]
-  host_account_id uuid [not null, ref: > accounts.id]
+  host_account_id uuid [not null, ref: > users.id]
 
   storage_path varchar(512) [not null]
   content_type varchar(32) [not null]
@@ -203,7 +203,7 @@ Table choices {
 
 Table games {
   id uuid [pk, not null]
-  host_account_id uuid [not null, ref: > accounts.id]
+  host_account_id uuid [not null, ref: > users.id]
   source_quiz_id uuid [not null]
 
   title varchar(200) [not null]
