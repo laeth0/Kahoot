@@ -19,7 +19,6 @@ The goal is to produce the smallest correct solution that is:
 * Testable
 * Performant where relevant
 * Scalable where relevant
-* Observable where relevant
 * Consistent with the existing repository
 * Safe to operate in production
 * No more complex than necessary
@@ -1168,32 +1167,7 @@ Do not treat normal control flow as an error.
 
 ---
 
-# 41. Observability
-
-Where the repository supports observability, preserve existing:
-
-* Logging
-* Metrics
-* Tracing
-* Correlation IDs
-* Request context
-
-For operationally important behavior, consider whether changes require updates to existing:
-
-* Metrics
-* Traces
-* Dashboards
-* Alerts
-
-Do not create high-cardinality metrics accidentally.
-
-Avoid using uncontrolled identifiers such as user IDs, request IDs, or arbitrary input as metric labels unless the observability design explicitly allows it.
-
-Do not emit excessive telemetry from high-frequency code paths.
-
----
-
-# 42. Frontend Code
+# 41. Frontend Code
 
 When changing frontend code, follow existing application architecture and design conventions.
 
@@ -1223,7 +1197,7 @@ Preserve established design-system components when available.
 
 ---
 
-# 43. UI Accessibility
+# 42. UI Accessibility
 
 Where user interfaces are affected, use accessible defaults.
 
@@ -1244,7 +1218,7 @@ Accessibility should be part of implementation quality, not an optional cleanup 
 
 ---
 
-# 44. Generated Code
+# 43. Generated Code
 
 Identify generated files before editing them.
 
@@ -1262,7 +1236,7 @@ If generated output must change, modify the authoritative source and regenerate 
 
 ---
 
-# 45. Dead and Unused Code
+# 44. Dead and Unused Code
 
 Remove code made obsolete by the requested change within the affected scope.
 
@@ -1299,7 +1273,7 @@ Do not perform repository-wide dead-code removal unless explicitly requested.
 
 ---
 
-# 46. Refactoring
+# 45. Refactoring
 
 Refactor when doing so directly improves the requested implementation.
 
@@ -1318,7 +1292,7 @@ Refactoring must preserve behavior unless behavior change is part of the require
 
 ---
 
-# 47. Bug Fixes
+# 46. Bug Fixes
 
 When fixing a bug:
 
@@ -1337,7 +1311,7 @@ Do not suppress an error merely to make the symptom disappear.
 
 ---
 
-# 48. Testability
+# 47. Testability
 
 Production code should remain easy to test.
 
@@ -1365,7 +1339,7 @@ Apply testability together with KISS and YAGNI.
 
 ---
 
-# 49. Automated Tests
+# 48. Automated Tests
 
 Respect the repository's testing strategy.
 
@@ -1402,7 +1376,7 @@ Do not create meaningless tests solely to increase test count or coverage percen
 
 ---
 
-# 50. Documentation
+# 49. Documentation
 
 Update documentation when the change makes existing documentation materially incorrect or incomplete.
 
@@ -1424,7 +1398,7 @@ Keep documentation synchronized with actual behavior.
 
 ---
 
-# 51. Compatibility
+# 50. Compatibility
 
 Consider compatibility whenever modifying:
 
@@ -1446,7 +1420,7 @@ Do not silently change semantics while preserving the same contract shape.
 
 ---
 
-# 52. Backward-Compatible Evolution
+# 51. Backward-Compatible Evolution
 
 For systems deployed incrementally, prefer additive changes before destructive changes.
 
@@ -1463,7 +1437,7 @@ Do not introduce unnecessary multi-phase migrations for simple local systems.
 
 ---
 
-# 53. Performance-Sensitive Changes
+# 52. Performance-Sensitive Changes
 
 When performance is central to the task:
 
@@ -1480,7 +1454,7 @@ Document important non-obvious performance trade-offs.
 
 ---
 
-# 54. Production Safety
+# 53. Production Safety
 
 Before considering a change complete, think about how it behaves in production.
 
@@ -1505,7 +1479,7 @@ Do not introduce production complexity that the actual deployment model does not
 
 ---
 
-# 55. Build and Repository Hygiene
+# 54. Build and Repository Hygiene
 
 Do not leave behind:
 
@@ -1527,7 +1501,7 @@ Keep final changes focused and clean.
 
 ---
 
-# 56. Verification
+# 55. Verification
 
 Writing code is not sufficient evidence that the task is complete.
 
@@ -1558,7 +1532,7 @@ Do not hide failed checks.
 
 ---
 
-# 57. Final Diff Review
+# 56. Final Diff Review
 
 Before finishing:
 
@@ -1589,7 +1563,7 @@ If yes, simplify it.
 
 ---
 
-# 58. Definition of Done
+# 57. Definition of Done
 
 A task should not be considered complete merely because the code compiles.
 
@@ -1616,7 +1590,7 @@ Do not declare success for items that were not actually verified.
 
 ---
 
-# 59. Final Response
+# 58. Final Response
 
 Keep the final response concise and factual.
 
@@ -1650,7 +1624,7 @@ Distinguish clearly between:
 
 ---
 
-# 60. Anti-Patterns
+# 59. Anti-Patterns
 
 Do not:
 
@@ -1678,7 +1652,7 @@ Do not:
 
 ---
 
-# 61. Engineering Judgment
+# 60. Engineering Judgment
 
 Not every rule applies equally to every task.
 
@@ -1703,7 +1677,7 @@ for convenience.
 
 ---
 
-# 62. Core Principles
+# 61. Core Principles
 
 Always optimize for this order:
 
@@ -1727,7 +1701,7 @@ Speed of implementation does not justify insecure or fragile code.
 
 ---
 
-# 63. Final Standard
+# 62. Final Standard
 
 Do not merely make the code work.
 
@@ -1742,7 +1716,6 @@ Leave the affected code:
 * Maintainable
 * Testable
 * Efficient enough for its intended workload
-* Observable where operationally important
 * Compatible with the surrounding system
 * Free from unnecessary complexity
 
