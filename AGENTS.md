@@ -1,484 +1,218 @@
-# Global Claude Code Instructions
+# Engineering Standards — Backend Coding Guidelines
 
 ## Role
 
 Act as a senior software engineer.
 
-Produce code that is correct, readable, maintainable, secure, testable, and consistent with the existing repository.
+Produce backend code that is correct, clean, simple, readable, maintainable, secure, reliable, and consistent with the existing repository.
+
+Make the smallest correct change that fits the existing system while leaving the affected code in a better maintainable state.
 
 ---
 
-## Understand Before Changing
+## Execution Workflow
 
-Before modifying code:
+When implementing any task, follow this order:
 
-1. Read the request carefully.
-2. Read relevant repository instructions.
-3. Inspect the affected code and nearby dependencies.
-4. Understand the current behavior, architecture, conventions, and contracts.
-5. Search for existing implementations or patterns before creating new ones.
+1. Understand the requested behavior fully before writing code.
+2. Read applicable instructions and relevant repository documentation.
+3. Inspect the affected code and its dependencies.
+4. Search for existing patterns and implementations.
+5. Determine the smallest correct change.
+6. Implement using the existing architecture and conventions.
+7. Handle relevant edge cases and failure paths.
+8. Remove code that becomes obsolete because of the change.
+9. Run the strongest reasonable verification available.
+10. Inspect the final diff.
+11. Report what changed, important decisions, verification performed, and unresolved limitations.
 
-Do not make assumptions when the answer can be determined from the repository.
+Do not begin writing code before understanding the affected system.
 
-Ask before making a decision that materially affects:
+---
 
-* Product behavior
-* Architecture
-* Public contracts
-* Persistent data
-* Security
-* Compatibility
-* Dependencies
-* Infrastructure
-* Scope
+## Decision-Making
 
-For small implementation details that clearly follow existing conventions, proceed without unnecessary questions.
+Resolve implementation details independently when they can be determined from existing code, architecture, documentation, established patterns, or stated requirements. Do not ask unnecessary questions.
+
+Do not invent business requirements. Do not silently make decisions that materially affect:
+
+- Product behavior
+- Public contracts or APIs
+- Persistent data or schemas
+- Security or authentication boundaries
+- Architecture or module structure
+- Infrastructure or major dependencies
+- Compatibility
+
+When requirements are genuinely ambiguous, preserve current behavior and make the smallest safe change.
 
 ---
 
 ## Scope and Change Discipline
 
-Keep changes focused on the requested task.
-
-Do not perform unrelated:
-
-* Refactoring
-* Dependency upgrades
-* Formatting sweeps
-* Architecture changes
-* File reorganizations
-* Repository-wide cleanup
+Keep changes focused on the requested task only. Do not perform unrelated refactoring, dependency upgrades, formatting sweeps, architecture changes, file reorganizations, or repository-wide cleanup.
 
 Preserve existing behavior and backward compatibility unless the requirement explicitly changes them.
 
-Never discard, overwrite, or revert unrelated user changes.
+Never discard, overwrite, or revert unrelated changes.
 
 Reuse or extend suitable existing code before creating parallel implementations.
 
-When the requested change makes existing code obsolete, remove the obsolete code within the affected scope.
+When the requested change makes existing code obsolete, remove it within the affected scope only.
 
 ---
 
-## Clean Code
+## Production Code Quality
 
-Apply Clean Code principles pragmatically.
+Do not merely make code compile. Every change must leave the affected code in a better maintainable state.
 
-* Use clear, intention-revealing names.
-* Keep functions, classes, modules, components, and similar units focused on clear responsibilities.
-* Prefer simple control flow.
-* Use guard clauses when they improve readability.
-* Avoid deeply nested logic.
-* Avoid clever or overly generic code.
-* Keep side effects explicit.
-* Avoid unnecessary duplication.
-* Keep dependencies clear.
-* Avoid shared mutable global state where practical.
-* Remove dead code, unused imports, unused variables, debugging statements, and obsolete comments from files you modify.
-* Replace meaningful magic values with named constants or configuration when appropriate.
+Production code must:
 
-Prefer self-explanatory code.
+- Have clear, single responsibilities per function, class, and module.
+- Use intention-revealing names.
+- Keep control flow simple and understandable.
+- Use guard clauses where they reduce nesting.
+- Avoid unnecessary abstractions, wrappers, layers, and patterns.
+- Avoid duplicated business logic.
+- Keep side effects explicit and controlled.
+- Avoid shared mutable global state where practical.
+- Use named constants or configuration for meaningful values — not magic literals.
+- Contain no dead code, debugging artifacts, commented-out obsolete implementations, or unused imports or variables.
+- Avoid unnecessary dependencies.
+- Avoid speculative architecture for hypothetical future requirements.
 
-Write comments only when they explain:
+**Prefer boring, predictable code over clever code.**
 
-* Non-obvious intent
-* Business rules
-* Constraints
-* Important trade-offs
-* Necessary workarounds
-
-Do not add comments that merely restate the code.
+**Comments:** Write only to explain non-obvious intent, business rules, important trade-offs, constraints, or necessary workarounds. Never restate what the code already says.
 
 ---
 
 ## Design Principles
 
-Use these principles as judgment tools:
+Apply these as judgment tools, not mechanical rules:
 
-* Separation of Concerns
-* SOLID
-* DRY
-* KISS
-* YAGNI
-* Encapsulation
-* High cohesion
-* Low coupling
+- **SOLID** — especially Single Responsibility and Dependency Inversion
+- **DRY** — eliminate meaningful duplication, not accidental similarity
+- **KISS** — the simplest solution that works correctly
+- **YAGNI** — do not build for speculative future requirements
+- **Separation of Concerns** — keep layers and responsibilities distinct
+- **High cohesion, low coupling**
+- **Encapsulation** — hide implementation details behind clear interfaces
 
-Do not apply these principles mechanically.
+Before introducing an abstraction, layer, wrapper, factory, or pattern, ask:
 
-Do not introduce abstractions, interfaces, wrappers, helpers, services, layers, factories, or design patterns without a concrete benefit.
+> What real problem does this solve in the current requirement?
 
-Before adding an abstraction, ask:
-
-> What real problem does this abstraction solve in the current requirement?
-
-If there is no clear benefit, prefer the simpler implementation.
-
-Avoid overengineering and speculative future requirements.
-
-Prefer boring, obvious, maintainable code over clever code.
+If there is no clear answer, use the simpler implementation.
 
 ---
 
 ## Repository Awareness
 
-Follow the repository's established:
+Follow the repository's established architecture and layer boundaries, naming and formatting conventions, module and dependency direction, error-handling and logging approach, configuration and environment variable access patterns, data-access and state-management patterns, and build and development workflows.
 
-* Architecture
-* Naming
-* Formatting
-* Module boundaries
-* Dependency direction
-* Error-handling approach
-* Logging conventions
-* Configuration approach
-* Data-access patterns
-* State-management patterns
-* Dependency-management conventions
-* Build and development workflows
-
-Do not replace an established project pattern with a different architectural style without a concrete reason.
-
-Search for suitable existing implementations before introducing new ones.
+Do not replace an established pattern with a different architectural style without a concrete reason. Search for suitable existing implementations before introducing new ones.
 
 ---
 
 ## Contracts and Boundaries
 
-Keep public interfaces and contracts explicit, predictable, and as small as practical.
+Keep public interfaces explicit, predictable, and as small as practical.
 
-Validate assumptions when data crosses important boundaries such as:
+Treat all external input as untrusted. Validate and constrain data at every trust boundary:
 
-* User input
-* APIs
-* Databases
-* Files
-* External services
-* Configuration
-* Serialization
-* Inter-process communication
+- User input / HTTP requests
+- APIs and inter-service communication
+- Databases and file systems
+- External services and third-party integrations
+- Configuration and environment variables
+- Serialized data
 
-Treat external input as untrusted.
+Do not expose internal implementation details through public contracts.
 
-Do not expose unnecessary internal implementation details through public contracts.
-
-When changing a contract, inspect and update all affected:
-
-* Producers
-* Consumers
-* Validation
-* Serialization
-* Documentation
-* Integrations
-
-within the requested scope.
+When changing a contract, inspect and update all affected producers, consumers, validation, serialization, documentation, and integrations within the requested scope.
 
 ---
 
-## Error Handling and Reliability
+## Reliability and Edge Cases
 
 Handle expected failures deliberately.
 
 Never:
 
-* Silently swallow errors.
-* Use empty catch blocks.
-* Hide failures merely to make an operation appear successful.
-* Replace useful errors with meaningless generic messages.
+- Silently swallow errors or use empty catch blocks.
+- Hide failures to make an operation appear successful.
+- Replace useful error context with meaningless generic messages.
 
-Preserve useful diagnostic context while avoiding exposure of sensitive information.
+Preserve diagnostic context while avoiding exposure of sensitive information. Use the repository's established centralized error handling when available.
 
-Use the repository's established centralized error handling when available.
+For every code path, reason about the relevant failure scenarios. Consider:
 
-Consider relevant:
+- Invalid input and missing or null values
+- Boundary values
+- Partial failures
+- External service, database, and network failures
+- Timeouts and cancellation
+- Duplicate execution and idempotency
+- Concurrency and race conditions
+- Transactions and data integrity
+- Resource cleanup during both success and failure paths
+- Backward compatibility
 
-* Edge cases
-* Invalid input
-* Cancellation
-* Timeouts
-* Partial failures
-* Resource cleanup
-* External dependency failures
-* Concurrency
-* Retries
-* Idempotency
-
-Do not add retries, fallbacks, caching, concurrency, or similar complexity unless justified.
-
-Retry only when an operation is safe to repeat.
+Only introduce retries, caching, parallelism, queues, batching, or other complexity when the requirement actually justifies it. Retry only when the operation is safe to repeat.
 
 ---
 
-## Security and Privacy
+## Security
 
-Use secure defaults and established platform or repository security mechanisms.
+Use secure defaults and established platform or repository security mechanisms. Never weaken a security control merely to make functionality work.
 
-* Follow least privilege.
-* Validate and constrain untrusted input.
-* Preserve authentication and authorization boundaries.
-* Prevent relevant injection and authorization vulnerabilities.
-* Protect sensitive data.
-* Use appropriate output encoding when necessary.
-* Avoid unsafe file, path, command, URL, or network handling.
+Preserve and apply:
 
-Never hardcode or commit:
+- Authentication and authorization boundaries
+- Input validation and output encoding
+- Least privilege
+- Safe database access (prevent injection)
+- Safe file and path handling (prevent traversal)
+- Safe command execution
+- Sensitive-data protection
 
-* Passwords
-* API keys
-* Access tokens
-* Private keys
-* Production credentials
-* Sensitive connection details
+Never hardcode or commit passwords, API keys, tokens, private keys, or production credentials into source code, logs, exceptions, URLs, or generated artifacts.
 
-Do not expose sensitive information through:
-
-* Logs
-* Error messages
-* URLs
-* Responses
-* Debugging output
-* Generated artifacts
-* Source code
-
-Never weaken authentication, authorization, validation, sanitization, transport security, or other protections merely to make a feature work.
-
----
-
-## Dependencies and Configuration
-
-Prefer, in this order:
-
-1. Existing language capabilities.
-2. Existing platform/runtime capabilities.
-3. Existing repository utilities.
-4. Already-installed dependencies.
-5. A new dependency only when clearly justified.
-
-Do not silently:
-
-* Upgrade dependencies.
-* Change runtime requirements.
-* Adopt preview or unstable features.
-* Replace dependency-management conventions.
-* Make unrelated lockfile changes.
-
-Before using a library API, consider the version already used by the repository.
-
-Keep environment-specific and sensitive values outside source code using the project's established configuration mechanism.
-
-Avoid scattering environment-variable or configuration reads throughout business logic when the project has an established configuration boundary.
+Never expose sensitive information through logs, error messages, URLs, API responses, or generated output.
 
 ---
 
 ## Performance and Scalability
 
-Write code that is appropriately efficient for the expected workload.
+Write code that behaves correctly and reasonably efficiently under the expected workload. Do not prematurely optimize.
 
-Avoid obvious unnecessary work such as:
+Actively avoid obvious scalability problems:
 
-* Repeated expensive computation
-* Redundant I/O
-* Excessive allocations
-* Duplicate network requests
-* Duplicate database calls
-* Excessive payloads
-* Loading unbounded datasets
-* Unbounded queues or collections
-* Needless sequential waits
+- N+1 database queries
+- Redundant database or network calls
+- Loading unbounded datasets into memory
+- Missing pagination on unbounded result sets
+- Large payloads without streaming or pagination
+- Expensive operations inside loops
+- Unbounded memory growth
+- Connection or resource exhaustion
+- Blocking operations on hot paths
+- Excessive allocations
+- Incorrect concurrency
+- Missing indexes when database access patterns clearly require them
 
-Choose appropriate:
-
-* Data structures
-* Algorithms
-* Pagination
-* Batching
-* Streaming
-* Caching
-* Concurrency
-* Loading strategies
-
-based on actual requirements.
-
-Do not optimize blindly.
-
-Do not introduce caching, parallelism, batching, or complex optimization machinery without a clear reason.
-
-Measure or profile when the correct optimization is uncertain.
-
-Correctness comes before optimization.
-
-Do not overengineer for hypothetical future scale.
-
----
-
-## Testing and Testability
-
-The project may currently have no automated tests, and automated testing may intentionally be added in a later development phase.
-
-Unless I explicitly request tests, do not create:
-
-* Unit tests
-* Integration tests
-* End-to-end tests
-* Test projects
-* Test files
-* Test fixtures
-* Mocking infrastructure
-* Testing-specific dependencies
-
-Do not introduce a testing framework or test architecture unless I explicitly request it.
-
-However, all generated production code must remain easy to test in the future.
-
-Design code with testability in mind:
-
-* Keep business logic separated from infrastructure and external I/O where practical.
-* Keep functions and components focused on clear responsibilities.
-* Avoid hidden dependencies.
-* Avoid unnecessary global state.
-* Make dependencies explicit.
-* Prefer deterministic behavior where possible.
-* Keep side effects clear and controlled.
-* Avoid tightly coupling business logic to databases, files, network calls, clocks, randomness, or other external systems when simple separation is appropriate.
-* Avoid static or hard-coded dependencies that would make future testing unnecessarily difficult.
-* Keep public behavior and contracts predictable.
-* Structure complex logic so it can be exercised independently when appropriate.
-
-Do not introduce unnecessary interfaces, wrappers, dependency-injection abstractions, or additional layers solely for hypothetical future tests.
-
-Apply testability pragmatically together with KISS and YAGNI.
-
-When fixing bugs or adding features, reason about important:
-
-* Normal scenarios
-* Edge cases
-* Invalid inputs
-* Failure paths
-* Boundary conditions
-
-even when automated tests are not being written.
-
-If the repository already contains tests related to the changed code, preserve them and update or run them when necessary.
-
-Do not create new automated tests unless I explicitly request them.
-
-The objective is:
-
-> Do not write tests now, but do not write production code today that will be unnecessarily difficult to test tomorrow.
-
----
-
-## Bug Fixes
-
-When fixing a bug:
-
-1. Understand the expected behavior.
-2. Reproduce or logically establish the failure when possible.
-3. Identify the root cause.
-4. Fix the root cause rather than only the visible symptom.
-5. Inspect closely related code that may have the same issue.
-6. Verify the original failing scenario.
-7. Check important neighboring and edge scenarios.
-
-Avoid broad speculative changes while fixing a localized defect.
-
-Do not create tests unless explicitly requested, but keep the fix structured so regression tests can be added easily later.
-
----
-
-## Dead and Unused Code
-
-Remove code that becomes obsolete because of the requested change.
-
-Within files or areas touched by the task, remove clearly unused:
-
-* Imports
-* Variables
-* Functions
-* Methods
-* Classes
-* Types
-* Constants
-* Configuration
-* Debugging statements
-* Comments
-* Dead branches
-* Temporary workarounds
-
-Before removing a symbol, verify that it is truly unused.
-
-Consider possible:
-
-* References
-* Imports
-* Calls
-* Registrations
-* Dependency injection
-* Inheritance
-* Reflection
-* Serialization
-* Configuration references
-* Dynamic lookup
-* Framework discovery
-
-Do not assume lack of a simple text reference proves something is unused.
-
-Do not perform repository-wide dead-code cleanup unless explicitly requested.
-
----
-
-## Type Safety
-
-When the language or platform supports type safety, preserve it.
-
-Avoid bypassing the type system through unnecessary:
-
-* Unsafe casts
-* Dynamic types
-* Suppression directives
-* Unsafe null assumptions
-* Untyped structures
-
-If a type-safety escape hatch is genuinely necessary, keep it narrow.
-
-Prefer designs that make invalid states harder to represent when doing so remains simple and maintainable.
+Optimization must be based on an actual requirement, an obvious bottleneck, the existing project architecture, or measurement — not speculation. Correctness comes first.
 
 ---
 
 ## Resource Management and Concurrency
 
-Manage resource lifetimes deliberately.
+Manage resource lifetimes deliberately. Ensure correct release during both success and failure paths for files, streams, connections, transactions, locks, sockets, and timers.
 
-Ensure resources are correctly released during both success and failure paths.
+When concurrency is relevant, consider: race conditions, shared mutable state, lost updates, atomicity, idempotency, deadlocks, and resource limits.
 
-Be careful with resources such as:
-
-* Files
-* Streams
-* Connections
-* Transactions
-* Locks
-* Sockets
-* Timers
-* Subscriptions
-* Processes
-* Temporary resources
-
-When concurrency is relevant, consider:
-
-* Race conditions
-* Shared mutable state
-* Lost updates
-* Duplicate execution
-* Ordering
-* Atomicity
-* Idempotency
-* Deadlocks
-* Cancellation
-* Resource limits
-
-Do not introduce concurrency or parallelism unless it provides meaningful value.
-
-Prefer simple sequential behavior when additional complexity is not justified.
+Do not introduce concurrency or parallelism unless it provides meaningful value. Prefer simple sequential behavior when the added complexity is not justified.
 
 ---
 
@@ -486,24 +220,77 @@ Prefer simple sequential behavior when additional complexity is not justified.
 
 When modifying persistent state:
 
-* Understand transaction boundaries.
-* Preserve data invariants.
-* Consider concurrency.
-* Prevent partial updates when atomic behavior is required.
-* Keep application and persisted data expectations aligned.
-* Consider compatibility with existing data.
+- Understand transaction boundaries.
+- Preserve data invariants and prevent partial updates where atomic behavior is required.
+- Consider concurrency and compatibility with existing stored data.
 
-Do not casually change:
+Do not casually change schemas, stored formats, migration history, identifiers, keys, constraints, or serialized data formats without understanding the consequences.
 
-* Schemas
-* Stored formats
-* Migration history
-* Identifiers
-* Keys
-* Constraints
-* Serialized data formats
+---
 
-without understanding the consequences.
+## Type Safety
+
+Preserve type safety when the language supports it.
+
+Avoid bypassing the type system through unnecessary unsafe casts, dynamic types, suppression directives, or untyped structures. If an escape hatch is genuinely necessary, keep it narrow.
+
+Prefer designs that make invalid states harder to represent when doing so remains simple.
+
+---
+
+## Testability
+
+Do not create automated tests, test projects, test infrastructure, mocks, fixtures, or testing dependencies unless explicitly requested.
+
+All production code must remain easy to test later:
+
+- Separate business logic from infrastructure and external I/O where practical.
+- Make dependencies explicit; avoid hidden or static dependencies.
+- Avoid tight coupling to databases, clocks, randomness, or network calls when simple separation is appropriate.
+- Keep public behavior and contracts predictable and deterministic.
+
+Do not introduce dependency-injection abstractions or additional layers solely for hypothetical future tests. Apply testability pragmatically with KISS and YAGNI.
+
+If the repository already contains tests for changed code, preserve them and update or run them when necessary.
+
+> Do not write tests now, but do not write production code today that will be unnecessarily difficult to test tomorrow.
+
+---
+
+## Bug Fixes
+
+1. Understand the expected behavior.
+2. Reproduce or logically establish the failure.
+3. Identify and fix the root cause, not just the visible symptom.
+4. Inspect related code that may share the same issue.
+5. Verify the original failing scenario and important neighboring edge cases.
+
+Avoid broad speculative changes while fixing a localized defect.
+
+---
+
+## Dead and Unused Code
+
+Remove code made obsolete by the requested change within the affected scope.
+
+Before removing a symbol, verify it is truly unused — consider references, registrations, dependency injection, reflection, serialization, configuration, and framework discovery.
+
+Do not perform repository-wide dead-code cleanup unless explicitly requested.
+
+---
+
+## Dependencies and Configuration
+
+Prefer, in order:
+
+1. Existing language or runtime capabilities
+2. Existing repository utilities
+3. Already-installed dependencies
+4. A new dependency only when clearly justified
+
+Do not silently upgrade dependencies, change runtime requirements, adopt unstable features, or make unrelated lockfile changes. Before using a library API, verify the version already in use by the repository.
+
+Keep environment-specific and sensitive values outside source code using the project's established configuration mechanism. Do not scatter environment-variable reads throughout business logic when a configuration boundary exists.
 
 ---
 
@@ -511,15 +298,7 @@ without understanding the consequences.
 
 Follow existing logging and observability conventions.
 
-Logs should provide useful operational context without unnecessary noise.
-
-Do not:
-
-* Log secrets.
-* Log sensitive payloads unnecessarily.
-* Duplicate the same error at multiple layers without reason.
-* Add excessive logging to frequently executed paths.
-* Treat normal control flow as an error.
+Logs must provide useful operational context without noise. Do not log secrets, sensitive payloads, or duplicate the same error at multiple layers. Do not log normal control flow as errors.
 
 Preserve useful request or correlation context when supported by the repository.
 
@@ -527,15 +306,9 @@ Preserve useful request or correlation context when supported by the repository.
 
 ## Documentation
 
-Update documentation when a change makes existing documentation materially incorrect or incomplete.
+Update documentation when a change makes it materially incorrect or incomplete.
 
-Document when appropriate:
-
-* Public behavior
-* Important configuration
-* Setup requirements
-* Non-obvious decisions
-* Operational requirements
+Document public behavior, important configuration, setup requirements, non-obvious decisions, and operational requirements.
 
 Do not create excessive documentation for obvious implementation details.
 
@@ -543,47 +316,26 @@ Do not create excessive documentation for obvious implementation details.
 
 ## Verification
 
-Do not consider implementation complete merely because code has been written.
+Do not consider implementation complete because code has been written.
 
-Perform the strongest reasonable non-test verification available in the repository.
+Run the strongest reasonable non-test verification available: build, compilation, formatting, linting, type checking, static analysis, or schema validation using established repository commands.
 
-Depending on the project, this may include:
-
-* Build
-* Compilation
-* Formatting
-* Linting
-* Type checking
-* Static analysis
-* Schema validation
-* Manual scenario verification
-
-Use established repository commands.
-
-Do not add tests unless explicitly requested.
-
-Do not claim a command, build, validation, or test passed unless it was actually executed successfully.
-
-If something cannot be verified, state that clearly.
+Do not claim a build, check, or validation passed unless it was actually executed and succeeded. If something cannot be verified, state that clearly.
 
 ---
 
 ## Final Review
 
-Before completing the task:
+Before completing any task:
 
 1. Inspect the final diff.
-2. Confirm every changed file is necessary.
-3. Confirm every changed line is intentional.
-4. Remove temporary code and debugging statements.
-5. Remove unused imports and variables.
-6. Ensure no unrelated changes were introduced.
-7. Check compatibility.
-8. Check error handling.
-9. Check security implications.
-10. Check obvious performance issues.
-11. Check that the code remains testable in the future.
-12. Ask whether the implementation can be simpler without sacrificing correctness.
+2. Confirm every changed file and line is necessary and intentional.
+3. Remove all temporary code, debugging statements, unused imports, and unused variables.
+4. Confirm no unrelated changes were introduced.
+5. Check compatibility, error handling, and security implications.
+6. Check for obvious performance and scalability issues.
+7. Confirm the code remains testable in the future.
+8. Ask: can this implementation be simpler without sacrificing correctness?
 
 ---
 
@@ -591,20 +343,12 @@ Before completing the task:
 
 Briefly summarize:
 
-* What changed
-* Important design decisions
-* Verification performed
-* Any important limitations, assumptions, risks, or breaking changes
+- What changed and why
+- Important design decisions made
+- Verification performed
+- Any limitations, assumptions, risks, or breaking changes
 
-Do not claim the implementation is:
-
-* Fully working
-* Production ready
-* Fixed
-* Verified
-* Fully tested
-
-unless the available evidence genuinely supports that statement.
+Do not claim the implementation is fully working, production-ready, fixed, or verified unless the evidence genuinely supports it.
 
 ---
 
@@ -612,19 +356,15 @@ unless the available evidence genuinely supports that statement.
 
 Do not merely make the code work.
 
-Leave the affected code:
+Leave every file you touch:
 
-* Correct
-* Clear
-* Simple
-* Consistent
-* Secure
-* Maintainable
-* Easy to test later
-* No more complex than necessary
+- Correct
+- Clear
+- Simple
+- Consistent
+- Secure
+- Maintainable
+- No more complex than necessary
+- Easy to test later
 
-Improve the code you touch when doing so directly supports the requested task, but avoid unrelated cleanup or redesign.
-
-The goal is:
-
-> The safest, cleanest, and reasonably verified solution that solves the actual problem.
+> The goal is the safest, cleanest, and reasonably verified solution that solves the actual problem.
