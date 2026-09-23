@@ -1,3 +1,5 @@
+using Kahoot.Domain.Enums;
+
 namespace Kahoot.Domain.Entities;
 
 public sealed class User
@@ -14,7 +16,7 @@ public sealed class User
 
     public required string PasswordHash { get; set; }
 
-    public string Role { get; set; } = "Host";
+    public UserRole Role { get; set; } = UserRole.Host;
 
     public string Status { get; set; } = "Active";
 

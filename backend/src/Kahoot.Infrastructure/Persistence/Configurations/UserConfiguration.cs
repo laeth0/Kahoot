@@ -1,4 +1,5 @@
 using Kahoot.Domain.Entities;
+using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -30,8 +31,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
             .IsRequired();
 
         builder.Property(user => user.Role)
+            .HasConversion<string>()
             .HasMaxLength(32)
-            .HasDefaultValue("Host")
+            .HasDefaultValue(UserRole.Host)
+            .HasSentinel((UserRole)0)
             .IsRequired();
 
         builder.Property(user => user.Status)

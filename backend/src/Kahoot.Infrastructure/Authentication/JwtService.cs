@@ -153,7 +153,7 @@ internal sealed class JwtService : IJwtService
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString("D")),
             new Claim(JwtRegisteredClaimNames.UniqueName, user.Username),
             new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim("role", user.Role),
+            new Claim("role", user.Role.ToString()),
             new Claim("token_security_version", user.TokenSecurityVersion.ToString()),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N"))
         };
