@@ -226,6 +226,10 @@ Code should:
 * Avoid surprising behavior.
 * Avoid premature generalization.
 
+All variable names should be descriptive, meaningful, clean, and easy to understand.
+
+Avoid vague, overly short, or unclear variable names unless they are standard conventions (for example, `i` in a simple loop). Prefer names that clearly communicate the variable’s purpose and intent.
+
 Prefer:
 
 > Simple code that clearly solves the actual problem.
