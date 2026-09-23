@@ -1,31 +1,491 @@
-Table users {
+Project Kahoot {
+  database_type: 'PostgreSQL'
+
+  Note: '''
+  PostgreSQL is the authoritative store.
+  Tenant isolation is represented by Accounts.TenantId:
+  - Host accounts must have a non-null unique TenantId.
+  - SystemAdministrator accounts must have TenantId = NULL.
+  - Tenant-scoped child relationships use composite foreign keys where practical
+    so a child cannot be linked to a parent from another tenant.
+  '''
+}
+
+Enum account_kind {
+  Host
+  SystemAdministrator
+}
+
+Enum account_status {
+  Active
+  Suspended
+}
+
+Enum media_status {
+  ACTIVE
+  DELETION_PENDING
+}
+
+Enum game_status {
+  CREATED
+  LOBBY
+  QUESTION_ACTIVE
+  QUESTION_RESULTS
+  LEADERBOARD
+  FINISHED
+}
+
+Table accounts {
   id uuid [pk, not null]
-  username varchar(64) [not null, unique]
-  normalized_username varchar(64) [not null, unique]
-  email varchar(256) [not null, unique]
-  name varchar(128) [not null]
-  password_hash text [not null]
-  role varchar(32) [not null, default: 'Host']
-  status varchar(32) [not null, default: 'Active']
+  tenant_id uuid [null]
+
+  display_username varchar(64) [not null]
+  normalized_username varchar(64) [not null]
+  password_hash varchar(512) [not null]
+
+  account_kind account_kind [not null]
+  status account_status [not null]
+
   token_security_version int [not null, default: 1]
+  revision bigint [not null, default: 1]
+  termination_pending boolean [not null, default: false]
+
+  status_changed_at timestamptz [null]
   created_at timestamptz [not null]
-  updated_at timestamptz [not null]
+
+  indexes {
+    normalized_username [unique, name: 'ux_accounts_normalized_username']
+    tenant_id [unique, name: 'ux_accounts_tenant_id']
+    (account_kind, status, created_at, id) [name: 'ix_accounts_admin_listing']
+  }
+
+  Note: '''
+  Host => TenantId is required.
+  SystemAdministrator => TenantId must be NULL.
+  StatusChangedAt is also the durable suspension cutoff timestamp used by the
+  suspension finalizer.
+  '''
 }
 
 Table refresh_tokens {
   id uuid [pk, not null]
-  user_id uuid [not null]
+  account_id uuid [not null]
+
   token_family_id uuid [not null]
-  token_hash varchar(64) [not null, unique]
+  family_created_at timestamptz [not null]
+
+  token_hash bytea [not null]
   created_at timestamptz [not null]
   expires_at timestamptz [not null]
-  rotated_at timestamptz
-  revoked_at timestamptz
+  rotated_at timestamptz [null]
+  revoked_at timestamptz [null]
 
   indexes {
-    user_id
-    token_family_id
+    token_hash [unique, name: 'ux_refresh_tokens_token_hash']
+    (account_id, token_family_id) [name: 'ix_refresh_tokens_account_family']
+    expires_at [name: 'ix_refresh_tokens_expires_at']
+    revoked_at [name: 'ix_refresh_tokens_revoked_at']
+  }
+
+  Note: '''
+  Only SHA-256 token hashes are stored.
+  Cleanup eligibility is based on Max(ExpiresAt, RevokedAt) + 7 days.
+  FamilyCreatedAt is copied to each rotated token so the absolute 30-day family
+  lifetime can be checked without an additional family table.
+  '''
+}
+
+Table security_audit_logs {
+  id uuid [pk, not null]
+
+  actor_account_id uuid [not null]
+  actor_kind account_kind [not null]
+  target_account_id uuid [null]
+
+  action varchar(64) [not null]
+  occurred_at timestamptz [not null]
+  request_id varchar(64) [not null]
+  outcome varchar(16) [not null]
+  reason_code varchar(64) [null]
+
+  indexes {
+    occurred_at [name: 'ix_security_audit_logs_occurred_at']
+    (actor_account_id, occurred_at) [name: 'ix_security_audit_logs_actor_time']
+    (target_account_id, occurred_at) [name: 'ix_security_audit_logs_target_time']
+  }
+
+  Note: '''
+  Append-oriented audit table. The application DB role must have SELECT/INSERT
+  but no UPDATE/DELETE permission on this table.
+  '''
+}
+
+Table quizzes {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+
+  title varchar(200) [not null]
+  description varchar(1000) [null]
+
+  is_published boolean [not null, default: false]
+  revision bigint [not null, default: 1]
+  created_at timestamptz [not null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_quizzes_id_tenant']
+    (tenant_id, created_at, id) [name: 'ix_quizzes_tenant_created_id']
   }
 }
 
-Ref: refresh_tokens.user_id > users.id [delete: cascade]
+Table media_items {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+
+  storage_path varchar(512) [not null]
+  content_type varchar(32) [not null]
+
+  byte_size bigint [not null]
+  pixel_width int [not null]
+  pixel_height int [not null]
+
+  status media_status [not null]
+  reference_count int [not null, default: 0]
+  unreferenced_since timestamptz [null]
+  created_at timestamptz [not null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_media_items_id_tenant']
+    storage_path [unique, name: 'ux_media_items_storage_path']
+    (tenant_id, created_at, id) [name: 'ix_media_items_tenant_created_id']
+    (status, reference_count, unreferenced_since) [name: 'ix_media_items_orphan_cleanup']
+  }
+
+  Note: '''
+  ReferenceCount includes current authoring references and immutable game-snapshot
+  references. A referenced row must not be physically deleted.
+  '''
+}
+
+Table questions {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  quiz_id uuid [not null]
+
+  text varchar(500) [not null]
+  media_item_id uuid [null]
+
+  duration_seconds int [not null]
+  base_points int [not null]
+  order_index int [not null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_questions_id_tenant']
+    (quiz_id, order_index) [unique, name: 'ux_questions_quiz_order']
+    (tenant_id, quiz_id, order_index) [name: 'ix_questions_tenant_quiz_order']
+  }
+}
+
+Table choices {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  question_id uuid [not null]
+
+  text varchar(300) [not null]
+  is_correct boolean [not null]
+  order_index int [not null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_choices_id_tenant']
+    (question_id, order_index) [unique, name: 'ux_choices_question_order']
+    (tenant_id, question_id, order_index) [name: 'ix_choices_tenant_question_order']
+  }
+
+  Note: '''
+  OrderIndex is an implementation field used to preserve deterministic choice
+  presentation order when the complete choice set is replaced.
+  '''
+}
+
+Table games {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  source_quiz_id uuid [not null]
+
+  title varchar(200) [not null]
+  pin varchar(8) [null]
+
+  status game_status [not null]
+  state_version bigint [not null, default: 1]
+  presence_version bigint [not null, default: 0]
+
+  reserved_participant_count int [not null, default: 0]
+  next_seat_number int [not null, default: 1]
+
+  current_question_index int [null]
+
+  host_grace_expires_at timestamptz [null]
+  is_terminated_by_suspension boolean [not null, default: false]
+
+  created_at timestamptz [not null]
+  finished_at timestamptz [null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_games_id_tenant']
+    pin [unique, name: 'ux_games_active_pin']
+    (tenant_id, created_at, id) [name: 'ix_games_tenant_created_id']
+    (tenant_id, status) [name: 'ix_games_tenant_status']
+    (tenant_id, source_quiz_id) [name: 'ix_games_tenant_source_quiz']
+    (status, host_grace_expires_at) [name: 'ix_games_abandonment_sweep']
+  }
+
+  Note: '''
+  Pin is nullable and must be set to NULL when the game becomes FINISHED so the
+  numeric PIN can be reused while a normal UNIQUE index still prevents active
+  collisions.
+
+  ReservedParticipantCount is the durable seat counter locked during JoinGame.
+  NextSeatNumber provides concurrency-safe sequential seat allocation.
+  HostGraceExpiresAt is the durable deadline consumed by AbandonedGameFinalizer.
+  '''
+}
+
+Table game_question_snapshots {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  game_id uuid [not null]
+
+  order_index int [not null]
+  text varchar(500) [not null]
+
+  media_item_id uuid [null]
+  media_url varchar(512) [null]
+
+  duration_seconds int [not null]
+  base_points int [not null]
+
+  started_at timestamptz [null]
+  ends_at timestamptz [null]
+
+  initial_eligible_participant_count int [not null, default: 0]
+  effective_eligible_participant_count int [not null, default: 0]
+  accepted_answer_count int [not null, default: 0]
+
+  results_materialized_at timestamptz [null]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_game_questions_id_tenant']
+    (id, tenant_id, game_id) [unique, name: 'ux_game_questions_id_tenant_game']
+    (game_id, order_index) [unique, name: 'ux_game_questions_game_order']
+    (tenant_id, game_id, order_index) [name: 'ix_game_questions_tenant_game_order']
+  }
+
+  Note: '''
+  Snapshot content fields (Text, MediaUrl, DurationSeconds, BasePoints) are copied
+  at game creation and never follow later quiz edits.
+
+  InitialEligibleParticipantCount is intentionally separate from
+  EffectiveEligibleParticipantCount. This is required to distinguish a question
+  that started with zero players from one that started non-empty and later
+  reached zero after participant removals.
+  '''
+}
+
+Table game_choice_snapshots {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  game_question_id uuid [not null]
+
+  text varchar(300) [not null]
+  is_correct boolean [not null]
+  order_index int [not null]
+
+  selection_count int [not null, default: 0]
+
+  indexes {
+    (id, tenant_id) [unique, name: 'ux_game_choices_id_tenant']
+    (id, tenant_id, game_question_id) [unique, name: 'ux_game_choices_id_tenant_question']
+    (game_question_id, order_index) [unique, name: 'ux_game_choices_question_order']
+  }
+
+  Note: '''
+  SelectionCount is materialized when the question closes so reconnect/result
+  payloads do not have to aggregate the full answer history repeatedly.
+  '''
+}
+
+Table participants {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  game_id uuid [not null]
+
+  display_nickname varchar(30) [not null]
+  normalized_nickname varchar(30) [not null]
+
+  seat_number int [not null]
+
+  join_operation_id_hash bytea [not null]
+  join_recovery_expires_at timestamptz [not null]
+
+  is_removed boolean [not null, default: false]
+  removed_at timestamptz [null]
+
+  total_score bigint [not null, default: 0]
+  rank int [null]
+
+  connection_generation bigint [not null, default: 0]
+
+  created_at timestamptz [not null]
+
+  indexes {
+    (id, tenant_id, game_id) [unique, name: 'ux_participants_id_tenant_game']
+    (game_id, normalized_nickname) [unique, name: 'ux_participants_game_nickname']
+    (game_id, join_operation_id_hash) [unique, name: 'ux_participants_game_join_operation']
+    (game_id, seat_number) [unique, name: 'ux_participants_game_seat']
+    (tenant_id, game_id, is_removed) [name: 'ix_participants_tenant_game_removed']
+  }
+
+  Note: '''
+  Removed participants are never deleted; nickname reservation remains permanent
+  for the game.
+
+  Rank is the latest materialized leaderboard/final rank.
+  SignalR ConnectionId is intentionally not stored here; transient connection
+  mappings may live in the realtime/session store. ConnectionGeneration is the
+  durable fencing value.
+  '''
+}
+
+Table participant_session_tokens {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+  game_id uuid [not null]
+  participant_id uuid [not null]
+
+  token_hash bytea [not null]
+
+  created_at timestamptz [not null]
+  revoked_at timestamptz [null]
+  expires_at timestamptz [null]
+
+  indexes {
+    participant_id [unique, name: 'ux_participant_session_tokens_participant']
+    token_hash [unique, name: 'ux_participant_session_tokens_token_hash']
+    (tenant_id, game_id, participant_id) [unique, name: 'ux_participant_tokens_tenant_game_participant']
+    expires_at [name: 'ix_participant_session_tokens_expires_at']
+  }
+
+  Note: '''
+  Only SHA-256 token hashes are persisted. Keeping the credential in a separate
+  table allows token-hash cleanup after the post-game recovery window without
+  deleting historical Participant, Answer, Score, or Rank data.
+  '''
+}
+
+Table answer_submissions {
+  id uuid [pk, not null]
+  tenant_id uuid [not null]
+
+  game_id uuid [not null]
+  game_question_id uuid [not null]
+  participant_id uuid [not null]
+
+  submitted_at timestamptz [not null]
+  response_time_ms int [not null]
+
+  is_correct boolean [not null]
+  points_awarded int [not null]
+
+  indexes {
+    (id, tenant_id, game_question_id) [unique, name: 'ux_answer_submissions_id_tenant_question']
+    (game_id, game_question_id, participant_id) [unique, name: 'ux_answer_submissions_once_per_question']
+    (game_question_id, submitted_at) [name: 'ix_answer_submissions_question_time']
+  }
+
+  Note: '''
+  Append-only historical table. SubmittedAt is the natural time column for
+  archival/partition planning. The uniqueness constraint is the durable
+  idempotency guarantee for answer resubmission.
+  '''
+}
+
+Table answer_submission_choices {
+  answer_submission_id uuid [not null]
+  tenant_id uuid [not null]
+  game_question_id uuid [not null]
+  game_choice_id uuid [not null]
+
+  indexes {
+    (answer_submission_id, game_choice_id) [pk, name: 'pk_answer_submission_choices']
+    (game_question_id, game_choice_id) [name: 'ix_answer_submission_choices_question_choice']
+  }
+}
+
+Table game_command_idempotency {
+  game_id uuid [not null]
+  tenant_id uuid [not null]
+  command_id uuid [not null]
+
+  command_name varchar(64) [not null]
+  request_hash bytea [not null]
+
+  result_state_version bigint [not null]
+  response_payload jsonb [not null]
+
+  created_at timestamptz [not null]
+
+  indexes {
+    (game_id, command_id) [pk, name: 'pk_game_command_idempotency']
+    (tenant_id, game_id, created_at) [name: 'ix_game_command_idempotency_tenant_game_time']
+  }
+
+  Note: '''
+  RequestHash is required to detect reuse of an existing CommandId with altered
+  parameters. ResponsePayload stores the committed response for exact replay.
+  '''
+}
+
+
+// Root ownership / authentication
+
+Ref: refresh_tokens.account_id > accounts.id [delete: restrict]
+Ref: security_audit_logs.actor_account_id > accounts.id [delete: restrict]
+Ref: security_audit_logs.target_account_id > accounts.id [delete: restrict]
+
+Ref: quizzes.tenant_id > accounts.tenant_id [delete: restrict]
+Ref: media_items.tenant_id > accounts.tenant_id [delete: restrict]
+Ref: games.tenant_id > accounts.tenant_id [delete: restrict]
+
+
+// Quiz authoring
+
+Ref: questions.(quiz_id, tenant_id) > quizzes.(id, tenant_id) [delete: cascade]
+Ref: questions.(media_item_id, tenant_id) > media_items.(id, tenant_id) [delete: restrict]
+Ref: choices.(question_id, tenant_id) > questions.(id, tenant_id) [delete: cascade]
+
+
+// Game snapshot / archive
+
+Ref: games.(source_quiz_id, tenant_id) > quizzes.(id, tenant_id) [delete: restrict]
+Ref: game_question_snapshots.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
+Ref: game_question_snapshots.(media_item_id, tenant_id) > media_items.(id, tenant_id) [delete: restrict]
+Ref: game_choice_snapshots.(game_question_id, tenant_id) > game_question_snapshots.(id, tenant_id) [delete: restrict]
+
+
+// Participants / credentials
+
+Ref: participants.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
+Ref: participant_session_tokens.(participant_id, tenant_id, game_id) > participants.(id, tenant_id, game_id) [delete: restrict]
+
+
+// Answer ingestion / scoring
+
+Ref: answer_submissions.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
+Ref: answer_submissions.(game_question_id, tenant_id, game_id) > game_question_snapshots.(id, tenant_id, game_id) [delete: restrict]
+Ref: answer_submissions.(participant_id, tenant_id, game_id) > participants.(id, tenant_id, game_id) [delete: restrict]
+Ref: answer_submission_choices.(answer_submission_id, tenant_id, game_question_id) > answer_submissions.(id, tenant_id, game_question_id) [delete: restrict]
+Ref: answer_submission_choices.(game_choice_id, tenant_id, game_question_id) > game_choice_snapshots.(id, tenant_id, game_question_id) [delete: restrict]
+
+
+// Game command idempotency
+
+Ref: game_command_idempotency.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
