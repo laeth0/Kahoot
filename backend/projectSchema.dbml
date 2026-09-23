@@ -3,11 +3,10 @@ Project Kahoot {
 
   Note: '''
   PostgreSQL is the authoritative store.
-  Tenant isolation is represented by Accounts.TenantId:
-  - Host accounts must have a non-null unique TenantId.
-  - SystemAdministrator accounts must have TenantId = NULL.
-  - Tenant-scoped child relationships use composite foreign keys where practical
-    so a child cannot be linked to a parent from another tenant.
+  Host isolation is represented by HostAccountId:
+  - Host-owned resources reference Accounts.Id directly via HostAccountId.
+  - Host-scoped child relationships use composite foreign keys where practical
+    so a child cannot be linked to a parent from another host account.
   '''
 }
 
@@ -37,7 +36,6 @@ Enum game_status {
 
 Table accounts {
   id uuid [pk, not null]
-  tenant_id uuid [null]
 
   display_username varchar(64) [not null]
   normalized_username varchar(64) [not null]
@@ -55,13 +53,10 @@ Table accounts {
 
   indexes {
     normalized_username [unique, name: 'ux_accounts_normalized_username']
-    tenant_id [unique, name: 'ux_accounts_tenant_id']
     (account_kind, status, created_at, id) [name: 'ix_accounts_admin_listing']
   }
 
   Note: '''
-  Host => TenantId is required.
-  SystemAdministrator => TenantId must be NULL.
   StatusChangedAt is also the durable suspension cutoff timestamp used by the
   suspension finalizer.
   '''
@@ -122,7 +117,7 @@ Table security_audit_logs {
 
 Table quizzes {
   id uuid [pk, not null]
-  tenant_id uuid [not null, ref: > accounts.tenant_id]
+  host_account_id uuid [not null, ref: > accounts.id]
 
   title varchar(200) [not null]
   description varchar(1000) [null]
@@ -132,14 +127,14 @@ Table quizzes {
   created_at timestamptz [not null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_quizzes_id_tenant']
-    (tenant_id, created_at, id) [name: 'ix_quizzes_tenant_created_id']
+    (id, host_account_id) [unique, name: 'ux_quizzes_id_host_account']
+    (host_account_id, created_at, id) [name: 'ix_quizzes_host_account_created_id']
   }
 }
 
 Table media_items {
   id uuid [pk, not null]
-  tenant_id uuid [not null, ref: > accounts.tenant_id]
+  host_account_id uuid [not null, ref: > accounts.id]
 
   storage_path varchar(512) [not null]
   content_type varchar(32) [not null]
@@ -154,9 +149,9 @@ Table media_items {
   created_at timestamptz [not null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_media_items_id_tenant']
+    (id, host_account_id) [unique, name: 'ux_media_items_id_host_account']
     storage_path [unique, name: 'ux_media_items_storage_path']
-    (tenant_id, created_at, id) [name: 'ix_media_items_tenant_created_id']
+    (host_account_id, created_at, id) [name: 'ix_media_items_host_account_created_id']
     (status, reference_count, unreferenced_since) [name: 'ix_media_items_orphan_cleanup']
   }
 
@@ -168,7 +163,7 @@ Table media_items {
 
 Table questions {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   quiz_id uuid [not null]
 
   text varchar(500) [not null]
@@ -179,15 +174,15 @@ Table questions {
   order_index int [not null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_questions_id_tenant']
+    (id, host_account_id) [unique, name: 'ux_questions_id_host_account']
     (quiz_id, order_index) [unique, name: 'ux_questions_quiz_order']
-    (tenant_id, quiz_id, order_index) [name: 'ix_questions_tenant_quiz_order']
+    (host_account_id, quiz_id, order_index) [name: 'ix_questions_host_account_quiz_order']
   }
 }
 
 Table choices {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   question_id uuid [not null]
 
   text varchar(300) [not null]
@@ -195,9 +190,9 @@ Table choices {
   order_index int [not null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_choices_id_tenant']
+    (id, host_account_id) [unique, name: 'ux_choices_id_host_account']
     (question_id, order_index) [unique, name: 'ux_choices_question_order']
-    (tenant_id, question_id, order_index) [name: 'ix_choices_tenant_question_order']
+    (host_account_id, question_id, order_index) [name: 'ix_choices_host_account_question_order']
   }
 
   Note: '''
@@ -208,7 +203,7 @@ Table choices {
 
 Table games {
   id uuid [pk, not null]
-  tenant_id uuid [not null, ref: > accounts.tenant_id]
+  host_account_id uuid [not null, ref: > accounts.id]
   source_quiz_id uuid [not null]
 
   title varchar(200) [not null]
@@ -230,11 +225,11 @@ Table games {
   finished_at timestamptz [null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_games_id_tenant']
+    (id, host_account_id) [unique, name: 'ux_games_id_host_account']
     pin [unique, name: 'ux_games_active_pin']
-    (tenant_id, created_at, id) [name: 'ix_games_tenant_created_id']
-    (tenant_id, status) [name: 'ix_games_tenant_status']
-    (tenant_id, source_quiz_id) [name: 'ix_games_tenant_source_quiz']
+    (host_account_id, created_at, id) [name: 'ix_games_host_account_created_id']
+    (host_account_id, status) [name: 'ix_games_host_account_status']
+    (host_account_id, source_quiz_id) [name: 'ix_games_host_account_source_quiz']
     (status, host_grace_expires_at) [name: 'ix_games_abandonment_sweep']
   }
 
@@ -251,7 +246,7 @@ Table games {
 
 Table game_question_snapshots {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   game_id uuid [not null]
 
   order_index int [not null]
@@ -273,10 +268,10 @@ Table game_question_snapshots {
   results_materialized_at timestamptz [null]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_game_questions_id_tenant']
-    (id, tenant_id, game_id) [unique, name: 'ux_game_questions_id_tenant_game']
+    (id, host_account_id) [unique, name: 'ux_game_questions_id_host_account']
+    (id, host_account_id, game_id) [unique, name: 'ux_game_questions_id_host_account_game']
     (game_id, order_index) [unique, name: 'ux_game_questions_game_order']
-    (tenant_id, game_id, order_index) [name: 'ix_game_questions_tenant_game_order']
+    (host_account_id, game_id, order_index) [name: 'ix_game_questions_host_account_game_order']
   }
 
   Note: '''
@@ -292,7 +287,7 @@ Table game_question_snapshots {
 
 Table game_choice_snapshots {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   game_question_id uuid [not null]
 
   text varchar(300) [not null]
@@ -302,8 +297,8 @@ Table game_choice_snapshots {
   selection_count int [not null, default: 0]
 
   indexes {
-    (id, tenant_id) [unique, name: 'ux_game_choices_id_tenant']
-    (id, tenant_id, game_question_id) [unique, name: 'ux_game_choices_id_tenant_question']
+    (id, host_account_id) [unique, name: 'ux_game_choices_id_host_account']
+    (id, host_account_id, game_question_id) [unique, name: 'ux_game_choices_id_host_account_question']
     (game_question_id, order_index) [unique, name: 'ux_game_choices_question_order']
   }
 
@@ -315,7 +310,7 @@ Table game_choice_snapshots {
 
 Table participants {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   game_id uuid [not null]
 
   display_nickname varchar(30) [not null]
@@ -337,11 +332,11 @@ Table participants {
   created_at timestamptz [not null]
 
   indexes {
-    (id, tenant_id, game_id) [unique, name: 'ux_participants_id_tenant_game']
+    (id, host_account_id, game_id) [unique, name: 'ux_participants_id_host_account_game']
     (game_id, normalized_nickname) [unique, name: 'ux_participants_game_nickname']
     (game_id, join_operation_id_hash) [unique, name: 'ux_participants_game_join_operation']
     (game_id, seat_number) [unique, name: 'ux_participants_game_seat']
-    (tenant_id, game_id, is_removed) [name: 'ix_participants_tenant_game_removed']
+    (host_account_id, game_id, is_removed) [name: 'ix_participants_host_account_game_removed']
   }
 
   Note: '''
@@ -357,7 +352,7 @@ Table participants {
 
 Table participant_session_tokens {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   game_id uuid [not null]
   participant_id uuid [not null]
 
@@ -370,7 +365,7 @@ Table participant_session_tokens {
   indexes {
     participant_id [unique, name: 'ux_participant_session_tokens_participant']
     token_hash [unique, name: 'ux_participant_session_tokens_token_hash']
-    (tenant_id, game_id, participant_id) [unique, name: 'ux_participant_tokens_tenant_game_participant']
+    (host_account_id, game_id, participant_id) [unique, name: 'ux_participant_tokens_host_account_game_participant']
     expires_at [name: 'ix_participant_session_tokens_expires_at']
   }
 
@@ -383,7 +378,7 @@ Table participant_session_tokens {
 
 Table answer_submissions {
   id uuid [pk, not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
 
   game_id uuid [not null]
   game_question_id uuid [not null]
@@ -396,7 +391,7 @@ Table answer_submissions {
   points_awarded int [not null]
 
   indexes {
-    (id, tenant_id, game_question_id) [unique, name: 'ux_answer_submissions_id_tenant_question']
+    (id, host_account_id, game_question_id) [unique, name: 'ux_answer_submissions_id_host_account_question']
     (game_id, game_question_id, participant_id) [unique, name: 'ux_answer_submissions_once_per_question']
     (game_question_id, submitted_at) [name: 'ix_answer_submissions_question_time']
   }
@@ -410,7 +405,7 @@ Table answer_submissions {
 
 Table answer_submission_choices {
   answer_submission_id uuid [not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   game_question_id uuid [not null]
   game_choice_id uuid [not null]
 
@@ -422,7 +417,7 @@ Table answer_submission_choices {
 
 Table game_command_idempotency {
   game_id uuid [not null]
-  tenant_id uuid [not null]
+  host_account_id uuid [not null]
   command_id uuid [not null]
 
   command_name varchar(64) [not null]
@@ -435,7 +430,7 @@ Table game_command_idempotency {
 
   indexes {
     (game_id, command_id) [pk, name: 'pk_game_command_idempotency']
-    (tenant_id, game_id, created_at) [name: 'ix_game_command_idempotency_tenant_game_time']
+    (host_account_id, game_id, created_at) [name: 'ix_game_command_idempotency_host_account_game_time']
   }
 
   Note: '''
@@ -447,34 +442,34 @@ Table game_command_idempotency {
 
 // Quiz authoring
 
-Ref: questions.(quiz_id, tenant_id) > quizzes.(id, tenant_id) [delete: cascade]
-Ref: questions.(media_item_id, tenant_id) > media_items.(id, tenant_id) [delete: restrict]
-Ref: choices.(question_id, tenant_id) > questions.(id, tenant_id) [delete: cascade]
+Ref: questions.(quiz_id, host_account_id) > quizzes.(id, host_account_id) [delete: cascade]
+Ref: questions.(media_item_id, host_account_id) > media_items.(id, host_account_id) [delete: restrict]
+Ref: choices.(question_id, host_account_id) > questions.(id, host_account_id) [delete: cascade]
 
 
 // Game snapshot / archive
 
-Ref: games.(source_quiz_id, tenant_id) > quizzes.(id, tenant_id) [delete: restrict]
-Ref: game_question_snapshots.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
-Ref: game_question_snapshots.(media_item_id, tenant_id) > media_items.(id, tenant_id) [delete: restrict]
-Ref: game_choice_snapshots.(game_question_id, tenant_id) > game_question_snapshots.(id, tenant_id) [delete: restrict]
+Ref: games.(source_quiz_id, host_account_id) > quizzes.(id, host_account_id) [delete: restrict]
+Ref: game_question_snapshots.(game_id, host_account_id) > games.(id, host_account_id) [delete: restrict]
+Ref: game_question_snapshots.(media_item_id, host_account_id) > media_items.(id, host_account_id) [delete: restrict]
+Ref: game_choice_snapshots.(game_question_id, host_account_id) > game_question_snapshots.(id, host_account_id) [delete: restrict]
 
 
 // Participants / credentials
 
-Ref: participants.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
-Ref: participant_session_tokens.(participant_id, tenant_id, game_id) > participants.(id, tenant_id, game_id) [delete: restrict]
+Ref: participants.(game_id, host_account_id) > games.(id, host_account_id) [delete: restrict]
+Ref: participant_session_tokens.(participant_id, host_account_id, game_id) > participants.(id, host_account_id, game_id) [delete: restrict]
 
 
 // Answer ingestion / scoring
 
-Ref: answer_submissions.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
-Ref: answer_submissions.(game_question_id, tenant_id, game_id) > game_question_snapshots.(id, tenant_id, game_id) [delete: restrict]
-Ref: answer_submissions.(participant_id, tenant_id, game_id) > participants.(id, tenant_id, game_id) [delete: restrict]
-Ref: answer_submission_choices.(answer_submission_id, tenant_id, game_question_id) > answer_submissions.(id, tenant_id, game_question_id) [delete: restrict]
-Ref: answer_submission_choices.(game_choice_id, tenant_id, game_question_id) > game_choice_snapshots.(id, tenant_id, game_question_id) [delete: restrict]
+Ref: answer_submissions.(game_id, host_account_id) > games.(id, host_account_id) [delete: restrict]
+Ref: answer_submissions.(game_question_id, host_account_id, game_id) > game_question_snapshots.(id, host_account_id, game_id) [delete: restrict]
+Ref: answer_submissions.(participant_id, host_account_id, game_id) > participants.(id, host_account_id, game_id) [delete: restrict]
+Ref: answer_submission_choices.(answer_submission_id, host_account_id, game_question_id) > answer_submissions.(id, host_account_id, game_question_id) [delete: restrict]
+Ref: answer_submission_choices.(game_choice_id, host_account_id, game_question_id) > game_choice_snapshots.(id, host_account_id, game_question_id) [delete: restrict]
 
 
 // Game command idempotency
 
-Ref: game_command_idempotency.(game_id, tenant_id) > games.(id, tenant_id) [delete: restrict]
+Ref: game_command_idempotency.(game_id, host_account_id) > games.(id, host_account_id) [delete: restrict]
