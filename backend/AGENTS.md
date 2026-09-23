@@ -1,20 +1,32 @@
-# Backend Development Rules
+# Backend agent instructions
 
-## Architecture
-- Use Clean Architecture for project boundaries and Vertical Slice Architecture for application features.
-- Keep domain entities in Domain, use cases in Application, persistence in Infrastructure, and HTTP concerns in Api.
+These instructions apply to `backend/`. Read the affected code and nearby dependencies before changing it. Keep changes focused, preserve existing contracts, and follow the conventions already present in the relevant project.
 
-## Database Configuration and Migrations
-- Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
-- Use the repository-root `docker-compose.yml` for local API and PostgreSQL runs. Keep local credentials in the ignored `.env` file; use `.env.example` only as a template. Add future frontend services to the root Compose project when they exist.
-- Supply `Jwt__SigningKey` at runtime. Never commit JWT signing keys.
-- Apply pending EF Core migrations through an `IHostedService` outside `Program.cs`. Use the startup `CancellationToken` and let migration failures stop application startup.
+## Project layout
 
-## HTTP Errors and Middleware
-- Return ASP.NET Core `ProblemDetails` for errors. Route unexpected request exceptions through the global exception handler, log useful context, and keep stack traces and sensitive details out of HTTP responses.
-- Do not swallow exceptions or use empty `catch` blocks.
-- Keep middleware in the required order when configured: exception handling, forwarded headers, HTTPS, CORS, authentication, authorization, rate limiting, then endpoint mapping.
+- `Kahoot.slnx` contains four .NET 10 projects under `src/`.
+- `Kahoot.Domain` holds entities and domain contracts. It has no project references.
+- `Kahoot.Application` holds application contracts, MediatR command/query interfaces, results, and service registration. It references Domain.
+- `Kahoot.Infrastructure` implements persistence and authentication. It references Application; its registration is in `DependencyInjection.cs`.
+- `Kahoot.Api` is the HTTP entry point. It references Application and Infrastructure; `Program.cs` configures middleware, authentication, CORS, health checks, and endpoints.
+- `test/` currently contains no test project.
 
-## Testing Policy
-- **No Testing Code**: Do not create or add any test code, test projects, unit tests, or integration tests to the backend.
-- **Empty Test Directory**: The `backend/test/` directory must remain completely empty, containing only the `.gitkeep` file.
+Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, application behavior and contracts in Application, database and external-service implementations in Infrastructure, and core entities in Domain.
+
+## Existing patterns
+
+- Use the existing `ICommand`/`IQuery` and `Result`/`Error` types for application operations where they fit. MediatR handlers and FluentValidation validators are registered by assembly scanning in `Kahoot.Application/DependencyInjection.cs`.
+- API controllers inherit `ApiControllerBase`, which supplies `[ApiController]` and the `api/[controller]` route. Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
+- Infrastructure services that use marker interfaces (`IScopedService`, `ITransientService`, `ISingletonService`) are registered by Scrutor scanning. Check the existing lifetime before adding a service.
+- EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup. When changing persisted entities, keep configuration, migrations, and `projectSchema.dbml` aligned; do not edit existing migrations to represent a new schema change.
+- Pass `CancellationToken` through async request, database, and service calls. Keep database writes and token rotation atomic where required.
+- Authentication uses JWT bearer validation. Refresh tokens are stored as hashes and rotated or revoked by `JwtService`; preserve those security properties and avoid logging tokens or credentials.
+
+## Configuration and local verification
+
+- See `README.md` for local setup and required environment variables. Keep passwords and the JWT signing key out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string, and `Jwt__SigningKey` must be a 64-character hexadecimal key.
+- Development CORS origins are in `src/Kahoot.Api/appsettings.Development.json`. OpenAPI and Scalar are exposed only in Development. The database-aware health endpoint is `/health`.
+- From `backend/`, run `dotnet build Kahoot.slnx` after code changes. Run `dotnet format Kahoot.slnx --verify-no-changes` when formatting is relevant. Report any verification that could not run.
+- Do not add test files or test infrastructure unless explicitly requested. Preserve and run relevant existing tests if they are added later.
+
+Before finishing, review the changed files for unintended edits, unused code, contract changes, security effects, and consistency with the existing project structure.
