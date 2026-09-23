@@ -13,8 +13,8 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - `Kahoot.slnx` contains four .NET 10 projects under `src/`.
 - `Kahoot.Domain` holds entities and domain contracts. It has no project references.
 - `Kahoot.Application` holds application contracts, vertical slice feature folders, MediatR command/query interfaces, results, and service registration. It references Domain.
-- `Kahoot.Infrastructure` implements persistence and authentication. It references Application; its registration is in `DependencyInjection.cs`.
-- `Kahoot.Api` is the HTTP entry point. It references Application and Infrastructure; `Program.cs` configures middleware, authentication, CORS, health checks, and endpoints.
+- `Kahoot.Infrastructure` implements persistence. It references Application; its registration is in `DependencyInjection.cs`.
+- `Kahoot.Api` is the HTTP entry point. It references Application and Infrastructure; `Program.cs` configures middleware, CORS, health checks, and endpoints.
 - `test/` directory must remain completely empty, containing only the `.gitkeep` file.
 
 ## Existing patterns
@@ -22,8 +22,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Use the existing `ICommand`/`IQuery` and `Result`/`Error` types for application operations where they fit. MediatR handlers and FluentValidation validators are registered by assembly scanning in `Kahoot.Application/DependencyInjection.cs`.
 - Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
 - EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
-- Pass `CancellationToken` through async request, database, and service calls. Keep database writes and token rotation atomic where required.
-- Authentication uses JWT bearer validation. Refresh tokens are stored as hashes and rotated or revoked by `JwtService`; preserve those security properties and avoid logging tokens or credentials.
+- Pass `CancellationToken` through async request, database, and service calls. Avoid logging credentials or sensitive data.
 
 ## Database and EF Core Migrations
 
@@ -34,7 +33,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 ## Configuration and local verification
 
 - Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
-- See `README.md` for local setup and required environment variables. Keep passwords and the JWT signing key out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string, and `Jwt__SigningKey` must be a 64-character hexadecimal key.
+- See `README.md` for local setup and required environment variables. Keep passwords out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string.
 - Development CORS origins are in `src/Kahoot.Api/appsettings.Development.json`. OpenAPI and Scalar are exposed only in Development. The database-aware health endpoint is `/health`.
 - From `backend/`, run `dotnet build Kahoot.slnx` after code changes. Run `dotnet format Kahoot.slnx --verify-no-changes` when formatting is relevant. Report any verification that could not run.
 

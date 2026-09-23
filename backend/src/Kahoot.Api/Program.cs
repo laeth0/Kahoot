@@ -1,4 +1,3 @@
-using Kahoot.Api.Authentication;
 using Kahoot.Api.Endpoints;
 using Kahoot.Api.HealthChecks;
 using Kahoot.Api.Middleware;
@@ -20,8 +19,8 @@ builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 builder.Services.AddCors(options => options.AddPolicy(corsPolicy, policy =>
     policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
-builder.Services.AddJwtAuthentication(builder.Configuration);
 
+builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 
@@ -36,7 +35,6 @@ app.UseHttpsRedirection();
 
 app.UseRouting();
 app.UseCors(corsPolicy);
-app.UseAuthentication();
 app.UseAuthorization();
 
 if (app.Environment.IsDevelopment())

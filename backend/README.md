@@ -2,14 +2,13 @@
 
 ## Run locally with Docker Compose
 
-From the repository root, copy `.env.example` to `.env` and set `POSTGRES_PASSWORD` and `JWT_SIGNING_KEY`. Use a unique PostgreSQL password without connection-string delimiters (`;` or `=`). The JWT key must be 64 hexadecimal characters (32 random bytes). For example, in PowerShell:
+From the repository root, copy `.env.example` to `.env` and set `POSTGRES_PASSWORD`. Use a unique PostgreSQL password without connection-string delimiters (`;` or `=`). For example, in PowerShell:
 
 ```powershell
 Copy-Item .env.example .env
-[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))
 ```
 
-Paste the generated key into `JWT_SIGNING_KEY` in `.env`, then run:
+Set `POSTGRES_PASSWORD` in `.env`, then run:
 
 ```sh
 docker compose up --build -d
@@ -20,15 +19,13 @@ The API is available at `http://localhost:8080` and its database-aware health ch
 
 The `docker-compose.yml` file is at the repository root so a future frontend service can join the `web` network. PostgreSQL remains on the separate `data` network. Compose currently runs only the API and PostgreSQL. The `.env` file is ignored by Git and stays on your machine.
 
-To run the API on the host while keeping PostgreSQL in Compose, start `docker compose up -d db`, provide `Jwt__SigningKey` and a password-bearing `ConnectionStrings__DefaultConnection` through your process environment, then run the API with `dotnet run`. The values in committed appsettings remain defaults for local development.
+To run the API on the host while keeping PostgreSQL in Compose, start `docker compose up -d db`, provide a password-bearing `ConnectionStrings__DefaultConnection` through your process environment, then run the API with `dotnet run`. The values in committed appsettings remain defaults for local development.
 
 ## Configuration
 
 Configure PostgreSQL through `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Keep passwords out of committed files. If the database requires password authentication, supply the full connection string through the `ConnectionStrings__DefaultConnection` environment variable for that environment.
 
 The API requires this connection string at startup and applies pending EF Core migrations during startup. Migration failures stop the application.
-
-JWT issuer, audience, and token lifetimes are configured in `src/Kahoot.Api/appsettings.json`. Set `Jwt__SigningKey` to a 64-character hexadecimal key in the process environment before starting the API. The signing key is intentionally absent from committed configuration. The JWT service issues access tokens and one-time refresh tokens; refresh tokens are stored as hashes and can be rotated or revoked. Authentication endpoints are not included yet.
 
 Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`. Configure `Cors:AllowedOrigins` for other environments; the default production list is empty.
 

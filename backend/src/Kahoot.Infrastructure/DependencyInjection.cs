@@ -1,6 +1,4 @@
-using Kahoot.Application.Common.Authentication;
 using Kahoot.Application.Common.Persistence;
-using Kahoot.Infrastructure.Authentication;
 using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -25,7 +23,6 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
         services.AddHostedService<DatabaseMigrationService>();
         services.AddSingleton(TimeProvider.System);
-        services.AddScoped<IJwtService, JwtService>();
 
         return services;
     }
