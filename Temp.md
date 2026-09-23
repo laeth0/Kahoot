@@ -1,29 +1,3 @@
-# ASP.NET Core Engineering Standards
-
-These rules define the engineering standards, architecture patterns, and conventions
-for ASP.NET Core and .NET work in this repository.
-
-## Required ASP.NET Core Stack
-
-Every project uses the following libraries and patterns unless the request explicitly
-requires otherwise:
-
-- Entity Framework Core for persistence.
-- Mapster for object mapping.
-- FluentValidation for request and command validation.
-- CQRS with MediatR for application commands, queries, notifications, and pipeline
-  behaviors.
-- Scrutor for convention-based dependency registration.
-- Scalar for interactive OpenAPI documentation.
-
-Inspect the target framework and pinned package versions before changing code. Use APIs
-compatible with those versions, preserve the solution's established conventions, and do
-not replace a required library with an alternative mapping, validation, mediator,
-registration, persistence, or API-documentation library.
-
-## Architecture
-
-- The architecture of the project is Clean Architecture and Vertical Slice Architecture.
 
 ## ASP.NET Core Application Structure
 
@@ -62,44 +36,6 @@ registration, persistence, or API-documentation library.
   credentials, secrets, URLs, and ports out of source code and load them through the
   project's ASP.NET Core configuration patterns.
 
-## CQRS and MediatR
-
-- Represent state changes as MediatR commands and data retrieval as MediatR queries.
-  Name each request and handler for the use case they implement.
-- Give each `IRequestHandler<TRequest, TResponse>` one use-case responsibility. Do not
-  place unrelated application workflows in a controller, endpoint delegate, or a large
-  catch-all handler.
-- Send commands and queries through `ISender`. Inject `IPublisher` only where MediatR
-  notifications are intentionally published.
-- Keep command and query contracts explicit and strongly typed. Prefer the Result
-  Pattern for expected success and failure outcomes.
-- Implement cross-cutting MediatR behavior, such as FluentValidation, logging, or
-  transactions, with ordered `IPipelineBehavior<TRequest, TResponse>` implementations.
-  Do not duplicate the same behavior inside every handler.
-- Use notifications only for in-process fan-out where multiple handlers are intended.
-  Do not treat an in-process MediatR notification as a durable integration event.
-- Pass `CancellationToken` from the ASP.NET Core endpoint through `ISender.Send`, the
-  handler, and EF Core async operations.
-
-## FluentValidation
-
-- Create `AbstractValidator<T>` validators for HTTP request models and MediatR commands
-  or queries that accept user-controlled input.
-- Register validators from the owning assembly with FluentValidation's assembly-scanning
-  registration APIs supported by the pinned package version.
-- Execute MediatR request validators in a validation pipeline behavior before the
-  handler runs. Keep ASP.NET Core model-binding failures and FluentValidation failures
-  mapped to the application's established `ProblemDetails` response shape.
-- Use FluentValidation for input-shape and use-case validation. Keep EF Core uniqueness
-  constraints, concurrency checks, and domain invariants authoritative at their proper
-  boundary rather than relying solely on a validator.
-- Use asynchronous validation rules only when I/O is genuinely required, and call the
-  asynchronous validation path with the request cancellation token.
-- Do not duplicate identical rules in controllers, endpoint filters, MediatR handlers,
-  and validators. Reuse a validator or a shared rule component when the rule is truly
-  identical.
-
-
 ### EF Core Migrations
 
 > **CRITICAL INSTRUCTION:** Whenever a database model or EF Core relationship changes,
@@ -118,35 +54,6 @@ registration, persistence, or API-documentation library.
 > file as immutable. Do not modify a previous migration to include a later change. Update
 > the models and `projectSchema.dbml`, then generate a new migration containing only the
 > new schema change.
-
-
-  verify column types, nullability, defaults, foreign keys, indexes, and delete behavior.
-- Preserve existing data during renames, type changes, and required-column additions.
-  Use a staged migration when one deployment cannot safely perform the change.
-- Apply pending EF Core migrations automatically during application startup through an
-  `IHostedService`, keeping the migration logic outside `Program.cs`.
-- Run migrations asynchronously with the startup `CancellationToken`. Let failures
-  propagate so application startup fails.
-
-## ASP.NET Core HTTP Pipeline
-
-- Keep middleware order intentional. Place exception handling, forwarded headers,
-  HTTPS, CORS, authentication, authorization, rate limiting, and endpoint mapping in the
-  order required by the pinned ASP.NET Core version and the application's hosting model.
-- Use ASP.NET Core `ProblemDetails` for consistent error responses. Let unexpected
-  exceptions reach the centralized exception handler and keep stack traces out of HTTP
-  responses.
-- Handle errors intentionally and consistently with the existing architecture. Let the
-  global exception middleware handle unexpected failures, never silently swallow
-  exceptions or use empty `catch` blocks, and preserve useful context without exposing
-  sensitive implementation details.
-- Use ASP.NET Core authentication schemes and policy-based authorization. Apply
-  authorization metadata to every protected controller action or endpoint and enforce
-  resource ownership in the corresponding use case or EF Core query.
-- Use `[ApiController]` conventions for controller APIs.
-- Use `IHttpClientFactory` for outbound HTTP clients and ASP.NET Core hosted services for
-  long-running background work. A hosted service must create a scope before resolving a
-  scoped `DbContext` or MediatR handler dependency.
 
 ## OpenAPI and Scalar
 
