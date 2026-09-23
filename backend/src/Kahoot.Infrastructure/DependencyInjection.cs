@@ -1,5 +1,4 @@
 using Kahoot.Application.Common.Interfaces;
-using Kahoot.Application.Common.Persistence;
 using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -31,9 +30,6 @@ public static class DependencyInjection
                 .AsImplementedInterfaces()
                 .WithTransientLifetime()
             .AddClasses(classes => classes.AssignableTo<IScopedService>(), publicOnly: false)
-                .AsImplementedInterfaces()
-                .WithScopedLifetime()
-            .AddClasses(classes => classes.AssignableTo(typeof(IRepository<>)), publicOnly: false)
                 .AsImplementedInterfaces()
                 .WithScopedLifetime()
             .AddClasses(classes => classes.AssignableTo<ISingletonService>())
