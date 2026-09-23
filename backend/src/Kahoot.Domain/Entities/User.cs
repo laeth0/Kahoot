@@ -22,7 +22,7 @@ public sealed class User
 
     public bool TerminationPending { get; set; }
 
-    public DateTimeOffset? StatusChangedAt { get; set; }
-
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
 }

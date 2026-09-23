@@ -48,18 +48,13 @@ Table users {
   revision bigint [not null, default: 1]
   termination_pending boolean [not null, default: false]
 
-  status_changed_at timestamptz [null]
   created_at timestamptz [not null]
+  updated_at timestamptz [not null]
 
   indexes {
     normalized_username [unique, name: 'ux_users_normalized_username']
     (role, status, created_at, id) [name: 'ix_users_admin_listing']
   }
-
-  Note: '''
-  StatusChangedAt is also the durable suspension cutoff timestamp used by the
-  suspension finalizer.
-  '''
 }
 
 Table refresh_tokens {
