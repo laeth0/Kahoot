@@ -4,9 +4,9 @@ using System.Security.Cryptography;
 using System.Text;
 using Kahoot.Application.Common.Authentication;
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Domain.Entities;
-using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -21,13 +21,13 @@ internal sealed class JwtService : IJwtService, IScopedService
     private static readonly Error InvalidRefreshToken =
         Error.Unauthorized("Auth.InvalidRefreshToken", "The refresh token is invalid or expired.");
 
-    private readonly AppDbContext _dbContext;
+    private readonly IAppDbContext _dbContext;
     private readonly TimeProvider _timeProvider;
     private readonly JwtOptions _options;
     private readonly SigningCredentials _signingCredentials;
 
     public JwtService(
-        AppDbContext dbContext,
+        IAppDbContext dbContext,
         TimeProvider timeProvider,
         IOptions<JwtOptions> options)
     {

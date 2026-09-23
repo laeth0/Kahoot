@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Common.Persistence;
 using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -20,6 +21,7 @@ public static class DependencyInjection
 
         services.AddDbContext<AppDbContext>(options =>
             options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+        services.AddScoped<IAppDbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
         services.AddHostedService<DatabaseMigrationService>();
         services.AddSingleton(TimeProvider.System);
         services.Scan(scan => scan
