@@ -12,7 +12,7 @@ Project Kahoot {
 
 Enum user_role {
   Host
-  SystemAdministrator
+  SystemAdmin
 }
 
 Enum user_status {
