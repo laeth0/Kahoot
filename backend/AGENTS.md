@@ -22,9 +22,15 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Use the existing `ICommand`/`IQuery` and `Result`/`Error` types for application operations where they fit. MediatR handlers and FluentValidation validators are registered by assembly scanning in `Kahoot.Application/DependencyInjection.cs`.
 - API controllers inherit `ApiControllerBase`, which supplies `[ApiController]` and the `api/[controller]` route. Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
 - Infrastructure services that use marker interfaces (`IScopedService`, `ITransientService`, `ISingletonService`) are registered by Scrutor scanning. Check the existing lifetime before adding a service.
-- EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup. When changing persisted entities, keep configuration, migrations, and `projectSchema.dbml` aligned; do not edit existing migrations to represent a new schema change.
+- EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
 - Pass `CancellationToken` through async request, database, and service calls. Keep database writes and token rotation atomic where required.
 - Authentication uses JWT bearer validation. Refresh tokens are stored as hashes and rotated or revoked by `JwtService`; preserve those security properties and avoid logging tokens or credentials.
+
+## Database and EF Core Migrations
+
+- **Migration Immutability:** Existing migrations and generated designer files are immutable. Never modify, rename, or delete an existing migration; always add a new migration for subsequent schema changes.
+- **`projectSchema.dbml` Sync:** Whenever database models or relationships change, you MUST update `projectSchema.dbml` and generate the new EF Core migration together in the same task.
+- **Separation of Concerns:** Keep schema migrations, development seed data, and production reference data strictly separated. Do not combine them in the same initialization workflow or service.
 
 ## Configuration and local verification
 
@@ -35,7 +41,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 
 ## Testing constraints
 
-- Do not create or add any test code, test projects, unit tests, or integration tests to the backend.
+- Do not create or add any test code, test projects, unit tests, integration tests, or end-to-end tests to the backend.
 - The `backend/test/` directory must remain completely empty, containing only the `.gitkeep` file.
 
 Before finishing, review the changed files for unintended edits, unused code, contract changes, security effects, and consistency with the existing project structure.
