@@ -1,8 +1,6 @@
-using Kahoot.Domain.Common;
-
 namespace Kahoot.Domain.Entities;
 
-public sealed class RefreshToken : IEntity
+public sealed class RefreshToken
 {
     public Guid Id { get; set; }
 
