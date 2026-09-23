@@ -6,6 +6,7 @@
 
 ## Database Configuration and Migrations
 - Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
+- Supply `Jwt__SigningKey` at runtime. Never commit JWT signing keys.
 - Apply pending EF Core migrations through an `IHostedService` outside `Program.cs`. Use the startup `CancellationToken` and let migration failures stop application startup.
 
 ## HTTP Errors and Middleware

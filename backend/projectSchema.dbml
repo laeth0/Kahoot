@@ -4,3 +4,18 @@ Table users {
   name text [not null]
   password_hash text [not null]
 }
+
+Table refresh_tokens {
+  id uuid [pk, not null]
+  user_id uuid [not null]
+  token_hash varchar(64) [not null, unique]
+  created_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  revoked_at timestamptz
+
+  indexes {
+    user_id
+  }
+}
+
+Ref: refresh_tokens.user_id > users.id [delete: cascade]
