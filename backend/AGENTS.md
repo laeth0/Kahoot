@@ -6,6 +6,7 @@
 
 ## Database Configuration and Migrations
 - Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
+- Use the repository-root `docker-compose.yml` for local API and PostgreSQL runs. Keep local credentials in the ignored `.env` file; use `.env.example` only as a template. Add future frontend services to the root Compose project when they exist.
 - Supply `Jwt__SigningKey` at runtime. Never commit JWT signing keys.
 - Apply pending EF Core migrations through an `IHostedService` outside `Program.cs`. Use the startup `CancellationToken` and let migration failures stop application startup.
 

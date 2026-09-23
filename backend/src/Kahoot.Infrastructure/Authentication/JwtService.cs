@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Kahoot.Application.Common.Authentication;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Results;
 using Kahoot.Domain.Entities;
 using Kahoot.Infrastructure.Persistence;
@@ -12,7 +13,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Kahoot.Infrastructure.Authentication;
 
-internal sealed class JwtService : IJwtService
+internal sealed class JwtService : IJwtService, IScopedService
 {
     private const int RefreshTokenByteCount = 32;
     private const int RefreshTokenLength = 43;

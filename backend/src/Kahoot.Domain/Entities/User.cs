@@ -1,6 +1,8 @@
+using Kahoot.Domain.Common;
+
 namespace Kahoot.Domain.Entities;
 
-public sealed class User
+public sealed class User : IEntity
 {
     public Guid Id { get; set; }
 
