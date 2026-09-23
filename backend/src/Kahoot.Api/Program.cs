@@ -1,3 +1,4 @@
+using Kahoot.Api.Endpoints;
 using Kahoot.Api.Middleware;
 using Kahoot.Application;
 using Kahoot.Infrastructure;
@@ -28,5 +29,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
+app.MapHomePage();
 
 app.Run();
