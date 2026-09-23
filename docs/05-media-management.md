@@ -8,7 +8,7 @@ This document defines the normative requirements for image upload processing, di
 
 Media management handles image assets utilized within quiz questions:
 * **Registered User / Host**: Uploads images and attaches them to questions within their own tenant boundary.
-* **Anonymous Visitor / Player**: Fetches public image bytes during gameplay or preview via immutable URL.
+* **Player / Participant**: Fetches public image bytes during gameplay or preview via immutable URL.
 * **System Administrator**: Cannot browse private media inventories or view unreferenced images.
 * **Separation of Bytes vs. Metadata `[NORMATIVE]`**:
   * Uploaded image bytes are intentionally publicly readable by URL once uploaded (`/uploads/{filename}`). The system does not guarantee secrecy of public image URLs.

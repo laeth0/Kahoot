@@ -36,7 +36,7 @@ Realtime communication coordinates live quiz synchronization across distributed 
 
 | Method Signature | Invoker & Preconditions | Description & Return Contract | Stable Req ID |
 | :--- | :--- | :--- | :--- |
-| `JoinGame(string pin, string nickname, string joinOperationId)` | Anonymous Visitor | Joins lobby, reserves seat, returns one-time session token, and attaches socket to player group. | `RT-METH-001` |
+| `JoinGame(string pin, string nickname, string joinOperationId)` | Public / Prospective Player | Joins lobby, reserves seat, returns one-time session token, and attaches socket to player group. | `RT-METH-001` |
 | `Reconnect(string sessionToken)` | Player with issued token | Validates token hash, replaces prior connection, increments generation, and returns full authoritative player catch-up state. | `RT-METH-002` |
 | `SubmitAnswer(string questionId, List<string> choiceIds)` | Player with active socket | Validates choices and deadline, commits answer, returns `{ "accepted": true, "alreadyAnswered": false }`. | `RT-METH-003` |
 | `JoinAsHost(string gameId)` | Authenticated Host | Validates Host ownership and JWT claims; attaches socket to host group. | `RT-METH-004` |

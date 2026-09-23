@@ -9,7 +9,6 @@ This document defines the normative requirements for account credentials, System
 Authentication manages credentials and cryptographic session authority for two distinct account types:
 * **System Administrator**: Provisioned via deployment bootstrap or created by an existing administrator; possesses platform administration privileges.
 * **Registered User / Host**: Self-registers; owns exactly one tenant boundary.
-* **Anonymous Visitor**: Public client performing registration or login.
 * *(Players do NOT use account credentials; player sessions are defined in [07-joining-and-lobby.md](07-joining-and-lobby.md)).*
 
 ### 1.1 Credential Standards `[NORMATIVE]`

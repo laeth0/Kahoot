@@ -7,7 +7,7 @@ This document defines the normative requirements for account-free Player joining
 ## 1. Topic Overview & Actors
 
 The lobby phase is the exclusive entry point for Players entering a game:
-* **Anonymous Visitor / Player**: Joins using a PIN, nickname, and client-generated `JoinOperationId`; receives a secure session token.
+* **Player / Participant**: Joins using a PIN, nickname, and client-generated `JoinOperationId`; receives a secure session token.
 * **Registered User / Host**: Observes the lobby list in real time and can remove disruptive participants.
 * **System Administrator**: Zero involvement in game lobbies or participant management.
 * **Lobby Invariant `[NORMATIVE]`**: Players may join **only while the game is in `LOBBY`**. Once the game transitions out of `LOBBY` to start Question 1, new joins are permanently blocked.
