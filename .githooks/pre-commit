@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+
+cd "$(git rev-parse --show-toplevel)"
+
+if command -v dotnet >/dev/null 2>&1; then
+    dotnet_command=dotnet
+elif command -v dotnet.exe >/dev/null 2>&1; then
+    dotnet_command=dotnet.exe
+else
+    echo "The .NET SDK is required to format the backend." >&2
+    exit 1
+fi
+
+if "$dotnet_command" format backend/Kahoot.slnx --verify-no-changes; then
+    exit 0
+fi
+
+if ! "$dotnet_command" format backend/Kahoot.slnx; then
+    echo "Backend formatting failed; commit aborted." >&2
+    exit 1
+fi
+
+echo "Backend formatting changed files. Review and stage them, then commit again." >&2
+exit 1

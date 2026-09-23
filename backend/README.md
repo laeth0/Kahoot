@@ -31,3 +31,13 @@ The API requires this connection string at startup and applies pending EF Core m
 JWT issuer, audience, and token lifetimes are configured in `src/Kahoot.Api/appsettings.json`. Set `Jwt__SigningKey` to a 64-character hexadecimal key in the process environment before starting the API. The signing key is intentionally absent from committed configuration. The JWT service issues access tokens and one-time refresh tokens; refresh tokens are stored as hashes and can be rotated or revoked. Authentication endpoints are not included yet.
 
 Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`. Configure `Cors:AllowedOrigins` for other environments; the default production list is empty.
+
+## Commit formatting
+
+Enable the shared pre-commit hook once per clone from the repository root:
+
+```sh
+git config --local core.hooksPath .githooks
+```
+
+The hook runs `dotnet format` on `backend/Kahoot.slnx`. If formatting changes files, the commit stops so you can review and stage the formatted files before retrying.
