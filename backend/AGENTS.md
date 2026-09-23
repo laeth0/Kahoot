@@ -1,17 +1,21 @@
 # Backend agent instructions
 
-These instructions apply to `backend/`. Read the affected code and nearby dependencies before changing it. Keep changes focused, preserve existing contracts, and follow the conventions already present in the relevant project.
+These instructions apply to `backend/`. Read the affected code and nearby dependencies before changing it. Keep changes focused, preserve existing contracts, and follow the conventions already present in the relevant project. Make this project production-ready: write clean code and apply industry best practices.
+
+## Architecture and Core Principles
+
+- Use Clean Architecture and Vertical Slice Architecture.
+- Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, application behavior, vertical feature slices, and contracts in Application, database and external-service implementations in Infrastructure, and core entities in Domain.
+- Make this project production-ready: write clean code, handle edge cases gracefully, follow idiomatic C#/.NET design patterns, and ensure strict separation of concerns.
 
 ## Project layout
 
 - `Kahoot.slnx` contains four .NET 10 projects under `src/`.
 - `Kahoot.Domain` holds entities and domain contracts. It has no project references.
-- `Kahoot.Application` holds application contracts, MediatR command/query interfaces, results, and service registration. It references Domain.
+- `Kahoot.Application` holds application contracts, vertical slice feature folders, MediatR command/query interfaces, results, and service registration. It references Domain.
 - `Kahoot.Infrastructure` implements persistence and authentication. It references Application; its registration is in `DependencyInjection.cs`.
 - `Kahoot.Api` is the HTTP entry point. It references Application and Infrastructure; `Program.cs` configures middleware, authentication, CORS, health checks, and endpoints.
-- `test/` currently contains no test project.
-
-Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, application behavior and contracts in Application, database and external-service implementations in Infrastructure, and core entities in Domain.
+- `test/` directory must remain completely empty, containing only the `.gitkeep` file.
 
 ## Existing patterns
 
@@ -24,9 +28,15 @@ Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, a
 
 ## Configuration and local verification
 
+- Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
 - See `README.md` for local setup and required environment variables. Keep passwords and the JWT signing key out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string, and `Jwt__SigningKey` must be a 64-character hexadecimal key.
 - Development CORS origins are in `src/Kahoot.Api/appsettings.Development.json`. OpenAPI and Scalar are exposed only in Development. The database-aware health endpoint is `/health`.
 - From `backend/`, run `dotnet build Kahoot.slnx` after code changes. Run `dotnet format Kahoot.slnx --verify-no-changes` when formatting is relevant. Report any verification that could not run.
-- Do not add test files or test infrastructure unless explicitly requested. Preserve and run relevant existing tests if they are added later.
+
+## Testing constraints
+
+- Do not create or add any test code, test projects, unit tests, or integration tests to the backend.
+- The `backend/test/` directory must remain completely empty, containing only the `.gitkeep` file.
 
 Before finishing, review the changed files for unintended edits, unused code, contract changes, security effects, and consistency with the existing project structure.
+
