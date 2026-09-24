@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Persistence;
+using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +20,13 @@ public static class DependencyInjection
         }
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(connectionString).UseSnakeCaseNamingConvention());
+            options.UseNpgsql(connectionString, npgsqlOptions =>
+            {
+                npgsqlOptions.MapEnum<UserRole>("user_role");
+                npgsqlOptions.MapEnum<UserStatus>("user_status");
+                npgsqlOptions.MapEnum<MediaStatus>("media_status");
+                npgsqlOptions.MapEnum<GameStatus>("game_status");
+            }).UseSnakeCaseNamingConvention());
         services.AddScoped<IAppDbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
         services.AddHostedService<DatabaseMigrationService>();
         services.AddSingleton(TimeProvider.System);
