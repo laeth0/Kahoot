@@ -44,7 +44,15 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
         }
 
         var utcNow = _timeProvider.GetUtcNow();
-        var passwordHash = _passwordHasher.HashPassword(request.Password);
+        string passwordHash;
+        try
+        {
+            passwordHash = await _passwordHasher.HashPasswordAsync(request.Password, cancellationToken);
+        }
+        catch (PasswordHashingRateLimitedException)
+        {
+            return Result.Failure<RegisterResponse>(AuthErrors.RateLimited);
+        }
 
         var user = new User
         {

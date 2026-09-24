@@ -34,6 +34,38 @@ public static class DependencyInjection
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+        services
+            .AddOptions<JwtOptions>()
+            .Bind(configuration.GetRequiredSection(JwtOptions.SectionName))
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")
+            .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required.")
+            .Validate(
+                options => IsValidBase64Key(options.SigningKey, 32),
+                "Jwt:SigningKey must be a valid Base64 string representing at least 32 bytes (256 bits).")
+            .Validate(options => options.AccessTokenMinutes > 0, "Jwt:AccessTokenMinutes must be greater than zero.")
+            .ValidateOnStart();
+
+        services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddSingleton<ILoginRateLimiter, LoginRateLimiter>();
+
         return services;
+    }
+
+    private static bool IsValidBase64Key(string? signingKey, int minByteLength)
+    {
+        if (string.IsNullOrWhiteSpace(signingKey))
+        {
+            return false;
+        }
+
+        try
+        {
+            var bytes = Convert.FromBase64String(signingKey);
+            return bytes.Length >= minByteLength;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

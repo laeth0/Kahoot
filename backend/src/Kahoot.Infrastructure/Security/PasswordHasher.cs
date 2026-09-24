@@ -6,6 +6,8 @@ using Konscious.Security.Cryptography;
 
 namespace Kahoot.Infrastructure.Security;
 
+// Registered as Singleton in DI so that _gate and _queuedCount are truly
+// process-wide, enforcing the AUTH-HASH-002 concurrency limits.
 public sealed class PasswordHasher : IPasswordHasher
 {
     private const string ExpectedAlgorithm = "argon2id";
@@ -24,9 +26,13 @@ public sealed class PasswordHasher : IPasswordHasher
     private readonly SemaphoreSlim _gate = new(MaxActiveHashingOperations, MaxActiveHashingOperations);
     private int _queuedCount;
 
-    // Canonical dummy hash generated using identical work parameters to defend against timing enumeration attacks.
-    private static readonly string PrecomputedDummyHash =
-        $"${ExpectedAlgorithm}${ExpectedVersion}${ExpectedParameters}${Convert.ToBase64String(new byte[SaltSize])}${Convert.ToBase64String(new byte[HashSize])}";
+    // A real Argon2id hash computed once with identical work parameters (m=65536, t=3, p=1).
+    // Using a genuine hash — not zero-filled bytes — ensures that dummy verification
+    // performs the same real CPU/memory work as verifying a real password, preventing
+    // timing-based username enumeration attacks.
+    // The password used to derive this hash is irrelevant; it is intentionally unpublished.
+    private const string PrecomputedDummyHash =
+        "$argon2id$v=19$m=65536,t=3,p=1$cycT0VRAQ5f2pQHSVXARzQ==$pZ8wc4Uvqt1H5tUzQhNtbjxA5d/BCukzj/lNemTYOoY=";
 
     public async Task<string> HashPasswordAsync(string password, CancellationToken cancellationToken = default)
     {
@@ -83,97 +89,27 @@ public sealed class PasswordHasher : IPasswordHasher
         return VerifyPasswordAsync(password, PrecomputedDummyHash, cancellationToken);
     }
 
-    public string HashPassword(string password)
-    {
-        ArgumentNullException.ThrowIfNull(password);
-
-        using var lease = EnterGateSync();
-
-        byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
-        byte[] hash = HashWithArgon2id(password, salt);
-
-        return $"${ExpectedAlgorithm}${ExpectedVersion}${ExpectedParameters}${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
-    }
-
-    public bool VerifyPassword(string password, string passwordHash)
-    {
-        if (password is null || string.IsNullOrEmpty(passwordHash))
-        {
-            return false;
-        }
-
-        var parts = passwordHash.Split('$');
-        if (parts.Length != 6 || parts[0].Length != 0)
-        {
-            return false;
-        }
-
-        if (!string.Equals(parts[1], ExpectedAlgorithm, StringComparison.Ordinal) ||
-            !string.Equals(parts[2], ExpectedVersion, StringComparison.Ordinal) ||
-            !string.Equals(parts[3], ExpectedParameters, StringComparison.Ordinal))
-        {
-            return false;
-        }
-
-        byte[] salt = new byte[SaltSize];
-        if (!Convert.TryFromBase64String(parts[4], salt, out int saltBytesWritten) || saltBytesWritten != SaltSize)
-        {
-            return false;
-        }
-
-        byte[] expectedHash = new byte[HashSize];
-        if (!Convert.TryFromBase64String(parts[5], expectedHash, out int hashBytesWritten) || hashBytesWritten != HashSize)
-        {
-            return false;
-        }
-
-        using var lease = EnterGateSync();
-
-        byte[] actualHash = HashWithArgon2id(password, salt);
-        return CryptographicOperations.FixedTimeEquals(expectedHash, actualHash);
-    }
-
     private async Task<IDisposable> EnterGateAsync(CancellationToken cancellationToken)
     {
+        // Fast path: a slot is immediately available — acquire without queuing.
         if (_gate.Wait(0))
         {
             return new GateReleaser(_gate);
         }
 
+        // Slow path: all active slots are taken; join the queue.
         if (Interlocked.Increment(ref _queuedCount) > MaxQueuedHashingOperations)
         {
+            // Queue is full — undo increment and surface 429.
             Interlocked.Decrement(ref _queuedCount);
             throw new PasswordHashingRateLimitedException();
         }
 
+        // Wait for a slot; always decrement the queue counter on exit, whether
+        // we succeeded, were cancelled, or the wait threw for any other reason.
         try
         {
             await _gate.WaitAsync(cancellationToken);
-        }
-        finally
-        {
-            Interlocked.Decrement(ref _queuedCount);
-        }
-
-        return new GateReleaser(_gate);
-    }
-
-    private IDisposable EnterGateSync()
-    {
-        if (_gate.Wait(0))
-        {
-            return new GateReleaser(_gate);
-        }
-
-        if (Interlocked.Increment(ref _queuedCount) > MaxQueuedHashingOperations)
-        {
-            Interlocked.Decrement(ref _queuedCount);
-            throw new PasswordHashingRateLimitedException();
-        }
-
-        try
-        {
-            _gate.Wait();
         }
         finally
         {
@@ -208,6 +144,8 @@ public sealed class PasswordHasher : IPasswordHasher
 
         public void Dispose()
         {
+            // Interlocked ensures Release is called at most once even if Dispose
+            // is called concurrently or more than once (e.g. double-using).
             if (Interlocked.Exchange(ref _disposed, 1) == 0)
             {
                 _gate.Release();
