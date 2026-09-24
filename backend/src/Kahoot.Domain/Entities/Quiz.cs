@@ -15,4 +15,6 @@ public sealed class Quiz
     public long Revision { get; set; } = 1;
 
     public DateTimeOffset CreatedAt { get; set; }
+
+    public DateTimeOffset UpdatedAt { get; set; }
 }

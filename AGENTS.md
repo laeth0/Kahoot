@@ -74,6 +74,12 @@ Never ignore an explicit business requirement merely because another implementat
 
 Do not reinterpret requirements without a concrete reason.
 
+### Conflict with Requirements Documentation (`docs/`)
+
+> [!IMPORTANT]
+> If the user gives a command or task that conflicts with the requirements, architecture, or specifications defined in [`docs/`](docs/), **do not edit the code immediately**.
+> You MUST notify the user first, explain the specific conflict (citing the relevant documentation in `docs/`), and wait for clarification or explicit confirmation before proceeding with any code edits.
+
 ---
 
 # 3. Understand Before Changing
