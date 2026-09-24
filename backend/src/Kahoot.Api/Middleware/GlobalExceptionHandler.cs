@@ -35,6 +35,18 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        if (exception is Kahoot.Application.Common.Exceptions.PasswordHashingRateLimitedException)
+        {
+            await Results.Problem(
+                statusCode: StatusCodes.Status429TooManyRequests,
+                title: "Request.RateLimited",
+                detail: "Password hashing concurrency limit exceeded. Please try again later.",
+                extensions: new Dictionary<string, object?> { ["code"] = "Request.RateLimited" })
+                .ExecuteAsync(httpContext);
+
+            return true;
+        }
+
         if (exception is Npgsql.NpgsqlException npgsqlException && npgsqlException.IsTransient
             || exception is TimeoutException)
         {
