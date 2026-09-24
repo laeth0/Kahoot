@@ -1,6 +1,8 @@
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
+using Kahoot.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IAppDbContext>(serviceProvider => serviceProvider.GetRequiredService<AppDbContext>());
         services.AddHostedService<DatabaseMigrationService>();
         services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         return services;
     }
