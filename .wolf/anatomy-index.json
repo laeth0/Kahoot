@@ -1,0 +1,1198 @@
+{
+  "version": 1,
+  "meta": {
+    "lastScanned": "2026-09-24T17:32:59.375Z",
+    "fileCount": 131,
+    "hits": 0,
+    "misses": 0,
+    "renderedHash": "e107b3fa5875b0883971caa590d28bd4dc5bcdf603896fbf8fee015d5dc6d6d0",
+    "storeUpdatedAt": "2026-09-24T17:32:59.377Z",
+    "rootHash": "1cd2897697f25e97"
+  },
+  "files": {
+    ".githooks/pre-commit": {
+      "description": "",
+      "tokens": 161,
+      "hash": "b8264abe109011e9",
+      "size": 601,
+      "mtimeMs": 1790142497108.777,
+      "updatedAt": "2026-09-24T17:32:59.287Z",
+      "source": "scan"
+    },
+    ".gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 2,
+      "hash": "69aa73cf5bc3377a",
+      "size": 5,
+      "mtimeMs": 1790141566896.833,
+      "updatedAt": "2026-09-24T17:32:59.288Z",
+      "source": "scan"
+    },
+    ".specify/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 105,
+      "hash": "05c2054a5f5ca103",
+      "size": 393,
+      "mtimeMs": 1790140517406.8806,
+      "updatedAt": "2026-09-24T17:32:59.290Z",
+      "source": "scan"
+    },
+    ".specify/init-options.json": {
+      "description": "",
+      "tokens": 52,
+      "hash": "c12ad5065de25444",
+      "size": 180,
+      "mtimeMs": 1790140517406.8806,
+      "updatedAt": "2026-09-24T17:32:59.291Z",
+      "source": "scan"
+    },
+    ".specify/integration.json": {
+      "description": "",
+      "tokens": 110,
+      "hash": "6ea2c556a0899312",
+      "size": 383,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.292Z",
+      "source": "scan"
+    },
+    ".specify/integrations/claude.manifest.json": {
+      "description": "",
+      "tokens": 372,
+      "hash": "4f746b65b02a53d1",
+      "size": 1302,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.293Z",
+      "source": "scan"
+    },
+    ".specify/integrations/codex.manifest.json": {
+      "description": "",
+      "tokens": 372,
+      "hash": "8bcd385f2c71259f",
+      "size": 1301,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.294Z",
+      "source": "scan"
+    },
+    ".specify/integrations/speckit.manifest.json": {
+      "description": "",
+      "tokens": 439,
+      "hash": "28e183ba24e5326c",
+      "size": 1536,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.294Z",
+      "source": "scan"
+    },
+    ".specify/memory/.constitution-template.json": {
+      "description": "",
+      "tokens": 31,
+      "hash": "36e9c61ac9797211",
+      "size": 107,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.295Z",
+      "source": "scan"
+    },
+    ".specify/memory/constitution.md": {
+      "description": "[PROJECT_NAME] Constitution",
+      "tokens": 597,
+      "hash": "29fc1837b20f493d",
+      "size": 2396,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.296Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/check-prerequisites.ps1": {
+      "description": "Consolidated prerequisite checking script (PowerShell)",
+      "tokens": 1818,
+      "hash": "f671563c76b1c01e",
+      "size": 6816,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.297Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/common.ps1": {
+      "description": "Common PowerShell functions analogous to common.sh",
+      "tokens": 9362,
+      "hash": "ecba48dc345d7ec8",
+      "size": 35105,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.297Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/create-new-feature.ps1": {
+      "description": "Create a new feature",
+      "tokens": 3824,
+      "hash": "79dfefe26fe532f2",
+      "size": 14339,
+      "mtimeMs": 1790140517413.1313,
+      "updatedAt": "2026-09-24T17:32:59.298Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/resolve-template.ps1": {
+      "description": "",
+      "tokens": 248,
+      "hash": "99a4589963895d07",
+      "size": 927,
+      "mtimeMs": 1790140517421.3267,
+      "updatedAt": "2026-09-24T17:32:59.298Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/setup-plan.ps1": {
+      "description": "Setup implementation plan for a feature",
+      "tokens": 839,
+      "hash": "dda307ce74dcdf7a",
+      "size": 3146,
+      "mtimeMs": 1790140517421.3267,
+      "updatedAt": "2026-09-24T17:32:59.299Z",
+      "source": "scan"
+    },
+    ".specify/scripts/powershell/setup-tasks.ps1": {
+      "description": "",
+      "tokens": 1063,
+      "hash": "de7a8fa4a7f00408",
+      "size": 3985,
+      "mtimeMs": 1790140517421.3267,
+      "updatedAt": "2026-09-24T17:32:59.299Z",
+      "source": "scan"
+    },
+    ".specify/templates/checklist-template.md": {
+      "description": "[CHECKLIST TYPE] Checklist: [FEATURE NAME]",
+      "tokens": 520,
+      "hash": "6cd6df527caab2e2",
+      "size": 2078,
+      "mtimeMs": 1790140517424.65,
+      "updatedAt": "2026-09-24T17:32:59.300Z",
+      "source": "scan"
+    },
+    ".specify/templates/constitution-template.md": {
+      "description": "[PROJECT_NAME] Constitution",
+      "tokens": 597,
+      "hash": "29fc1837b20f493d",
+      "size": 2396,
+      "mtimeMs": 1790140517424.65,
+      "updatedAt": "2026-09-24T17:32:59.301Z",
+      "source": "scan"
+    },
+    ".specify/templates/plan-template.md": {
+      "description": "Implementation Plan: [FEATURE]",
+      "tokens": 909,
+      "hash": "543cc3d587da1f31",
+      "size": 3795,
+      "mtimeMs": 1790140517424.65,
+      "updatedAt": "2026-09-24T17:32:59.302Z",
+      "source": "scan"
+    },
+    ".specify/templates/spec-template.md": {
+      "description": "Feature Specification: [FEATURE NAME]",
+      "tokens": 1172,
+      "hash": "cfc2f4605b4366d7",
+      "size": 4687,
+      "mtimeMs": 1790140517426.6553,
+      "updatedAt": "2026-09-24T17:32:59.302Z",
+      "source": "scan"
+    },
+    ".specify/templates/tasks-template.md": {
+      "description": "Tasks: [FEATURE NAME]",
+      "tokens": 2347,
+      "hash": "fb57e624cef756ec",
+      "size": 9423,
+      "mtimeMs": 1790140517426.6553,
+      "updatedAt": "2026-09-24T17:32:59.303Z",
+      "source": "scan"
+    },
+    ".specify/workflows/speckit/workflow.yml": {
+      "description": "",
+      "tokens": 625,
+      "hash": "ea636ff77e01aafd",
+      "size": 2192,
+      "mtimeMs": 1790140517426.6553,
+      "updatedAt": "2026-09-24T17:32:59.304Z",
+      "source": "scan"
+    },
+    ".specify/workflows/workflow-registry.json": {
+      "description": "",
+      "tokens": 109,
+      "hash": "496ab499c587cca6",
+      "size": 381,
+      "mtimeMs": 1790140517426.6553,
+      "updatedAt": "2026-09-24T17:32:59.304Z",
+      "source": "scan"
+    },
+    "AGENTS.md": {
+      "description": "Engineering Standards for AI Coding Agents",
+      "tokens": 10061,
+      "hash": "54accd7e65582d0e",
+      "size": 40243,
+      "mtimeMs": 1790271137423.764,
+      "updatedAt": "2026-09-24T17:32:59.305Z",
+      "source": "scan"
+    },
+    "backend/.dockerignore": {
+      "description": "Docker ignore rules",
+      "tokens": 113,
+      "hash": "509b9109868f0684",
+      "size": 422,
+      "mtimeMs": 1790140517430.0564,
+      "updatedAt": "2026-09-24T17:32:59.307Z",
+      "source": "scan"
+    },
+    "backend/.gitignore": {
+      "description": "Git ignore rules",
+      "tokens": 180,
+      "hash": "db25fe21a700a27f",
+      "size": 672,
+      "mtimeMs": 1790140517430.0564,
+      "updatedAt": "2026-09-24T17:32:59.307Z",
+      "source": "scan"
+    },
+    "backend/AGENTS.md": {
+      "description": "Backend agent instructions",
+      "tokens": 1174,
+      "hash": "4d1dabbc49bc96ec",
+      "size": 4696,
+      "mtimeMs": 1790261516694.3955,
+      "updatedAt": "2026-09-24T17:32:59.307Z",
+      "source": "scan"
+    },
+    "backend/Dockerfile": {
+      "description": "Docker container definition",
+      "tokens": 278,
+      "hash": "4ca1e4a4ae9c7224",
+      "size": 1042,
+      "mtimeMs": 1790141699733.7576,
+      "updatedAt": "2026-09-24T17:32:59.308Z",
+      "source": "scan"
+    },
+    "backend/dotnet-tools.json": {
+      "description": "",
+      "tokens": 56,
+      "hash": "7b8673b5c62f9575",
+      "size": 195,
+      "mtimeMs": 1790180978892.9204,
+      "updatedAt": "2026-09-24T17:32:59.308Z",
+      "source": "scan"
+    },
+    "backend/Kahoot.slnx": {
+      "description": "",
+      "tokens": 88,
+      "hash": "57f8f586499aed64",
+      "size": 327,
+      "mtimeMs": 1790257170595.7163,
+      "updatedAt": "2026-09-24T17:32:59.309Z",
+      "source": "scan"
+    },
+    "backend/projectSchema.dbml": {
+      "description": "Declares varchar",
+      "tokens": 3935,
+      "hash": "34cf82c713c27c64",
+      "size": 14755,
+      "mtimeMs": 1790243184054.029,
+      "updatedAt": "2026-09-24T17:32:59.309Z",
+      "source": "scan"
+    },
+    "backend/README.md": {
+      "description": "Project documentation",
+      "tokens": 630,
+      "hash": "45636248b9d831e7",
+      "size": 2517,
+      "mtimeMs": 1790182440710.391,
+      "updatedAt": "2026-09-24T17:32:59.310Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/appsettings.Development.json": {
+      "description": "",
+      "tokens": 151,
+      "hash": "b43d8f44762087a2",
+      "size": 527,
+      "mtimeMs": 1790261929962.2231,
+      "updatedAt": "2026-09-24T17:32:59.310Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/appsettings.json": {
+      "description": ".NET application settings",
+      "tokens": 120,
+      "hash": "d530ea196db24bcc",
+      "size": 417,
+      "mtimeMs": 1790261903733.7153,
+      "updatedAt": "2026-09-24T17:32:59.310Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/appsettings.Production.json": {
+      "description": "",
+      "tokens": 116,
+      "hash": "315bd489784cb0f4",
+      "size": 405,
+      "mtimeMs": 1790261916212.4807,
+      "updatedAt": "2026-09-24T17:32:59.311Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Controllers/ApiController.cs": {
+      "description": "Controller: ApiController",
+      "tokens": 659,
+      "hash": "974cc4d0a0d0d302",
+      "size": 2471,
+      "mtimeMs": 1790246511768.4688,
+      "updatedAt": "2026-09-24T17:32:59.311Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Controllers/AuthController.cs": {
+      "description": "Controller: AuthController",
+      "tokens": 346,
+      "hash": "d6b3a0cf34eaa534",
+      "size": 1297,
+      "mtimeMs": 1790270985465.8403,
+      "updatedAt": "2026-09-24T17:32:59.311Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Endpoints/HomePageEndpoint.cs": {
+      "description": "HomePageEndpoint: MapHomePage",
+      "tokens": 1180,
+      "hash": "cce3e4f12bf3e589",
+      "size": 4424,
+      "mtimeMs": 1790140678242.7417,
+      "updatedAt": "2026-09-24T17:32:59.312Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/HealthChecks/DatabaseHealthCheck.cs": {
+      "description": "DatabaseHealthCheck: CheckHealthAsync",
+      "tokens": 162,
+      "hash": "b139ad3b225f1144",
+      "size": 605,
+      "mtimeMs": 1790141566853.9521,
+      "updatedAt": "2026-09-24T17:32:59.312Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Kahoot.Api.csproj": {
+      "description": "",
+      "tokens": 249,
+      "hash": "c32ce09bcf51cfb0",
+      "size": 931,
+      "mtimeMs": 1790182329529.1719,
+      "updatedAt": "2026-09-24T17:32:59.312Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Middleware/GlobalExceptionHandler.cs": {
+      "description": "GlobalExceptionHandler: TryHandleAsync",
+      "tokens": 732,
+      "hash": "5f65760fd36d8572",
+      "size": 2745,
+      "mtimeMs": 1790260812365.2002,
+      "updatedAt": "2026-09-24T17:32:59.313Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Program.cs": {
+      "description": "Application entry point",
+      "tokens": 377,
+      "hash": "d6bdefa26a22fda9",
+      "size": 1413,
+      "mtimeMs": 1790182287838.0078,
+      "updatedAt": "2026-09-24T17:32:59.313Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Properties/launchSettings.json": {
+      "description": "",
+      "tokens": 256,
+      "hash": "28ab33ae4216b32c",
+      "size": 893,
+      "mtimeMs": 1790140517439.052,
+      "updatedAt": "2026-09-24T17:32:59.313Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Api/Services/CurrentUser.cs": {
+      "description": "Class: CurrentUser",
+      "tokens": 235,
+      "hash": "21cddd5329d540a7",
+      "size": 880,
+      "mtimeMs": 1790246668314.0354,
+      "updatedAt": "2026-09-24T17:32:59.313Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/AssemblyReference.cs": {
+      "description": "Class: AssemblyReference",
+      "tokens": 49,
+      "hash": "f89d9faba95c0fbc",
+      "size": 182,
+      "mtimeMs": 1790108058638.3242,
+      "updatedAt": "2026-09-24T17:32:59.314Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Behaviors/ValidationBehavior.cs": {
+      "description": "ValidationBehavior: Handle",
+      "tokens": 318,
+      "hash": "ffc0c6a81d37c001",
+      "size": 1190,
+      "mtimeMs": 1790246129602.709,
+      "updatedAt": "2026-09-24T17:32:59.314Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Exceptions/PasswordHashingRateLimitedException.cs": {
+      "description": "Thrown when the global password hashing concurrency floor (16 active, 50 queued) is exceeded.",
+      "tokens": 106,
+      "hash": "006558cf02662234",
+      "size": 396,
+      "mtimeMs": 1790260726336.9458,
+      "updatedAt": "2026-09-24T17:32:59.315Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Exceptions/UniqueConstraintViolationException.cs": {
+      "description": "Represents a database-provider-independent error that occurs when a unique constraint is violated.",
+      "tokens": 243,
+      "hash": "97d34f8b55132e4d",
+      "size": 909,
+      "mtimeMs": 1790259784863.2302,
+      "updatedAt": "2026-09-24T17:32:59.315Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Interfaces/ICurrentUser.cs": {
+      "description": "Interface: ICurrentUser (0 members)",
+      "tokens": 46,
+      "hash": "4bed93267ce7162f",
+      "size": 171,
+      "mtimeMs": 1790246656027.0332,
+      "updatedAt": "2026-09-24T17:32:59.316Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Interfaces/IJwtTokenGenerator.cs": {
+      "description": "Interface: IJwtTokenGenerator (1 members)",
+      "tokens": 44,
+      "hash": "e28490109e761ba4",
+      "size": 163,
+      "mtimeMs": 1790260743047.8308,
+      "updatedAt": "2026-09-24T17:32:59.316Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Interfaces/IPasswordHasher.cs": {
+      "description": "Interface: IPasswordHasher (0 members)",
+      "tokens": 111,
+      "hash": "cb73930c878a0441",
+      "size": 414,
+      "mtimeMs": 1790270027166.7168,
+      "updatedAt": "2026-09-24T17:32:59.316Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Messaging/ICommand.cs": {
+      "description": "Interface: ICommand (0 members)",
+      "tokens": 132,
+      "hash": "98c649af57a4a7e2",
+      "size": 495,
+      "mtimeMs": 1790140517441.9204,
+      "updatedAt": "2026-09-24T17:32:59.316Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Messaging/IQuery.cs": {
+      "description": "Interface: IQuery (0 members)",
+      "tokens": 85,
+      "hash": "8ca12f382859157b",
+      "size": 317,
+      "mtimeMs": 1790140517441.9204,
+      "updatedAt": "2026-09-24T17:32:59.316Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Persistence/IAppDbContext.cs": {
+      "description": "DbContext: User, RefreshToken, Quiz, MediaItem, Question, Choice, Game, GameQuestionSnapshot, GameChoiceSnapshot, Participant, ParticipantSessionTo...",
+      "tokens": 272,
+      "hash": "9a52eff07e13f889",
+      "size": 1019,
+      "mtimeMs": 1790246058559.7505,
+      "updatedAt": "2026-09-24T17:32:59.317Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Results/Error.cs": {
+      "description": "Error: NotFound, Validation, Conflict, Unauthorized + 4 more",
+      "tokens": 476,
+      "hash": "75ac5645f3f7f60a",
+      "size": 1782,
+      "mtimeMs": 1790140517441.9204,
+      "updatedAt": "2026-09-24T17:32:59.317Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Results/ErrorType.cs": {
+      "description": "Class: ErrorType",
+      "tokens": 59,
+      "hash": "50146ce1cd2ed511",
+      "size": 219,
+      "mtimeMs": 1790140517441.9204,
+      "updatedAt": "2026-09-24T17:32:59.317Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Results/Result.cs": {
+      "description": "Result: Success, Failure",
+      "tokens": 303,
+      "hash": "bb408ad4cc449686",
+      "size": 1134,
+      "mtimeMs": 1790140517441.9204,
+      "updatedAt": "2026-09-24T17:32:59.318Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Common/Results/ResultT.cs": {
+      "description": "Class: Result",
+      "tokens": 162,
+      "hash": "535584df14d770b1",
+      "size": 606,
+      "mtimeMs": 1790140517446.38,
+      "updatedAt": "2026-09-24T17:32:59.318Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/DependencyInjection.cs": {
+      "description": "DependencyInjection: AddApplication",
+      "tokens": 189,
+      "hash": "24fb666470286fe7",
+      "size": 707,
+      "mtimeMs": 1790181041953.8328,
+      "updatedAt": "2026-09-24T17:32:59.318Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/AuthErrors.cs": {
+      "description": "Class: AuthErrors",
+      "tokens": 157,
+      "hash": "84a439b1e2d438ba",
+      "size": 588,
+      "mtimeMs": 1790260736708.1362,
+      "updatedAt": "2026-09-24T17:32:59.318Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Login/LoginCommand.cs": {
+      "description": "Class: LoginCommand",
+      "tokens": 59,
+      "hash": "229aa27191beb524",
+      "size": 219,
+      "mtimeMs": 1790260847045.9873,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Login/LoginCommandValidator.cs": {
+      "description": "Class: LoginCommandValidator",
+      "tokens": 133,
+      "hash": "bd5fbe616328649b",
+      "size": 496,
+      "mtimeMs": 1790260852248.6892,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Login/LoginRequest.cs": {
+      "description": "Class: LoginRequest",
+      "tokens": 32,
+      "hash": "d432eed8040d2cc2",
+      "size": 120,
+      "mtimeMs": 1790260827999.0754,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Login/LoginResponse.cs": {
+      "description": "Class: LoginResponse",
+      "tokens": 54,
+      "hash": "fe2e9e4ea13c88db",
+      "size": 202,
+      "mtimeMs": 1790260834309.8047,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Login/LoginResult.cs": {
+      "description": "Class: LoginResult",
+      "tokens": 38,
+      "hash": "cde288247c3a29b0",
+      "size": 142,
+      "mtimeMs": 1790260839523.814,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Register/RegisterCommand.cs": {
+      "description": "Class: RegisterCommand",
+      "tokens": 54,
+      "hash": "db8520527ef5cc64",
+      "size": 199,
+      "mtimeMs": 1790246152179.235,
+      "updatedAt": "2026-09-24T17:32:59.319Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Register/RegisterCommandHandler.cs": {
+      "description": "Class: RegisterCommandHandler",
+      "tokens": 773,
+      "hash": "01dc5a49f057bb97",
+      "size": 2896,
+      "mtimeMs": 1790260822727.9536,
+      "updatedAt": "2026-09-24T17:32:59.320Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Register/RegisterCommandValidator.cs": {
+      "description": "Class: RegisterCommandValidator",
+      "tokens": 707,
+      "hash": "dddf86c16d382bfe",
+      "size": 2651,
+      "mtimeMs": 1790257853581.1226,
+      "updatedAt": "2026-09-24T17:32:59.320Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Register/RegisterRequest.cs": {
+      "description": "Class: RegisterRequest",
+      "tokens": 34,
+      "hash": "b5c288241828aadc",
+      "size": 126,
+      "mtimeMs": 1790246435896.0244,
+      "updatedAt": "2026-09-24T17:32:59.320Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Features/Auth/Register/RegisterResponse.cs": {
+      "description": "Class: RegisterResponse",
+      "tokens": 34,
+      "hash": "a4e3e1d12c60ac7e",
+      "size": 126,
+      "mtimeMs": 1790246156864.344,
+      "updatedAt": "2026-09-24T17:32:59.320Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Application/Kahoot.Application.csproj": {
+      "description": "",
+      "tokens": 218,
+      "hash": "e3b2a813e688750c",
+      "size": 815,
+      "mtimeMs": 1790180262370.5918,
+      "updatedAt": "2026-09-24T17:32:59.320Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/AnswerSubmission.cs": {
+      "description": "Class: AnswerSubmission",
+      "tokens": 125,
+      "hash": "5befc0ec6c3a7657",
+      "size": 466,
+      "mtimeMs": 1790195228653.6887,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/AnswerSubmissionChoice.cs": {
+      "description": "Class: AnswerSubmissionChoice",
+      "tokens": 71,
+      "hash": "e69a00fabc27c626",
+      "size": 266,
+      "mtimeMs": 1790195237347.9565,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/Choice.cs": {
+      "description": "Class: Choice",
+      "tokens": 84,
+      "hash": "38d5e94dd9d2314d",
+      "size": 315,
+      "mtimeMs": 1790195188415.2031,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/Game.cs": {
+      "description": "Class: Game",
+      "tokens": 224,
+      "hash": "701c995451fec6ff",
+      "size": 840,
+      "mtimeMs": 1790195194375.1963,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/GameChoiceSnapshot.cs": {
+      "description": "Class: GameChoiceSnapshot",
+      "tokens": 101,
+      "hash": "ef5fee5092abf7d4",
+      "size": 376,
+      "mtimeMs": 1790195212164.206,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/GameCommandIdempotency.cs": {
+      "description": "Class: GameCommandIdempotency",
+      "tokens": 126,
+      "hash": "a60fe6dd160de377",
+      "size": 472,
+      "mtimeMs": 1790195243201.4268,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/GameQuestionSnapshot.cs": {
+      "description": "Class: GameQuestionSnapshot",
+      "tokens": 214,
+      "hash": "a7d019d6cb49adbc",
+      "size": 799,
+      "mtimeMs": 1790195200592.4075,
+      "updatedAt": "2026-09-24T17:32:59.321Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/MediaItem.cs": {
+      "description": "Class: MediaItem",
+      "tokens": 168,
+      "hash": "e9e1580bde7565d9",
+      "size": 629,
+      "mtimeMs": 1790195176968.9922,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/Participant.cs": {
+      "description": "Class: Participant",
+      "tokens": 199,
+      "hash": "5a286735fed74265",
+      "size": 746,
+      "mtimeMs": 1790195217695.7576,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/ParticipantSessionToken.cs": {
+      "description": "Class: ParticipantSessionToken",
+      "tokens": 121,
+      "hash": "19ce81a1cb38b521",
+      "size": 451,
+      "mtimeMs": 1790195222921.73,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/Question.cs": {
+      "description": "Class: Question",
+      "tokens": 108,
+      "hash": "5e2176b18dc2a02c",
+      "size": 403,
+      "mtimeMs": 1790195182874.445,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/Quiz.cs": {
+      "description": "Class: Quiz",
+      "tokens": 114,
+      "hash": "5054217b7f0bb25b",
+      "size": 426,
+      "mtimeMs": 1790243166081.9546,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/RefreshToken.cs": {
+      "description": "Class: RefreshToken",
+      "tokens": 135,
+      "hash": "166b1d931e7d4694",
+      "size": 503,
+      "mtimeMs": 1790195155158.0896,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Entities/User.cs": {
+      "description": "Class: User",
+      "tokens": 180,
+      "hash": "1d4db8741fc3a71c",
+      "size": 674,
+      "mtimeMs": 1790195564677.3428,
+      "updatedAt": "2026-09-24T17:32:59.322Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Enums/GameStatus.cs": {
+      "description": "Class: GameStatus",
+      "tokens": 48,
+      "hash": "32b9f00804e865d1",
+      "size": 178,
+      "mtimeMs": 1790195136389.8894,
+      "updatedAt": "2026-09-24T17:32:59.323Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Enums/MediaStatus.cs": {
+      "description": "Class: MediaStatus",
+      "tokens": 27,
+      "hash": "52d228193aaca153",
+      "size": 100,
+      "mtimeMs": 1790195143260.4956,
+      "updatedAt": "2026-09-24T17:32:59.323Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Enums/UserRole.cs": {
+      "description": "Class: UserRole",
+      "tokens": 25,
+      "hash": "88f59c4446631227",
+      "size": 91,
+      "mtimeMs": 1790195298058.6753,
+      "updatedAt": "2026-09-24T17:32:59.323Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Enums/UserStatus.cs": {
+      "description": "Class: UserStatus",
+      "tokens": 25,
+      "hash": "d177c9718939bb0f",
+      "size": 93,
+      "mtimeMs": 1790195129384.9812,
+      "updatedAt": "2026-09-24T17:32:59.324Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Domain/Kahoot.Domain.csproj": {
+      "description": "",
+      "tokens": 58,
+      "hash": "61e3f2d043e37f0d",
+      "size": 219,
+      "mtimeMs": 1790113184586.74,
+      "updatedAt": "2026-09-24T17:32:59.324Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/AssemblyReference.cs": {
+      "description": "Class: AssemblyReference",
+      "tokens": 50,
+      "hash": "46be2da2743d635f",
+      "size": 185,
+      "mtimeMs": 1790108064470.9329,
+      "updatedAt": "2026-09-24T17:32:59.324Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/DependencyInjection.cs": {
+      "description": "DependencyInjection: AddInfrastructure",
+      "tokens": 755,
+      "hash": "443a00e2c1d3f085",
+      "size": 2831,
+      "mtimeMs": 1790261879995.1643,
+      "updatedAt": "2026-09-24T17:32:59.325Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Kahoot.Infrastructure.csproj": {
+      "description": "",
+      "tokens": 315,
+      "hash": "8862840035f82804",
+      "size": 1179,
+      "mtimeMs": 1790261828683.7927,
+      "updatedAt": "2026-09-24T17:32:59.325Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/AppDbContext.cs": {
+      "description": "DbContext: User, RefreshToken, Quiz, MediaItem, Question, Choice, Game, GameQuestionSnapshot, GameChoiceSnapshot, Participant, ParticipantSessionTo...",
+      "tokens": 929,
+      "hash": "d409efeb302ebaff",
+      "size": 3483,
+      "mtimeMs": 1790259804975.9849,
+      "updatedAt": "2026-09-24T17:32:59.325Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/AnswerSubmissionChoiceConfiguration.cs": {
+      "description": "AnswerSubmissionChoiceConfiguration: Configure",
+      "tokens": 476,
+      "hash": "e7942da31aebce2e",
+      "size": 1785,
+      "mtimeMs": 1790244561357.7131,
+      "updatedAt": "2026-09-24T17:32:59.325Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/AnswerSubmissionConfiguration.cs": {
+      "description": "AnswerSubmissionConfiguration: Configure",
+      "tokens": 738,
+      "hash": "e060986d9f3615b0",
+      "size": 2767,
+      "mtimeMs": 1790244554706.4033,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ChoiceConfiguration.cs": {
+      "description": "ChoiceConfiguration: Configure",
+      "tokens": 437,
+      "hash": "e4952e742bc27d93",
+      "size": 1636,
+      "mtimeMs": 1790244490909.5945,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameChoiceSnapshotConfiguration.cs": {
+      "description": "GameChoiceSnapshotConfiguration: Configure",
+      "tokens": 497,
+      "hash": "855c2e0ec692282d",
+      "size": 1861,
+      "mtimeMs": 1790244526828.5742,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameCommandIdempotencyConfiguration.cs": {
+      "description": "GameCommandIdempotencyConfiguration: Configure",
+      "tokens": 482,
+      "hash": "3096ed47a6c16902",
+      "size": 1804,
+      "mtimeMs": 1790244569542.063,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameConfiguration.cs": {
+      "description": "GameConfiguration: Configure",
+      "tokens": 783,
+      "hash": "b6df6ed02909a81d",
+      "size": 2936,
+      "mtimeMs": 1790244509536.3545,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/GameQuestionSnapshotConfiguration.cs": {
+      "description": "GameQuestionSnapshotConfiguration: Configure",
+      "tokens": 818,
+      "hash": "94bb9263184cee55",
+      "size": 3067,
+      "mtimeMs": 1790244519512.038,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/MediaItemConfiguration.cs": {
+      "description": "MediaItemConfiguration: Configure",
+      "tokens": 560,
+      "hash": "aafc388fdd154db9",
+      "size": 2098,
+      "mtimeMs": 1790244470403.1653,
+      "updatedAt": "2026-09-24T17:32:59.326Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantConfiguration.cs": {
+      "description": "ParticipantConfiguration: Configure",
+      "tokens": 816,
+      "hash": "a3ca2811395b8356",
+      "size": 3057,
+      "mtimeMs": 1790244534431.9622,
+      "updatedAt": "2026-09-24T17:32:59.327Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/ParticipantSessionTokenConfiguration.cs": {
+      "description": "ParticipantSessionTokenConfiguration: Configure",
+      "tokens": 532,
+      "hash": "db74e39d11bd85fd",
+      "size": 1993,
+      "mtimeMs": 1790244541289.0847,
+      "updatedAt": "2026-09-24T17:32:59.327Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuestionConfiguration.cs": {
+      "description": "QuestionConfiguration: Configure",
+      "tokens": 567,
+      "hash": "3f44233c5ddd1c54",
+      "size": 2123,
+      "mtimeMs": 1790244482011.7107,
+      "updatedAt": "2026-09-24T17:32:59.327Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/QuizConfiguration.cs": {
+      "description": "QuizConfiguration: Configure",
+      "tokens": 407,
+      "hash": "aa8715b2a5befcd2",
+      "size": 1525,
+      "mtimeMs": 1790244464039.1643,
+      "updatedAt": "2026-09-24T17:32:59.327Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/RefreshTokenConfiguration.cs": {
+      "description": "RefreshTokenConfiguration: Configure",
+      "tokens": 460,
+      "hash": "f9be378f3811bed1",
+      "size": 1724,
+      "mtimeMs": 1790244457851.8796,
+      "updatedAt": "2026-09-24T17:32:59.327Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/Configurations/UserConfiguration.cs": {
+      "description": "UserConfiguration: Configure",
+      "tokens": 451,
+      "hash": "0e26f0eb7240a8e8",
+      "size": 1689,
+      "mtimeMs": 1790244451395.319,
+      "updatedAt": "2026-09-24T17:32:59.328Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Persistence/DatabaseMigrationService.cs": {
+      "description": "DatabaseMigrationService: StartAsync, StopAsync",
+      "tokens": 179,
+      "hash": "08fc96edb6e4b2f5",
+      "size": 670,
+      "mtimeMs": 1790140517455.9172,
+      "updatedAt": "2026-09-24T17:32:59.328Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Security/JwtOptions.cs": {
+      "description": "Strongly typed options for JWT access token issuance.",
+      "tokens": 118,
+      "hash": "ecc38e249b70f929",
+      "size": 439,
+      "mtimeMs": 1790262092695.5342,
+      "updatedAt": "2026-09-24T17:32:59.328Z",
+      "source": "scan"
+    },
+    "backend/src/Kahoot.Infrastructure/Security/PasswordHasher.cs": {
+      "description": "PasswordHasher: HashPasswordAsync, VerifyPasswordAsync, VerifyDummyPasswordAsync, Dispose",
+      "tokens": 1533,
+      "hash": "d5dac07557626b9b",
+      "size": 5756,
+      "mtimeMs": 1790270060955.159,
+      "updatedAt": "2026-09-24T17:32:59.329Z",
+      "source": "scan"
+    },
+    "backend/test/.gitkeep": {
+      "description": "Placeholder to preserve empty test folder in git",
+      "tokens": 14,
+      "hash": "6a043d6574fa8eb2",
+      "size": 52,
+      "mtimeMs": 1790140517455.9172,
+      "updatedAt": "2026-09-24T17:32:59.329Z",
+      "source": "scan"
+    },
+    "CLAUDE.md": {
+      "description": "OpenWolf",
+      "tokens": 99,
+      "hash": "074d6b42b583729a",
+      "size": 395,
+      "mtimeMs": 1790271137353.8193,
+      "updatedAt": "2026-09-24T17:32:59.329Z",
+      "source": "scan"
+    },
+    "docker-compose.yml": {
+      "description": "Docker Compose services",
+      "tokens": 416,
+      "hash": "7c136c2bf17bcd17",
+      "size": 1455,
+      "mtimeMs": 1790261944795.9172,
+      "updatedAt": "2026-09-24T17:32:59.330Z",
+      "source": "scan"
+    },
+    "docs/01-roles-and-access.md": {
+      "description": "01. Roles, Ownership, and Access",
+      "tokens": 5080,
+      "hash": "b876855ed2936e5f",
+      "size": 20322,
+      "mtimeMs": 1790196519633.7207,
+      "updatedAt": "2026-09-24T17:32:59.330Z",
+      "source": "scan"
+    },
+    "docs/02-authentication.md": {
+      "description": "02. Authentication and Credential Lifecycle",
+      "tokens": 5396,
+      "hash": "31457ce6f533d815",
+      "size": 21590,
+      "mtimeMs": 1790196519642.691,
+      "updatedAt": "2026-09-24T17:32:59.331Z",
+      "source": "scan"
+    },
+    "docs/03-account-management.md": {
+      "description": "03. Platform Account Management and Tenant Lifecycle",
+      "tokens": 3459,
+      "hash": "b62396e04566c329",
+      "size": 13840,
+      "mtimeMs": 1790196519650.901,
+      "updatedAt": "2026-09-24T17:32:59.332Z",
+      "source": "scan"
+    },
+    "docs/04-quiz-and-question-management.md": {
+      "description": "04. Quiz and Question Authoring",
+      "tokens": 3815,
+      "hash": "27208952e46078c2",
+      "size": 15266,
+      "mtimeMs": 1789939098483.9756,
+      "updatedAt": "2026-09-24T17:32:59.332Z",
+      "source": "scan"
+    },
+    "docs/05-media-management.md": {
+      "description": "05. Media Management and Lifecycle",
+      "tokens": 3736,
+      "hash": "71278becdfb537b7",
+      "size": 14942,
+      "mtimeMs": 1790185458593.2178,
+      "updatedAt": "2026-09-24T17:32:59.333Z",
+      "source": "scan"
+    },
+    "docs/06-game-lifecycle.md": {
+      "description": "06. Game Lifecycle and Session State Machine",
+      "tokens": 4484,
+      "hash": "24e7193c059eb503",
+      "size": 17939,
+      "mtimeMs": 1789939098427.119,
+      "updatedAt": "2026-09-24T17:32:59.333Z",
+      "source": "scan"
+    },
+    "docs/07-joining-and-lobby.md": {
+      "description": "07. Player Joining, Lobby Management, and Presence",
+      "tokens": 3822,
+      "hash": "4585de6ba45357ca",
+      "size": 15288,
+      "mtimeMs": 1790185466246.3584,
+      "updatedAt": "2026-09-24T17:32:59.334Z",
+      "source": "scan"
+    },
+    "docs/08-live-gameplay.md": {
+      "description": "08. Live Gameplay and High-Throughput Ingestion",
+      "tokens": 3791,
+      "hash": "4c59c036114711d0",
+      "size": 15162,
+      "mtimeMs": 1789939098500.1567,
+      "updatedAt": "2026-09-24T17:32:59.334Z",
+      "source": "scan"
+    },
+    "docs/09-scoring-and-leaderboards.md": {
+      "description": "09. Scoring Engine and Leaderboards",
+      "tokens": 2713,
+      "hash": "0efbce754bede8ea",
+      "size": 10852,
+      "mtimeMs": 1789939098419.3655,
+      "updatedAt": "2026-09-24T17:32:59.335Z",
+      "source": "scan"
+    },
+    "docs/10-realtime-and-protocol.md": {
+      "description": "10. Realtime Protocol and SignalR Communication",
+      "tokens": 3671,
+      "hash": "5184d31f6621c577",
+      "size": 14687,
+      "mtimeMs": 1790185473461.1702,
+      "updatedAt": "2026-09-24T17:32:59.335Z",
+      "source": "scan"
+    },
+    "docs/11-reconnection.md": {
+      "description": "11. Player Reconnection and State Catch-Up",
+      "tokens": 2909,
+      "hash": "cbfb3ef8bbbdd068",
+      "size": 11638,
+      "mtimeMs": 1789939098444.2612,
+      "updatedAt": "2026-09-24T17:32:59.336Z",
+      "source": "scan"
+    },
+    "docs/12-platform-operations-and-health.md": {
+      "description": "12. Platform Operations, Health Probes, and Worker Orchestration",
+      "tokens": 3330,
+      "hash": "1304529cd50dd550",
+      "size": 13321,
+      "mtimeMs": 1789939098468.191,
+      "updatedAt": "2026-09-24T17:32:59.336Z",
+      "source": "scan"
+    },
+    "docs/13-architecture-and-deployment.md": {
+      "description": "13. Architecture and Deployment",
+      "tokens": 5596,
+      "hash": "ab884f27da33d7f6",
+      "size": 22383,
+      "mtimeMs": 1790196538673.5957,
+      "updatedAt": "2026-09-24T17:32:59.337Z",
+      "source": "scan"
+    },
+    "docs/14-verification-and-testing.md": {
+      "description": "14. Verification and Testing",
+      "tokens": 9438,
+      "hash": "9414bd3c079a29f9",
+      "size": 37767,
+      "mtimeMs": 1790196519670.124,
+      "updatedAt": "2026-09-24T17:32:59.338Z",
+      "source": "scan"
+    },
+    "frontend/AGENTS.md": {
+      "description": "React Engineering Standards",
+      "tokens": 9193,
+      "hash": "a4886844bdf803e7",
+      "size": 36794,
+      "mtimeMs": 1789939108029.8235,
+      "updatedAt": "2026-09-24T17:32:59.339Z",
+      "source": "scan"
+    },
+    "frontend/FOLDER_STRUCTURE.md": {
+      "description": "Frontend Folder Structure & Architecture Guide",
+      "tokens": 3655,
+      "hash": "bdaddb8ed287385b",
+      "size": 14925,
+      "mtimeMs": 1790103795292.289,
+      "updatedAt": "2026-09-24T17:32:59.340Z",
+      "source": "scan"
+    },
+    "skills-lock.json": {
+      "description": "",
+      "tokens": 329,
+      "hash": "fd0ba812d351fc6f",
+      "size": 1151,
+      "mtimeMs": 1790140517455.9172,
+      "updatedAt": "2026-09-24T17:32:59.340Z",
+      "source": "scan"
+    }
+  },
+  "preamble": [
+    "> Project structure index. Auto-maintained by OpenWolf hooks and daemon.",
+    "> Run `openwolf scan` to generate, or wait for the first Claude Code session.",
+    "> Status: Pending initial scan"
+  ]
+}
