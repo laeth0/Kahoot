@@ -1,4 +1,5 @@
 using System.Text;
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
@@ -11,6 +12,8 @@ namespace Kahoot.Application.Features.Auth.Register;
 
 public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, RegisterResponse>
 {
+    private const string NormalizedUsernameConstraintName = "ux_users_normalized_username";
+
     private readonly IAppDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
     private readonly TimeProvider _timeProvider;
@@ -64,28 +67,11 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        catch (UniqueConstraintViolationException ex) when (string.Equals(ex.ConstraintName, NormalizedUsernameConstraintName, StringComparison.Ordinal))
         {
             return Result.Failure<RegisterResponse>(AuthErrors.UsernameUnavailable);
         }
 
         return Result.Success(new RegisterResponse(user.Id, user.DisplayUsername));
-    }
-
-    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
-    {
-        var inner = ex.InnerException;
-        if (inner is null)
-        {
-            return false;
-        }
-
-        var sqlStateProperty = inner.GetType().GetProperty("SqlState");
-        if (sqlStateProperty?.GetValue(inner) is string sqlState && sqlState == "23505")
-        {
-            return true;
-        }
-
-        return inner.Message.Contains("23505") || inner.Message.Contains("ux_users_normalized_username");
     }
 }

@@ -1,7 +1,9 @@
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Kahoot.Infrastructure.Persistence;
 
@@ -50,5 +52,47 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         modelBuilder.HasPostgresEnum<GameStatus>("game_status");
 
         modelBuilder.ApplyConfigurationsFromAssembly(AssemblyReference.Assembly);
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new UniqueConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        try
+        {
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new UniqueConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        return SaveChanges(acceptAllChangesOnSuccess: true);
     }
 }
