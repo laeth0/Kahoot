@@ -35,6 +35,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 
 - Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
 - See `README.md` for local setup and required environment variables. Keep passwords out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string.
+- Use the .NET Options Pattern for grouped runtime configuration when it improves type safety, validation, and maintainability. Do not use it for ordinary constants or values that are not meant to vary by environment. Prefer strongly typed options over scattered configuration-string lookups, and validate critical options at startup.
 - Development CORS origins are in `src/Kahoot.Api/appsettings.Development.json`. OpenAPI and Scalar are exposed only in Development. The database-aware health endpoint is `/health`.
 - From `backend/`, run `dotnet build Kahoot.slnx` after code changes. Run `dotnet format Kahoot.slnx --verify-no-changes` when formatting is relevant. Report any verification that could not run.
 
