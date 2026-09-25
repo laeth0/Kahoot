@@ -31,4 +31,8 @@ public static class AuthErrors
     public static readonly Error Forbidden = Error.Forbidden(
         "Auth.Forbidden",
         "Access denied due to invalid CSRF token or disallowed origin.");
+
+    public static readonly Error Unauthorized = Error.Unauthorized(
+        "Auth.Unauthorized",
+        "Authentication is required to access this resource, or token is invalid.");
 }

@@ -4,8 +4,10 @@ using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
 using Kahoot.Application.Features.Auth.Login;
 using Kahoot.Application.Features.Auth.Logout;
+using Kahoot.Application.Features.Auth.LogoutAll;
 using Kahoot.Application.Features.Auth.Refresh;
 using Kahoot.Application.Features.Auth.Register;
+using Kahoot.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -134,6 +136,27 @@ public sealed class AuthController : ApiController
         }
 
         var command = new LogoutCommand(hasCookie ? cookieToken : null);
+        var result = await _sender.Send(command, cancellationToken);
+
+        ClearRefreshTokenCookie();
+
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("logout-all")]
+    [Authorize(Roles = $"{nameof(UserRole.Host)},{nameof(UserRole.SystemAdmin)}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
+    {
+        var command = new LogoutAllCommand();
         var result = await _sender.Send(command, cancellationToken);
 
         ClearRefreshTokenCookie();
