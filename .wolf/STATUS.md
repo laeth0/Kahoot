@@ -29,7 +29,7 @@ budget_tokens: 1000
 - `docs/02-authentication.md`
 
 ### Closed decisions
-- A Host account ID identifies the Host ownership boundary; no separate tenant ID is issued or stored.
+- Host ownership uses `users.id`, stored in `host_account_id` on owned rows. There is no separate accounts or tenants table.
 - Fresh database authority checks remain on each authenticated request to meet rapid revocation requirements.
 
 ### Open decisions

@@ -60,6 +60,21 @@
       ],
       "occurrences": 1,
       "last_seen": "2026-09-25T12:03:48Z"
+    },
+    {
+      "id": "realtime-host-account-id-ambiguity-20260925",
+      "timestamp": "2026-09-25T12:06:35Z",
+      "error_message": "Realtime group placeholder hostAccountId appeared to imply a separate account table.",
+      "file": "docs/10-realtime-and-protocol.md",
+      "root_cause": "The docs used the schema field name without explaining that it references users.id.",
+      "fix": "Clarify that hostAccountId is the Host users.id stored in games.host_account_id.",
+      "tags": [
+        "docs",
+        "schema",
+        "ownership"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-25T12:06:35Z"
     }
   ]
 }

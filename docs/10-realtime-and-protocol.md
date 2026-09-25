@@ -15,6 +15,7 @@ Realtime communication coordinates live quiz synchronization across distributed 
   * Group identifiers are strictly derived server-side:
     * `host:{hostAccountId}:game:{gameId}:hosts`
     * `host:{hostAccountId}:game:{gameId}:players`
+  * `{hostAccountId}` is the Host user's `users.id`, stored on the game as `games.host_account_id`; there is no separate account table.
   * Clients can **never** specify, inject, or request arbitrary SignalR group names.
 
 ---

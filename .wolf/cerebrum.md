@@ -24,6 +24,8 @@ budget_tokens: 2000
 <!-- Mistakes made and corrected. Each entry prevents the same mistake recurring. -->
 <!-- Format: [YYYY-MM-DD] Description of what went wrong and what to do instead. -->
 
+- [2026-09-25] The schema has a `users` table, not an `accounts` table. `HostAccountId` and `host_account_id` are ownership field names that reference the Host user's `users.id`; explain this mapping in docs instead of assuming a separate account entity.
+
 ## Decision Log
 
 <!-- Significant technical decisions with rationale. Why X was chosen over Y. -->
