@@ -27,9 +27,15 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
 
             await Results.ValidationProblem(
                 errors,
+                instance: httpContext.Request.Path,
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Validation.Failed",
-                extensions: new Dictionary<string, object?> { ["code"] = "Validation.Failed" })
+                type: "https://api.kahoot-saas.local/errors/Validation.Failed",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "Validation.Failed",
+                    ["requestId"] = httpContext.TraceIdentifier
+                })
                 .ExecuteAsync(httpContext);
 
             return true;
@@ -38,25 +44,37 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
         if (exception is Kahoot.Application.Common.Exceptions.PasswordHashingRateLimitedException)
         {
             await Results.Problem(
+                instance: httpContext.Request.Path,
                 statusCode: StatusCodes.Status429TooManyRequests,
                 title: "Request.RateLimited",
                 detail: "Password hashing concurrency limit exceeded. Please try again later.",
-                extensions: new Dictionary<string, object?> { ["code"] = "Request.RateLimited" })
+                type: "https://api.kahoot-saas.local/errors/Request.RateLimited",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "Request.RateLimited",
+                    ["requestId"] = httpContext.TraceIdentifier
+                })
                 .ExecuteAsync(httpContext);
 
             return true;
         }
 
-        if (exception is Npgsql.NpgsqlException npgsqlException && npgsqlException.IsTransient
-            || exception is TimeoutException)
+        var rootException = exception.GetBaseException();
+        if (rootException is Npgsql.NpgsqlException { IsTransient: true } or TimeoutException)
         {
             _logger.LogError(exception, "Database service is temporarily unavailable.");
 
             await Results.Problem(
+                instance: httpContext.Request.Path,
                 statusCode: StatusCodes.Status503ServiceUnavailable,
                 title: "Service.Unavailable",
                 detail: "The service is temporarily unavailable due to a database connection failure.",
-                extensions: new Dictionary<string, object?> { ["code"] = "Service.Unavailable" })
+                type: "https://api.kahoot-saas.local/errors/Service.Unavailable",
+                extensions: new Dictionary<string, object?>
+                {
+                    ["code"] = "Service.Unavailable",
+                    ["requestId"] = httpContext.TraceIdentifier
+                })
                 .ExecuteAsync(httpContext);
 
             return true;

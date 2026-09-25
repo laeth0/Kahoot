@@ -10,7 +10,7 @@ public static class AuthErrors
 
     public static readonly Error InvalidCredentials = Error.Unauthorized(
         "Auth.InvalidCredentials",
-        "Invalid username or password.");
+        "The provided username or password was incorrect.");
 
     public static readonly Error RateLimited = Error.RateLimited(
         "Request.RateLimited",

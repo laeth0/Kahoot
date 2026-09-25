@@ -54,7 +54,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
             }
 
             int backoffStep = state.FailedCount - 5;
-            int seconds = (int)Math.Pow(2, backoffStep);
+            int seconds = 1 << backoffStep;
             return TimeSpan.FromSeconds(Math.Min(seconds, 10));
         }
     }
@@ -75,7 +75,8 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
                 state.FailedCount = 0;
             }
 
-            state.FailedCount++;
+            // Counts above nine all use the same 10-second cap.
+            state.FailedCount = Math.Min(state.FailedCount + 1, 9);
             state.LastFailedAt = now;
         }
     }

@@ -37,6 +37,12 @@ public sealed class LogoutAllCommandHandler : ICommandHandler<LogoutAllCommand>
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        var user = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return Result.Failure(AuthErrors.Unauthorized);
+        }
+
         // 1. Atomically revoke every active refresh token belonging to this user across all families/sessions
         await _dbContext.RefreshTokens
             .Where(token => token.UserId == userId.Value && token.RevokedAt == null)

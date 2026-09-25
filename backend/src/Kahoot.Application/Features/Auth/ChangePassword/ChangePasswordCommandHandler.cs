@@ -90,10 +90,12 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         // 5. Atomically commit password update, security version increment, and all refresh-token revocation
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        // Revoke every active refresh token belonging to this user across all families/sessions
-        await _dbContext.RefreshTokens
-            .Where(token => token.UserId == userId.Value && token.RevokedAt == null)
-            .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RevokedAt, now), cancellationToken);
+        var currentUser = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
+        if (currentUser is null || currentUser.Status != UserStatus.Active ||
+            !string.Equals(currentUser.PasswordHash, user.PasswordHash, StringComparison.Ordinal))
+        {
+            return Result.Failure(AuthErrors.InvalidCredentials);
+        }
 
         // Optimistic concurrency guarantee: ensure the password hash has not changed concurrently
         int updatedUsers = await _dbContext.Users
@@ -111,6 +113,10 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure(AuthErrors.InvalidCredentials);
         }
+
+        await _dbContext.RefreshTokens
+            .Where(token => token.UserId == userId.Value && token.RevokedAt == null)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(token => token.RevokedAt, now), cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
 

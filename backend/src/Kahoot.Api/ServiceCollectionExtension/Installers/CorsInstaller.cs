@@ -17,7 +17,7 @@ internal sealed class CorsInstaller : IServiceInstaller
 
         services.AddCors(options => options.AddPolicy(
             "Frontend",
-            policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()));
+            policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
 
         return services;
     }

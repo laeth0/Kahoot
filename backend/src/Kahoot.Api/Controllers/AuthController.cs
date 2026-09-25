@@ -1,3 +1,5 @@
+using System.Buffers.Text;
+using System.Security.Cryptography;
 using Kahoot.Api.Options;
 using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Results;
@@ -23,6 +25,8 @@ public sealed class AuthController : ApiController
 {
     private const string RefreshTokenCookieName = "kahoot_refresh_token";
     private const string RefreshTokenCookiePath = "/api/auth";
+    private const string CsrfCookieName = "kahoot_csrf_token";
+    private const string CsrfHeaderName = "X-CSRF-Token";
 
     private readonly ISender _sender;
     private readonly IOptions<RefreshTokenOptions> _refreshTokenOptions;
@@ -80,6 +84,7 @@ public sealed class AuthController : ApiController
         }
 
         SetRefreshTokenCookie(result.Value.RawRefreshToken);
+        SetCsrfCookie();
         return Ok(result.Value.Response);
     }
 
@@ -95,8 +100,7 @@ public sealed class AuthController : ApiController
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
         CancellationToken cancellationToken)
     {
-        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken) &&
-                         !string.IsNullOrWhiteSpace(cookieToken);
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken);
 
         if (!ValidateCsrfAndOrigin(hasCookie))
         {
@@ -118,6 +122,7 @@ public sealed class AuthController : ApiController
         }
 
         SetRefreshTokenCookie(result.Value.RawRefreshToken);
+        SetCsrfCookie();
         return Ok(result.Value.Response);
     }
 
@@ -128,8 +133,7 @@ public sealed class AuthController : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken) &&
-                         !string.IsNullOrWhiteSpace(cookieToken);
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken);
 
         if (!ValidateCsrfAndOrigin(hasCookie))
         {
@@ -139,13 +143,12 @@ public sealed class AuthController : ApiController
         var command = new LogoutCommand(hasCookie ? cookieToken : null);
         var result = await _sender.Send(command, cancellationToken);
 
-        ClearRefreshTokenCookie();
-
         if (!result.IsSuccess)
         {
             return Problem(result.Error);
         }
 
+        ClearAuthCookies();
         return NoContent();
     }
 
@@ -160,13 +163,12 @@ public sealed class AuthController : ApiController
         var command = new LogoutAllCommand();
         var result = await _sender.Send(command, cancellationToken);
 
-        ClearRefreshTokenCookie();
-
         if (!result.IsSuccess)
         {
             return Problem(result.Error);
         }
 
+        ClearAuthCookies();
         return NoContent();
     }
 
@@ -185,66 +187,75 @@ public sealed class AuthController : ApiController
         var command = new ChangePasswordCommand(request.CurrentPassword, request.NewPassword);
         var result = await _sender.Send(command, cancellationToken);
 
-        ClearRefreshTokenCookie();
-
         if (!result.IsSuccess)
         {
             return Problem(result.Error);
         }
 
+        ClearAuthCookies();
         return NoContent();
     }
 
     private bool ValidateCsrfAndOrigin(bool isCookieAuth)
     {
-        // 1. Origin / Referer validation if present
-        string? origin = Request.Headers.Origin.FirstOrDefault();
-        if (string.IsNullOrWhiteSpace(origin) && Request.Headers.TryGetValue("Referer", out var refererValues))
+        if (!Request.Headers.TryGetValue(CsrfHeaderName, out var csrfHeader) ||
+            csrfHeader.Count != 1 || string.IsNullOrWhiteSpace(csrfHeader[0]))
         {
-            var referer = refererValues.FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(referer) && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
-            {
-                origin = refererUri.GetLeftPart(UriPartial.Authority);
-            }
+            return false;
         }
 
-        if (!string.IsNullOrWhiteSpace(origin))
-        {
-            if (!IsOriginAllowed(origin, _corsOptions.Value.AllowedOrigins))
-            {
-                return false;
-            }
-        }
-
-        // 2. Custom header CSRF mitigation for browser cookie-authenticated requests
         if (isCookieAuth)
         {
-            if (!Request.Headers.TryGetValue("X-CSRF-Token", out var csrfToken) ||
-                string.IsNullOrWhiteSpace(csrfToken))
+            if (!Request.Cookies.TryGetValue(CsrfCookieName, out var csrfCookie) ||
+                string.IsNullOrEmpty(csrfCookie) ||
+                !CryptographicOperations.FixedTimeEquals(
+                    System.Text.Encoding.UTF8.GetBytes(csrfHeader[0]!),
+                    System.Text.Encoding.UTF8.GetBytes(csrfCookie)))
             {
                 return false;
             }
         }
 
-        return true;
+        string? origin = Request.Headers.Origin.ToString();
+        bool fromOriginHeader = !string.IsNullOrEmpty(origin);
+        if (!fromOriginHeader)
+        {
+            origin = Request.Headers.Referer.ToString();
+        }
+
+        if (string.IsNullOrEmpty(origin))
+        {
+            return !isCookieAuth;
+        }
+
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri) ||
+            originUri.Scheme is not ("http" or "https") ||
+            !string.IsNullOrEmpty(originUri.UserInfo) ||
+            (fromOriginHeader && origin != originUri.GetLeftPart(UriPartial.Authority)))
+        {
+            return false;
+        }
+
+        return IsOriginAllowed(originUri);
     }
 
-    private bool IsOriginAllowed(string origin, string[] allowedOrigins)
+    private bool IsOriginAllowed(Uri origin)
     {
-        if (allowedOrigins.Any(allowed => string.Equals(allowed.TrimEnd('/'), origin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)))
+        if (_corsOptions.Value.AllowedOrigins.Any(allowed =>
+                Uri.TryCreate(allowed, UriKind.Absolute, out var allowedUri) && SameOrigin(origin, allowedUri)))
         {
             return true;
         }
 
-        if (Uri.TryCreate(origin, UriKind.Absolute, out var originUri))
-        {
-            if (string.Equals(originUri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase))
-            {
-                return true;
-            }
-        }
+        return Uri.TryCreate($"{Request.Scheme}://{Request.Host}", UriKind.Absolute, out var requestOrigin) &&
+               SameOrigin(origin, requestOrigin);
+    }
 
-        return false;
+    private static bool SameOrigin(Uri first, Uri second)
+    {
+        return string.Equals(first.Scheme, second.Scheme, StringComparison.OrdinalIgnoreCase) &&
+               string.Equals(first.IdnHost, second.IdnHost, StringComparison.OrdinalIgnoreCase) &&
+               first.Port == second.Port;
     }
 
     private void SetRefreshTokenCookie(string rawRefreshToken)
@@ -252,7 +263,7 @@ public sealed class AuthController : ApiController
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
-            Secure = Request.IsHttps,
+            Secure = true,
             SameSite = SameSiteMode.Lax,
             Path = RefreshTokenCookiePath,
             MaxAge = TimeSpan.FromDays(_refreshTokenOptions.Value.LifetimeDays)
@@ -261,16 +272,36 @@ public sealed class AuthController : ApiController
         Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
     }
 
-    private void ClearRefreshTokenCookie()
+    private void SetCsrfCookie()
     {
         var cookieOptions = new CookieOptions
         {
-            HttpOnly = true,
-            Secure = Request.IsHttps,
+            HttpOnly = false,
+            Secure = true,
             SameSite = SameSiteMode.Lax,
-            Path = RefreshTokenCookiePath
+            Path = "/",
+            MaxAge = TimeSpan.FromDays(_refreshTokenOptions.Value.LifetimeDays)
         };
 
-        Response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
+        Response.Cookies.Append(CsrfCookieName, Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(32)), cookieOptions);
+    }
+
+    private void ClearAuthCookies()
+    {
+        Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = RefreshTokenCookiePath
+        });
+
+        Response.Cookies.Delete(CsrfCookieName, new CookieOptions
+        {
+            HttpOnly = false,
+            Secure = true,
+            SameSite = SameSiteMode.Lax,
+            Path = "/"
+        });
     }
 }

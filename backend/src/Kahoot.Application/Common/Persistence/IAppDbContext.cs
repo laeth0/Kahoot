@@ -36,5 +36,7 @@ public interface IAppDbContext
 
     DatabaseFacade Database { get; }
 
+    Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

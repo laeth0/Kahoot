@@ -42,14 +42,21 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<GameCommandIdempotency> GameCommandIdempotencies => Set<GameCommandIdempotency>();
 
+    public async Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Call inside a transaction before changing a user's refresh tokens or credentials.
+        // The account row is the shared lock across application instances.
+        var users = await Users
+            .FromSqlInterpolated($"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return users.Count == 0 ? null : users[0];
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
-        modelBuilder.HasPostgresEnum<UserRole>("user_role");
-        modelBuilder.HasPostgresEnum<UserStatus>("user_status");
-        modelBuilder.HasPostgresEnum<MediaStatus>("media_status");
-        modelBuilder.HasPostgresEnum<GameStatus>("game_status");
 
         modelBuilder.ApplyConfigurationsFromAssembly(AssemblyReference.Assembly);
     }

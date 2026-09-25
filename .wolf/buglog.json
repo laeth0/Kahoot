@@ -1,4 +1,65 @@
 {
   "version": 1,
-  "bugs": []
+  "bugs": [
+    {
+      "id": "auth-refresh-revocation-race-20260925",
+      "timestamp": "2026-09-25T11:53:27Z",
+      "error_message": "Refresh could issue a replacement after concurrent revocation or misclassify a revoked token as a refresh race.",
+      "file": "backend/src/Kahoot.Application/Features/Auth/Refresh/RefreshCommandHandler.cs",
+      "root_cause": "Account state was read before the transaction and token rows were changed without a shared account lock order.",
+      "fix": "Serialize credential mutations on the PostgreSQL user row and re-read token state after locking.",
+      "tags": [
+        "auth",
+        "concurrency",
+        "refresh"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-25T11:53:27Z"
+    },
+    {
+      "id": "auth-csrf-header-unchecked-20260925",
+      "timestamp": "2026-09-25T11:53:27Z",
+      "error_message": "Any nonempty CSRF header passed cookie refresh and logout validation.",
+      "file": "backend/src/Kahoot.Api/Controllers/AuthController.cs",
+      "root_cause": "The header was checked for presence but never compared with a session-side value.",
+      "fix": "Issue a random readable CSRF cookie, compare it to the header, and validate exact allowed origins.",
+      "tags": [
+        "auth",
+        "csrf",
+        "cookies"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-25T11:53:27Z"
+    },
+    {
+      "id": "postgres-enum-migration-duplicate-20260925",
+      "timestamp": "2026-09-25T11:53:27Z",
+      "error_message": "Generated initial migration declared each PostgreSQL enum twice, including a nonexistent schema.",
+      "file": "backend/src/Kahoot.Infrastructure/Persistence/AppDbContext.cs",
+      "root_cause": "HasPostgresEnum was called with the enum name as the schema argument while MapEnum already registered the enum.",
+      "fix": "Remove duplicate explicit enum registrations and regenerate the new initial migration.",
+      "tags": [
+        "ef-core",
+        "postgresql",
+        "migration"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-25T11:53:27Z"
+    },
+    {
+      "id": "auth-redundant-tenant-id-20260925",
+      "timestamp": "2026-09-25T12:03:48Z",
+      "error_message": "Login and refresh returned the Host account ID twice, once as accountId and once as tenantId; JWTs also emitted tenantId.",
+      "file": "backend/src/Kahoot.Application/Features/Auth/Login/LoginCommandHandler.cs",
+      "root_cause": "Stale Auth requirements were applied despite the current model using HostAccountId and no separate tenant ID.",
+      "fix": "Remove tenantId from Auth responses, JWT generation and validation, and align affected requirements with HostAccountId.",
+      "tags": [
+        "auth",
+        "contract",
+        "ownership"
+      ],
+      "occurrences": 1,
+      "last_seen": "2026-09-25T12:03:48Z"
+    }
+  ]
 }

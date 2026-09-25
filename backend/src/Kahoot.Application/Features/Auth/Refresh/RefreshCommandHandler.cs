@@ -16,6 +16,7 @@ namespace Kahoot.Application.Features.Auth.Refresh;
 public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, RefreshResult>
 {
     private const int RefreshTokenEntropyBytes = 32;
+    private static readonly TimeSpan RaceGracePeriod = TimeSpan.FromSeconds(10);
 
     private readonly IAppDbContext _dbContext;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
@@ -38,49 +39,53 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
         RefreshCommand request,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(request.RawRefreshToken))
+        if (string.IsNullOrWhiteSpace(request.RawRefreshToken) || request.RawRefreshToken.Length > 128)
+        {
+            return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
+        }
+
+        byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.RawRefreshToken));
+        var presentedToken = await _dbContext.RefreshTokens
+            .AsNoTracking()
+            .SingleOrDefaultAsync(token => token.TokenHash == presentedTokenHash, cancellationToken);
+
+        if (presentedToken is null)
+        {
+            return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
+        }
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Credential mutations lock the account row first. Re-read the token after
+        // acquiring it so revocation and rotation have one database commit order.
+        var user = await _dbContext.GetUserForUpdateAsync(presentedToken.UserId, cancellationToken);
+        if (user is null || user.Status != UserStatus.Active)
+        {
+            return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
+        }
+
+        var token = await _dbContext.RefreshTokens
+            .AsNoTracking()
+            .SingleOrDefaultAsync(candidate => candidate.Id == presentedToken.Id, cancellationToken);
+
+        if (token is null || token.RevokedAt.HasValue)
         {
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
         var now = _timeProvider.GetUtcNow();
-
-        // 1. Hash the presented raw refresh token using SHA-256 (raw token is never queried or stored)
-        byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.RawRefreshToken));
-
-        // 2. Indexed lookup by TokenHash
-        var token = await _dbContext.RefreshTokens
-            .AsNoTracking()
-            .SingleOrDefaultAsync(candidate => candidate.TokenHash == presentedTokenHash, cancellationToken);
-
-        if (token is null)
-        {
-            return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
-        }
-
-        // 3. Replay evaluation on already-consumed token
         if (token.RotatedAt.HasValue)
         {
-            var delta = now - token.RotatedAt.Value;
-
-            // Grace window (< 10s): Concurrent browser tab / lost response race -> 409
-            if (delta < TimeSpan.FromSeconds(10))
+            if (now - token.RotatedAt.Value < RaceGracePeriod)
             {
                 return Result.Failure<RefreshResult>(AuthErrors.RefreshRace);
             }
 
-            // Reuse detection (>= 10s): Malicious replay -> revoke family, increment security version, 401
-            await RevokeFamilyAndIncrementSecurityVersionAsync(token.UserId, token.TokenFamilyId, now, cancellationToken);
+            await RevokeFamilyAndIncrementSecurityVersionAsync(token, now, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             return Result.Failure<RefreshResult>(AuthErrors.RefreshTokenReuse);
         }
 
-        // 4. Validate revocation status
-        if (token.RevokedAt.HasValue)
-        {
-            return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
-        }
-
-        // 5. Validate expiration and absolute family cap (configured in RefreshTokenOptions)
         var refreshTokenOptions = _refreshTokenOptions.Value;
         if (now >= token.ExpiresAt ||
             now >= token.FamilyCreatedAt.AddDays(refreshTokenOptions.FamilyMaxLifetimeDays))
@@ -88,58 +93,23 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
-        // 6. Load user to validate active status and obtain claims for new JWT
-        var user = await _dbContext.Users
-            .SingleOrDefaultAsync(candidate => candidate.Id == token.UserId, cancellationToken);
+        int consumed = await _dbContext.RefreshTokens
+            .Where(candidate => candidate.Id == token.Id && candidate.RotatedAt == null && candidate.RevokedAt == null)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(candidate => candidate.RotatedAt, now), cancellationToken);
 
-        if (user is null || user.Status != UserStatus.Active)
+        if (consumed != 1)
         {
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
-        // 7. Atomic rotation within a database transaction
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-        // Database-level concurrency gate:
-        // Atomic conditional update ensures only one in-flight request can successfully consume the token.
-        int affectedRows = await _dbContext.RefreshTokens
-            .Where(candidate => candidate.Id == token.Id && candidate.RotatedAt == null && candidate.RevokedAt == null)
-            .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RotatedAt, now), cancellationToken);
-
-        if (affectedRows == 0)
-        {
-            // Another concurrent request won the rotation race.
-            await transaction.RollbackAsync(cancellationToken);
-
-            var latestToken = await _dbContext.RefreshTokens
-                .AsNoTracking()
-                .SingleOrDefaultAsync(candidate => candidate.Id == token.Id, cancellationToken);
-
-            var delta = latestToken?.RotatedAt is not null
-                ? now - latestToken.RotatedAt.Value
-                : TimeSpan.Zero;
-
-            if (delta < TimeSpan.FromSeconds(10))
-            {
-                return Result.Failure<RefreshResult>(AuthErrors.RefreshRace);
-            }
-
-            await RevokeFamilyAndIncrementSecurityVersionAsync(token.UserId, token.TokenFamilyId, now, cancellationToken);
-            return Result.Failure<RefreshResult>(AuthErrors.RefreshTokenReuse);
-        }
-
-        // 8. Generate replacement refresh token; persist only SHA256(replacementRawToken)
-        byte[] randomBytes = RandomNumberGenerator.GetBytes(RefreshTokenEntropyBytes);
-        string replacementRawToken = Base64Url.EncodeToString(randomBytes);
-        byte[] replacementTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(replacementRawToken));
-
+        string replacementRawToken = Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(RefreshTokenEntropyBytes));
         var replacementToken = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
             TokenFamilyId = token.TokenFamilyId,
             FamilyCreatedAt = token.FamilyCreatedAt,
-            TokenHash = replacementTokenHash,
+            TokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(replacementRawToken)),
             CreatedAt = now,
             ExpiresAt = now.AddDays(refreshTokenOptions.LifetimeDays),
             RotatedAt = null,
@@ -149,9 +119,7 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
         _dbContext.RefreshTokens.Add(replacementToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        // 9. Generate new access JWT
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
-
         await transaction.CommitAsync(cancellationToken);
 
         var response = new RefreshResponse(
@@ -165,26 +133,20 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
     }
 
     private async Task RevokeFamilyAndIncrementSecurityVersionAsync(
-        Guid userId,
-        Guid tokenFamilyId,
+        RefreshToken token,
         DateTimeOffset now,
         CancellationToken cancellationToken)
     {
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await _dbContext.RefreshTokens
+            .Where(candidate => candidate.UserId == token.UserId &&
+                                candidate.TokenFamilyId == token.TokenFamilyId &&
+                                candidate.RevokedAt == null)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(candidate => candidate.RevokedAt, now), cancellationToken);
 
-        int revokedTokens = await _dbContext.RefreshTokens
-            .Where(candidate => candidate.TokenFamilyId == tokenFamilyId && candidate.RevokedAt == null)
-            .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RevokedAt, now), cancellationToken);
-
-        if (revokedTokens > 0)
-        {
-            await _dbContext.Users
-                .Where(candidate => candidate.Id == userId)
-                .ExecuteUpdateAsync(setter => setter
-                    .SetProperty(u => u.TokenSecurityVersion, u => u.TokenSecurityVersion + 1)
-                    .SetProperty(u => u.UpdatedAt, now), cancellationToken);
-        }
-
-        await transaction.CommitAsync(cancellationToken);
+        await _dbContext.Users
+            .Where(candidate => candidate.Id == token.UserId)
+            .ExecuteUpdateAsync(setter => setter
+                .SetProperty(candidate => candidate.TokenSecurityVersion, candidate => candidate.TokenSecurityVersion + 1)
+                .SetProperty(candidate => candidate.UpdatedAt, now), cancellationToken);
     }
 }

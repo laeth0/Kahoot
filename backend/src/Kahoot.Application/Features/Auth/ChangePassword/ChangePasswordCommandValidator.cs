@@ -11,7 +11,8 @@ public sealed class ChangePasswordCommandValidator : AbstractValidator<ChangePas
     {
         RuleFor(command => command.CurrentPassword)
             .Cascade(CascadeMode.Stop)
-            .NotEmpty().WithMessage("Current password is required.");
+            .NotEmpty().WithMessage("Current password is required.")
+            .MaximumLength(MaxPasswordLength).WithMessage("Current password is too long.");
 
         RuleFor(command => command.NewPassword)
             .Cascade(CascadeMode.Stop)

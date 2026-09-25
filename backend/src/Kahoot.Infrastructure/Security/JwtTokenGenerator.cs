@@ -37,10 +37,12 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         var claims = new Dictionary<string, object>
         {
             [JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
+            ["accountId"] = user.Id.ToString(),
             [JwtRegisteredClaimNames.Jti] = Guid.NewGuid().ToString(),
             [JwtRegisteredClaimNames.UniqueName] = user.DisplayUsername,
             ["role"] = user.Role.ToString(),
-            ["token_security_version"] = user.TokenSecurityVersion
+            ["token_security_version"] = user.TokenSecurityVersion,
+            ["tokenSecurityVersion"] = user.TokenSecurityVersion
         };
 
         var handler = new JsonWebTokenHandler();

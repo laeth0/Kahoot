@@ -47,6 +47,12 @@ public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
         // 3. Atomically revoke every non-revoked refresh token belonging to that family
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        var user = await _dbContext.GetUserForUpdateAsync(token.UserId, cancellationToken);
+        if (user is null)
+        {
+            return Result.Success();
+        }
+
         await _dbContext.RefreshTokens
             .Where(candidate => candidate.UserId == token.UserId &&
                                 candidate.TokenFamilyId == token.TokenFamilyId &&

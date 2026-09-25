@@ -1,4 +1,3 @@
-using System.Text;
 using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
@@ -32,8 +31,8 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
         RegisterCommand request,
         CancellationToken cancellationToken)
     {
-        var displayUsername = request.Username.Trim();
-        var normalizedUsername = displayUsername.Normalize(NormalizationForm.FormKC).ToUpperInvariant();
+        var displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
+        var normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
         var usernameExists = await _dbContext.Users
             .AnyAsync(user => user.NormalizedUsername == normalizedUsername, cancellationToken);

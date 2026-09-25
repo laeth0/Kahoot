@@ -72,12 +72,16 @@ internal sealed class JwtAuthenticationInstaller : IServiceInstaller
                         var userState = await dbContext.Users
                             .AsNoTracking()
                             .Where(u => u.Id == userId)
-                            .Select(u => new { u.Status, u.TokenSecurityVersion })
+                            .Select(u => new { u.Status, u.Role, u.TokenSecurityVersion })
                             .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
 
                         if (userState is null
                             || userState.Status != UserStatus.Active
-                            || userState.TokenSecurityVersion != tokenVersion)
+                            || userState.TokenSecurityVersion != tokenVersion
+                            || !string.Equals(
+                                userState.Role.ToString(),
+                                context.Principal?.FindFirstValue(ClaimTypes.Role) ?? context.Principal?.FindFirstValue("role"),
+                                StringComparison.Ordinal))
                         {
                             context.Fail("Token has been revoked or user is not active.");
                         }
@@ -94,11 +98,33 @@ internal sealed class JwtAuthenticationInstaller : IServiceInstaller
 
                         var problem = Results.Problem(
                             statusCode: StatusCodes.Status401Unauthorized,
-                            title: "Auth.Unauthorized",
+                            title: "Unauthorized",
                             detail: "Authentication is required to access this resource, or token is invalid.",
-                            extensions: new Dictionary<string, object?> { ["code"] = "Auth.Unauthorized" });
+                            instance: context.HttpContext.Request.Path,
+                            type: "https://api.kahoot-saas.local/errors/Auth.Unauthorized",
+                            extensions: new Dictionary<string, object?>
+                            {
+                                ["code"] = "Auth.Unauthorized",
+                                ["requestId"] = context.HttpContext.TraceIdentifier
+                            });
 
                         await problem.ExecuteAsync(context.HttpContext);
+                    },
+
+                    OnForbidden = async context =>
+                    {
+                        await Results.Problem(
+                            statusCode: StatusCodes.Status403Forbidden,
+                            title: "Forbidden",
+                            detail: "The authenticated account is not allowed to access this resource.",
+                            instance: context.HttpContext.Request.Path,
+                            type: "https://api.kahoot-saas.local/errors/Auth.Forbidden",
+                            extensions: new Dictionary<string, object?>
+                            {
+                                ["code"] = "Auth.Forbidden",
+                                ["requestId"] = context.HttpContext.TraceIdentifier
+                            })
+                            .ExecuteAsync(context.HttpContext);
                     }
                 };
             });

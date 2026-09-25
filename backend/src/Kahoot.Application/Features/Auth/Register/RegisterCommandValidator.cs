@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text;
 using FluentValidation;
 
 namespace Kahoot.Application.Features.Auth.Register;
@@ -8,6 +7,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 {
     private const int MinUsernameLength = 3;
     private const int MaxUsernameLength = 64;
+    private const int MaxDisplayUsernameLength = 256;
     private const int MinPasswordLength = 12;
     private const int MaxPasswordLength = 128;
 
@@ -54,13 +54,13 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 
     private static bool BeValidLength(string username)
     {
-        var trimmed = username.Trim();
-        if (string.IsNullOrEmpty(trimmed) || trimmed.Length > MaxUsernameLength)
+        var displayUsername = UsernameNormalization.GetDisplayUsername(username);
+        if (string.IsNullOrEmpty(displayUsername) || displayUsername.Length > MaxDisplayUsernameLength)
         {
             return false;
         }
 
-        var normalized = trimmed.Normalize(NormalizationForm.FormKC).ToUpperInvariant();
+        var normalized = UsernameNormalization.GetNormalizedUsername(displayUsername);
         return normalized.Length is >= MinUsernameLength and <= MaxUsernameLength;
     }
 }

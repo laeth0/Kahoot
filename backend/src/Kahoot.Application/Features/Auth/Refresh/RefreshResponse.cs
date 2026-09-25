@@ -5,4 +5,4 @@ public sealed record RefreshResponse(
     string Username,
     string AccountKind,
     string AccessToken,
-    int ExpiresIn = 900);
+    int ExpiresIn);
