@@ -37,7 +37,7 @@ Enum game_status {
 Table users {
   id uuid [pk, not null]
 
-  display_username varchar(64) [not null]
+  display_username varchar(256) [not null]
   normalized_username varchar(64) [not null]
   password_hash varchar(512) [not null]
 

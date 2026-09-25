@@ -29,6 +29,8 @@ The API requires this connection string at startup and applies pending EF Core m
 
 Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`. Configure `Cors:AllowedOrigins` for other environments; the default production list is empty.
 
+After login, the API sets an HttpOnly refresh cookie and a readable `kahoot_csrf_token` cookie. Browser clients should send the latter cookie's value in `X-CSRF-Token` on refresh and logout requests, with credentials enabled for cross-origin development requests. The refresh cookie is scoped to `/api/auth`; both cookies use `Secure` and require HTTPS outside browser localhost exceptions.
+
 ## Commit formatting
 
 Enable the shared pre-commit hook once per clone from the repository root:

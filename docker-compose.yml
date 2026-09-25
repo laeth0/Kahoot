@@ -7,6 +7,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Host=db;Port=5432;Database=${POSTGRES_DB:-kahoot};Username=${POSTGRES_USER:-postgres};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}"
+      Jwt__SigningKey: "${JWT_SIGNING_KEY:-q1vWz9Qx8+7JkL5p3R2m4N6v8X0y1Z3a5B7c9D1e3F4=}"
     ports:
       - "127.0.0.1:${API_PORT:-8080}:8080"
     depends_on:

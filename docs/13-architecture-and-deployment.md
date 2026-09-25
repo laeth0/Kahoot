@@ -246,7 +246,7 @@ Production configuration loaded via non-committed `.env` files:
 | Simultaneous Live Games | 200 games | Authoritative game state machine; indexed PIN registry. |
 | Concurrent Connected Players | 20,000 players | 500-seat per-game limit; lightweight SignalR connection state. |
 | Aggregate Realtime Connections | $\ge 25,000$ connections | WebSocket multiplexing via reverse proxy; 64 KB buffer ceiling. |
-| Historical Quizzes in Database | 1,000,000 quizzes | Tenant-scoped queries; composite index `(TenantId, CreatedAt DESC)`. |
+| Historical Quizzes in Database | 1,000,000 quizzes | Tenant-scoped queries; composite index `(HostAccountId, CreatedAt DESC)`. |
 | Historical Accepted Answer Records | 100,000,000 rows | Append-only partition-ready `AnswerSubmissions` table. |
 
 ### 4.2 Canonical Latency & Throughput SLO Targets `[NORMATIVE]`

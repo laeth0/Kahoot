@@ -3,9 +3,16 @@ using Kahoot.Application.Common.Interfaces;
 
 namespace Kahoot.Api.Services;
 
-internal sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICurrentUser
+internal sealed class CurrentUser : ICurrentUser
 {
-    private ClaimsPrincipal? User => httpContextAccessor.HttpContext?.User;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+
+    public CurrentUser(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContextAccessor = httpContextAccessor;
+    }
+
+    private ClaimsPrincipal? User => _httpContextAccessor.HttpContext?.User;
 
     public Guid? UserId
     {
@@ -15,17 +22,6 @@ internal sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : IC
                 ?? User?.FindFirstValue("sub");
 
             return Guid.TryParse(sub, out var parsedId) ? parsedId : null;
-        }
-    }
-
-    public Guid? TenantId
-    {
-        get
-        {
-            var tenantClaim = User?.FindFirstValue("tenant_id")
-                ?? User?.FindFirstValue("tenantId");
-
-            return Guid.TryParse(tenantClaim, out var parsedId) ? parsedId : UserId;
         }
     }
 

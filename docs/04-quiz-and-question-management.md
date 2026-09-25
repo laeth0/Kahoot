@@ -23,7 +23,7 @@ Quiz authoring allows Hosts to create structured educational content:
   * **Endpoint**: `POST /api/quizzes`
   * **Payload**: `{ "title": "Math 101 Quiz", "description": "Optional overview..." }`
   * **Rules**: `title` is required, trimmed, 1–200 characters. `description` is optional, trimmed, max 1,000 characters.
-  * Assigns `TenantId` from authenticated Host claims. Sets `IsPublished = false`, `Revision = 1`.
+  * Assigns `HostAccountId` from the authenticated Host account ID. Sets `IsPublished = false`, `Revision = 1`.
   * Returns `201 Created` with quiz summary.
 * **`QUIZ-AUTH-002` (Update Quiz Metadata)**:
   * **Endpoint**: `PUT /api/quizzes/{quizId}`
@@ -169,7 +169,7 @@ Under standard operational load:
   * When attaching a `mediaId` to a question, the server verifies:
     ```sql
     -- NON-NORMATIVE REFERENCE EXAMPLE
-    SELECT 1 FROM MediaItems WHERE MediaId = @MediaId AND TenantId = @CurrentTenantId;
+    SELECT 1 FROM MediaItems WHERE MediaId = @MediaId AND HostAccountId = @CurrentHostAccountId;
     ```
   * If the media belongs to another tenant or does not exist, returns `400 Quiz.InvalidMediaReference`.
 

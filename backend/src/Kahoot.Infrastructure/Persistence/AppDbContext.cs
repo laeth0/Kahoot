@@ -1,12 +1,19 @@
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Kahoot.Infrastructure.Persistence;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options), IAppDbContext
+public sealed class AppDbContext : DbContext, IAppDbContext
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options)
+        : base(options)
+    {
+    }
+
     public DbSet<User> Users => Set<User>();
 
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -35,15 +42,64 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 
     public DbSet<GameCommandIdempotency> GameCommandIdempotencies => Set<GameCommandIdempotency>();
 
+    public async Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        // Call inside a transaction before changing a user's refresh tokens or credentials.
+        // The account row is the shared lock across application instances.
+        var users = await Users
+            .FromSqlInterpolated($"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        return users.Count == 0 ? null : users[0];
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.HasPostgresEnum<UserRole>("user_role");
-        modelBuilder.HasPostgresEnum<UserStatus>("user_status");
-        modelBuilder.HasPostgresEnum<MediaStatus>("media_status");
-        modelBuilder.HasPostgresEnum<GameStatus>("game_status");
-
         modelBuilder.ApplyConfigurationsFromAssembly(AssemblyReference.Assembly);
+    }
+
+    public override async Task<int> SaveChangesAsync(
+        bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new UniqueConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
+    }
+
+    public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return SaveChangesAsync(acceptAllChangesOnSuccess: true, cancellationToken);
+    }
+
+    public override int SaveChanges(bool acceptAllChangesOnSuccess)
+    {
+        try
+        {
+            return base.SaveChanges(acceptAllChangesOnSuccess);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+            throw new UniqueConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
+    }
+
+    public override int SaveChanges()
+    {
+        return SaveChanges(acceptAllChangesOnSuccess: true);
     }
 }
