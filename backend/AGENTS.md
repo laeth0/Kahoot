@@ -24,6 +24,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
 - Pass `CancellationToken` through async request, database, and service calls. Avoid logging credentials or sensitive data.
 - **Constructor and Dependency Injection Style:** Always use explicit constructor injection with `private readonly` backing fields (prefixed with `_`) and assignments inside the constructor body. Do not use C# primary constructors on classes for dependency injection.
+- **Service Registration and `ServiceCollectionExtension`:** Every file/installer inside `src/Kahoot.Api/ServiceCollectionExtension` must strictly focus on one single responsibility. Do not create large installers or extension methods that bundle multiple unrelated concerns. Every installer/extension method must have one focused purpose (for example, a dedicated installer for JWT authentication, a dedicated installer for CORS). The class name must be obvious and accurately describe the contents of the class (e.g., `JwtAuthenticationInstaller`, `CorsInstaller`). Core framework and hosting registrations (`AddControllers`, `AddOpenApi`, `AddExceptionHandler`, `AddProblemDetails`, `AddHealthChecks`, `AddHttpContextAccessor`, `AddAuthorization`, `AddApplication`, `AddInfrastructure`) belong directly in `Program.cs`.
 
 ## Database and EF Core Migrations
 
