@@ -33,9 +33,20 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 
 ## Configuration and local verification
 
-- Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Do not use .NET user secrets or commit passwords.
-- See `README.md` for local setup and required environment variables. Keep passwords out of committed configuration. `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string.
-- Use the .NET Options Pattern for grouped runtime configuration when it improves type safety, validation, and maintainability. Do not use it for ordinary constants or values that are not meant to vary by environment. Prefer strongly typed options over scattered configuration-string lookups, and validate critical options at startup.
+- Review and keep all three configuration files consistent with their intended environments whenever adding, modifying, or removing configuration values:
+  - `src/Kahoot.Api/appsettings.json`: Keep only safe shared defaults that make sense across environments. Do not store secrets here. Avoid production-specific values unless they are truly shared defaults.
+  - `src/Kahoot.Api/appsettings.Development.json`: Use development-friendly values. It may contain local non-sensitive defaults that simplify development (e.g., local CORS origins, local JWT signing key). Do not place real production secrets here. Keep behavior close enough to production that configuration mistakes are detectable.
+  - `src/Kahoot.Api/appsettings.Production.json`: Use production-safe settings. Do not hardcode secrets such as JWT signing keys, database passwords, API keys, or credentials. Sensitive values must come from environment variables, secret stores, or the deployment platform. Prefer fail-fast validation for required production configuration instead of silent fallback values. Do not weaken security just to make startup succeed.
+- **No .NET User Secrets (`secrets.json`):** Never use or initialize .NET User Secrets (`dotnet user-secrets`). Put all configuration exclusively across the three appsettings files (`appsettings.json`, `appsettings.Development.json`, and `appsettings.Production.json`). Local development configuration belongs in `appsettings.Development.json`, shared defaults belong in `appsettings.json`, and production settings belong in `appsettings.Production.json` (with production secrets supplied via environment variables / deployment platform).
+- Keep PostgreSQL connection settings in `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. In `appsettings.Production.json`, keep `DefaultConnection` empty so missing production connection strings fail fast. Do not commit production passwords. In production or custom environments, `ConnectionStrings__DefaultConnection` supplies a password-bearing connection string via environment variables.
+- Use the .NET Options Pattern for grouped runtime configuration when it improves type safety, validation, and maintainability:
+  - Bind from the correct configuration section.
+  - Validate important values with `ValidateOnStart()` where appropriate.
+  - Keep validation rules consistent with the real application requirements.
+  - Do not duplicate the same configuration value in multiple places.
+  - Keep one source of truth for values such as token lifetimes, limits, and security settings.
+  - Do not move normal implementation constants into configuration unless they genuinely need to vary by environment.
+  - Verify that environment-variable overrides work correctly with ASP.NET Core configuration conventions (e.g., `Section__Key`).
 - Development CORS origins are in `src/Kahoot.Api/appsettings.Development.json`. OpenAPI and Scalar are exposed only in Development. The database-aware health endpoint is `/health`.
 - From `backend/`, run `dotnet build Kahoot.slnx` after code changes. Run `dotnet format Kahoot.slnx --verify-no-changes` when formatting is relevant. Report any verification that could not run.
 

@@ -4,24 +4,25 @@ using System.Text;
 using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Kahoot.Application.Features.Auth.Login;
 
 public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginResult>
 {
-    private const int AccessTokenLifetimeSeconds = 900;
-    private const int RefreshTokenLifetimeDays = 14;
     private const int RefreshTokenEntropyBytes = 32;
 
     private readonly IAppDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtTokenGenerator _jwtTokenGenerator;
     private readonly ILoginRateLimiter _loginRateLimiter;
+    private readonly IOptions<RefreshTokenOptions> _refreshTokenOptions;
     private readonly TimeProvider _timeProvider;
 
     public LoginCommandHandler(
@@ -29,12 +30,14 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         IPasswordHasher passwordHasher,
         IJwtTokenGenerator jwtTokenGenerator,
         ILoginRateLimiter loginRateLimiter,
+        IOptions<RefreshTokenOptions> refreshTokenOptions,
         TimeProvider timeProvider)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _jwtTokenGenerator = jwtTokenGenerator;
         _loginRateLimiter = loginRateLimiter;
+        _refreshTokenOptions = refreshTokenOptions;
         _timeProvider = timeProvider;
     }
 
@@ -98,7 +101,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         // 7. Successful login resets consecutive failed attempts for this username
         _loginRateLimiter.ResetFailedAttempts(normalizedUsername);
 
-        // 8. Generate 15-minute JWT access token
+        // 8. Generate JWT access token; expiration comes from JwtOptions via IJwtTokenGenerator
         var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
 
         // 9. Generate cryptographically secure refresh token; persist only SHA256(rawToken)
@@ -106,6 +109,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         string rawRefreshToken = Base64Url.EncodeToString(randomBytes);
         byte[] tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(rawRefreshToken));
 
+        var refreshTokenOptions = _refreshTokenOptions.Value;
         var now = _timeProvider.GetUtcNow();
         var refreshToken = new RefreshToken
         {
@@ -115,7 +119,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             FamilyCreatedAt = now,
             TokenHash = tokenHash,
             CreatedAt = now,
-            ExpiresAt = now.AddDays(RefreshTokenLifetimeDays),
+            ExpiresAt = now.AddDays(refreshTokenOptions.LifetimeDays),
             RotatedAt = null,
             RevokedAt = null
         };
@@ -127,8 +131,8 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             user.Id,
             user.DisplayUsername,
             user.Role.ToString(),
-            accessToken,
-            AccessTokenLifetimeSeconds);
+            accessToken.Token,
+            accessToken.ExpiresInSeconds);
 
         return Result.Success(new LoginResult(response, rawRefreshToken));
     }

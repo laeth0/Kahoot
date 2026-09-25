@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
@@ -47,6 +48,15 @@ public static class DependencyInjection
 
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<ILoginRateLimiter, LoginRateLimiter>();
+
+        services
+            .AddOptions<RefreshTokenOptions>()
+            .Bind(configuration.GetRequiredSection(RefreshTokenOptions.SectionName))
+            .Validate(options => options.LifetimeDays > 0, "RefreshToken:LifetimeDays must be greater than zero.")
+            .Validate(
+                options => options.FamilyMaxLifetimeDays >= options.LifetimeDays,
+                "RefreshToken:FamilyMaxLifetimeDays must be greater than or equal to LifetimeDays.")
+            .ValidateOnStart();
 
         return services;
     }

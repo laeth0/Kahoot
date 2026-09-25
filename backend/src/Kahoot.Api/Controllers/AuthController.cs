@@ -1,9 +1,11 @@
+using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth.Login;
 using Kahoot.Application.Features.Auth.Register;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace Kahoot.Api.Controllers;
 
@@ -13,13 +15,14 @@ public sealed class AuthController : ApiController
 {
     private const string RefreshTokenCookieName = "kahoot_refresh_token";
     private const string RefreshTokenCookiePath = "/api/auth";
-    private static readonly TimeSpan RefreshTokenCookieLifetime = TimeSpan.FromDays(14);
 
     private readonly ISender _sender;
+    private readonly IOptions<RefreshTokenOptions> _refreshTokenOptions;
 
-    public AuthController(ISender sender)
+    public AuthController(ISender sender, IOptions<RefreshTokenOptions> refreshTokenOptions)
     {
         _sender = sender;
+        _refreshTokenOptions = refreshTokenOptions;
     }
 
     [HttpPost("register")]
@@ -75,7 +78,7 @@ public sealed class AuthController : ApiController
             Secure = Request.IsHttps,
             SameSite = SameSiteMode.Lax,
             Path = RefreshTokenCookiePath,
-            MaxAge = RefreshTokenCookieLifetime
+            MaxAge = TimeSpan.FromDays(_refreshTokenOptions.Value.LifetimeDays)
         };
 
         Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
