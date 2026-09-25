@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kahoot.Api.ServiceCollectionExtension;
+namespace Kahoot.Application.Common.Interfaces;
 
 public interface IServiceInstaller
 {

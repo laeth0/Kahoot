@@ -1,4 +1,5 @@
 using Kahoot.Api.Options;
+using Kahoot.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 

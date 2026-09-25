@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Security;
