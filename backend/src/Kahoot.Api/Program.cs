@@ -1,6 +1,7 @@
 using Kahoot.Api.Endpoints;
 using Kahoot.Api.HealthChecks;
 using Kahoot.Api.Middleware;
+using Kahoot.Api.Options;
 using Kahoot.Api.Services;
 using Kahoot.Application;
 using Kahoot.Application.Common.Interfaces;
@@ -11,6 +12,10 @@ var builder = WebApplication.CreateBuilder(args);
 const string corsPolicy = "Frontend";
 
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+
+builder.Services
+    .AddOptions<CorsOptions>()
+    .Bind(builder.Configuration.GetSection(CorsOptions.SectionName));
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();

@@ -1,10 +1,14 @@
+using Kahoot.Api.Options;
 using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Results;
+using Kahoot.Application.Features.Auth;
 using Kahoot.Application.Features.Auth.Login;
+using Kahoot.Application.Features.Auth.Refresh;
 using Kahoot.Application.Features.Auth.Register;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
 
 namespace Kahoot.Api.Controllers;
@@ -18,11 +22,16 @@ public sealed class AuthController : ApiController
 
     private readonly ISender _sender;
     private readonly IOptions<RefreshTokenOptions> _refreshTokenOptions;
+    private readonly IOptions<CorsOptions> _corsOptions;
 
-    public AuthController(ISender sender, IOptions<RefreshTokenOptions> refreshTokenOptions)
+    public AuthController(
+        ISender sender,
+        IOptions<RefreshTokenOptions> refreshTokenOptions,
+        IOptions<CorsOptions> corsOptions)
     {
         _sender = sender;
         _refreshTokenOptions = refreshTokenOptions;
+        _corsOptions = corsOptions;
     }
 
     [HttpPost("register")]
@@ -68,6 +77,96 @@ public sealed class AuthController : ApiController
 
         SetRefreshTokenCookie(result.Value.RawRefreshToken);
         return Ok(result.Value.Response);
+    }
+
+    [HttpPost("refresh")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(RefreshResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Refresh(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
+        CancellationToken cancellationToken)
+    {
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken) &&
+                         !string.IsNullOrWhiteSpace(cookieToken);
+
+        if (!ValidateCsrfAndOrigin(hasCookie))
+        {
+            return Problem(AuthErrors.Forbidden);
+        }
+
+        var rawRefreshToken = hasCookie ? cookieToken : request?.RefreshToken;
+        if (string.IsNullOrWhiteSpace(rawRefreshToken))
+        {
+            return Problem(AuthErrors.InvalidRefreshToken);
+        }
+
+        var command = new RefreshCommand(rawRefreshToken);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error);
+        }
+
+        SetRefreshTokenCookie(result.Value.RawRefreshToken);
+        return Ok(result.Value.Response);
+    }
+
+    private bool ValidateCsrfAndOrigin(bool isCookieAuth)
+    {
+        // 1. Origin / Referer validation if present
+        string? origin = Request.Headers.Origin.FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(origin) && Request.Headers.TryGetValue("Referer", out var refererValues))
+        {
+            var referer = refererValues.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(referer) && Uri.TryCreate(referer, UriKind.Absolute, out var refererUri))
+            {
+                origin = refererUri.GetLeftPart(UriPartial.Authority);
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(origin))
+        {
+            if (!IsOriginAllowed(origin, _corsOptions.Value.AllowedOrigins))
+            {
+                return false;
+            }
+        }
+
+        // 2. Custom header CSRF mitigation for browser cookie-authenticated requests
+        if (isCookieAuth)
+        {
+            if (!Request.Headers.TryGetValue("X-CSRF-Token", out var csrfToken) ||
+                string.IsNullOrWhiteSpace(csrfToken))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool IsOriginAllowed(string origin, string[] allowedOrigins)
+    {
+        if (allowedOrigins.Any(allowed => string.Equals(allowed.TrimEnd('/'), origin.TrimEnd('/'), StringComparison.OrdinalIgnoreCase)))
+        {
+            return true;
+        }
+
+        if (Uri.TryCreate(origin, UriKind.Absolute, out var originUri))
+        {
+            if (string.Equals(originUri.Host, Request.Host.Host, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private void SetRefreshTokenCookie(string rawRefreshToken)

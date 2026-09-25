@@ -15,4 +15,20 @@ public static class AuthErrors
     public static readonly Error RateLimited = Error.RateLimited(
         "Request.RateLimited",
         "Too many requests. Please try again later.");
+
+    public static readonly Error InvalidRefreshToken = Error.Unauthorized(
+        "Auth.InvalidRefreshToken",
+        "Invalid, expired, or revoked refresh token.");
+
+    public static readonly Error RefreshTokenReuse = Error.Unauthorized(
+        "Auth.RefreshTokenReuse",
+        "Refresh token has already been consumed. Session revoked.");
+
+    public static readonly Error RefreshRace = Error.Conflict(
+        "Auth.RefreshRace",
+        "Concurrent refresh in progress. Please retry or wait for completion.");
+
+    public static readonly Error Forbidden = Error.Forbidden(
+        "Auth.Forbidden",
+        "Access denied due to invalid CSRF token or disallowed origin.");
 }
