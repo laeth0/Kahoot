@@ -2,6 +2,7 @@ using Kahoot.Api.Options;
 using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
+using Kahoot.Application.Features.Auth.ChangePassword;
 using Kahoot.Application.Features.Auth.Login;
 using Kahoot.Application.Features.Auth.Logout;
 using Kahoot.Application.Features.Auth.LogoutAll;
@@ -157,6 +158,31 @@ public sealed class AuthController : ApiController
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
         var command = new LogoutAllCommand();
+        var result = await _sender.Send(command, cancellationToken);
+
+        ClearRefreshTokenCookie();
+
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("change-password")]
+    [Authorize(Roles = $"{nameof(UserRole.Host)},{nameof(UserRole.SystemAdmin)}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> ChangePassword(
+        [FromBody] ChangePasswordRequest request,
+        CancellationToken cancellationToken)
+    {
+        var command = new ChangePasswordCommand(request.CurrentPassword, request.NewPassword);
         var result = await _sender.Send(command, cancellationToken);
 
         ClearRefreshTokenCookie();
