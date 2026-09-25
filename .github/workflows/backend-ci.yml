@@ -1,0 +1,59 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.env.example'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'docker-compose.yml'
+      - '.env.example'
+      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore dependencies
+        working-directory: backend
+        run: dotnet restore Kahoot.slnx
+
+      - name: Build solution
+        working-directory: backend
+        run: dotnet build Kahoot.slnx --configuration Release --no-restore
+
+      - name: Verify formatting
+        working-directory: backend
+        run: dotnet format Kahoot.slnx --verify-no-changes --no-restore
+
+      - name: Validate Docker Compose
+        env:
+          POSTGRES_PASSWORD: ci-validation-only
+        run: docker compose --file docker-compose.yml config --quiet
+
+      - name: Build backend image
+        run: docker build --file backend/Dockerfile --tag kahoot-backend:ci backend
