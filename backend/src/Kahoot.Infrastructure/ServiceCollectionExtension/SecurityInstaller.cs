@@ -4,7 +4,7 @@ using Kahoot.Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kahoot.Infrastructure.ServiceCollectionExtension.Installers;
+namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
 internal sealed class SecurityInstaller : IServiceInstaller
 {

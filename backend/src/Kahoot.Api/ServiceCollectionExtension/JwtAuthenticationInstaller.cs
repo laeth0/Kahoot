@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Kahoot.Api.ServiceCollectionExtension.Installers;
+namespace Kahoot.Api.ServiceCollectionExtension;
 
 internal sealed class JwtAuthenticationInstaller : IServiceInstaller
 {

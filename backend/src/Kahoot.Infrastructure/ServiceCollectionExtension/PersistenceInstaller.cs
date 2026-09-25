@@ -7,7 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Kahoot.Infrastructure.ServiceCollectionExtension.Installers;
+namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
 internal sealed class PersistenceInstaller : IServiceInstaller
 {

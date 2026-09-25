@@ -1,15 +1,14 @@
-using Kahoot.Api.Services;
 using Kahoot.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kahoot.Api.ServiceCollectionExtension.Installers;
+namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
-internal sealed class ApplicationInstaller : IServiceInstaller
+internal sealed class TimeProviderInstaller : IServiceInstaller
 {
     public IServiceCollection Install(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddSingleton(TimeProvider.System);
 
         return services;
     }
