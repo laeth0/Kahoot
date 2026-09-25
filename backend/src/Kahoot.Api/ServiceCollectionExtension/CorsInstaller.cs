@@ -1,13 +1,12 @@
 using Kahoot.Api.Options;
-using Kahoot.Application.Common.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kahoot.Api.ServiceCollectionExtension;
 
-internal sealed class CorsInstaller : IServiceInstaller
+public static class CorsInstaller
 {
-    public IServiceCollection Install(IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddCorsPolicy(this IServiceCollection services, IConfiguration configuration)
     {
         var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 

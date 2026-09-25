@@ -1,4 +1,3 @@
-using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
@@ -9,9 +8,9 @@ using Microsoft.Extensions.Options;
 
 namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
-internal sealed class PersistenceInstaller : IServiceInstaller
+public static class PersistenceInstaller
 {
-    public IServiceCollection Install(IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
         // Register DatabaseOptions from the Database: config section.
         // ConnectionString is wired separately from ConnectionStrings:DefaultConnection

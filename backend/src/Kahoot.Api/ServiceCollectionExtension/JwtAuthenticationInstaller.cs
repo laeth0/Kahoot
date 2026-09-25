@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Security;
@@ -12,9 +11,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Kahoot.Api.ServiceCollectionExtension;
 
-internal sealed class JwtAuthenticationInstaller : IServiceInstaller
+public static class JwtAuthenticationInstaller
 {
-    public IServiceCollection Install(IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         var jwtSection = configuration.GetSection(JwtOptions.SectionName);
         var issuer = jwtSection["Issuer"] ?? string.Empty;

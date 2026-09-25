@@ -2,6 +2,8 @@ using Kahoot.Api;
 using Kahoot.Api.Endpoints;
 using Kahoot.Api.HealthChecks;
 using Kahoot.Api.Middleware;
+using Kahoot.Api.ServiceCollectionExtension;
+using Kahoot.Api.Services;
 using Kahoot.Application;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
@@ -19,10 +21,9 @@ var builder = WebApplication.CreateBuilder(args);
 
     builder.Services.AddApplication();
     builder.Services.AddInfrastructure(builder.Configuration);
-
-    builder.Services.InstallServices(
-        builder.Configuration,
-        Kahoot.Api.AssemblyReference.Assembly);
+    builder.Services.AddCorsPolicy(builder.Configuration);
+    builder.Services.AddJwtAuthentication(builder.Configuration);
+    builder.Services.AddScoped<ICurrentUser, CurrentUser>();
 }
 
 

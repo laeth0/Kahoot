@@ -6,9 +6,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
-internal sealed class SecurityInstaller : IServiceInstaller
+public static class SecurityInstaller
 {
-    public IServiceCollection Install(IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddSecurity(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 

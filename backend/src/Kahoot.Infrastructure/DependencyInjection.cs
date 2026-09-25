@@ -1,4 +1,5 @@
-using Kahoot.Application;
+using Kahoot.Infrastructure.Persistence;
+using Kahoot.Infrastructure.ServiceCollectionExtension;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -10,6 +11,12 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        return services.InstallServices(configuration, AssemblyReference.Assembly);
+        services.AddPersistence(configuration);
+        services.AddSecurity(configuration);
+        services.AddHostedService<RefreshTokenCleanupWorker>();
+        services.AddSingleton(TimeProvider.System);
+
+        return services;
     }
 }
+
