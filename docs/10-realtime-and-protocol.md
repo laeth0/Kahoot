@@ -13,8 +13,8 @@ Realtime communication coordinates live quiz synchronization across distributed 
 * **Audience Segregation `[NORMATIVE]`**:
   * Hosts and Players belong to separate server-managed groups.
   * Group identifiers are strictly derived server-side:
-    * `tenant:{tenantId}:game:{gameId}:hosts`
-    * `tenant:{tenantId}:game:{gameId}:players`
+    * `host:{hostAccountId}:game:{gameId}:hosts`
+    * `host:{hostAccountId}:game:{gameId}:players`
   * Clients can **never** specify, inject, or request arbitrary SignalR group names.
 
 ---

@@ -29,7 +29,7 @@ Media management handles image assets utilized within quiz questions:
   5. **Metadata Stripping**: Completely strips all EXIF, IPTC, and XMP metadata (removing GPS coordinates, camera serial numbers, and creator tags).
   6. **Re-Encoding & Polyglot Elimination**: Re-encodes image into canonical JPEG, PNG, or WebP. Eliminates trailing polyglot payloads, embedded HTML/script blocks, and corrupt chunk structures. *(Non-Claim: Re-encoding does NOT guarantee elimination of steganographic data concealed in raw pixel values).*
   7. **Durable File Persistence**: Writes file to persistent volume under `/uploads/{guid}.{extension}` using a cryptographically random UUIDv4.
-  8. **Atomic Metadata Commit**: Inserts `MediaItem` into PostgreSQL with `MediaId`, `TenantId`, `StoragePath`, `ByteSize`, `PixelWidth`, `PixelHeight`, `Status = 'ACTIVE'`, `ReferenceCount = 0`, `CreatedAt = NOW()`.
+  8. **Atomic Metadata Commit**: Inserts `MediaItem` into PostgreSQL with `MediaId`, `HostAccountId`, `StoragePath`, `ByteSize`, `PixelWidth`, `PixelHeight`, `Status = 'ACTIVE'`, `ReferenceCount = 0`, `CreatedAt = NOW()`.
 * **`MED-UPL-004` (Upload Response)**: `201 Created`
   ```json
   {
@@ -41,7 +41,7 @@ Media management handles image assets utilized within quiz questions:
 ### 2.2 Media Attachment to Questions `[NORMATIVE]`
 * **`MED-ATT-001` (Attachment Contract)**:
   * Host specifies `mediaId` during question creation or edit.
-  * Server verifies that `MediaItem` exists, has `Status == 'ACTIVE'`, and `TenantId == CurrentHost.TenantId`.
+  * Server verifies that `MediaItem` exists, has `Status == 'ACTIVE'`, and `HostAccountId == CurrentHost.Id`.
   * Foreign media items or items in `DELETION_PENDING` return `400 Quiz.InvalidMediaReference`.
   * On attachment: increments `MediaItem.ReferenceCount` and clears `UnreferencedSince`.
 

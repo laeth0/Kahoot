@@ -15,7 +15,7 @@ Authentication manages credentials and cryptographic session authority for two d
 * **`AUTH-CRED-001` (Username Contract)**: Required, 3–64 characters evaluated post-Unicode NFKC normalization and culture-independent case folding (`NormalizedUsername`). Globally unique across both normal and administrator accounts.
 * **`AUTH-CRED-002` (Password Contract)**: Required, 12–128 characters. Must contain at least one uppercase letter, one lowercase letter, one numeric digit, and one non-alphanumeric special character.
 * **`AUTH-CRED-003` (Zero Normalization of Passwords)**: Passwords must **never** be trimmed, lowercased, or Unicode-normalized. Passwords must be validated and processed byte-for-byte as entered.
-* **`AUTH-CRED-004` (No Alternative Auth)**: Authentication strictly uses `username + password`. No email address, Tenant ID input, social login, or SSO is supported.
+* **`AUTH-CRED-004` (No Alternative Auth)**: Authentication strictly uses `username + password`. No email address, separate ownership identifier input, social login, or SSO is supported.
 
 ---
 
@@ -43,7 +43,7 @@ Authentication manages credentials and cryptographic session authority for two d
       * Enforces global uniqueness on `NormalizedUsername`.
       * Securely hashes password using Argon2id / BCrypt.
       * Inserts account with `AccountKind = Host`, `Status = Active`, and `TokenSecurityVersion = 1`.
-      * Creates the associated tenant boundary.
+      * The new account ID establishes the Host ownership boundary.
   * **Response**: `201 Created` with `{ "accountId": "acc_...", "username": "TeacherJane" }`.
   * **Rule**: Registration does **not** issue session tokens or log the user in; client must initiate an explicit login.
 
@@ -58,14 +58,14 @@ Authentication manages credentials and cryptographic session authority for two d
     * If account does **not** exist: executes dummy password verification (see Section 5.1).
     * Verifies account `Status == Active`. If `Suspended`, rejects with generic failure code.
     * On success:
-      * Generates a signed JWT access token (lifetime: 15 minutes) containing `accountId`, `tenantId`, `role`, and `tokenSecurityVersion`.
+      * Generates a signed JWT access token (lifetime: 15 minutes) containing `accountId`, `role`, and `tokenSecurityVersion`.
       * Generates a high-entropy cryptographic refresh token (sliding window: 14 days; absolute family cap: 30 days).
       * Stores the SHA-256 hash of the refresh token with a new `TokenFamilyId`.
       * Sets the HttpOnly refresh cookie:
         ```text
         Set-Cookie: kahoot_refresh_token=<raw_token>; Path=/api/auth; Secure; HttpOnly; SameSite=Lax; Max-Age=1209600
         ```
-  * **Response**: `200 OK` with `{ "accountId": "...", "username": "...", "accountKind": "Host", "tenantId": "...", "accessToken": "...", "expiresIn": 900 }`.
+  * **Response**: `200 OK` with `{ "accountId": "...", "username": "...", "accountKind": "Host", "accessToken": "...", "expiresIn": 900 }`.
 
 ### 2.4 Refresh Token Rotation & Race Grace Contract `[NORMATIVE]`
 * **`AUTH-REF-001` (Refresh Endpoint & CSRF)**:

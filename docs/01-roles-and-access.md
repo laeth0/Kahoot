@@ -18,7 +18,7 @@ The platform is designed strictly as a **multi-tenant SaaS platform where each r
 * **`RA-TENANT-001` (Tenant Boundary)**: One normal registered user equals exactly one tenant boundary, acting as Host for all resources created under that account.
 * **`RA-TENANT-002` (No Hierarchies)**: There are no organizations, teams, workspaces, tenant administrators, user memberships, user invitations, or tenant switching.
 * **`RA-TENANT-003` (Multi-Tenant SaaS Classification)**: The platform is a multi-tenant SaaS application where each user account is an isolated tenant. It must never be configured or described as a single-tenant platform.
-* **`RA-AUTHZ-001` (Derived Authorization)**: The server derives tenant context solely from the cryptographically validated identity token. Untrusted client headers, query parameters, route segments, or payload fields specifying a `TenantId` are strictly rejected.
+* **`RA-AUTHZ-001` (Derived Authorization)**: The server derives Host ownership solely from the account identity in a cryptographically validated identity token. Untrusted client headers, query parameters, route segments, or payload fields specifying a `HostAccountId` are strictly rejected.
 * **`RA-AUTHZ-002` (Zero Impersonation)**: System Administrators cannot impersonate normal users, assume Host roles, or bypass tenant boundaries to browse private Host content.
 
 ---
@@ -139,19 +139,19 @@ Stored Canonical Form: NormalizedUsername / NormalizedNickname (Strict DB unique
 ## 4. Topic-Specific Non-Functional Requirements & Performance SLOs
 
 ### 4.1 Authorization Evaluation Latency `[NORMATIVE]`
-* **`RA-SLO-001` (Evaluation Speed)**: Server-side authorization check (signature validation, claims extraction, tenant context derivation, and authority freshness check) must complete in:
+* **`RA-SLO-001` (Evaluation Speed)**: Server-side authorization check (signature validation, claims extraction, Host account identity extraction, and authority freshness check) must complete in:
   * $p50 \le 2\text{ ms}$
   * $p95 \le 5\text{ ms}$
   * $p99 \le 10\text{ ms}$
 * **`RA-SLO-002` (Revocation Propagation Bound)**: Across a multi-instance deployment, revoking account authority (suspension, logout-all, password change) must propagate to all backend instances within $\le 100\text{ ms}$ ($p95$). Stale access tokens must be rejected after this window.
 
 ### 4.2 Multi-Tenant Database Segregation Invariants
-* **`RA-ISOL-002` (Persistence Filtering)**: Every tenant-scoped query must enforce `TenantId = @CurrentTenantId` as its primary filter prior to evaluating secondary filters, sorting, or pagination cursors.
-* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `MediaItems`, `Games`) must include `TenantId` as the leading column in composite clustering keys or primary indexes:
+* **`RA-ISOL-002` (Persistence Filtering)**: Every tenant-scoped query must enforce `HostAccountId = @CurrentHostAccountId` as its primary filter prior to evaluating secondary filters, sorting, or pagination cursors.
+* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `MediaItems`, `Games`) must include `HostAccountId` as the leading column in composite clustering keys or primary indexes:
   ```sql
   -- NON-NORMATIVE REFERENCE EXAMPLE
-  CREATE INDEX IX_Quizzes_TenantId_CreatedAt ON Quizzes (TenantId, CreatedAt DESC);
-  CREATE INDEX IX_Games_TenantId_Status ON Games (TenantId, Status);
+  CREATE INDEX IX_Quizzes_HostAccountId_CreatedAt ON Quizzes (HostAccountId, CreatedAt DESC);
+  CREATE INDEX IX_Games_HostAccountId_Status ON Games (HostAccountId, Status);
   ```
 * **`RA-ISOL-004` (Integrity Constraints)**: Database relational constraints must prevent creating cross-tenant relationships (e.g., associating a Question with a Quiz of a different tenant, or referencing another tenant's MediaItem).
 
@@ -161,7 +161,7 @@ Stored Canonical Form: NormalizedUsername / NormalizedNickname (Strict DB unique
 
 ### 5.1 Multi-Tenant Data Segregation Invariants
 * **`RA-SEC-001` (Strict Logical Isolation)**: Tenant A can never read, modify, delete, or receive realtime events for Tenant B's data under any circumstance.
-* **`RA-SEC-002` (No Tenant Header Injection)**: Server code must strictly reject any request body, route parameter, or header that attempts to declare an external `TenantId`. The authenticated security token is the sole authority for tenant identity.
+* **`RA-SEC-002` (No Ownership Injection)**: Server code must strictly reject any request body, route parameter, or header that attempts to declare an external `HostAccountId`. The authenticated security token is the sole authority for Host ownership.
 * **`RA-SEC-003` (Foreign Resource Concealment)**: Foreign IDOR requests return `404 Quiz.NotFound` or `404 Game.NotFound`. The system avoids distinguishable fast-path rejections that leak ownership through response payload or execution timing.
 
 ### 5.2 Authorization & Password Timing Side Channels
@@ -197,7 +197,7 @@ flowchart TD
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `RA-RISK-001` | Database connection pool exhausted during authz check. | Inability to evaluate user permissions; connection hanging. | Bounded acquisition timeout ($\le 3\text{ s}$); fail fast with `503 Service.Unavailable` and `Retry-After: 5`. | Pool exhaustion alerts; client exponential backoff with jitter. | `RA-TEST-007` |
 | `RA-RISK-002` | Stale JWT presented after immediate Host account suspension. | Suspended user continues executing protected operations. | Server checks revocation version / suspension status. Request rejected immediately with `403 Auth.AccountSuspended`. | Revocation broadcast across cluster in $\le 100\text{ ms}$; socket disconnect. | `RA-TEST-008` |
-| `RA-RISK-003` | IDOR attempt: Host A calls Host B's quiz ID. | Potential disclosure of quiz content or existence across tenants. | Query includes `TenantId = HostA`; zero rows match; returns `404 Quiz.NotFound`. | Statistical timing parity between foreign and non-existent IDs. | `RA-TEST-002` |
+| `RA-RISK-003` | IDOR attempt: Host A calls Host B's quiz ID. | Potential disclosure of quiz content or existence across tenants. | Query includes `HostAccountId = HostA.Id`; zero rows match; returns `404 Quiz.NotFound`. | Statistical timing parity between foreign and non-existent IDs. | `RA-TEST-002` |
 | `RA-RISK-004` | Malicious client submits Unicode zero-width or control characters. | Bypassing unique username rules or corrupting UI rendering. | Rejected at input validation layer with `400 Validation.Failed`. | Dual-representation model; category `Cc` and `Cf` rejection. | `RA-TEST-005` |
 | `RA-RISK-005` | High-volume keyset pagination cursor tampering. | SQL injection or cross-tenant cursor traversal. | Cursor is cryptographically HMAC-signed or validated as strictly typed scalar ID; invalid cursor returns `400 Validation.Failed`. | Tamper detection on pagination cursor. | `RA-TEST-009` |
 | `RA-RISK-006` | Network timeout during privilege escalation or role change. | Caller uncertain if role transition committed. | Caller queries `GET /api/admin/users/{id}` or resubmits with idempotency key. | Deterministic Outcome C resolution; no orphan states. | `RA-TEST-010` |

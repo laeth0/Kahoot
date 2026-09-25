@@ -36,7 +36,7 @@ Reconnection enables Players to recover their active game state after network dr
   * Atomically associates participant with new SignalR `ConnectionId`.
   * Increments participant's `ConnectionGeneration` in database/session store.
   * Older connection generations are immediately fenced and barred from submitting answers.
-  * Subscribes new socket to `tenant:{tenantId}:game:{gameId}:players`.
+  * Subscribes new socket to `host:{hostAccountId}:game:{gameId}:players`.
 
 ### 2.2 Authoritative Phase-Specific State Catch-Up `[NORMATIVE]`
 * **`RECON-CATCH-001` (Catch-Up Projections)**:
