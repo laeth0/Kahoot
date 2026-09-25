@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Results;
+using Kahoot.Application.Features.Auth.Login;
 using Kahoot.Application.Features.Auth.Register;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -10,6 +11,10 @@ namespace Kahoot.Api.Controllers;
 [Route("api/auth")]
 public sealed class AuthController : ApiController
 {
+    private const string RefreshTokenCookieName = "kahoot_refresh_token";
+    private const string RefreshTokenCookiePath = "/api/auth";
+    private static readonly TimeSpan RefreshTokenCookieLifetime = TimeSpan.FromDays(14);
+
     private readonly ISender _sender;
 
     public AuthController(ISender sender)
@@ -36,5 +41,43 @@ public sealed class AuthController : ApiController
         }
 
         return Problem(result.Error);
+    }
+
+    [HttpPost("login")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Login(
+        [FromBody] LoginRequest request,
+        CancellationToken cancellationToken)
+    {
+        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var command = new LoginCommand(request.Username, request.Password, ipAddress);
+        var result = await _sender.Send(command, cancellationToken);
+
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error);
+        }
+
+        SetRefreshTokenCookie(result.Value.RawRefreshToken);
+        return Ok(result.Value.Response);
+    }
+
+    private void SetRefreshTokenCookie(string rawRefreshToken)
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            Path = RefreshTokenCookiePath,
+            MaxAge = RefreshTokenCookieLifetime
+        };
+
+        Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
     }
 }
