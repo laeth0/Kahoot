@@ -3,6 +3,7 @@ using Kahoot.Application.Common.Options;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
 using Kahoot.Application.Features.Auth.Login;
+using Kahoot.Application.Features.Auth.Logout;
 using Kahoot.Application.Features.Auth.Refresh;
 using Kahoot.Application.Features.Auth.Register;
 using MediatR;
@@ -117,6 +118,34 @@ public sealed class AuthController : ApiController
         return Ok(result.Value.Response);
     }
 
+    [HttpPost("logout")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
+    public async Task<IActionResult> Logout(CancellationToken cancellationToken)
+    {
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken) &&
+                         !string.IsNullOrWhiteSpace(cookieToken);
+
+        if (!ValidateCsrfAndOrigin(hasCookie))
+        {
+            return Problem(AuthErrors.Forbidden);
+        }
+
+        var command = new LogoutCommand(hasCookie ? cookieToken : null);
+        var result = await _sender.Send(command, cancellationToken);
+
+        ClearRefreshTokenCookie();
+
+        if (!result.IsSuccess)
+        {
+            return Problem(result.Error);
+        }
+
+        return NoContent();
+    }
+
     private bool ValidateCsrfAndOrigin(bool isCookieAuth)
     {
         // 1. Origin / Referer validation if present
@@ -181,5 +210,18 @@ public sealed class AuthController : ApiController
         };
 
         Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
+    }
+
+    private void ClearRefreshTokenCookie()
+    {
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = Request.IsHttps,
+            SameSite = SameSiteMode.Lax,
+            Path = RefreshTokenCookiePath
+        };
+
+        Response.Cookies.Delete(RefreshTokenCookieName, cookieOptions);
     }
 }
