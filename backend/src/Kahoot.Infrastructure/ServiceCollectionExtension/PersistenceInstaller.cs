@@ -27,6 +27,8 @@ public static class PersistenceInstaller
                 "ConnectionStrings:DefaultConnection is required.")
             .Validate(options => options.CommandTimeoutSeconds > 0,
                 "Database:CommandTimeoutSeconds must be greater than zero.")
+            .Validate(options => options.MigrationCommandTimeoutSeconds > 0,
+                "Database:MigrationCommandTimeoutSeconds must be greater than zero.")
             .ValidateOnStart();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>

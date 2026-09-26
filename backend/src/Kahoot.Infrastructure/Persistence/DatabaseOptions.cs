@@ -32,4 +32,9 @@ public sealed class DatabaseOptions
     /// Command execution timeout in seconds. Explicit unit name prevents ambiguity.
     /// </summary>
     public int CommandTimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Per-command timeout for startup migrations, separate from request-time database commands.
+    /// </summary>
+    public int MigrationCommandTimeoutSeconds { get; set; } = 300;
 }

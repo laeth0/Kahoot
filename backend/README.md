@@ -26,6 +26,7 @@ To run the API on the host while keeping PostgreSQL in Compose, start `docker co
 Configure PostgreSQL through `src/Kahoot.Api/appsettings.json` and `src/Kahoot.Api/appsettings.Development.json`. Keep passwords out of committed files. If the database requires password authentication, supply the full connection string through the `ConnectionStrings__DefaultConnection` environment variable for that environment.
 
 The API requires this connection string at startup and applies pending EF Core migrations during startup. Migration failures stop the application.
+Replicas coordinate startup migrations with a PostgreSQL transaction-level advisory lock. A waiting replica starts serving traffic only after it acquires the lock and EF Core confirms that its migrations are applied. Transient connection failures before migration begins are retried with bounded backoff. Migration commands use `Database:MigrationCommandTimeoutSeconds` (300 seconds by default); PostgreSQL lock waits during migration are limited to 5 seconds. Review migrations for compatibility with old and new application versions before rolling deployments.
 
 Development CORS allows `http://localhost:5173` and `http://127.0.0.1:5173`. Configure `Cors:AllowedOrigins` for other environments; the default production list is empty.
 
