@@ -13,6 +13,38 @@ public static class SecurityInstaller
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
         services
+            .AddOptions<BootstrapAdminOptions>()
+            .Bind(configuration.GetRequiredSection(BootstrapAdminOptions.SectionName))
+            .Configure(options =>
+            {
+                string? enabledValue = configuration["BOOTSTRAP_ADMIN_ENABLED"];
+                if (enabledValue is not null)
+                {
+                    if (!bool.TryParse(enabledValue, out bool enabled))
+                    {
+                        throw new InvalidOperationException("BOOTSTRAP_ADMIN_ENABLED must be true or false.");
+                    }
+
+                    options.Enabled = enabled;
+                }
+
+                if (configuration["BOOTSTRAP_ADMIN_USERNAME"] is { } username)
+                {
+                    options.Username = username;
+                }
+
+                if (configuration["BOOTSTRAP_ADMIN_PASSWORD"] is { } password)
+                {
+                    options.Password = password;
+                }
+            })
+            .Validate(options => !options.Enabled || !string.IsNullOrWhiteSpace(options.Username),
+                "BOOTSTRAP_ADMIN_USERNAME is required when bootstrap is enabled.")
+            .Validate(options => !options.Enabled || options.Password.Length is >= 16 and <= 128,
+                "BOOTSTRAP_ADMIN_PASSWORD must be 16 to 128 characters when bootstrap is enabled.")
+            .ValidateOnStart();
+
+        services
             .AddOptions<JwtOptions>()
             .Bind(configuration.GetRequiredSection(JwtOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")

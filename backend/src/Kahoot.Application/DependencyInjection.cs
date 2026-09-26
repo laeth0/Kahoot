@@ -1,5 +1,7 @@
 using FluentValidation;
 using Kahoot.Application.Common.Behaviors;
+using Kahoot.Application.Common.Seeding;
+using Kahoot.Application.Features.Auth.Bootstrap;
 using Mapster;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -18,6 +20,8 @@ public static class DependencyInjection
         services.AddValidatorsFromAssembly(AssemblyReference.Assembly);
 
         TypeAdapterConfig.GlobalSettings.Scan(AssemblyReference.Assembly);
+
+        services.AddScoped<ISeeder, SystemAdminSeeder>();
 
         return services;
     }

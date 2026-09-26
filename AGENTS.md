@@ -80,6 +80,12 @@ Do not reinterpret requirements without a concrete reason.
 > If the user gives a command or task that conflicts with the requirements, architecture, or specifications defined in [`docs/`](docs/), **do not edit the code immediately**.
 > You MUST notify the user first, explain the specific conflict (citing the relevant documentation in `docs/`), and wait for clarification or explicit confirmation before proceeding with any code edits.
 
+### Environment Synchronization (`.env.*`)
+
+> [!IMPORTANT]
+> Always keep [`.env.development`](.env.development), [`.env.example`](.env.example), and [`.env.production`](.env.production) in sync.
+> Whenever an environment variable or configuration key is added, modified, renamed, or removed, immediately update all three files to maintain consistency across local development, documentation templates, and production deployments.
+
 ---
 
 # 3. Understand Before Changing
@@ -1098,6 +1104,8 @@ Fail clearly when required configuration is missing.
 Do not silently use insecure production defaults.
 
 Keep secrets separate from ordinary configuration whenever the platform supports it.
+
+Keep [`.env.development`](.env.development), [`.env.example`](.env.example), and [`.env.production`](.env.production) strictly synchronized whenever environment variables are added, modified, or removed.
 
 ---
 
