@@ -8,6 +8,22 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, application behavior, vertical feature slices, and contracts in Application, database and external-service implementations in Infrastructure, and core entities in Domain.
 - Make this project production-ready: write clean code, handle edge cases gracefully, follow idiomatic C#/.NET design patterns, and ensure strict separation of concerns.
 
+## Concurrency, MVCC, Security, and Performance Focus
+
+- **Production-Ready Multi-Replica SaaS Scale:** This project is a production-grade SaaS platform engineered for large volumes of concurrent users and deployed across multiple horizontally scaled replicas (containers/Kubernetes pods). Every feature, background worker, and startup routine must be designed with multi-instance concurrency in mind. Never assume a single instance: in-memory synchronization (`lock`, `SemaphoreSlim`) is insufficient for cluster-wide coordination.
+- **Concurrency & Race Condition Elimination:** Proactively design against race conditions (e.g., time-of-check to time-of-use / TOCTOU, double-submits, concurrent token refreshes, concurrent game sessions/joins, and answer submissions). 
+- **Deadlock Avoidance & Locking Discipline:**
+  - Enforce strict, consistent lock ordering across all operations and transactions to prevent circular wait deadlocks (`40P01 deadlock_detected`).
+  - Keep transaction lifespans as short as possible; avoid slow network or compute operations inside database transactions.
+  - Choose the appropriate locking strategy for the use case:
+    - **Optimistic Concurrency Control (OCC):** Use PostgreSQL `xmin` row versioning or entity `Revision` for high-throughput, low-contention workflows.
+    - **Pessimistic Concurrency (`SELECT FOR UPDATE`):** Use for strict serialization paths (e.g., inventory, seat allocation, token revocation).
+    - **PostgreSQL Advisory Locks (`pg_advisory_xact_lock`):** Use transaction-scoped advisory locks for cluster-wide coordination, schema migrations, seeding, or singleton scheduled tasks.
+- **PostgreSQL MVCC & Isolation:** Leverage Multi-Version Concurrency Control understanding (tuple versions, `xmin`/`xmax`, snapshot isolation). Proactively analyze and explain how queries interact with MVCC, table-level vs. row-level locks, and lock queues.
+- **Security by Default:** Enforce fail-fast security configurations, least-privilege principles, strict input validation, server-side authorization boundaries, parameterized SQL statements, and safe telemetry/logging that never leaks secrets, credentials, or sensitive tokens.
+- **Performance & Scalability:** Optimize critical execution paths: eliminate N+1 queries, minimize lock contention and lock hold durations, leverage PostgreSQL connection pooling, pass `CancellationToken` throughout all async paths, maintain low-cardinality telemetry metrics/spans, and avoid unnecessary allocations or blocking I/O.
+- **Proactive Explanation:** Whenever implementing, reviewing, or modifying code touching MVCC, concurrency, security boundaries, or performance optimizations, proactively explain the underlying mechanisms, trade-offs, and guarantees to the user.
+
 ## Project layout
 
 - `Kahoot.slnx` contains four .NET 10 projects under `src/`.
