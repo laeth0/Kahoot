@@ -23,6 +23,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Preserve the existing ASP.NET Core Problem Details responses and centralized exception handling in `GlobalExceptionHandler`.
 - EF Core uses PostgreSQL, snake_case names, `AppDbContext`, and entity configurations in `Persistence/Configurations`. The app applies pending migrations at startup.
 - **Constructor and Dependency Injection Style:** Always use explicit constructor injection with `private readonly` backing fields (prefixed with `_`) and assignments inside the constructor body. Do not use C# primary constructors on classes for dependency injection.
+- **Explicit Type Declarations (Avoid `var`):** Do not use the `var` keyword for variable declarations or loop iterations in new or modified code. Always use explicit, strongly-typed declarations (e.g., `DateTimeOffset utcNow = ...`, `User user = ...`, `EntityEntry<T> entry in ...`) to keep types clear and explicit. Do not perform repository-wide refactoring sweeps on existing code solely to replace `var`.
 - **Service Registration:** Register services explicitly without reflection or assembly scanning. Extension methods in `ServiceCollectionExtension` must be focused on a single responsibility (e.g., `AddPersistence`, `AddSecurity`, `AddCorsPolicy`, `AddJwtAuthentication`). Framework, hosting, and root service registrations (`AddApplication`, `AddInfrastructure`, `AddScoped<ICurrentUser, CurrentUser>`) belong directly in `Program.cs`.
 
 ## Database and EF Core Migrations

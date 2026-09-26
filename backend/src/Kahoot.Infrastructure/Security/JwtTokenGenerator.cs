@@ -28,13 +28,13 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
     {
         ArgumentNullException.ThrowIfNull(user);
 
-        var now = _timeProvider.GetUtcNow();
-        var expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        DateTimeOffset expiresAt = now.AddMinutes(_options.AccessTokenMinutes);
 
-        var securityKey = new SymmetricSecurityKey(_signingKeyBytes);
-        var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+        SymmetricSecurityKey securityKey = new SymmetricSecurityKey(_signingKeyBytes);
+        SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
-        var claims = new Dictionary<string, object>
+        Dictionary<string, object> claims = new Dictionary<string, object>
         {
             [JwtRegisteredClaimNames.Sub] = user.Id.ToString(),
             ["accountId"] = user.Id.ToString(),
@@ -45,8 +45,8 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             ["tokenSecurityVersion"] = user.TokenSecurityVersion
         };
 
-        var handler = new JsonWebTokenHandler();
-        var descriptor = new SecurityTokenDescriptor
+        JsonWebTokenHandler handler = new JsonWebTokenHandler();
+        SecurityTokenDescriptor descriptor = new SecurityTokenDescriptor
         {
             Issuer = _options.Issuer,
             Audience = _options.Audience,
@@ -57,8 +57,8 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
             Claims = claims
         };
 
-        var token = handler.CreateToken(descriptor);
-        var expiresInSeconds = (int)(_options.AccessTokenMinutes * 60);
+        string token = handler.CreateToken(descriptor);
+        int expiresInSeconds = (int)(_options.AccessTokenMinutes * 60);
 
         return new AccessTokenResult(token, expiresAt, expiresInSeconds);
     }

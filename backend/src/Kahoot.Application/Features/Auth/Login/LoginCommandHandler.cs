@@ -1,6 +1,7 @@
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
+using Kahoot.Application.Common;
 using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
@@ -10,6 +11,7 @@ using Kahoot.Application.Common.Results;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 
 namespace Kahoot.Application.Features.Auth.Login;
@@ -52,18 +54,18 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         }
 
         // 2. Canonical username normalization (NFKC + invariant uppercase, identical to registration)
-        var displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
-        var normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
+        string displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
+        string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
         // 3. Progressive username backoff delay after 5 failed attempts (1s, 2s, 4s, 8s, max 10s)
-        var backoffDelay = _loginRateLimiter.GetUsernameBackoffDelay(normalizedUsername);
+        TimeSpan backoffDelay = _loginRateLimiter.GetUsernameBackoffDelay(normalizedUsername);
         if (backoffDelay > TimeSpan.Zero)
         {
             await Task.Delay(backoffDelay, _timeProvider, cancellationToken);
         }
 
         // 4. Lookup user globally across Host and System Administrator accounts
-        var user = await _dbContext.Users
+        User? user = await _dbContext.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.NormalizedUsername == normalizedUsername, cancellationToken);
 
@@ -101,8 +103,8 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
 
         // Recheck the account under the same row lock used by password changes,
         // logout-all, and refresh so a stale password cannot create a new session.
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-        var currentUser = await _dbContext.GetUserForUpdateAsync(user.Id, cancellationToken);
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? currentUser = await _dbContext.GetUserForUpdateAsync(user.Id, cancellationToken);
         if (currentUser is null || currentUser.Status != UserStatus.Active ||
             !string.Equals(currentUser.PasswordHash, user.PasswordHash, StringComparison.Ordinal))
         {
@@ -110,16 +112,16 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             return Result.Failure<LoginResult>(AuthErrors.InvalidCredentials);
         }
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(currentUser);
+        AccessTokenResult accessToken = _jwtTokenGenerator.GenerateAccessToken(currentUser);
 
         // Persist only SHA256(rawToken).
         byte[] randomBytes = RandomNumberGenerator.GetBytes(RefreshTokenEntropyBytes);
         string rawRefreshToken = Base64Url.EncodeToString(randomBytes);
         byte[] tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(rawRefreshToken));
 
-        var refreshTokenOptions = _refreshTokenOptions.Value;
-        var now = _timeProvider.GetUtcNow();
-        var refreshToken = new RefreshToken
+        RefreshTokenOptions refreshTokenOptions = _refreshTokenOptions.Value;
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        RefreshToken refreshToken = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = currentUser.Id,
@@ -138,7 +140,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
 
         _loginRateLimiter.ResetFailedAttempts(normalizedUsername);
 
-        var response = new LoginResponse(
+        LoginResponse response = new LoginResponse(
             currentUser.Id,
             currentUser.DisplayUsername,
             currentUser.Role.ToString(),

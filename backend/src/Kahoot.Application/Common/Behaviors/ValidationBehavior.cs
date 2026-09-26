@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.Results;
 using MediatR;
 
 namespace Kahoot.Application.Common.Behaviors;
@@ -23,12 +24,12 @@ public sealed class ValidationBehavior<TRequest, TResponse> : IPipelineBehavior<
             return await next();
         }
 
-        var context = new ValidationContext<TRequest>(request);
+        ValidationContext<TRequest> context = new ValidationContext<TRequest>(request);
 
-        var validationResults = await Task.WhenAll(
+        ValidationResult[] validationResults = await Task.WhenAll(
             _validators.Select(validator => validator.ValidateAsync(context, cancellationToken)));
 
-        var failures = validationResults
+        List<ValidationFailure> failures = validationResults
             .SelectMany(result => result.Errors)
             .Where(failure => failure is not null)
             .ToList();

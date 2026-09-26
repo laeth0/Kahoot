@@ -3,7 +3,9 @@ using System.Text;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
+using Kahoot.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Auth.Logout;
 
@@ -33,7 +35,7 @@ public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
         byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.RawRefreshToken));
 
         // 2. Indexed lookup by TokenHash
-        var token = await _dbContext.RefreshTokens
+        RefreshToken? token = await _dbContext.RefreshTokens
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.TokenHash == presentedTokenHash, cancellationToken);
 
@@ -42,12 +44,12 @@ public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
             return Result.Success();
         }
 
-        var now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         // 3. Atomically revoke every non-revoked refresh token belonging to that family
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var user = await _dbContext.GetUserForUpdateAsync(token.UserId, cancellationToken);
+        User? user = await _dbContext.GetUserForUpdateAsync(token.UserId, cancellationToken);
         if (user is null)
         {
             return Result.Success();

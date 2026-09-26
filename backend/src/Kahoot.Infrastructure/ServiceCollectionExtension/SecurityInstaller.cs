@@ -79,7 +79,7 @@ public static class SecurityInstaller
 
         try
         {
-            var bytes = Convert.FromBase64String(signingKey);
+            byte[] bytes = Convert.FromBase64String(signingKey);
             return bytes.Length >= minByteLength;
         }
         catch (FormatException)

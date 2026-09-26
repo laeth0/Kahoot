@@ -3,8 +3,10 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
+using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Auth.ChangePassword;
 
@@ -32,24 +34,20 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         CancellationToken cancellationToken)
     {
         // 1. Resolve account exclusively from the authenticated user
-        var userId = _currentUser.UserId;
+        Guid? userId = _currentUser.UserId;
         if (!userId.HasValue || userId.Value == Guid.Empty)
         {
             return Result.Failure(AuthErrors.Unauthorized);
         }
 
         // 2. Fetch the current active user state without transaction/locks
-        var user = await _dbContext.Users
+        string? currentPasswordHash = await _dbContext.Users
             .AsNoTracking()
             .Where(candidate => candidate.Id == userId.Value && candidate.Status == UserStatus.Active)
-            .Select(candidate => new
-            {
-                candidate.Id,
-                candidate.PasswordHash
-            })
+            .Select(candidate => candidate.PasswordHash)
             .SingleOrDefaultAsync(cancellationToken);
 
-        if (user is null)
+        if (currentPasswordHash is null)
         {
             return Result.Failure(AuthErrors.Unauthorized);
         }
@@ -59,7 +57,7 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         {
             bool isPasswordValid = await _passwordHasher.VerifyPasswordAsync(
                 request.CurrentPassword,
-                user.PasswordHash,
+                currentPasswordHash,
                 cancellationToken);
 
             if (!isPasswordValid)
@@ -85,14 +83,14 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             return Result.Failure(AuthErrors.RateLimited);
         }
 
-        var now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         // 5. Atomically commit password update, security version increment, and all refresh-token revocation
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var currentUser = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
+        User? currentUser = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
         if (currentUser is null || currentUser.Status != UserStatus.Active ||
-            !string.Equals(currentUser.PasswordHash, user.PasswordHash, StringComparison.Ordinal))
+            !string.Equals(currentUser.PasswordHash, currentPasswordHash, StringComparison.Ordinal))
         {
             return Result.Failure(AuthErrors.InvalidCredentials);
         }
@@ -101,7 +99,7 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         int updatedUsers = await _dbContext.Users
             .Where(candidate => candidate.Id == userId.Value
                              && candidate.Status == UserStatus.Active
-                             && candidate.PasswordHash == user.PasswordHash)
+                             && candidate.PasswordHash == currentPasswordHash)
             .ExecuteUpdateAsync(setter => setter
                 .SetProperty(u => u.PasswordHash, newPasswordHash)
                 .SetProperty(u => u.TokenSecurityVersion, u => u.TokenSecurityVersion + 1)

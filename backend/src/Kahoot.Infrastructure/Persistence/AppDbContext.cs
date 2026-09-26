@@ -44,7 +44,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
     public async Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var users = await Users
+        List<User> users = await Users
             .FromSqlInterpolated($"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
             .AsNoTracking()
             .ToListAsync(cancellationToken);

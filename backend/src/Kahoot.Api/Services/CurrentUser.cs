@@ -18,10 +18,10 @@ internal sealed class CurrentUser : ICurrentUser
     {
         get
         {
-            var sub = User?.FindFirstValue(ClaimTypes.NameIdentifier)
+            string? sub = User?.FindFirstValue(ClaimTypes.NameIdentifier)
                 ?? User?.FindFirstValue("sub");
 
-            return Guid.TryParse(sub, out var parsedId) ? parsedId : null;
+            return Guid.TryParse(sub, out Guid parsedId) ? parsedId : null;
         }
     }
 

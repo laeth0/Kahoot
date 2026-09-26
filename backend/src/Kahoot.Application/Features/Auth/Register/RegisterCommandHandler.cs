@@ -28,10 +28,10 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
         RegisterCommand request,
         CancellationToken cancellationToken)
     {
-        var displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
-        var normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
+        string displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
+        string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
-        var usernameExists = await _dbContext.Users
+        bool usernameExists = await _dbContext.Users
             .AnyAsync(user => user.NormalizedUsername == normalizedUsername, cancellationToken);
 
         if (usernameExists)
@@ -49,7 +49,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
             return Result.Failure<RegisterResponse>(AuthErrors.RateLimited);
         }
 
-        var user = new User
+        User user = new User
         {
             Id = Guid.NewGuid(),
             DisplayUsername = displayUsername,

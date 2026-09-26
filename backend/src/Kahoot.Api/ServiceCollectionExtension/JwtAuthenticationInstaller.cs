@@ -15,11 +15,11 @@ public static class JwtAuthenticationInstaller
 {
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
-        var jwtSection = configuration.GetSection(JwtOptions.SectionName);
-        var issuer = jwtSection["Issuer"] ?? string.Empty;
-        var audience = jwtSection["Audience"] ?? string.Empty;
-        var signingKey = jwtSection["SigningKey"] ?? string.Empty;
-        var signingKeyBytes = !string.IsNullOrWhiteSpace(signingKey)
+        IConfigurationSection jwtSection = configuration.GetSection(JwtOptions.SectionName);
+        string issuer = jwtSection["Issuer"] ?? string.Empty;
+        string audience = jwtSection["Audience"] ?? string.Empty;
+        string signingKey = jwtSection["SigningKey"] ?? string.Empty;
+        byte[] signingKeyBytes = !string.IsNullOrWhiteSpace(signingKey)
             ? Convert.FromBase64String(signingKey)
             : [];
 
@@ -49,29 +49,29 @@ public static class JwtAuthenticationInstaller
                     // effect for access tokens that are structurally still valid.
                     OnTokenValidated = async context =>
                     {
-                        var sub = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
+                        string? sub = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
                             ?? context.Principal?.FindFirstValue("sub");
 
-                        if (!Guid.TryParse(sub, out var userId))
+                        if (!Guid.TryParse(sub, out Guid userId))
                         {
                             context.Fail("Invalid user identifier in token.");
                             return;
                         }
 
-                        var versionClaim = context.Principal?.FindFirstValue("token_security_version");
-                        if (!int.TryParse(versionClaim, out var tokenVersion))
+                        string? versionClaim = context.Principal?.FindFirstValue("token_security_version");
+                        if (!int.TryParse(versionClaim, out int tokenVersion))
                         {
                             context.Fail("Missing or invalid token_security_version claim.");
                             return;
                         }
 
-                        var dbContext = context.HttpContext.RequestServices
+                        IAppDbContext dbContext = context.HttpContext.RequestServices
                             .GetRequiredService<IAppDbContext>();
 
-                        var userState = await dbContext.Users
+                        UserSecurityState? userState = await dbContext.Users
                             .AsNoTracking()
                             .Where(u => u.Id == userId)
-                            .Select(u => new { u.Status, u.Role, u.TokenSecurityVersion })
+                            .Select(u => new UserSecurityState(u.Status, u.Role, u.TokenSecurityVersion))
                             .SingleOrDefaultAsync(context.HttpContext.RequestAborted);
 
                         if (userState is null
@@ -95,7 +95,7 @@ public static class JwtAuthenticationInstaller
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         context.Response.ContentType = "application/problem+json";
 
-                        var problem = Results.Problem(
+                        IResult problem = Results.Problem(
                             statusCode: StatusCodes.Status401Unauthorized,
                             title: "Unauthorized",
                             detail: "Authentication is required to access this resource, or token is invalid.",
@@ -130,4 +130,6 @@ public static class JwtAuthenticationInstaller
 
         return services;
     }
+
+    private sealed record UserSecurityState(UserStatus Status, UserRole Role, int TokenSecurityVersion);
 }

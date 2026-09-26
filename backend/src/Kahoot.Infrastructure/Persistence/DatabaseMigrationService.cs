@@ -44,14 +44,14 @@ internal sealed class DatabaseMigrationService : IHostedService
         {
             for (int attempt = 0; attempt <= ConnectionRetryDelays.Length; attempt++)
             {
-                await using var connection = new NpgsqlConnection(_databaseOptions.ConnectionString);
+                await using NpgsqlConnection connection = new NpgsqlConnection(_databaseOptions.ConnectionString);
                 bool migrationStarted = false;
 
                 try
                 {
                     await connection.OpenAsync(cancellationToken);
-                    await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-                    await using var command = connection.CreateCommand();
+                    await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
+                    await using NpgsqlCommand command = connection.CreateCommand();
                     command.Transaction = transaction;
                     command.CommandText = "SELECT pg_advisory_xact_lock(@lockKey)";
                     command.CommandTimeout = 0;
@@ -104,8 +104,8 @@ internal sealed class DatabaseMigrationService : IHostedService
 
     private async Task ApplyMigrationsAsync(CancellationToken cancellationToken)
     {
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         dbContext.Database.SetCommandTimeout(_databaseOptions.MigrationCommandTimeoutSeconds);
 
         // Keep this session open so the setting applies to EF's history-table lock and every DDL command.

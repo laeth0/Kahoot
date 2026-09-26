@@ -9,7 +9,7 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
 using Scalar.AspNetCore;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 {
     builder.Services.AddControllers();
     builder.Services.AddOpenApi();
@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder(args);
 }
 
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 {
     app.UseExceptionHandler();
     app.UseHttpsRedirection();

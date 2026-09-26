@@ -38,7 +38,7 @@ public sealed class PasswordHasher : IPasswordHasher
     {
         ArgumentNullException.ThrowIfNull(password);
 
-        using var lease = await EnterGateAsync(cancellationToken);
+        using IDisposable lease = await EnterGateAsync(cancellationToken);
 
         byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
         byte[] hash = HashWithArgon2id(password, salt);
@@ -53,7 +53,7 @@ public sealed class PasswordHasher : IPasswordHasher
             return false;
         }
 
-        var parts = passwordHash.Split('$');
+        string[] parts = passwordHash.Split('$');
         if (parts.Length != 6 || parts[0].Length != 0)
         {
             return false;
@@ -78,7 +78,7 @@ public sealed class PasswordHasher : IPasswordHasher
             return false;
         }
 
-        using var lease = await EnterGateAsync(cancellationToken);
+        using IDisposable lease = await EnterGateAsync(cancellationToken);
 
         byte[] actualHash = HashWithArgon2id(password, salt);
         return CryptographicOperations.FixedTimeEquals(expectedHash, actualHash);
@@ -121,7 +121,7 @@ public sealed class PasswordHasher : IPasswordHasher
 
     private static byte[] HashWithArgon2id(string password, byte[] salt)
     {
-        using var argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
+        using Argon2id argon2 = new Argon2id(Encoding.UTF8.GetBytes(password))
         {
             Salt = salt,
             MemorySize = MemorySizeKiB,

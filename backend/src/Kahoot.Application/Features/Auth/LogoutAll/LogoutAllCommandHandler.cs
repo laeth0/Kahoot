@@ -2,8 +2,10 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
+using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Auth.LogoutAll;
 
@@ -27,17 +29,17 @@ public sealed class LogoutAllCommandHandler : ICommandHandler<LogoutAllCommand>
         LogoutAllCommand request,
         CancellationToken cancellationToken)
     {
-        var userId = _currentUser.UserId;
+        Guid? userId = _currentUser.UserId;
         if (!userId.HasValue || userId.Value == Guid.Empty)
         {
             return Result.Failure(AuthErrors.Unauthorized);
         }
 
-        var now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        var user = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
+        User? user = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
         if (user is null || user.Status != UserStatus.Active)
         {
             return Result.Failure(AuthErrors.Unauthorized);

@@ -15,10 +15,10 @@ internal sealed class DatabaseSeeder : IHostedService
 
     public async Task StartAsync(CancellationToken cancellationToken)
     {
-        await using var scope = _scopeFactory.CreateAsyncScope();
-        var seeders = scope.ServiceProvider.GetServices<ISeeder>();
+        await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        IEnumerable<ISeeder> seeders = scope.ServiceProvider.GetServices<ISeeder>();
 
-        foreach (var seeder in seeders)
+        foreach (ISeeder seeder in seeders)
         {
             await seeder.SeedAsync(cancellationToken);
         }

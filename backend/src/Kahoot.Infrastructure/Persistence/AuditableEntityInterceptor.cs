@@ -1,5 +1,6 @@
 using Kahoot.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace Kahoot.Infrastructure.Persistence;
@@ -40,9 +41,9 @@ internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 
     private void StampAuditFields(DbContext context)
     {
-        var utcNow = _timeProvider.GetUtcNow();
+        DateTimeOffset utcNow = _timeProvider.GetUtcNow();
 
-        foreach (var entry in context.ChangeTracker.Entries<IAuditableEntity>())
+        foreach (EntityEntry<IAuditableEntity> entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {

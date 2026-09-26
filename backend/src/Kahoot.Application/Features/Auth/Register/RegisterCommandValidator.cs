@@ -38,9 +38,9 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 
     private static bool HasInvalidCharacters(string username)
     {
-        foreach (var character in username)
+        foreach (char character in username)
         {
-            var category = char.GetUnicodeCategory(character);
+            UnicodeCategory category = char.GetUnicodeCategory(character);
             if (category is UnicodeCategory.Control
                 or UnicodeCategory.Format
                 or UnicodeCategory.Surrogate)
@@ -54,13 +54,13 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 
     private static bool BeValidLength(string username)
     {
-        var displayUsername = UsernameNormalization.GetDisplayUsername(username);
+        string displayUsername = UsernameNormalization.GetDisplayUsername(username);
         if (string.IsNullOrEmpty(displayUsername) || displayUsername.Length > MaxDisplayUsernameLength)
         {
             return false;
         }
 
-        var normalized = UsernameNormalization.GetNormalizedUsername(displayUsername);
+        string normalized = UsernameNormalization.GetNormalizedUsername(displayUsername);
         return normalized.Length is >= MinUsernameLength and <= MaxUsernameLength;
     }
 }

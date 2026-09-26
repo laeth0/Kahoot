@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Kahoot.Api.Controllers;
 
@@ -52,8 +53,8 @@ public sealed class AuthController : ApiController
         [FromBody] RegisterRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new RegisterCommand(request.Username, request.Password);
-        var result = await _sender.Send(command, cancellationToken);
+        RegisterCommand command = new RegisterCommand(request.Username, request.Password);
+        Result<RegisterResponse> result = await _sender.Send(command, cancellationToken);
 
         if (result.IsSuccess)
         {
@@ -74,9 +75,9 @@ public sealed class AuthController : ApiController
         [FromBody] LoginRequest request,
         CancellationToken cancellationToken)
     {
-        var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var command = new LoginCommand(request.Username, request.Password, ipAddress);
-        var result = await _sender.Send(command, cancellationToken);
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        LoginCommand command = new LoginCommand(request.Username, request.Password, ipAddress);
+        Result<LoginResult> result = await _sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -100,21 +101,21 @@ public sealed class AuthController : ApiController
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshRequest? request,
         CancellationToken cancellationToken)
     {
-        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken);
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out string? cookieToken);
 
         if (!ValidateCsrfAndOrigin(hasCookie))
         {
             return Problem(AuthErrors.Forbidden);
         }
 
-        var rawRefreshToken = hasCookie ? cookieToken : request?.RefreshToken;
+        string? rawRefreshToken = hasCookie ? cookieToken : request?.RefreshToken;
         if (string.IsNullOrWhiteSpace(rawRefreshToken))
         {
             return Problem(AuthErrors.InvalidRefreshToken);
         }
 
-        var command = new RefreshCommand(rawRefreshToken);
-        var result = await _sender.Send(command, cancellationToken);
+        RefreshCommand command = new RefreshCommand(rawRefreshToken);
+        Result<RefreshResult> result = await _sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -133,15 +134,15 @@ public sealed class AuthController : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> Logout(CancellationToken cancellationToken)
     {
-        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out var cookieToken);
+        bool hasCookie = Request.Cookies.TryGetValue(RefreshTokenCookieName, out string? cookieToken);
 
         if (!ValidateCsrfAndOrigin(hasCookie))
         {
             return Problem(AuthErrors.Forbidden);
         }
 
-        var command = new LogoutCommand(hasCookie ? cookieToken : null);
-        var result = await _sender.Send(command, cancellationToken);
+        LogoutCommand command = new LogoutCommand(hasCookie ? cookieToken : null);
+        Result result = await _sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -160,8 +161,8 @@ public sealed class AuthController : ApiController
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status503ServiceUnavailable)]
     public async Task<IActionResult> LogoutAll(CancellationToken cancellationToken)
     {
-        var command = new LogoutAllCommand();
-        var result = await _sender.Send(command, cancellationToken);
+        LogoutAllCommand command = new LogoutAllCommand();
+        Result result = await _sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -184,8 +185,8 @@ public sealed class AuthController : ApiController
         [FromBody] ChangePasswordRequest request,
         CancellationToken cancellationToken)
     {
-        var command = new ChangePasswordCommand(request.CurrentPassword, request.NewPassword);
-        var result = await _sender.Send(command, cancellationToken);
+        ChangePasswordCommand command = new ChangePasswordCommand(request.CurrentPassword, request.NewPassword);
+        Result result = await _sender.Send(command, cancellationToken);
 
         if (!result.IsSuccess)
         {
@@ -198,7 +199,7 @@ public sealed class AuthController : ApiController
 
     private bool ValidateCsrfAndOrigin(bool isCookieAuth)
     {
-        if (!Request.Headers.TryGetValue(CsrfHeaderName, out var csrfHeader) ||
+        if (!Request.Headers.TryGetValue(CsrfHeaderName, out StringValues csrfHeader) ||
             csrfHeader.Count != 1 || string.IsNullOrWhiteSpace(csrfHeader[0]))
         {
             return false;
@@ -206,7 +207,7 @@ public sealed class AuthController : ApiController
 
         if (isCookieAuth)
         {
-            if (!Request.Cookies.TryGetValue(CsrfCookieName, out var csrfCookie) ||
+            if (!Request.Cookies.TryGetValue(CsrfCookieName, out string? csrfCookie) ||
                 string.IsNullOrEmpty(csrfCookie) ||
                 !CryptographicOperations.FixedTimeEquals(
                     System.Text.Encoding.UTF8.GetBytes(csrfHeader[0]!),
@@ -228,7 +229,7 @@ public sealed class AuthController : ApiController
             return !isCookieAuth;
         }
 
-        if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri) ||
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out Uri? originUri) ||
             originUri.Scheme is not ("http" or "https") ||
             !string.IsNullOrEmpty(originUri.UserInfo) ||
             (fromOriginHeader && origin != originUri.GetLeftPart(UriPartial.Authority)))
@@ -242,12 +243,12 @@ public sealed class AuthController : ApiController
     private bool IsOriginAllowed(Uri origin)
     {
         if (_corsOptions.Value.AllowedOrigins.Any(allowed =>
-                Uri.TryCreate(allowed, UriKind.Absolute, out var allowedUri) && SameOrigin(origin, allowedUri)))
+                Uri.TryCreate(allowed, UriKind.Absolute, out Uri? allowedUri) && SameOrigin(origin, allowedUri)))
         {
             return true;
         }
 
-        return Uri.TryCreate($"{Request.Scheme}://{Request.Host}", UriKind.Absolute, out var requestOrigin) &&
+        return Uri.TryCreate($"{Request.Scheme}://{Request.Host}", UriKind.Absolute, out Uri? requestOrigin) &&
                SameOrigin(origin, requestOrigin);
     }
 
@@ -260,7 +261,7 @@ public sealed class AuthController : ApiController
 
     private void SetRefreshTokenCookie(string rawRefreshToken)
     {
-        var cookieOptions = new CookieOptions
+        CookieOptions cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = true,
@@ -274,7 +275,7 @@ public sealed class AuthController : ApiController
 
     private void SetCsrfCookie()
     {
-        var cookieOptions = new CookieOptions
+        CookieOptions cookieOptions = new CookieOptions
         {
             HttpOnly = false,
             Secure = true,

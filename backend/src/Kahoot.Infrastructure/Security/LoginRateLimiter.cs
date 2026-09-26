@@ -20,9 +20,9 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
 
     public bool IsIpRateLimited(string ipAddress)
     {
-        var key = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
-        var tracker = _ipTrackers.GetOrAdd(key, _ => new IpAttemptTracker());
-        var now = _timeProvider.GetUtcNow();
+        string key = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
+        IpAttemptTracker tracker = _ipTrackers.GetOrAdd(key, _ => new IpAttemptTracker());
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         return !tracker.TryRecordAttempt(now, MaxAttemptsPerIp, IpWindow);
     }
@@ -34,12 +34,12 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
             return TimeSpan.Zero;
         }
 
-        if (!_usernameBackoffs.TryGetValue(normalizedUsername, out var state))
+        if (!_usernameBackoffs.TryGetValue(normalizedUsername, out UsernameBackoffState? state))
         {
             return TimeSpan.Zero;
         }
 
-        var now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         lock (state)
         {
             if (now - state.LastFailedAt > FailedAttemptWindow)
@@ -66,8 +66,8 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
             return;
         }
 
-        var state = _usernameBackoffs.GetOrAdd(normalizedUsername, _ => new UsernameBackoffState());
-        var now = _timeProvider.GetUtcNow();
+        UsernameBackoffState state = _usernameBackoffs.GetOrAdd(normalizedUsername, _ => new UsernameBackoffState());
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         lock (state)
         {
             if (now - state.LastFailedAt > FailedAttemptWindow)
@@ -100,7 +100,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         {
             lock (_lock)
             {
-                var cutoff = now - window;
+                DateTimeOffset cutoff = now - window;
                 while (_timestamps.Count > 0 && _timestamps.Peek() <= cutoff)
                 {
                     _timestamps.Dequeue();

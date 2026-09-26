@@ -1,4 +1,5 @@
 using FluentValidation;
+using FluentValidation.Results;
 using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Options;
@@ -8,6 +9,7 @@ using Kahoot.Application.Features.Auth.Register;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -44,22 +46,22 @@ internal sealed class SystemAdminSeeder : ISeeder
             return;
         }
 
-        var credentials = new RegisterCommand(_options.Username, _options.Password);
-        var validation = await _credentialValidator.ValidateAsync(credentials, cancellationToken);
+        RegisterCommand credentials = new RegisterCommand(_options.Username, _options.Password);
+        ValidationResult validation = await _credentialValidator.ValidateAsync(credentials, cancellationToken);
         if (!validation.IsValid)
         {
             throw new InvalidOperationException("Bootstrap administrator credentials do not meet the account requirements.");
         }
 
-        var displayUsername = UsernameNormalization.GetDisplayUsername(_options.Username);
-        var normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
+        string displayUsername = UsernameNormalization.GetDisplayUsername(_options.Username);
+        string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
         if (IsAlreadySeeded(await GetExistingRoleAsync(normalizedUsername, cancellationToken)))
         {
             return;
         }
 
-        var passwordHash = await _passwordHasher.HashPasswordAsync(_options.Password, cancellationToken);
-        var user = new User
+        string passwordHash = await _passwordHasher.HashPasswordAsync(_options.Password, cancellationToken);
+        User user = new User
         {
             Id = Guid.NewGuid(),
             DisplayUsername = displayUsername,
@@ -74,7 +76,7 @@ internal sealed class SystemAdminSeeder : ISeeder
 
         try
         {
-            await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+            await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);

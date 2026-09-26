@@ -35,7 +35,7 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(CleanupInterval, _timeProvider);
+        using PeriodicTimer timer = new PeriodicTimer(CleanupInterval, _timeProvider);
 
         try
         {
@@ -72,9 +72,9 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
             for (int batchNumber = 0; batchNumber < MaxBatchesPerPass; batchNumber++)
             {
                 int batchDeletedCount;
-                await using (var scope = _scopeFactory.CreateAsyncScope())
+                await using (AsyncServiceScope scope = _scopeFactory.CreateAsyncScope())
                 {
-                    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                     batchDeletedCount = await DeleteBatchAsync(dbContext, cutoff, cancellationToken);
                 }
 

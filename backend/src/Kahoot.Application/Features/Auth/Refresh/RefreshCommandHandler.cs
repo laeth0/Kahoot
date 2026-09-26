@@ -1,6 +1,7 @@
 using System.Buffers.Text;
 using System.Security.Cryptography;
 using System.Text;
+using Kahoot.Application.Common;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Options;
@@ -9,6 +10,7 @@ using Kahoot.Application.Common.Results;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Options;
 
 namespace Kahoot.Application.Features.Auth.Refresh;
@@ -45,7 +47,7 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
         }
 
         byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.RawRefreshToken));
-        var presentedToken = await _dbContext.RefreshTokens
+        RefreshToken? presentedToken = await _dbContext.RefreshTokens
             .AsNoTracking()
             .SingleOrDefaultAsync(token => token.TokenHash == presentedTokenHash, cancellationToken);
 
@@ -54,17 +56,17 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         // Credential mutations lock the account row first. Re-read the token after
         // acquiring it so revocation and rotation have one database commit order.
-        var user = await _dbContext.GetUserForUpdateAsync(presentedToken.UserId, cancellationToken);
+        User? user = await _dbContext.GetUserForUpdateAsync(presentedToken.UserId, cancellationToken);
         if (user is null || user.Status != UserStatus.Active)
         {
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
-        var token = await _dbContext.RefreshTokens
+        RefreshToken? token = await _dbContext.RefreshTokens
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.Id == presentedToken.Id, cancellationToken);
 
@@ -73,7 +75,7 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
             return Result.Failure<RefreshResult>(AuthErrors.InvalidRefreshToken);
         }
 
-        var now = _timeProvider.GetUtcNow();
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         if (token.RotatedAt.HasValue)
         {
             if (now - token.RotatedAt.Value < RaceGracePeriod)
@@ -86,7 +88,7 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
             return Result.Failure<RefreshResult>(AuthErrors.RefreshTokenReuse);
         }
 
-        var refreshTokenOptions = _refreshTokenOptions.Value;
+        RefreshTokenOptions refreshTokenOptions = _refreshTokenOptions.Value;
         if (now >= token.ExpiresAt ||
             now >= token.FamilyCreatedAt.AddDays(refreshTokenOptions.FamilyMaxLifetimeDays))
         {
@@ -103,7 +105,7 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
         }
 
         string replacementRawToken = Base64Url.EncodeToString(RandomNumberGenerator.GetBytes(RefreshTokenEntropyBytes));
-        var replacementToken = new RefreshToken
+        RefreshToken replacementToken = new RefreshToken
         {
             Id = Guid.NewGuid(),
             UserId = user.Id,
@@ -119,10 +121,10 @@ public sealed class RefreshCommandHandler : ICommandHandler<RefreshCommand, Refr
         _dbContext.RefreshTokens.Add(replacementToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
-        var accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
+        AccessTokenResult accessToken = _jwtTokenGenerator.GenerateAccessToken(user);
         await transaction.CommitAsync(cancellationToken);
 
-        var response = new RefreshResponse(
+        RefreshResponse response = new RefreshResponse(
             user.Id,
             user.DisplayUsername,
             user.Role.ToString(),

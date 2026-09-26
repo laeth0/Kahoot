@@ -19,7 +19,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
     {
         if (exception is ValidationException validationException)
         {
-            var errors = validationException.Errors
+            Dictionary<string, string[]> errors = validationException.Errors
                 .GroupBy(error => error.PropertyName)
                 .ToDictionary(
                     group => group.Key,
@@ -59,7 +59,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
-        var rootException = exception.GetBaseException();
+        Exception rootException = exception.GetBaseException();
         if (rootException is Npgsql.NpgsqlException { IsTransient: true } or TimeoutException)
         {
             _logger.LogError(exception, "Database service is temporarily unavailable.");
