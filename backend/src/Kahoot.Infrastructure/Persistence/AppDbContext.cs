@@ -44,8 +44,6 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
     public async Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken)
     {
-        // Call inside a transaction before changing a user's refresh tokens or credentials.
-        // The account row is the shared lock across application instances.
         var users = await Users
             .FromSqlInterpolated($"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
             .AsNoTracking()
