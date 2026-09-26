@@ -11,7 +11,7 @@ Platform operations manage system lifecycle, database migrations, and internal b
 * **Reverse Proxy / Ingress**: Uses readiness probes to route HTTP and WebSocket traffic.
 * **Internal Background Workers**: Hosted background services executing periodic cleanup and finalization.
 * **System Administrator**: Receives platform health status via administrative endpoints.
-* **No Centralized Observability Stack `[NORMATIVE]`**: The platform intentionally excludes Grafana, Prometheus, OpenTelemetry, Jaeger, and Loki. Operational observability relies exclusively on local structured container logging, health endpoints, OS metrics, and load test output.
+* **Observability Stack**: The platform supports OpenTelemetry for tracing and metrics, alongside local structured container logging, health endpoints, and OS metrics.
 
 ---
 
