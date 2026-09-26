@@ -12,18 +12,14 @@ public static class SecurityInstaller
     {
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
-        services
-            .AddOptions<BootstrapAdminOptions>()
+        services.AddOptions<BootstrapAdminOptions>()
             .Bind(configuration.GetRequiredSection(BootstrapAdminOptions.SectionName))
             .Configure(options =>
             {
-                string? enabledValue = configuration["BOOTSTRAP_ADMIN_ENABLED"];
-                if (enabledValue is not null)
+                if (configuration["BOOTSTRAP_ADMIN_ENABLED"] is { } enabledValue)
                 {
                     if (!bool.TryParse(enabledValue, out bool enabled))
-                    {
                         throw new InvalidOperationException("BOOTSTRAP_ADMIN_ENABLED must be true or false.");
-                    }
 
                     options.Enabled = enabled;
                 }
@@ -38,33 +34,25 @@ public static class SecurityInstaller
                     options.Password = password;
                 }
             })
-            .Validate(options => !options.Enabled || !string.IsNullOrWhiteSpace(options.Username),
-                "BOOTSTRAP_ADMIN_USERNAME is required when bootstrap is enabled.")
-            .Validate(options => !options.Enabled || options.Password.Length is >= 16 and <= 128,
-                "BOOTSTRAP_ADMIN_PASSWORD must be 16 to 128 characters when bootstrap is enabled.")
+            .Validate(options => !options.Enabled || !string.IsNullOrWhiteSpace(options.Username), "BOOTSTRAP_ADMIN_USERNAME is required when bootstrap is enabled.")
+            .Validate(options => !options.Enabled || options.Password.Length is >= 16 and <= 128, "BOOTSTRAP_ADMIN_PASSWORD must be 16 to 128 characters when bootstrap is enabled.")
             .ValidateOnStart();
 
-        services
-            .AddOptions<JwtOptions>()
+        services.AddOptions<JwtOptions>()
             .Bind(configuration.GetRequiredSection(JwtOptions.SectionName))
             .Validate(options => !string.IsNullOrWhiteSpace(options.Issuer), "Jwt:Issuer is required.")
             .Validate(options => !string.IsNullOrWhiteSpace(options.Audience), "Jwt:Audience is required.")
-            .Validate(
-                options => IsValidBase64Key(options.SigningKey, 32),
-                "Jwt:SigningKey must be a valid Base64 string representing at least 32 bytes (256 bits).")
+            .Validate(options => IsValidBase64Key(options.SigningKey, 32), "Jwt:SigningKey must be a valid Base64 string representing at least 32 bytes (256 bits).")
             .Validate(options => options.AccessTokenMinutes > 0, "Jwt:AccessTokenMinutes must be greater than zero.")
             .ValidateOnStart();
 
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<ILoginRateLimiter, LoginRateLimiter>();
 
-        services
-            .AddOptions<RefreshTokenOptions>()
+        services.AddOptions<RefreshTokenOptions>()
             .Bind(configuration.GetRequiredSection(RefreshTokenOptions.SectionName))
             .Validate(options => options.LifetimeDays > 0, "RefreshToken:LifetimeDays must be greater than zero.")
-            .Validate(
-                options => options.FamilyMaxLifetimeDays >= options.LifetimeDays,
-                "RefreshToken:FamilyMaxLifetimeDays must be greater than or equal to LifetimeDays.")
+            .Validate(options => options.FamilyMaxLifetimeDays >= options.LifetimeDays, "RefreshToken:FamilyMaxLifetimeDays must be greater than or equal to LifetimeDays.")
             .ValidateOnStart();
 
         return services;
