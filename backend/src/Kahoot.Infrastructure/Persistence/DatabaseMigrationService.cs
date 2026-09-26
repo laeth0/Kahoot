@@ -10,7 +10,6 @@ namespace Kahoot.Infrastructure.Persistence;
 
 internal sealed class DatabaseMigrationService : IHostedService
 {
-    // Keep this key unchanged across deployments so old and new replicas coordinate.
     private const long MigrationLockKey = 0x4B41484F4F545F4D;
     private const int DdlLockTimeoutSeconds = 5;
     private static readonly TimeSpan[] ConnectionRetryDelays =

@@ -15,16 +15,13 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
 
     private readonly IAppDbContext _dbContext;
     private readonly IPasswordHasher _passwordHasher;
-    private readonly TimeProvider _timeProvider;
 
     public RegisterCommandHandler(
         IAppDbContext dbContext,
-        IPasswordHasher passwordHasher,
-        TimeProvider timeProvider)
+        IPasswordHasher passwordHasher)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
-        _timeProvider = timeProvider;
     }
 
     public async Task<Result<RegisterResponse>> Handle(
@@ -42,7 +39,6 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
             return Result.Failure<RegisterResponse>(AuthErrors.UsernameUnavailable);
         }
 
-        var utcNow = _timeProvider.GetUtcNow();
         string passwordHash;
         try
         {
@@ -63,9 +59,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
             Status = UserStatus.Active,
             TokenSecurityVersion = 1,
             Revision = 1,
-            TerminationPending = false,
-            CreatedAt = utcNow,
-            UpdatedAt = utcNow
+            TerminationPending = false
         };
 
         _dbContext.Users.Add(user);

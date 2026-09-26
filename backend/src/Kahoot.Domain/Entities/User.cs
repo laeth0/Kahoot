@@ -2,7 +2,7 @@ using Kahoot.Domain.Enums;
 
 namespace Kahoot.Domain.Entities;
 
-public sealed class User
+public sealed class User : IAuditableEntity
 {
     public Guid Id { get; set; }
 

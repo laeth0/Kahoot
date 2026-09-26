@@ -1,6 +1,6 @@
 namespace Kahoot.Domain.Entities;
 
-public sealed class Quiz
+public sealed class Quiz : IAuditableEntity
 {
     public Guid Id { get; set; }
 

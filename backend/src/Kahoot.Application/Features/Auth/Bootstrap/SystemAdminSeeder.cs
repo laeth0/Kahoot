@@ -21,7 +21,6 @@ internal sealed class SystemAdminSeeder : ISeeder
     private readonly IPasswordHasher _passwordHasher;
     private readonly IValidator<RegisterCommand> _credentialValidator;
     private readonly BootstrapAdminOptions _options;
-    private readonly TimeProvider _timeProvider;
     private readonly ILogger<SystemAdminSeeder> _logger;
 
     public SystemAdminSeeder(
@@ -29,14 +28,12 @@ internal sealed class SystemAdminSeeder : ISeeder
         IPasswordHasher passwordHasher,
         IValidator<RegisterCommand> credentialValidator,
         IOptions<BootstrapAdminOptions> options,
-        TimeProvider timeProvider,
         ILogger<SystemAdminSeeder> logger)
     {
         _dbContext = dbContext;
         _passwordHasher = passwordHasher;
         _credentialValidator = credentialValidator;
         _options = options.Value;
-        _timeProvider = timeProvider;
         _logger = logger;
     }
 
@@ -62,7 +59,6 @@ internal sealed class SystemAdminSeeder : ISeeder
         }
 
         var passwordHash = await _passwordHasher.HashPasswordAsync(_options.Password, cancellationToken);
-        var utcNow = _timeProvider.GetUtcNow();
         var user = new User
         {
             Id = Guid.NewGuid(),
@@ -73,9 +69,7 @@ internal sealed class SystemAdminSeeder : ISeeder
             Status = UserStatus.Active,
             TokenSecurityVersion = 1,
             Revision = 1,
-            TerminationPending = false,
-            CreatedAt = utcNow,
-            UpdatedAt = utcNow
+            TerminationPending = false
         };
 
         try
