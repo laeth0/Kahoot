@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Admin.Users.GetUserById;
 using Kahoot.Application.Features.Admin.Users.ListUsers;
+using Kahoot.Application.Features.Admin.Users.ReactivateUser;
 using Kahoot.Application.Features.Admin.Users.SuspendUser;
 using Kahoot.Domain.Enums;
 using MediatR;
@@ -89,6 +90,29 @@ public sealed class AdminUsersController : ApiController
                 return Accepted(new SuspendUserResponse(TerminationPending: true));
             }
 
+            return NoContent();
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{accountId:guid}/reactivate")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ReactivateUser(
+        [FromRoute] Guid accountId,
+        [FromBody] ReactivateUserRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ReactivateUserCommand command = new ReactivateUserCommand(accountId, request.Revision);
+        Result result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
             return NoContent();
         }
 
