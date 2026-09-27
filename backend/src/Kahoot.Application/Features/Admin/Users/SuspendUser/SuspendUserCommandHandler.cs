@@ -43,7 +43,6 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
             return Result.Failure<SuspendUserResult>(AuthErrors.Forbidden);
         }
 
-        DateTimeOffset now = _timeProvider.GetUtcNow();
         Guid? adminId = _currentUser.UserId;
 
         // Step: Acquire pessimistic row lock (SELECT FOR UPDATE) inside transaction to serialize mutation
@@ -83,13 +82,9 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
         bool hasUnfinishedGames = await _dbContext.Games
             .AnyAsync(game => game.HostAccountId == request.AccountId && game.Status != GameStatus.Finished, cancellationToken);
 
-        // State: Immediate game cutoff - Mark unfinished games as logically terminal (ACCT-SUSP-003)
-        if (hasUnfinishedGames)
-        {
-            await _dbContext.Games
-                .Where(game => game.HostAccountId == request.AccountId && game.Status != GameStatus.Finished)
-                .ExecuteUpdateAsync(setter => setter.SetProperty(g => g.IsTerminatedBySuspension, true), cancellationToken);
-        }
+        // Game commands must reject a suspended host until the worker materializes each game.
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         // Step: Revoke all active refresh tokens for the target host account
         await _dbContext.RefreshTokens

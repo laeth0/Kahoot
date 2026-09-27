@@ -11,9 +11,9 @@ namespace Kahoot.Infrastructure.Persistence;
 
 internal sealed class SuspensionFinalizerWorker : BackgroundService
 {
-    private const int BatchSize = 10;
+    private const int GameBatchSize = 10;
+    private const int HostScanBatchSize = 50;
     private static readonly TimeSpan SweepInterval = TimeSpan.FromMinutes(1);
-    private static readonly TimeSpan BatchYieldInterval = TimeSpan.FromMilliseconds(50);
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ISuspensionFinalizerChannel _channel;
@@ -35,177 +35,205 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Suspension finalizer worker starting. Executing startup sweep. EventName={EventName}", "SuspensionFinalizerStarting");
-
-        // Step: On boot, immediately scan and resume any incomplete finalizations after crash or restart (ACCT-RISK-002, ACCT-TEST-008)
-        try
-        {
-            await ProcessAllPendingSuspensionsAsync(stoppingToken);
-        }
-        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-        {
-            return;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Error during initial suspension finalization sweep. EventName={EventName}", "SuspensionFinalizerStartupError");
-        }
+        await TrySweepAsync(stoppingToken);
 
         using PeriodicTimer timer = new PeriodicTimer(SweepInterval, _timeProvider);
+        Task<bool> channelWait = _channel.WaitToReadAsync(stoppingToken).AsTask();
+        Task<bool> timerWait = timer.WaitForNextTickAsync(stoppingToken).AsTask();
 
         try
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                Task<bool> channelTask = _channel.WaitToReadAsync(stoppingToken).AsTask();
-                Task<bool> timerTask = timer.WaitForNextTickAsync(stoppingToken).AsTask();
+                Task<bool> completedWait = timerWait.IsCompleted
+                    ? timerWait
+                    : await Task.WhenAny(timerWait, channelWait);
 
-                Task<bool> completedTask = await Task.WhenAny(channelTask, timerTask);
-
-                if (completedTask == channelTask && await channelTask)
+                if (completedWait == timerWait)
                 {
-                    while (_channel.TryRead(out Guid hostAccountId))
+                    if (!await timerWait)
                     {
-                        await FinalizeHostGamesAsync(hostAccountId, stoppingToken);
+                        break;
                     }
+
+                    timerWait = timer.WaitForNextTickAsync(stoppingToken).AsTask();
+                    await TrySweepAsync(stoppingToken);
+                    continue;
                 }
 
-                if (completedTask == timerTask && await timerTask)
+                if (!await channelWait)
                 {
-                    await ProcessAllPendingSuspensionsAsync(stoppingToken);
+                    break;
+                }
+
+                channelWait = _channel.WaitToReadAsync(stoppingToken).AsTask();
+                int processedHosts = 0;
+                while (processedHosts < HostScanBatchSize && _channel.TryRead(out Guid hostAccountId))
+                {
+                    await TryFinalizeHostBatchAsync(hostAccountId, stoppingToken);
+                    processedHosts++;
                 }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
-            // Application shutdown cancels the worker loop cleanly
+            // Normal application shutdown.
+        }
+    }
+
+    private async Task TrySweepAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await ProcessAllPendingSuspensionsAsync(cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Suspension finalization sweep failed. EventName={EventName}", "SuspensionFinalizerSweepError");
         }
     }
 
     private async Task ProcessAllPendingSuspensionsAsync(CancellationToken cancellationToken)
     {
-        List<Guid> pendingHostIds;
-        await using (AsyncServiceScope scope = _scopeFactory.CreateAsyncScope())
-        {
-            AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            pendingHostIds = await dbContext.Users
-                .AsNoTracking()
-                .Where(u => u.Status == UserStatus.Suspended && u.TerminationPending)
-                .Select(u => u.Id)
-                .ToListAsync(cancellationToken);
-        }
+        Guid lastHostId = Guid.Empty;
 
-        foreach (Guid hostId in pendingHostIds)
+        while (!cancellationToken.IsCancellationRequested)
         {
-            if (cancellationToken.IsCancellationRequested)
+            List<Guid> pendingHostIds;
+            await using (AsyncServiceScope scope = _scopeFactory.CreateAsyncScope())
+            {
+                AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                pendingHostIds = await dbContext.Database.SqlQuery<Guid>(
+                        $"""SELECT id AS "Value" FROM users WHERE role = {UserRole.Host} AND status = {UserStatus.Suspended} AND termination_pending AND id > {lastHostId} ORDER BY id LIMIT {HostScanBatchSize}""")
+                    .ToListAsync(cancellationToken);
+            }
+
+            foreach (Guid hostId in pendingHostIds)
+            {
+                await TryFinalizeHostBatchAsync(hostId, cancellationToken);
+            }
+
+            if (pendingHostIds.Count < HostScanBatchSize)
             {
                 break;
             }
 
-            await FinalizeHostGamesAsync(hostId, cancellationToken);
+            lastHostId = pendingHostIds[^1];
         }
     }
 
-    private async Task FinalizeHostGamesAsync(Guid hostAccountId, CancellationToken cancellationToken)
+    private async Task TryFinalizeHostBatchAsync(Guid hostAccountId, CancellationToken cancellationToken)
     {
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            bool hasMoreGames;
-            await using (AsyncServiceScope scope = _scopeFactory.CreateAsyncScope())
+            if (await FinalizeHostBatchAsync(hostAccountId, cancellationToken))
             {
-                AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-                await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-                // Step: Acquire row lock on host user row to serialize finalization across cluster replicas
-                User? host = await dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
-                if (host is null || !host.TerminationPending)
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                    break;
-                }
-
-                DateTimeOffset cutoffTimestamp = host.UpdatedAt;
-
-                // Step: Fetch bounded batch of unfinished games (<= 10 games per transaction) (ACCT-SUSP-004, ACCT-RISK-001)
-                List<Game> batchGames = await dbContext.Games
-                    .Where(g => g.HostAccountId == hostAccountId && g.Status != GameStatus.Finished)
-                    .OrderBy(g => g.CreatedAt)
-                    .Take(BatchSize)
-                    .ToListAsync(cancellationToken);
-
-                if (batchGames.Count == 0)
-                {
-                    // State: All games already materialized; clear TerminationPending flag
-                    await dbContext.Users
-                        .Where(u => u.Id == hostAccountId && u.TerminationPending)
-                        .ExecuteUpdateAsync(s => s
-                            .SetProperty(u => u.TerminationPending, false)
-                            .SetProperty(u => u.UpdatedAt, _timeProvider.GetUtcNow()), cancellationToken);
-
-                    await transaction.CommitAsync(cancellationToken);
-                    _logger.LogInformation("Completed suspension game finalization for host {HostAccountId}. EventName={EventName}", hostAccountId, "SuspensionFinalizationCompleted");
-                    break;
-                }
-
-                List<Guid> gameIds = batchGames.Select(g => g.Id).ToList();
-
-                List<Participant> participants = await dbContext.Participants
-                    .Where(p => gameIds.Contains(p.GameId))
-                    .ToListAsync(cancellationToken);
-
-                ILookup<Guid, Participant> participantsByGame = participants.ToLookup(p => p.GameId);
-
-                // Step: Materialize final ranks, set FINISHED status, set FinishedAt, and release PINs
-                foreach (Game game in batchGames)
-                {
-                    game.Status = GameStatus.Finished;
-                    game.FinishedAt = cutoffTimestamp;
-                    game.Pin = null;
-                    game.IsTerminatedBySuspension = true;
-
-                    List<Participant> gameParticipants = participantsByGame[game.Id]
-                        .OrderByDescending(p => p.TotalScore)
-                        .ThenBy(p => p.CreatedAt)
-                        .ToList();
-
-                    for (int i = 0; i < gameParticipants.Count; i++)
-                    {
-                        if (i > 0 && gameParticipants[i].TotalScore == gameParticipants[i - 1].TotalScore)
-                        {
-                            gameParticipants[i].Rank = gameParticipants[i - 1].Rank;
-                        }
-                        else
-                        {
-                            gameParticipants[i].Rank = i + 1;
-                        }
-                    }
-                }
-
-                await dbContext.SaveChangesAsync(cancellationToken);
-
-                hasMoreGames = await dbContext.Games
-                    .AnyAsync(g => g.HostAccountId == hostAccountId && g.Status != GameStatus.Finished, cancellationToken);
-
-                if (!hasMoreGames)
-                {
-                    await dbContext.Users
-                        .Where(u => u.Id == hostAccountId && u.TerminationPending)
-                        .ExecuteUpdateAsync(s => s
-                            .SetProperty(u => u.TerminationPending, false)
-                            .SetProperty(u => u.UpdatedAt, _timeProvider.GetUtcNow()), cancellationToken);
-                }
-
-                await transaction.CommitAsync(cancellationToken);
-
-                if (!hasMoreGames)
-                {
-                    _logger.LogInformation("Completed suspension game finalization for host {HostAccountId}. EventName={EventName}", hostAccountId, "SuspensionFinalizationCompleted");
-                    break;
-                }
+                _channel.NotifySuspension(hostAccountId);
             }
-
-            // Step: Yield briefly between batches to prevent DB connection starvation
-            await Task.Delay(BatchYieldInterval, _timeProvider, cancellationToken);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Suspension finalization failed for host {HostAccountId}. EventName={EventName}",
+                hostAccountId, "SuspensionFinalizerHostError");
+        }
+    }
+
+    private async Task<bool> FinalizeHostBatchAsync(Guid hostAccountId, CancellationToken cancellationToken)
+    {
+        await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        List<User> hosts = await dbContext.Users
+            .FromSqlInterpolated($"SELECT * FROM users WHERE id = {hostAccountId} FOR UPDATE SKIP LOCKED")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+
+        User? host = hosts.Count == 0 ? null : hosts[0];
+        if (host is null || host.Role != UserRole.Host ||
+            host.Status != UserStatus.Suspended || !host.TerminationPending)
+        {
+            return false;
+        }
+
+        List<Game> batchGames = await dbContext.Games
+            .FromSqlInterpolated($"SELECT * FROM games WHERE host_account_id = {hostAccountId} AND status <> {GameStatus.Finished} ORDER BY created_at, id LIMIT {GameBatchSize} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        if (batchGames.Count == 0)
+        {
+            await ClearPendingAsync(dbContext, hostAccountId, cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            _logger.LogInformation("Completed suspension game finalization for host {HostAccountId}. EventName={EventName}",
+                hostAccountId, "SuspensionFinalizationCompleted");
+            return false;
+        }
+
+        Guid[] gameIds = batchGames.Select(game => game.Id).ToArray();
+
+        await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
+            WITH ranked AS (
+                SELECT id, row_number() OVER (
+                    PARTITION BY game_id
+                    ORDER BY total_score DESC, normalized_nickname COLLATE "C" ASC, id ASC
+                ) AS final_rank
+                FROM participants
+                WHERE game_id = ANY ({gameIds}) AND NOT is_removed
+            )
+            UPDATE participants AS participant
+            SET rank = ranked.final_rank::integer
+            FROM ranked
+            WHERE participant.id = ranked.id
+            """, cancellationToken);
+
+        await dbContext.Participants
+            .Where(participant => gameIds.Contains(participant.GameId) && participant.IsRemoved)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(participant => participant.Rank, (int?)null), cancellationToken);
+
+        foreach (Game game in batchGames)
+        {
+            game.Status = GameStatus.Finished;
+            game.FinishedAt = host.UpdatedAt;
+            game.Pin = null;
+            game.IsTerminatedBySuspension = true;
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        bool hasMoreGames = await dbContext.Games
+            .AnyAsync(game => game.HostAccountId == hostAccountId && game.Status != GameStatus.Finished, cancellationToken);
+
+        if (!hasMoreGames)
+        {
+            await ClearPendingAsync(dbContext, hostAccountId, cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+
+        if (!hasMoreGames)
+        {
+            _logger.LogInformation("Completed suspension game finalization for host {HostAccountId}. EventName={EventName}",
+                hostAccountId, "SuspensionFinalizationCompleted");
+        }
+
+        return hasMoreGames;
+    }
+
+    private static async Task ClearPendingAsync(
+        AppDbContext dbContext,
+        Guid hostAccountId,
+        CancellationToken cancellationToken)
+    {
+        await dbContext.Users
+            .Where(user => user.Id == hostAccountId && user.TerminationPending)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(user => user.TerminationPending, false), cancellationToken);
     }
 }

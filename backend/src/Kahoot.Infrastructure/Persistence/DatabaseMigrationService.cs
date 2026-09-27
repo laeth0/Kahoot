@@ -23,15 +23,18 @@ internal sealed class DatabaseMigrationService : IHostedService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly DatabaseOptions _databaseOptions;
+    private readonly NpgsqlDataSource _dataSource;
     private readonly ILogger<DatabaseMigrationService> _logger;
 
     public DatabaseMigrationService(
         IServiceScopeFactory scopeFactory,
         IOptions<DatabaseOptions> databaseOptions,
+        NpgsqlDataSource dataSource,
         ILogger<DatabaseMigrationService> logger)
     {
         _scopeFactory = scopeFactory;
         _databaseOptions = databaseOptions.Value;
+        _dataSource = dataSource;
         _logger = logger;
     }
 
@@ -44,7 +47,7 @@ internal sealed class DatabaseMigrationService : IHostedService
         {
             for (int attempt = 0; attempt <= ConnectionRetryDelays.Length; attempt++)
             {
-                await using NpgsqlConnection connection = new NpgsqlConnection(_databaseOptions.ConnectionString);
+                await using NpgsqlConnection connection = _dataSource.CreateConnection();
                 bool migrationStarted = false;
 
                 try
@@ -58,7 +61,7 @@ internal sealed class DatabaseMigrationService : IHostedService
                     command.Parameters.AddWithValue("lockKey", MigrationLockKey);
 
                     await command.ExecuteNonQueryAsync(cancellationToken);
-                    _logger.LogInformation("Database migration lock acquired. EventName={EventName}", "DatabaseMigrationLockAcquired");
+                    _logger.LogDebug("Database migration lock acquired. EventName={EventName}", "DatabaseMigrationLockAcquired");
 
                     migrationStarted = true;
                     await ApplyMigrationsAsync(cancellationToken);

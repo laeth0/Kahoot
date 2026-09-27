@@ -16,6 +16,10 @@ public sealed class ListUsersQueryValidator : AbstractValidator<ListUsersQuery>
             .WithMessage("Username search filter cannot exceed 64 characters.")
             .When(query => query.Username is not null);
 
+        RuleFor(query => query.Status)
+            .IsInEnum()
+            .When(query => query.Status.HasValue);
+
         RuleFor(query => query.Cursor)
             .Must(cursor => string.IsNullOrWhiteSpace(cursor) || KeysetCursor.TryDecode(cursor, out _))
             .WithMessage("Cursor is invalid or malformed.");

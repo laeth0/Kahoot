@@ -38,8 +38,8 @@ public sealed record KeysetCursor
         }
 
         Span<byte> decodedBytes = stackalloc byte[64];
-        OperationStatus status = Base64Url.DecodeFromChars(cursor.AsSpan(), decodedBytes, out _, out int bytesWritten);
-        if (status != OperationStatus.Done)
+        OperationStatus status = Base64Url.DecodeFromChars(cursor.AsSpan(), decodedBytes, out int charsConsumed, out int bytesWritten);
+        if (status != OperationStatus.Done || charsConsumed != cursor.Length)
         {
             result = null;
             return false;
@@ -52,8 +52,14 @@ public sealed record KeysetCursor
             return false;
         }
 
-        if (Utf8Parser.TryParse(decodedBytes[..colonIndex], out long ticks, out _) &&
-            Utf8Parser.TryParse(decodedBytes[(colonIndex + 1)..bytesWritten], out Guid id, out _, 'N'))
+        ReadOnlySpan<byte> ticksBytes = decodedBytes[..colonIndex];
+        ReadOnlySpan<byte> idBytes = decodedBytes[(colonIndex + 1)..bytesWritten];
+        if (Utf8Parser.TryParse(ticksBytes, out long ticks, out int ticksConsumed) &&
+            ticksConsumed == ticksBytes.Length &&
+            ticks >= DateTimeOffset.MinValue.UtcTicks &&
+            ticks <= DateTimeOffset.MaxValue.UtcTicks &&
+            Utf8Parser.TryParse(idBytes, out Guid id, out int idConsumed, 'N') &&
+            idConsumed == idBytes.Length)
         {
             result = new KeysetCursor(new DateTimeOffset(ticks, TimeSpan.Zero), id);
             return true;

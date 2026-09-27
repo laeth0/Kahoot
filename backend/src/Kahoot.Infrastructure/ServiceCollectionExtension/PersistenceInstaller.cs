@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
@@ -20,13 +21,31 @@ public static class PersistenceInstaller
             .Validate(options => options.MigrationCommandTimeoutSeconds > 0, "Database:MigrationCommandTimeoutSeconds must be greater than zero.")
             .ValidateOnStart();
 
+        services.AddSingleton(serviceProvider =>
+        {
+            DatabaseOptions dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
+
+            NpgsqlDataSourceBuilder dataSourceBuilder = new(dbOptions.ConnectionString)
+            {
+                Name = "KahootPrimary"
+            };
+
+            dataSourceBuilder.MapEnum<UserRole>("user_role");
+            dataSourceBuilder.MapEnum<UserStatus>("user_status");
+            dataSourceBuilder.MapEnum<MediaStatus>("media_status");
+            dataSourceBuilder.MapEnum<GameStatus>("game_status");
+
+            return dataSourceBuilder.Build();
+        });
+
         services.AddScoped<AuditableEntityInterceptor>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
+            NpgsqlDataSource dataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();
             DatabaseOptions dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
-            options.UseNpgsql(dbOptions.ConnectionString, npgsqlOptions =>
+            options.UseNpgsql(dataSource, npgsqlOptions =>
             {
                 npgsqlOptions.MapEnum<UserRole>("user_role");
                 npgsqlOptions.MapEnum<UserStatus>("user_status");

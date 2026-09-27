@@ -96,34 +96,48 @@ public static class JwtAuthenticationInstaller
                         context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                         context.Response.ContentType = "application/problem+json";
 
+                        Dictionary<string, object?> extensions = new()
+                        {
+                            ["code"] = "Auth.Unauthorized",
+                            ["requestId"] = context.HttpContext.TraceIdentifier
+                        };
+
+                        if (System.Diagnostics.Activity.Current is not null)
+                        {
+                            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
+                        }
+
                         IResult problem = Results.Problem(
                             statusCode: StatusCodes.Status401Unauthorized,
                             title: "Unauthorized",
                             detail: "Authentication is required to access this resource, or token is invalid.",
                             instance: context.HttpContext.Request.Path,
                             type: "https://api.kahoot-saas.local/errors/Auth.Unauthorized",
-                            extensions: new Dictionary<string, object?>
-                            {
-                                ["code"] = "Auth.Unauthorized",
-                                ["requestId"] = context.HttpContext.TraceIdentifier
-                            });
+                            extensions: extensions);
 
                         await problem.ExecuteAsync(context.HttpContext);
                     },
 
                     OnForbidden = async context =>
                     {
+                        Dictionary<string, object?> extensions = new()
+                        {
+                            ["code"] = "Auth.Forbidden",
+                            ["requestId"] = context.HttpContext.TraceIdentifier
+                        };
+
+                        if (System.Diagnostics.Activity.Current is not null)
+                        {
+                            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
+                        }
+
                         await Results.Problem(
                             statusCode: StatusCodes.Status403Forbidden,
                             title: "Forbidden",
                             detail: "The authenticated account is not allowed to access this resource.",
                             instance: context.HttpContext.Request.Path,
                             type: "https://api.kahoot-saas.local/errors/Auth.Forbidden",
-                            extensions: new Dictionary<string, object?>
-                            {
-                                ["code"] = "Auth.Forbidden",
-                                ["requestId"] = context.HttpContext.TraceIdentifier
-                            })
+                            extensions: extensions)
                             .ExecuteAsync(context.HttpContext);
                     }
                 };

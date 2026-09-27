@@ -40,7 +40,6 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
             return Result.Failure(AuthErrors.Forbidden);
         }
 
-        DateTimeOffset now = _timeProvider.GetUtcNow();
         Guid? adminId = _currentUser.UserId;
 
         // Step: Acquire transaction to serialize the admin suspension and active count verification
@@ -97,6 +96,8 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure(AccountErrors.LastAdministrator);
         }
+
+        DateTimeOffset now = _timeProvider.GetUtcNow();
 
         // Step: Revoke all active refresh tokens for the target administrator
         await _dbContext.RefreshTokens

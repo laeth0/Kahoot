@@ -11,7 +11,7 @@ public sealed class SuspendAdministratorCommandValidator : AbstractValidator<Sus
             .WithMessage("Target administrator identifier is required.");
 
         RuleFor(command => command.Revision)
-            .GreaterThanOrEqualTo(0)
-            .WithMessage("Revision must be greater than or equal to 0.");
+            .GreaterThan(0)
+            .WithMessage("Revision must be greater than 0.");
     }
 }

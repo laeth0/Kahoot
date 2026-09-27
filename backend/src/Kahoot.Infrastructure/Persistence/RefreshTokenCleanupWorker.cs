@@ -41,18 +41,7 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                for (int attempt = 0; attempt <= RetryDelays.Length; attempt++)
-                {
-                    if (await TryCleanupAsync(stoppingToken))
-                    {
-                        break;
-                    }
-
-                    if (attempt < RetryDelays.Length)
-                    {
-                        await Task.Delay(RetryDelays[attempt], _timeProvider, stoppingToken);
-                    }
-                }
+                await ExecuteCleanupPassAsync(stoppingToken);
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -61,7 +50,61 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
         }
     }
 
-    private async Task<bool> TryCleanupAsync(CancellationToken cancellationToken)
+    private async Task ExecuteCleanupPassAsync(CancellationToken stoppingToken)
+    {
+        for (int attempt = 0; attempt <= RetryDelays.Length; attempt++)
+        {
+            (bool success, Exception? error, int deletedCount, double elapsedMs) = await PerformCleanupAttemptAsync(stoppingToken);
+
+            if (success)
+            {
+                if (deletedCount > 0)
+                {
+                    _logger.LogInformation(
+                        "Refresh token cleanup completed. EventName={EventName} DeletedCount={DeletedCount} ElapsedMilliseconds={ElapsedMilliseconds} Attempt={Attempt}",
+                        "RefreshTokenCleanupCompleted",
+                        deletedCount,
+                        elapsedMs,
+                        attempt + 1);
+                }
+                else
+                {
+                    _logger.LogDebug(
+                        "Refresh token cleanup completed with zero deleted tokens. EventName={EventName} DeletedCount={DeletedCount} ElapsedMilliseconds={ElapsedMilliseconds}",
+                        "RefreshTokenCleanupCompleted",
+                        0,
+                        elapsedMs);
+                }
+
+                return;
+            }
+
+            if (attempt < RetryDelays.Length)
+            {
+                TimeSpan delay = RetryDelays[attempt];
+                _logger.LogWarning(
+                    error,
+                    "Refresh token cleanup attempt failed; retrying. EventName={EventName} Attempt={Attempt} RetryDelaySeconds={RetryDelaySeconds} ElapsedMilliseconds={ElapsedMilliseconds}",
+                    "RefreshTokenCleanupAttemptFailed",
+                    attempt + 1,
+                    delay.TotalSeconds,
+                    elapsedMs);
+
+                await Task.Delay(delay, _timeProvider, stoppingToken);
+            }
+            else
+            {
+                _logger.LogError(
+                    error,
+                    "Refresh token cleanup failed and exhausted all retry attempts. EventName={EventName} Attempts={Attempts} ElapsedMilliseconds={ElapsedMilliseconds}",
+                    "RefreshTokenCleanupFailed",
+                    attempt + 1,
+                    elapsedMs);
+            }
+        }
+    }
+
+    private async Task<(bool Success, Exception? Error, int DeletedCount, double ElapsedMs)> PerformCleanupAttemptAsync(CancellationToken cancellationToken)
     {
         int deletedCount = 0;
         long startedAt = _timeProvider.GetTimestamp();
@@ -91,12 +134,8 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
                 }
             }
 
-            _logger.LogInformation(
-                "Refresh token cleanup completed. EventName={EventName} DeletedCount={DeletedCount} ElapsedMilliseconds={ElapsedMilliseconds}",
-                "RefreshTokenCleanupCompleted",
-                deletedCount,
-                _timeProvider.GetElapsedTime(startedAt).TotalMilliseconds);
-            return true;
+            double elapsedMs = _timeProvider.GetElapsedTime(startedAt).TotalMilliseconds;
+            return (true, null, deletedCount, elapsedMs);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -104,13 +143,8 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
         }
         catch (Exception exception)
         {
-            _logger.LogError(
-                exception,
-                "Refresh token cleanup failed. EventName={EventName} DeletedCount={DeletedCount} ElapsedMilliseconds={ElapsedMilliseconds}",
-                "RefreshTokenCleanupFailed",
-                deletedCount,
-                _timeProvider.GetElapsedTime(startedAt).TotalMilliseconds);
-            return false;
+            double elapsedMs = _timeProvider.GetElapsedTime(startedAt).TotalMilliseconds;
+            return (false, exception, deletedCount, elapsedMs);
         }
     }
 

@@ -11,7 +11,7 @@ Platform operations manage system lifecycle, database migrations, and internal b
 * **Reverse Proxy / Ingress**: Uses readiness probes to route HTTP and WebSocket traffic.
 * **Internal Background Workers**: Hosted background services executing periodic cleanup and finalization.
 * **System Administrator**: Receives platform health status via administrative endpoints.
-* **Observability Stack**: The platform supports OpenTelemetry for tracing and metrics, alongside local structured container logging, health endpoints, and OS metrics.
+* **Observability Stack**: The platform employs a vendor-neutral, three-signal observability architecture using OpenTelemetry (OTLP) to an OpenTelemetry Collector gateway, routing metrics to Prometheus, traces to Jaeger, and logs to Loki, with Grafana providing the unified operational UI. Structured JSON console logging remains independently available on `stdout`/`stderr`.
 
 ---
 
@@ -78,15 +78,33 @@ Workers run as internal hosted services and are strictly segregated by criticali
   5. Uncommitted database transactions are safely rolled back.
   6. **Host Abandonment Exemption**: Planned rolling restarts must **never** trigger Host abandonment finalization; the 5-minute Host grace window comfortably exceeds the 30-second shutdown drain period.
 
-### 2.6 Local Structured Logging `[NORMATIVE]`
-* **`OPS-LOG-001` (Structured JSON Format)**: Emitted to `stdout` / `stderr`.
+### 2.6 Structured Logging & Central Observability `[NORMATIVE]`
+* **`OPS-LOG-001` (Structured JSON Format)**: Emitted to `stdout` / `stderr` using standard .NET console JSON formatting.
 * **`OPS-LOG-002` (Mandatory Redaction)**:
   * Passwords, password hashes, and raw credentials.
   * JWT access tokens and raw refresh tokens.
-  * `Authorization` headers.
+  * `Authorization` headers and cookie values.
   * `access_token` query-string parameters on SignalR connections.
   * Quiz question text and player answers.
+  * Connection strings and database credentials in metrics or log scopes.
 * Operational context retained: `Timestamp`, `LogLevel`, `RequestId`, `EventName`, `ElapsedMilliseconds`, `StatusCode`, and sanitized error codes.
+* **`OPS-OBS-001` (Vendor-Neutral OTLP Gateway)**:
+  * The application exports metrics, distributed traces, and structured logs over standard OTLP (HTTP/protobuf) exclusively to the OpenTelemetry Collector gateway.
+  * The Collector routes:
+    * Metrics to Prometheus via a Prometheus scrape exporter.
+    * Distributed traces to Jaeger over OTLP.
+    * Application logs to Loki via native OTLP HTTP ingestion (`/otlp/v1/logs`).
+  * The application contains zero vendor SDK dependencies on Prometheus, Jaeger, Loki, or Grafana.
+* **`OPS-OBS-002` (Telemetry Failure Isolation & Availability Independence)**:
+  * Application availability, boot sequence, and traffic readiness (`/health`, `/health/ready`) are completely independent of the observability infrastructure.
+  * Network timeouts, crashes, or unresponsiveness of the OpenTelemetry Collector or backend data stores (Prometheus, Jaeger, Loki, Grafana) must never prevent the API from starting, serving traffic, or executing background workers.
+  * In-flight telemetry is buffered in bounded non-blocking in-memory queues; if the Collector is unreachable, telemetry records are dropped gracefully without crashing or degrading application throughput.
+  * Local structured JSON console logs to `stdout`/`stderr` remain fully operational even during complete telemetry collector outages.
+* **`OPS-OBS-003` (Health Probe Filtering & Sampling Policy)**:
+  * Health check endpoints (`/health`, `/health/live`, `/health/ready`) are filtered out of distributed tracing to prevent high-frequency probe noise from overwhelming trace storage.
+  * Distributed tracing in production employs parent-based ratio sampling (`parentbased_traceidratio`), configurable via standard `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`.
+* **`OPS-OBS-004` (ProblemDetails Trace Correlation)**:
+  * Whenever an active trace exists during HTTP request handling, the 32-character hexadecimal `traceId` is included additively in RFC 7807 ProblemDetails responses (`["traceId"] = Activity.Current.TraceId.ToString()`), alongside the existing `requestId` (`TraceIdentifier`), enabling seamless correlation across client responses, Grafana dashboards, Loki logs, and Jaeger trace graphs.
 
 ---
 

@@ -86,8 +86,14 @@ graph TD
   * `proxy` (Nginx): TLS termination, static asset routing, WebSocket upgrade proxying.
   * `frontend` (React / Vite): Static SPA distribution.
   * `backend` (ASP.NET Core 8+): Single modular monolith container.
-  * `db` (PostgreSQL 16+): Dedicated relational database volume.
+  * `db` (PostgreSQL 16+): Dedicated relational database volume (`db_data`).
   * `media_volume`: Persistent volume for `/app/uploads`.
+  * Observability subsystem (on internal `observability` network):
+    * `otel-collector` (OpenTelemetry Collector Contrib): OTLP gateway receiving traces, metrics, and logs from `backend`.
+    * `prometheus`: Metrics storage and query engine scraping `otel-collector` (persistent volume `prometheus_data`).
+    * `jaeger`: Distributed tracing backend receiving OTLP from `otel-collector` (in-memory ephemeral store for baseline single-host).
+    * `loki`: Log aggregation store receiving OTLP logs from `otel-collector` (persistent volume `loki_data`).
+    * `grafana`: Unified visualization dashboard querying Prometheus, Jaeger, and Loki (persistent volume `grafana_data`).
 * **`ARCH-SCALE-001` (Target SaaS Multi-Instance Requirements)**:
   To support target SaaS scale (25,000 concurrent WebSockets, 5,000 answers/sec), the architecture specifies the following required properties for horizontal scaling without prematurely mandating specific cloud products:
   1. **Stateless Application Cluster**: Multiple backend replica instances running concurrently.
@@ -203,6 +209,67 @@ Production configuration loaded via non-committed `.env` files:
 | `BOOTSTRAP_ADMIN_PASSWORD` | One-time bootstrap secret (min 16 chars) | **YES** | Initial admin password. Rotated after boot. | `ARCH-CFG-016` |
 | `STORAGE_MEDIA_PATH` | `/app/uploads` | No | Physical volume mount path for media storage. | `ARCH-CFG-017` |
 | `ASPNETCORE_ENVIRONMENT` | `Production` | No | Runtime mode; disables Swagger and debug endpoints. | `ARCH-CFG-018` |
+| `OTEL_SERVICE_NAME` | `kahoot-api` | No | Logical service name for OpenTelemetry resource attributes. | `ARCH-CFG-019` |
+| `OTEL_RESOURCE_ATTRIBUTES` | `deployment.environment.name=production` | No | Standard OpenTelemetry comma-separated resource attributes. | `ARCH-CFG-020` |
+| `OTEL_EXPORTER_OTLP_ENDPOINT` | `http://otel-collector:4318` (Compose) / `http://localhost:4318` (Host) | No | OTLP HTTP/protobuf receiver endpoint for telemetry signals. | `ARCH-CFG-021` |
+| `OTEL_EXPORTER_OTLP_PROTOCOL` | `http/protobuf` | No | Export wire protocol for OpenTelemetry signals. | `ARCH-CFG-022` |
+| `OTEL_TRACES_SAMPLER` | `parentbased_traceidratio` | No | Sampling mechanism for distributed tracing (`parentbased_traceidratio` or `always_on`). | `ARCH-CFG-023` |
+| `OTEL_TRACES_SAMPLER_ARG` | `0.10` | No | Sampling probability ratio when ratio sampler is active (e.g. 0.10 = 10%). | `ARCH-CFG-024` |
+| `GRAFANA_ADMIN_PASSWORD` | Strong generated secret (min 16 chars) | **YES** | Initial administrator password for Grafana web dashboard. | `ARCH-CFG-025` |
+
+### 2.5 Reference Observability Architecture `[NORMATIVE]`
+
+The platform implements a vendor-neutral, three-signal telemetry pipeline conforming to OpenTelemetry standards:
+
+```mermaid
+graph LR
+    subgraph AppHost ["Application Tier (web, data, observability networks)"]
+        Backend["Kahoot.Api (.NET)"]
+    end
+
+    subgraph ObsTier ["Observability Subsystem (observability network)"]
+        Collector["OpenTelemetry Collector Contrib\n(OTLP Gateway :4318 / :4317)"]
+        Prometheus["Prometheus (:9090)\nScrapes Collector :9464\nVolume: prometheus_data (7d)"]
+        Jaeger["Jaeger v2 (:16686)\nOTLP Receiver :4317\nEphemeral In-Memory Store"]
+        Loki["Grafana Loki (:3100)\nOTLP HTTP Ingestion /otlp/v1/logs\nVolume: loki_data (7d)"]
+        Grafana["Grafana UI (:3000)\nData Sources: Prom, Jaeger, Loki\nVolume: grafana_data"]
+    end
+
+    Backend -- "OTLP HTTP (:4318)\n(Traces, Metrics, Logs)" --> Collector
+    Collector -- "Metrics Scrape" --> Prometheus
+    Collector -- "OTLP gRPC (:4317)" --> Jaeger
+    Collector -- "OTLP HTTP (:3100)" --> Loki
+    Grafana --> Prometheus
+    Grafana --> Jaeger
+    Grafana --> Loki
+```
+
+#### Observability Invariants
+* **`ARCH-OBS-001` (Vendor-Neutral Observability Pipeline)**:
+  * Application telemetry (traces, metrics, and structured logs) is exported exclusively using standard OTLP (HTTP/protobuf) to the OpenTelemetry Collector gateway.
+  * The backend application contains zero direct vendor SDK dependencies on Prometheus, Jaeger, Loki, or Grafana.
+  * Routing, filtering, batching, and target protocol transformations are performed solely by the Collector.
+* **`ARCH-OBS-002` (Telemetry Network Isolation & Failure Independence)**:
+  * Observability backend components (`prometheus`, `jaeger`, `loki`, `grafana`) reside on an isolated internal Docker bridge network (`observability`), shielded from public ingress and directly isolated from `db`.
+  * The API joins `web`, `data`, and `observability`; the `otel-collector` joins `observability` to serve as a gateway.
+  * **Failure Independence**: The OpenTelemetry .NET SDK in `Kahoot.Api` uses bounded in-memory batch queues and asynchronous export. If the Collector is unreachable, experiencing backpressure, or crashing:
+    * Telemetry may be dropped. Repeated export failures still use some CPU and network resources but do not determine application readiness.
+    * The application boot sequence and readiness state (`/health`, `/health/ready`) are unaffected.
+    * Local structured JSON console logs to `stdout`/`stderr` continue uninterrupted.
+* **`ARCH-OBS-003` (Storage Retention and Single-Host Local Caveats)**:
+  * **Prometheus**: Metrics persist on a dedicated Docker volume (`prometheus_data`) with a retention window of 7 days (`--storage.tsdb.retention.time=7d`) and a 2GB size ceiling (`--storage.tsdb.retention.size=2GB`).
+  * **Loki**: Application logs persist on a dedicated Docker volume (`loki_data`) with a retention window of 7 days (`retention_period: 168h`).
+  * **Jaeger Baseline Ephemeral Store**: In the baseline reference single-host deployment, Jaeger runs using its default in-memory trace store. Distributed traces are ephemeral and cleared upon container restart. This design optimizes single-host memory and operational simplicity for development, staging, and small-scale deployments. For multi-instance production scale, Jaeger or Tempo backed by durable object storage or Cassandra/OpenSearch replaces the ephemeral in-memory store.
+  * **Grafana**: Dashboards, provisioning files, and operational state persist on `grafana_data`.
+* **`ARCH-OBS-004` (Sampling, Redaction & Cardinality Guardrails)**:
+  * **Trace Sampling**: Production deployments employ parent-based ratio sampling (`parentbased_traceidratio`) configured via `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG` (defaulting to 10% sampling, `0.10`), while development defaults to 100% (`always_on`).
+  * **Health Probe Filtering**: Ingress health probes (`/health`, `/health/live`, `/health/ready`) are filtered out of distributed tracing at the ASP.NET Core instrumentation boundary to eliminate repetitive synthetic span clutter.
+  * **Strict Metric & Label Low-Cardinality**: Dynamic high-cardinality identifiers (such as session tokens, game PINs, player connection IDs, individual answer IDs, or timestamps) must never be added as metric dimensions or Loki index labels.
+  * **Zero Sensitive Data in Telemetry**: Headers containing credentials (`Authorization`, `Cookie`), query strings containing tokens (`access_token`), passwords, password hashes, and player response payloads are strictly redacted before emission to OTLP.
+* **`ARCH-OBS-005` (Deployment Topology & Host-Run Precedence)**:
+  * When executing inside Docker Compose, `OTEL_EXPORTER_OTLP_ENDPOINT` is injected as `http://otel-collector:4318`.
+  * When executing directly on the host operating system (`dotnet run`), operators or developers set `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` and `OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf` to use the published Collector receiver port.
+  * Standard `OTEL_*` settings use the .NET configuration hierarchy (`appsettings.json` < `appsettings.{Environment}.json` < environment variables); exporter settings are consumed by the OpenTelemetry SDK and sampler settings by the application.
 
 ---
 

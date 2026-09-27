@@ -13,16 +13,16 @@ internal sealed class DatabaseSeeder : IHostedService
     private const long SeedingLockKey = 0x4B41484F4F545F53;
 
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly DatabaseOptions _databaseOptions;
+    private readonly NpgsqlDataSource _dataSource;
     private readonly ILogger<DatabaseSeeder> _logger;
 
     public DatabaseSeeder(
         IServiceScopeFactory scopeFactory,
-        IOptions<DatabaseOptions> databaseOptions,
+        NpgsqlDataSource dataSource,
         ILogger<DatabaseSeeder> logger)
     {
         _scopeFactory = scopeFactory;
-        _databaseOptions = databaseOptions.Value;
+        _dataSource = dataSource;
         _logger = logger;
     }
 
@@ -33,7 +33,7 @@ internal sealed class DatabaseSeeder : IHostedService
 
         try
         {
-            await using NpgsqlConnection connection = new NpgsqlConnection(_databaseOptions.ConnectionString);
+            await using NpgsqlConnection connection = _dataSource.CreateConnection();
             await connection.OpenAsync(cancellationToken);
 
             await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -44,7 +44,7 @@ internal sealed class DatabaseSeeder : IHostedService
             command.Parameters.AddWithValue("lockKey", SeedingLockKey);
 
             await command.ExecuteNonQueryAsync(cancellationToken);
-            _logger.LogInformation("Database seeding lock acquired. EventName={EventName}", "DatabaseSeedingLockAcquired");
+            _logger.LogDebug("Database seeding lock acquired. EventName={EventName}", "DatabaseSeedingLockAcquired");
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             IEnumerable<ISeeder> seeders = scope.ServiceProvider.GetServices<ISeeder>();
