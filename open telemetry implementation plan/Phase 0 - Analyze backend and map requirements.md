@@ -30,12 +30,58 @@ None installed. Inventory current .NET 10, EF Core 10.0.12, and Npgsql EF provid
 
 ## Step-by-step implementation tasks
 
-- [ ] Capture `git status --short` and preserve unrelated edits. Read the two AGENTS files and relevant docs; do not inspect `frontend/` or print values from secret-bearing `.env.*` files.
-- [ ] Re-run targeted `rg` searches for `ILogger`, log methods, `LoggerMessage`, `BeginScope`, `EventId`, `TraceIdentifier`, `ActivitySource`, `Meter`, OTel/backend names, and observability requirements in `backend/src`, `docs`, root Compose/config files, and the prompt. Search filenames or keys only for `.env.*`.
-- [ ] Draw the current startup and telemetry flow from `Program.cs`, `PersistenceInstaller`, `DatabaseMigrationService`, `DatabaseSeeder`, `SystemAdminSeeder`, `RefreshTokenCleanupWorker`, `SuspensionFinalizerWorker`, auth controllers, JWT installer, health check, and `GlobalExceptionHandler`. Confirm direct Npgsql connection creation and any new `HttpClient`/SignalR code.
-- [ ] Review every requirement section in the prompt (architecture, resources, all three signals, security, sampling, storage, correlation, Compose, docs, verification) against the phases in README; add a missing task to the owning phase if found.
-- [ ] Resolve and record exact package/image tags and compatible configuration syntax from versioned official sources. Confirm Npgsql meter/instrument names and its default pool-name behavior; confirm Collector exporter names, Loki OTLP label mapping, and Jaeger OTLP listener.
-- [ ] Record any new findings and the locked version matrix in this file. Mark current `docs/` statements as confirmed conflict, incomplete, or already compatible; preserve all unrelated requirements/SLOs.
+- [x] Capture `git status --short` and preserve unrelated edits. Read the two AGENTS files and relevant docs; do not inspect `frontend/` or print values from secret-bearing `.env.*` files.
+- [x] Re-run targeted `rg` searches for `ILogger`, log methods, `LoggerMessage`, `BeginScope`, `EventId`, `TraceIdentifier`, `ActivitySource`, `Meter`, OTel/backend names, and observability requirements in `backend/src`, `docs`, root Compose/config files, and the prompt. Search filenames or keys only for `.env.*`.
+- [x] Draw the current startup and telemetry flow from `Program.cs`, `PersistenceInstaller`, `DatabaseMigrationService`, `DatabaseSeeder`, `SystemAdminSeeder`, `RefreshTokenCleanupWorker`, `SuspensionFinalizerWorker`, auth controllers, JWT installer, health check, and `GlobalExceptionHandler`. Confirm direct Npgsql connection creation and any new `HttpClient`/SignalR code.
+- [x] Review every requirement section in the prompt (architecture, resources, all three signals, security, sampling, storage, correlation, Compose, docs, verification) against the phases in README; add a missing task to the owning phase if found.
+- [x] Resolve and record exact package/image tags and compatible configuration syntax from versioned official sources. Confirm Npgsql meter/instrument names and its default pool-name behavior; confirm Collector exporter names, Loki OTLP label mapping, and Jaeger OTLP listener.
+- [x] Record any new findings and the locked version matrix in this file. Mark current `docs/` statements as confirmed conflict, incomplete, or already compatible; preserve all unrelated requirements/SLOs.
+
+## Locked Stable Version Matrix (2026-09-27)
+
+### NuGet Packages (.NET 10)
+| Package | Version | Justification & Target |
+| --- | --- | --- |
+| `Npgsql.OpenTelemetry` | `10.0.3` | Matches `Npgsql` and `Npgsql.EntityFrameworkCore.PostgreSQL` `10.0.3` installed in `Kahoot.Infrastructure`. |
+| `OpenTelemetry.Extensions.Hosting` | `1.19.1` | Latest stable .NET hosting integration for OpenTelemetry SDK. |
+| `OpenTelemetry.Exporter.OpenTelemetryProtocol` | `1.19.1` | Latest stable OTLP gRPC/HTTP exporter. |
+| `OpenTelemetry.Instrumentation.AspNetCore` | `1.19.0` | Latest stable ASP.NET Core inbound HTTP tracing & metrics. |
+| `OpenTelemetry.Instrumentation.Http` | `1.19.0` | Latest stable `HttpClient` outbound tracing & metrics. |
+| `OpenTelemetry.Instrumentation.Runtime` | `1.19.0` | Latest stable .NET runtime metrics (GC, memory, thread pool). |
+
+### Docker Images (Pinned)
+| Component | Image & Tag | Ports & Role |
+| --- | --- | --- |
+| OpenTelemetry Collector | `otel/opentelemetry-collector-contrib:0.161.0` | Receives OTLP HTTP (4318) and gRPC (4317); exports Prometheus (9464), OTLP/Jaeger, and OTLP/Loki. |
+| Prometheus | `prom/prometheus:v3.15.0` | Scrapes Collector port 9464; persistent volume retention (15d); queries on 9090. |
+| Jaeger | `jaegertracing/jaeger:2.21.0` | Jaeger v2 native OTLP receiver (4317); UI and query API on 16686. |
+| Loki | `grafana/loki:3.7.8` | Ingests OTLP HTTP logs (`/otlp/v1/logs`) on port 3100; retention 7d. |
+| Grafana | `grafana/grafana:13.2.2` | Provisions Prometheus, Jaeger, and Loki data sources; UI on 3000. |
+
+## Detailed Analysis & Findings
+
+1. **Architecture & Clean Boundaries**:
+   - Telemetry registration belongs strictly in `Kahoot.Api` via a focused `AddObservability` extension method.
+   - `Kahoot.Domain` and `Kahoot.Application` remain free of any telemetry SDKs.
+   - Existing `ILogger<T>` calls across all application and infrastructure services seamlessly feed the OpenTelemetry logger provider.
+
+2. **Npgsql Connection Pool Identity & Direct Connections**:
+   - Npgsql 10 publishes metrics under the `Npgsql` meter name.
+   - By default, Npgsql uses connection strings as pool identifiers, which risks exposing credentials in Prometheus labels.
+   - **Resolution for Phase 2**: Register a singleton `NpgsqlDataSource` configured with safe pool identity (`kahoot-db`) in `PersistenceInstaller.cs`. Both EF Core (`UseNpgsql(dataSource)`) and direct startup tools (`DatabaseMigrationService`, `DatabaseSeeder`) will consume this shared data source, preventing connection string leakage and sharing pool efficiency.
+
+3. **ProblemDetails Trace Correlation**:
+   - Current ProblemDetails generation in `ApiController`, `GlobalExceptionHandler`, and `JwtAuthenticationInstaller` (OnChallenge & OnForbidden) uses `["requestId"] = httpContext.TraceIdentifier`.
+   - **Resolution for Phase 2 & 5**: Add `["traceId"] = Activity.Current.TraceId.ToString()` conditionally when `Activity.Current != null`, keeping `requestId` intact for 100% backward compatibility.
+
+4. **Health Check Trace Filtering**:
+   - Current health check `/health` will be filtered out in `AspNetCoreInstrumentationOptions.Filter` (`httpContext => !httpContext.Request.Path.StartsWithSegments("/health")`) to prevent log/trace pollution.
+
+5. **Documentation Alignment (Phase 1 Target)**:
+   - `docs/12-platform-operations-and-health.md`: Update Section 1 & Section 2.6 to document central OTLP log forwarding alongside JSON console logging.
+   - `docs/13-architecture-and-deployment.md`: Add Section documenting the observability stack topology and `observability` network.
+   - `docs/14-verification-and-testing.md`: Document verification criteria for the three signals.
+   - Confirm: Zero conflicts with business logic or performance SLOs (`ACCT-SLO-*`, `OPS-SLO-*`).
 
 ## Configuration/environment variables
 
