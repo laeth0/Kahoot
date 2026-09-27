@@ -9,11 +9,11 @@ namespace Kahoot.Infrastructure.Persistence;
 internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     private readonly TimeProvider _timeProvider;
-    private readonly ICurrentUser? _currentUser;
+    private readonly ICurrentUser _currentUser;
 
     public AuditableEntityInterceptor(
         TimeProvider timeProvider,
-        ICurrentUser? currentUser = null)
+        ICurrentUser currentUser)
     {
         _timeProvider = timeProvider;
         _currentUser = currentUser;

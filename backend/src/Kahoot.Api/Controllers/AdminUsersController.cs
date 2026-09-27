@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Admin.Users.GetUserById;
 using Kahoot.Application.Features.Admin.Users.ListUsers;
+using Kahoot.Application.Features.Admin.Users.SuspendUser;
 using Kahoot.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -60,6 +61,35 @@ public sealed class AdminUsersController : ApiController
         if (result.IsSuccess)
         {
             return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{accountId:guid}/suspend")]
+    [ProducesResponseType(typeof(SuspendUserResponse), StatusCodes.Status202Accepted)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SuspendUser(
+        [FromRoute] Guid accountId,
+        [FromBody] SuspendUserRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        SuspendUserCommand command = new SuspendUserCommand(accountId, request.Revision);
+        Result<SuspendUserResult> result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            if (result.Value.TerminationPending)
+            {
+                return Accepted(new SuspendUserResponse(TerminationPending: true));
+            }
+
+            return NoContent();
         }
 
         return Problem(result.Error);

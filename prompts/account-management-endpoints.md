@@ -92,7 +92,6 @@ All endpoints in this group require authentication with the `SystemAdmin` role.
     "revision": 3
   }
   ```
-- **Security Precondition (`ACCT-SEC-001`)**: Step-up verification required (caller's JWT access token must have been issued within the last **15 minutes**, or valid step-up confirmation header provided).
 - **Behavior & Phase 1 Cutoff (`ACCT-SUSP-001`, `ACCT-SUSP-003`)**:
   - Validates `revision` against database record; fails with `409` on mismatch.
   - In a single atomic database transaction:
@@ -108,7 +107,7 @@ All endpoints in this group require authentication with the `SystemAdmin` role.
   - `204 No Content` (if the Host had zero active games and finalization was completed immediately).
 - **Error Codes**:
   - `400 Validation.Failed`: Malformed payload or invalid `accountId`.
-  - `401 Auth.Unauthorized`: Missing/expired JWT or failed step-up verification ($> 15$ min).
+  - `401 Auth.Unauthorized`: Missing or invalid admin JWT.
   - `403 Auth.Forbidden`: Non-admin caller.
   - `404 Account.NotFound`: Target Host account does not exist.
   - `409 Account.ConcurrentModification`: Supplied `revision` does not match the current database revision.
@@ -174,7 +173,6 @@ Platform administrator management endpoints.
 
 #### 6. `POST /api/admin/administrators`
 - **Description**: Provisions a new active platform System Administrator account.
-- **Security Precondition (`ACCT-SEC-001`)**: Step-up verification required ($\le 15$ min token).
 - **Request Body**:
   ```json
   {
@@ -216,13 +214,12 @@ Platform administrator management endpoints.
     "revision": 2
   }
   ```
-- **Security Precondition (`ACCT-SEC-001`)**: Step-up verification required ($\le 15$ min token).
 - **Critical Invariant (`ACCT-ADMIN-003`, `ACCT-BOUND-004`)**:
   - The system must transactionally prevent suspending the final remaining active administrator (`COUNT(ActiveAdmins) > 1` checked under a pessimistic row lock).
   - If the target is the last active admin, the request must fail with `409 Account.LastAdministrator`.
 - **Response**: `204 No Content`
 - **Error Codes**:
-  - `401 Auth.Unauthorized`: Missing/invalid JWT or expired step-up.
+  - `401 Auth.Unauthorized`: Missing or invalid admin JWT.
   - `403 Auth.Forbidden`: Non-admin caller.
   - `404 Account.NotFound`: Target administrator does not exist.
   - `409 Account.LastAdministrator`: Attempted to suspend the only active platform administrator.
@@ -272,7 +269,7 @@ In addition to HTTP endpoints, section 2.2 defines the **Phase 2 Resumable Game 
 | HTTP Status | Error Code | Meaning |
 | :---: | :--- | :--- |
 | **`400`** | `Validation.Failed` | Invalid cursor, invalid page size, or malformed request body. |
-| **`401`** | `Auth.Unauthorized` | Missing/invalid token or step-up token older than 15 minutes. |
+| **`401`** | `Auth.Unauthorized` | Missing or invalid admin JWT. |
 | **`403`** | `Auth.Forbidden` | Caller does not possess the `SystemAdmin` role. |
 | **`404`** | `Account.NotFound` | Target account ID does not exist or has incompatible role. |
 | **`409`** | `Account.ConcurrentModification` | Revision mismatch during state mutation. |

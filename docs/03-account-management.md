@@ -1,6 +1,6 @@
 # 03. Platform Account Management and Tenant Lifecycle
 
-This document defines the normative requirements for account lifecycle states, immediate suspension cutoff enforcement, bounded asynchronous game finalization, account reactivation, administrator search/query capabilities, and step-up security verification. It combines functional specifications and non-functional requirements into a single unified specification.
+This document defines the normative requirements for account lifecycle states, immediate suspension cutoff enforcement, bounded asynchronous game finalization, account reactivation, and administrator search/query capabilities. It combines functional specifications and non-functional requirements into a single unified specification.
 
 ---
 
@@ -41,10 +41,9 @@ Account lifecycle governs administrative oversight of Host accounts and platform
   * **Privacy Guarantee**: Administrative responses must **never** join, project, or disclose private tenant content (quizzes, question text, choices, media items, game history, player answers, or scores).
 
 ### 2.2 Immediate Account Suspension & Bounded Finalization `[NORMATIVE]`
-* **`ACCT-SUSP-001` (Suspension Endpoint & Step-Up)**:
+* **`ACCT-SUSP-001` (Suspension Endpoint)**:
   * **Endpoint**: `POST /api/admin/users/{accountId}/suspend`
   * **Precondition**: Requires current `revision` for optimistic concurrency control (`{ "revision": 3 }`).
-  * **Step-Up Verification**: Requires recent administrative re-authentication (access token issued within the last 15 minutes, or administrative step-up verification header).
 * **`ACCT-SUSP-002` (Two-Phase Suspension Architecture)**:
   To avoid unbounded database transactions when a suspended Host has numerous active games or high participant counts, suspension is partitioned into two distinct phases:
 
@@ -149,9 +148,9 @@ sequenceDiagram
 
 ## 5. Security & Threat Mitigations
 
-### 5.1 Step-Up Security for High-Blast Actions
-* **`ACCT-SEC-001` (Administrative Step-Up)**:
-  * High-blast-radius operations (admin creation, admin suspension, Host suspension) require a recent password confirmation or step-up token issued within the last 15 minutes.
+### 5.1 Administrative Access Control
+* **`ACCT-SEC-001` (Administrative Authorization)**:
+  * Administrative operations (admin creation, admin suspension, Host suspension) require an authenticated session possessing the `SystemAdmin` role.
   * System Administrator Multi-Factor Authentication (MFA) is identified as an optional future enhancement; email/SMS MFA is explicitly excluded.
 
 ---
