@@ -8,6 +8,7 @@ using Kahoot.Application.Features.Quizzes.Questions;
 using Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 using Kahoot.Application.Features.Quizzes.Questions.DeleteQuestion;
 using Kahoot.Application.Features.Quizzes.Questions.UpdateQuestion;
+using Kahoot.Application.Features.Quizzes.ReorderQuestions;
 using Kahoot.Application.Features.Quizzes.UpdateQuiz;
 using Kahoot.Domain.Enums;
 using MediatR;
@@ -213,6 +214,29 @@ public sealed class QuizzesController : ApiController
         if (result.IsSuccess)
         {
             return NoContent();
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{quizId:guid}/reorder")]
+    [ProducesResponseType(typeof(ReorderQuestionsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ReorderQuestions(
+        [FromRoute] Guid quizId,
+        [FromBody] ReorderQuestionsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ReorderQuestionsCommand command = new ReorderQuestionsCommand(quizId, request.QuestionIds);
+        Result<ReorderQuestionsResponse> result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
         }
 
         return Problem(result.Error);
