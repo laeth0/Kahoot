@@ -31,6 +31,14 @@ public abstract class ApiController : ControllerBase
             "Auth.Forbidden" => "Forbidden",
             "Request.RateLimited" => "Rate limited",
             "Service.Unavailable" => "Service unavailable",
+            "Validation.Failed" => "Validation failed",
+            "Quiz.NotFound" => "Quiz not found",
+            "Quiz.QuestionNotFound" => "Question not found",
+            "Quiz.InUse" => "Quiz in use",
+            "Quiz.HasSessions" => "Quiz has sessions",
+            "Quiz.ConcurrentModification" => "Concurrent modification",
+            "Quiz.QuestionSetMismatch" => "Question set mismatch",
+            "Quiz.InvalidMediaReference" => "Invalid media reference",
             _ => error.Code
         };
 
