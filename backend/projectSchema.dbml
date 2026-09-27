@@ -50,6 +50,8 @@ Table users {
 
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
+  created_by uuid [null]
+  updated_by uuid [null]
 
   indexes {
     normalized_username [unique, name: 'ux_users_normalized_username']
@@ -96,6 +98,8 @@ Table quizzes {
   revision bigint [not null, default: 1]
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
+  created_by uuid [null]
+  updated_by uuid [null]
 
   indexes {
     (id, host_account_id) [unique, name: 'ux_quizzes_id_host_account']

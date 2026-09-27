@@ -36,6 +36,12 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(quiz => quiz.UpdatedAt)
             .IsRequired();
 
+        builder.Property(quiz => quiz.CreatedBy)
+            .IsRequired(false);
+
+        builder.Property(quiz => quiz.UpdatedBy)
+            .IsRequired(false);
+
         builder.HasIndex(quiz => new { quiz.Id, quiz.HostAccountId })
             .IsUnique()
             .HasDatabaseName("ux_quizzes_id_host_account");
