@@ -1,6 +1,7 @@
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Quizzes;
 using Kahoot.Application.Features.Quizzes.CreateQuiz;
+using Kahoot.Application.Features.Quizzes.DeleteQuiz;
 using Kahoot.Application.Features.Quizzes.GetQuizById;
 using Kahoot.Application.Features.Quizzes.ListQuizzes;
 using Kahoot.Application.Features.Quizzes.UpdateQuiz;
@@ -103,6 +104,27 @@ public sealed class QuizzesController : ApiController
         if (result.IsSuccess)
         {
             return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpDelete("{quizId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> DeleteQuiz(
+        [FromRoute] Guid quizId,
+        CancellationToken cancellationToken = default)
+    {
+        DeleteQuizCommand command = new DeleteQuizCommand(quizId);
+        Result result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return NoContent();
         }
 
         return Problem(result.Error);
