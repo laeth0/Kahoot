@@ -9,13 +9,15 @@ internal sealed class SuspensionFinalizerChannel : ISuspensionFinalizerChannel
 
     public SuspensionFinalizerChannel()
     {
-        UnboundedChannelOptions options = new UnboundedChannelOptions
+        BoundedChannelOptions options = new BoundedChannelOptions(1024)
         {
             SingleReader = true,
-            SingleWriter = false
+            SingleWriter = false,
+            FullMode = BoundedChannelFullMode.DropWrite
         };
 
-        _channel = Channel.CreateUnbounded<Guid>(options);
+        // Notifications only reduce latency; the database sweep recovers dropped hints.
+        _channel = Channel.CreateBounded<Guid>(options);
     }
 
     public void NotifySuspension(Guid hostAccountId)
