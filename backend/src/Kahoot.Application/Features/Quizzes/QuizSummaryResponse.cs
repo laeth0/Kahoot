@@ -1,4 +1,4 @@
-namespace Kahoot.Application.Features.Quizzes.CreateQuiz;
+namespace Kahoot.Application.Features.Quizzes;
 
 public sealed record QuizSummaryResponse(
     Guid Id,

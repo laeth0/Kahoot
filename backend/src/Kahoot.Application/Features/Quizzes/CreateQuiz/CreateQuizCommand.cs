@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Messaging;
+using Kahoot.Application.Features.Quizzes;
 
 namespace Kahoot.Application.Features.Quizzes.CreateQuiz;
 

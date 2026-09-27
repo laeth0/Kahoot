@@ -3,6 +3,7 @@ using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
+using Kahoot.Application.Features.Quizzes;
 using Kahoot.Domain.Entities;
 
 namespace Kahoot.Application.Features.Quizzes.CreateQuiz;

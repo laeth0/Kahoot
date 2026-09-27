@@ -1,5 +1,7 @@
 using Kahoot.Application.Common.Results;
+using Kahoot.Application.Features.Quizzes;
 using Kahoot.Application.Features.Quizzes.CreateQuiz;
+using Kahoot.Application.Features.Quizzes.ListQuizzes;
 using Kahoot.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -35,6 +37,27 @@ public sealed class QuizzesController : ApiController
         if (result.IsSuccess)
         {
             return Created($"/api/quizzes/{result.Value.Id}", result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(ListQuizzesResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> ListQuizzes(
+        [FromQuery] string? cursor = null,
+        [FromQuery] int pageSize = 50,
+        CancellationToken cancellationToken = default)
+    {
+        ListQuizzesQuery query = new ListQuizzesQuery(cursor, pageSize);
+        Result<ListQuizzesResponse> result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
         }
 
         return Problem(result.Error);
