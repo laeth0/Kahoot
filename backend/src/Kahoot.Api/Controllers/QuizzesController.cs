@@ -4,6 +4,8 @@ using Kahoot.Application.Features.Quizzes.CreateQuiz;
 using Kahoot.Application.Features.Quizzes.DeleteQuiz;
 using Kahoot.Application.Features.Quizzes.GetQuizById;
 using Kahoot.Application.Features.Quizzes.ListQuizzes;
+using Kahoot.Application.Features.Quizzes.Questions;
+using Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 using Kahoot.Application.Features.Quizzes.UpdateQuiz;
 using Kahoot.Domain.Enums;
 using MediatR;
@@ -125,6 +127,36 @@ public sealed class QuizzesController : ApiController
         if (result.IsSuccess)
         {
             return NoContent();
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{quizId:guid}/questions")]
+    [ProducesResponseType(typeof(QuestionResponse), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> AddQuestion(
+        [FromRoute] Guid quizId,
+        [FromBody] AddQuestionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        AddQuestionCommand command = new AddQuestionCommand(
+            quizId,
+            request.Text,
+            request.MediaId,
+            request.DurationSeconds,
+            request.BasePoints,
+            request.Choices);
+
+        Result<QuestionResponse> result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Created($"/api/quizzes/{quizId}/questions/{result.Value.Id}", result.Value);
         }
 
         return Problem(result.Error);
