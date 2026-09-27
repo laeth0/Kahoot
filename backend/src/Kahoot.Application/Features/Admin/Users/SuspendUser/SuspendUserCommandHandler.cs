@@ -17,17 +17,20 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
     private readonly ICurrentUser _currentUser;
     private readonly TimeProvider _timeProvider;
     private readonly ISocketEvictionService _socketEvictionService;
+    private readonly ISuspensionFinalizerChannel _suspensionFinalizerChannel;
 
     public SuspendUserCommandHandler(
         IAppDbContext dbContext,
         ICurrentUser currentUser,
         TimeProvider timeProvider,
-        ISocketEvictionService socketEvictionService)
+        ISocketEvictionService socketEvictionService,
+        ISuspensionFinalizerChannel suspensionFinalizerChannel)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
         _timeProvider = timeProvider;
         _socketEvictionService = socketEvictionService;
+        _suspensionFinalizerChannel = suspensionFinalizerChannel;
     }
 
     public async Task<Result<SuspendUserResult>> Handle(
@@ -113,6 +116,12 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
 
         // Step: Atomically commit Phase 1 suspension transaction
         await transaction.CommitAsync(cancellationToken);
+
+        // Step: Trigger Phase 2 background worker if host has active unfinished games (ACCT-SUSP-004)
+        if (hasUnfinishedGames)
+        {
+            _suspensionFinalizerChannel.NotifySuspension(request.AccountId);
+        }
 
         // Step: Evict active SignalR socket connections for host and players across cluster (ACCT-SLO-002)
         await _socketEvictionService.EvictUserSocketsAsync(request.AccountId, cancellationToken);
