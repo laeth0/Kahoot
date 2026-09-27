@@ -2,6 +2,7 @@ using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Admin.Administrators;
 using Kahoot.Application.Features.Admin.Administrators.CreateAdministrator;
 using Kahoot.Application.Features.Admin.Administrators.ListAdministrators;
+using Kahoot.Application.Features.Admin.Administrators.ReactivateAdministrator;
 using Kahoot.Application.Features.Admin.Administrators.SuspendAdministrator;
 using Kahoot.Domain.Enums;
 using MediatR;
@@ -74,6 +75,29 @@ public sealed class AdminAdministratorsController : ApiController
         CancellationToken cancellationToken = default)
     {
         SuspendAdministratorCommand command = new SuspendAdministratorCommand(id, request.Revision);
+        Result result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return NoContent();
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{id:guid}/reactivate")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> ReactivateAdministrator(
+        [FromRoute] Guid id,
+        [FromBody] ReactivateAdministratorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ReactivateAdministratorCommand command = new ReactivateAdministratorCommand(id, request.Revision);
         Result result = await _sender.Send(command, cancellationToken);
 
         if (result.IsSuccess)
