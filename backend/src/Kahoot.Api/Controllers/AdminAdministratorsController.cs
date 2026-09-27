@@ -2,6 +2,7 @@ using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Admin.Administrators;
 using Kahoot.Application.Features.Admin.Administrators.CreateAdministrator;
 using Kahoot.Application.Features.Admin.Administrators.ListAdministrators;
+using Kahoot.Application.Features.Admin.Administrators.SuspendAdministrator;
 using Kahoot.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -55,6 +56,29 @@ public sealed class AdminAdministratorsController : ApiController
         if (result.IsSuccess)
         {
             return Created(string.Empty, result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{id:guid}/suspend")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> SuspendAdministrator(
+        [FromRoute] Guid id,
+        [FromBody] SuspendAdministratorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        SuspendAdministratorCommand command = new SuspendAdministratorCommand(id, request.Revision);
+        Result result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return NoContent();
         }
 
         return Problem(result.Error);
