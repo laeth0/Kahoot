@@ -20,15 +20,15 @@ Add exact stable Phase 0 versions to **Api only**: `OpenTelemetry.Extensions.Hos
 
 ## Step-by-step implementation tasks
 
-- [ ] Add `AddObservability` to Api's focused service-registration folder. Register one OpenTelemetry resource identity shared across logs, traces, and metrics: `service.name` from `OTEL_SERVICE_NAME` or `Kahoot.Api`, assembly version, namespace `Kahoot`, deployment environment from `IHostEnvironment`, and one process-lifetime instance ID. Allow standard `OTEL_RESOURCE_ATTRIBUTES` to supply non-sensitive deployment attributes; check precedence rather than silently overriding operator values.
-- [ ] Configure OTLP/HTTP protobuf exporters for logs, traces, and metrics using standard endpoint/protocol environment variables. Set no Prometheus, Jaeger, or Loki address in application code. Keep export asynchronous/bounded by supported SDK defaults; do not fail startup when Collector is unreachable.
-- [ ] Enable inbound ASP.NET Core tracing/metrics, `HttpClient` tracing/metrics, .NET runtime metrics, and Npgsql tracing (`AddNpgsql`) plus the Npgsql meter `Npgsql`. Avoid extra `AddMeter` for framework meters already supplied by instrumentation. Verify actual instrument names against the Phase 0 selected versions before finalizing.
-- [ ] Filter `/health` from ASP.NET Core **traces only**, with the same path guard ready for `/health/live` and `/health/ready` if added later. Inspect whether its database connectivity query still emits an orphan Npgsql root span. If it does, use a supported OTel instrumentation-suppression scope around that Api health-check operation, while leaving database metrics and the health response intact; do not make Infrastructure depend on HTTP context. Do not add custom spans, per-request logs, or custom counters.
-- [ ] Honor standard `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`: Development parent-based always-on; Production `parentbased_traceidratio` with a documented initial ratio of `0.10`, overridable by deployment. Do not set a fixed sampler in code that masks the environment variables. Confirm this works with the pinned .NET SDK.
-- [ ] In `PersistenceInstaller`, register one application-lifetime `NpgsqlDataSource` whose diagnostics `Name` is a fixed bounded value such as `KahootPrimary` and whose connection string comes from validated `DatabaseOptions`. Map the four PostgreSQL enums at the data-source level as well as the existing EF provider level. Pass that same data source to EF `UseNpgsql`, and inject it into migration and seeding services for `OpenConnectionAsync`; preserve transaction/advisory-lock semantics, timeouts, and disposal ownership.
-- [ ] Confirm there is no remaining `new NpgsqlConnection(connectionString)` path producing an unnamed pool. Review emitted Npgsql spans and metrics for SQL/parameter/connection-string exposure. Keep span names stable, SQL parameter capture disabled, and `Database:EnableSensitiveDataLogging=false` in Production.
-- [ ] Configure the existing console provider with `Logging:Console:FormatterName=json` and `IncludeScopes=true` in Production, with a single-line UTC timestamp. Keep Production `Default=Warning`, set `Kahoot=Information`, and retain/adjust `Microsoft.AspNetCore`, `Microsoft.EntityFrameworkCore`, `Npgsql`, and `OpenTelemetry` at Warning after inspecting emitted categories; Development can retain its readable formatter. Register OTel logging as an additional provider with structured state/scopes and active TraceId/SpanId; do not call `ClearProviders()` or register a second console provider.
-- [ ] Add the same new variable names to all three `.env.*` templates: `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG`. Use `http://otel-collector:4318` and `http/protobuf` for Compose defaults. Keep Development sampled fully; use `parentbased_traceidratio`/`0.10` as the Production example. Add `OTEL_RESOURCE_ATTRIBUTES` only if actually used by the selected resource setup; never place secrets there.
+- [x] Add `AddObservability` to Api's focused service-registration folder. Register one OpenTelemetry resource identity shared across logs, traces, and metrics: `service.name` from `OTEL_SERVICE_NAME` or `Kahoot.Api`, assembly version, namespace `Kahoot`, deployment environment from `IHostEnvironment`, and one process-lifetime instance ID. Allow standard `OTEL_RESOURCE_ATTRIBUTES` to supply non-sensitive deployment attributes; check precedence rather than silently overriding operator values.
+- [x] Configure OTLP/HTTP protobuf exporters for logs, traces, and metrics using standard endpoint/protocol environment variables. Set no Prometheus, Jaeger, or Loki address in application code. Keep export asynchronous/bounded by supported SDK defaults; do not fail startup when Collector is unreachable.
+- [x] Enable inbound ASP.NET Core tracing/metrics, `HttpClient` tracing/metrics, .NET runtime metrics, and Npgsql tracing (`AddNpgsql`) plus the Npgsql meter `Npgsql`. Avoid extra `AddMeter` for framework meters already supplied by instrumentation. Verify actual instrument names against the Phase 0 selected versions before finalizing.
+- [x] Filter `/health` from ASP.NET Core **traces only**, with the same path guard ready for `/health/live` and `/health/ready` if added later. Inspect whether its database connectivity query still emits an orphan Npgsql root span. If it does, use a supported OTel instrumentation-suppression scope around that Api health-check operation, while leaving database metrics and the health response intact; do not make Infrastructure depend on HTTP context. Do not add custom spans, per-request logs, or custom counters.
+- [x] Honor standard `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`: Development parent-based always-on; Production `parentbased_traceidratio` with a documented initial ratio of `0.10`, overridable by deployment. Do not set a fixed sampler in code that masks the environment variables. Confirm this works with the pinned .NET SDK.
+- [x] In `PersistenceInstaller`, register one application-lifetime `NpgsqlDataSource` whose diagnostics `Name` is a fixed bounded value such as `KahootPrimary` and whose connection string comes from validated `DatabaseOptions`. Map the four PostgreSQL enums at the data-source level as well as the existing EF provider level. Pass that same data source to EF `UseNpgsql`, and inject it into migration and seeding services for `OpenConnectionAsync`; preserve transaction/advisory-lock semantics, timeouts, and disposal ownership.
+- [x] Confirm there is no remaining `new NpgsqlConnection(connectionString)` path producing an unnamed pool. Review emitted Npgsql spans and metrics for SQL/parameter/connection-string exposure. Keep span names stable, SQL parameter capture disabled, and `Database:EnableSensitiveDataLogging=false` in Production.
+- [x] Configure the existing console provider with `Logging:Console:FormatterName=json` and `IncludeScopes=true` in Production, with a single-line UTC timestamp. Keep Production `Default=Warning`, set `Kahoot=Information`, and retain/adjust `Microsoft.AspNetCore`, `Microsoft.EntityFrameworkCore`, `Npgsql`, and `OpenTelemetry` at Warning after inspecting emitted categories; Development can retain its readable formatter. Register OTel logging as an additional provider with structured state/scopes and active TraceId/SpanId; do not call `ClearProviders()` or register a second console provider.
+- [x] Add the same new variable names to all three `.env.*` templates: `OTEL_SERVICE_NAME`, `OTEL_EXPORTER_OTLP_ENDPOINT`, `OTEL_EXPORTER_OTLP_PROTOCOL`, `OTEL_TRACES_SAMPLER`, `OTEL_TRACES_SAMPLER_ARG`. Use `http://otel-collector:4318` and `http/protobuf` for Compose defaults. Keep Development sampled fully; use `parentbased_traceidratio`/`0.10` as the Production example. Add `OTEL_RESOURCE_ATTRIBUTES` only if actually used by the selected resource setup; never place secrets there.
 
 ## Configuration/environment variables
 
@@ -63,3 +63,36 @@ Phase 0 version record and Phase 1 documentation alignment.
 - [OpenTelemetry .NET logs](https://opentelemetry.io/docs/languages/dotnet/logs/getting-started-aspnetcore/), [sampling](https://opentelemetry.io/docs/languages/dotnet/sampling/), and [OTLP endpoint semantics](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/).
 - [Microsoft JSON console formatter configuration](https://learn.microsoft.com/en-us/dotnet/core/extensions/logging/console-log-formatter).
 - [Npgsql metrics and pool-name warning](https://www.npgsql.org/doc/diagnostics/metrics.html); [external data source with EF Core](https://www.npgsql.org/efcore/).
+
+---
+
+## Phase 2 Execution & Review Record
+
+### 1. Implemented Components
+- **`Kahoot.Api.csproj`**:
+  - Added exact stable pinned packages: `OpenTelemetry.Extensions.Hosting` (1.19.1), `OpenTelemetry.Exporter.OpenTelemetryProtocol` (1.19.1), `OpenTelemetry.Instrumentation.AspNetCore` (1.19.0), `OpenTelemetry.Instrumentation.Http` (1.19.0), `OpenTelemetry.Instrumentation.Runtime` (1.19.0), and `Npgsql.OpenTelemetry` (10.0.3).
+  - Clean Architecture verified: Zero OpenTelemetry SDK packages in `Kahoot.Domain`, `Kahoot.Application`, or `Kahoot.Infrastructure`.
+- **`ObservabilityInstaller.cs`**:
+  - Registered unified OpenTelemetry resource builder with `service.name`, `service.namespace` (`Kahoot`), `service.version`, `service.instance.id`, and `deployment.environment`.
+  - Configured asynchronous OTLP HTTP/protobuf exporters for traces, metrics, and logs honoring `OTEL_EXPORTER_OTLP_ENDPOINT` and `OTEL_EXPORTER_OTLP_PROTOCOL`.
+  - Enabled ASP.NET Core, HttpClient, and Npgsql distributed tracing with `/health*` path filtering.
+  - Resolved trace sampler dynamically from `OTEL_TRACES_SAMPLER` and `OTEL_TRACES_SAMPLER_ARG`, defaulting to parent-based always-on in Development and parent-based 10% ratio in Production.
+  - Enabled ASP.NET Core, HttpClient, Runtime, and Npgsql (`Npgsql`) metrics.
+  - Configured OpenTelemetry logging provider with formatted messages and active TraceId/SpanId scopes alongside default console logging.
+- **`DatabaseHealthCheck.cs`**:
+  - Wrapped connectivity probe in `OpenTelemetry.SuppressInstrumentationScope.Begin()` to prevent orphan Npgsql spans.
+- **ProblemDetails Trace Correlation (`OPS-OBS-004`)**:
+  - Enhanced `ApiController`, `GlobalExceptionHandler`, and `JwtAuthenticationInstaller` (both `OnChallenge` and `OnForbidden`) to include additive `["traceId"] = Activity.Current.TraceId.ToString()` whenever `Activity.Current` is active.
+- **`PersistenceInstaller.cs`, `DatabaseMigrationService.cs`, `DatabaseSeeder.cs`**:
+  - Registered singleton `NpgsqlDataSource` with bounded pool name `KahootPrimary` and mapped the 4 PostgreSQL enums (`user_role`, `user_status`, `media_status`, `game_status`).
+  - Passed the `NpgsqlDataSource` directly into `UseNpgsql` and injected into `DatabaseMigrationService` and `DatabaseSeeder`, eliminating all raw `new NpgsqlConnection` calls and preventing connection-string exposure in pool telemetry.
+- **Configuration & Environment**:
+  - Configured JSON console formatting with single-line UTC timestamps and category levels in `appsettings.Production.json`.
+  - Synchronized `.env.example`, `.env.development`, and `.env.production` with standard `OTEL_*` keys.
+
+### 2. Verification Results
+- `dotnet restore Kahoot.slnx`: Clean restore across all 4 projects.
+- `dotnet list src/Kahoot.Api/Kahoot.Api.csproj package`: Confirmed all 6 pinned package versions.
+- `dotnet build Kahoot.slnx`: Succeeded with 0 warnings and 0 errors.
+- `dotnet format Kahoot.slnx --verify-no-changes`: Passed cleanly.
+

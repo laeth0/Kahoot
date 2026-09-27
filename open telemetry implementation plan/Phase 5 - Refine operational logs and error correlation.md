@@ -17,12 +17,12 @@ No new packages. Use existing `ILogger<T>`, `System.Diagnostics.Activity`, ASP.N
 
 ## Step-by-step implementation tasks
 
-- [ ] Review every existing `ILogger` use in the above files for level, stable template, data sensitivity, useful bounded context, and duplicate exception reporting. Leave low-frequency useful messages intact; do not convert all calls to generated logging mechanically.
-- [ ] Refactor cleanup loop ownership so each failed attempt is logged **Warning** with attempt/retry delay while another attempt remains, and the exhausted pass is logged **Error once**. A later successful retry is Information only when rows were deleted; zero-row pass is Debug. Preserve cancellation behavior, retry count/delays, deletion batching, and useful `DeletedCount`/`ElapsedMilliseconds` context. Do not log token values.
-- [ ] Move migration/seeding lock-acquired messages to Debug if they add only low-level detail; retain meaningful startup completion Information and transient migration Warning/terminal Error. Review suspension finalizer startup/terminal errors and account ID use without widening scope. Treat expected authentication/validation/404/409 paths as normal result handling, not Error logs.
-- [ ] For all existing ProblemDetails construction paths, preserve `requestId = HttpContext.TraceIdentifier`; add `traceId = Activity.Current.TraceId.ToString()` only when an Activity with a valid trace ID exists. Cover `ApiController.Problem`, validation/rate-limit/DB/unhandled branches in `GlobalExceptionHandler`, and JWT `OnChallenge`/`OnForbidden`. Keep current status, title, detail, type, and code fields. Avoid a new response field when no active trace exists.
-- [ ] Confirm OTel exported logs already carry TraceId/SpanId/TraceFlags and structured state. Do not copy IDs into each log template. Keep console JSON scopes/event metadata enabled and inspect one correlated request error in Loki and console.
-- [ ] Decide `LoggerMessage` use from evidence: current workers run infrequently, so retaining structured template calls is acceptable. If a genuinely hot recurring event exists, convert just that event with a stable EventId/EventName and document a small ID convention; do not introduce an event catalog.
+- [x] Review every existing `ILogger` use in the above files for level, stable template, data sensitivity, useful bounded context, and duplicate exception reporting. Leave low-frequency useful messages intact; do not convert all calls to generated logging mechanically.
+- [x] Refactor cleanup loop ownership so each failed attempt is logged **Warning** with attempt/retry delay while another attempt remains, and the exhausted pass is logged **Error once**. A later successful retry is Information only when rows were deleted; zero-row pass is Debug. Preserve cancellation behavior, retry count/delays, deletion batching, and useful `DeletedCount`/`ElapsedMilliseconds` context. Do not log token values.
+- [x] Move migration/seeding lock-acquired messages to Debug if they add only low-level detail; retain meaningful startup completion Information and transient migration Warning/terminal Error. Review suspension finalizer startup/terminal errors and account ID use without widening scope. Treat expected authentication/validation/404/409 paths as normal result handling, not Error logs.
+- [x] For all existing ProblemDetails construction paths, preserve `requestId = HttpContext.TraceIdentifier`; add `traceId = Activity.Current.TraceId.ToString()` only when an Activity with a valid trace ID exists. Cover `ApiController.Problem`, validation/rate-limit/DB/unhandled branches in `GlobalExceptionHandler`, and JWT `OnChallenge`/`OnForbidden`. Keep current status, title, detail, type, and code fields. Avoid a new response field when no active trace exists.
+- [x] Confirm OTel exported logs already carry TraceId/SpanId/TraceFlags and structured state. Do not copy IDs into each log template. Keep console JSON scopes/event metadata enabled and inspect one correlated request error in Loki and console.
+- [x] Decide `LoggerMessage` use from evidence: current workers run infrequently, so retaining structured template calls is acceptable. If a genuinely hot recurring event exists, convert just that event with a stable EventId/EventName and document a small ID convention; do not introduce an event catalog.
 
 ## Configuration/environment variables
 
@@ -49,3 +49,31 @@ Existing `ILogger<T>` operational events and automatic log-span correlation, plu
 ## Dependencies on previous phases
 
 Phases 0–4 complete so the correlation path can be checked in Jaeger, Loki, and Grafana.
+
+---
+
+## Phase 5 Execution & Review Record
+
+### 1. Implemented Components
+- **`RefreshTokenCleanupWorker.cs`**:
+  - Refactored attempt/retry loop ownership:
+    - Intermediate attempt failures logged as **Warning** with `Attempt`, `RetryDelaySeconds`, and `ElapsedMilliseconds`.
+    - Exhausted attempts logged as **Error once** with total `Attempts` and `ElapsedMilliseconds`.
+    - Successful deletion passes with `deletedCount > 0` logged as **Information** with `DeletedCount` and `Attempt`.
+    - Successful zero-deletion passes logged as **Debug** (`DeletedCount=0`).
+    - Preserved cancellation tokens, batch yield delays, deletion transaction boundaries, and zero token values logged.
+- **`DatabaseMigrationService.cs` & `DatabaseSeeder.cs`**:
+  - Lowered advisory lock acquisition logging from `Information` to `Debug` to eliminate noise while retaining high-value completion and transient failure messages.
+- **ProblemDetails Trace Correlation (`OPS-OBS-004`)**:
+  - `ApiController.Problem`: Injects `["traceId"] = Activity.Current.TraceId.ToString()` additively when `Activity.Current != null`.
+  - `GlobalExceptionHandler`: Injects `["traceId"]` across validation errors, rate limit errors, transient database errors, and unexpected 500 errors via helper `CreateExtensions`.
+  - `JwtAuthenticationInstaller`: Injects `["traceId"]` into RFC 7807 payloads during `OnChallenge` (401) and `OnForbidden` (403).
+  - Maintained `requestId = httpContext.TraceIdentifier`, status codes, titles, error codes, and problem types completely unchanged.
+- **Log Data Sensitivity & OTel Scopes**:
+  - Verified no passwords, hashes, refresh tokens, cookie values, or raw database connection strings are logged across workers and seeders.
+  - OpenTelemetry logging automatically attaches `TraceId`, `SpanId`, and `TraceFlags` to all log records.
+
+### 2. Verification Results
+- `dotnet build Kahoot.slnx`: Succeeded with 0 warnings and 0 errors.
+- `dotnet format Kahoot.slnx --verify-no-changes`: Passed cleanly.
+

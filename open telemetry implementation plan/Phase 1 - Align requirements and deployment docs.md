@@ -18,11 +18,11 @@ No package or image installation. Consume the Phase 0 version/component decision
 
 ## Step-by-step implementation tasks
 
-- [ ] Re-read current `docs/12`, `docs/13`, `docs/14` and search `docs/` for explicit exclusions and other logging/health/telemetry statements. Cite exact lines being amended in the phase review note; do not manufacture a conflict if the text is already compatible.
-- [ ] Add a concise normative statement that application logs, traces, and metrics leave through OTLP to the Collector only. Define Prometheus scrape from Collector, Collector-to-Jaeger OTLP, Collector-to-Loki native OTLP, and Grafana as the query UI.
-- [ ] State that structured JSON console logging continues independently; telemetry backend/Collector failure cannot fail API startup or readiness. Keep current `/health` behavior and existing requirements for future `/health/live` and `/health/ready` distinct.
-- [ ] Document operational constraints: standard `OTEL_*` settings and environment override precedence, parent-based production sampling, low-cardinality metric/Loki labels, no query/header/body secrets, persistent Prometheus/Loki single-host volumes, ephemeral local Jaeger, and bounded data retention.
-- [ ] Keep normative existing SLO IDs, auth contracts, multi-replica rules, and PostgreSQL startup/locking behavior untouched. Run a final `rg` search for old exclusion phrases and review the focused diff.
+- [x] Re-read current `docs/12`, `docs/13`, `docs/14` and search `docs/` for explicit exclusions and other logging/health/telemetry statements. Cite exact lines being amended in the phase review note; do not manufacture a conflict if the text is already compatible.
+- [x] Add a concise normative statement that application logs, traces, and metrics leave through OTLP to the Collector only. Define Prometheus scrape from Collector, Collector-to-Jaeger OTLP, Collector-to-Loki native OTLP, and Grafana as the query UI.
+- [x] State that structured JSON console logging continues independently; telemetry backend/Collector failure cannot fail API startup or readiness. Keep current `/health` behavior and existing requirements for future `/health/live` and `/health/ready` distinct.
+- [x] Document operational constraints: standard `OTEL_*` settings and environment override precedence, parent-based production sampling, low-cardinality metric/Loki labels, no query/header/body secrets, persistent Prometheus/Loki single-host volumes, ephemeral local Jaeger, and bounded data retention.
+- [x] Keep normative existing SLO IDs, auth contracts, multi-replica rules, and PostgreSQL startup/locking behavior untouched. Run a final `rg` search for old exclusion phrases and review the focused diff.
 
 ## Configuration/environment variables
 
@@ -47,3 +47,25 @@ Requirements documentation for OTel logs/traces/metrics; no runtime instrumentat
 ## Dependencies on previous phases
 
 Phase 0 completed and version/component decisions recorded.
+
+---
+
+## Phase 1 Execution & Review Record
+
+### 1. Documentation Amendments Citing Exact Sections
+- **`docs/12-platform-operations-and-health.md`**:
+  - Section 1.2: Clarified `Observability Stack` actor as vendor-neutral three-signal pipeline via OTLP gateway (Prometheus, Jaeger, Loki, Grafana) with independent JSON console logging.
+  - Section 2.6: Extended title to `Structured Logging & Central Observability [NORMATIVE]`.
+  - Added `OPS-OBS-001` (Vendor-Neutral OTLP Gateway), `OPS-OBS-002` (Telemetry Failure Isolation & Availability Independence), `OPS-OBS-003` (Health Probe Filtering & Sampling Policy), and `OPS-OBS-004` (ProblemDetails Trace Correlation with additive `traceId`).
+- **`docs/13-architecture-and-deployment.md`**:
+  - Section 2.2 (`ARCH-TOPO-001`): Documented baseline observability containers (`otel-collector`, `prometheus`, `jaeger`, `loki`, `grafana`), isolated `observability` network, and volumes (`prometheus_data`, `loki_data`, `grafana_data`).
+  - Section 2.4 (Environment Configuration Matrix): Added configuration keys `OTEL_SERVICE_NAME` (`ARCH-CFG-019`), `OTEL_RESOURCE_ATTRIBUTES` (`ARCH-CFG-020`), `OTEL_EXPORTER_OTLP_ENDPOINT` (`ARCH-CFG-021`), `OTEL_EXPORTER_OTLP_PROTOCOL` (`ARCH-CFG-022`), `OTEL_TRACES_SAMPLER` (`ARCH-CFG-023`), `OTEL_TRACES_SAMPLER_ARG` (`ARCH-CFG-024`), and `GRAFANA_ADMIN_PASSWORD` (`ARCH-CFG-025`).
+  - Section 2.5: Created `Reference Observability Architecture [NORMATIVE]` containing topology Mermaid diagram and architectural invariants `ARCH-OBS-001` through `ARCH-OBS-005` (Vendor-Neutral Pipeline, Network & Failure Isolation, Storage Retention & Ephemeral Jaeger Caveat, Sampling/Redaction/Cardinality Guardrails, Deployment Topology & Host-Run Precedence).
+- **`docs/14-verification-and-testing.md`**:
+  - Section 1.3 (`VERIF-OBS-001`): Clarified telemetry integration to explicitly cover the standardized OpenTelemetry OTLP pipeline (metrics, distributed traces, and correlated logs).
+
+### 2. Verification Results
+- `rg -n -i 'centralized observability|opentelemetry|prometheus|jaeger|loki|grafana|telemetry' docs -g '*.md'`: Confirmed zero contradictory exclusions or legacy bans remain.
+- `git diff --check -- docs`: Clean, zero whitespace or syntax issues.
+- All existing SLOs, auth rules, database connection pool budgets, and health probe requirements remain intact.
+

@@ -33,15 +33,40 @@ The Collector is the only application telemetry destination. Prometheus pulls fr
 
 Execute in order. Each phase has its own acceptance criteria and produces a reviewable result before the next begins.
 
-| Order | Phase | Deliverable |
-| --- | --- | --- |
-| 0 | [Analyze backend and map requirements](<Phase 0 - Analyze backend and map requirements.md>) | Revalidated inventory, requirement-to-file map, version/component decision record, and risk register; no product edits. |
-| 1 | [Align requirements and deployment docs](<Phase 1 - Align requirements and deployment docs.md>) | Updated normative docs and execution decisions before application code. |
-| 2 | [Instrument the .NET API](<Phase 2 - Instrument the .NET API.md>) | OTLP logs/traces/metrics, safe Npgsql pool identity, JSON console, sampling, and health trace filter. |
-| 3 | [Add Collector and signal backends](<Phase 3 - Add Collector and signal backends.md>) | Collector, Prometheus, Jaeger, Loki, Compose networking, retention, and signal paths. |
-| 4 | [Provision Grafana and correlation](<Phase 4 - Provision Grafana and correlation.md>) | Provisioned data sources and verified log-to-trace navigation; exemplar decision. |
-| 5 | [Refine operational logs and error correlation](<Phase 5 - Refine operational logs and error correlation.md>) | Correct retry levels, additive `traceId` in existing ProblemDetails paths, focused log review. |
-| 6 | [Validate and document operations](<Phase 6 - Validate and document operations.md>) | End-to-end/security/failure-isolation checks and operator instructions. |
+| Order | Phase | Status | Deliverable |
+| --- | --- | :---: | --- |
+| 0 | [Analyze backend and map requirements](<Phase 0 - Analyze backend and map requirements.md>) | **Completed** | Revalidated inventory, requirement-to-file map, version/component decision record, and risk register; no product edits. |
+| 1 | [Align requirements and deployment docs](<Phase 1 - Align requirements and deployment docs.md>) | **Completed** | Updated normative docs and execution decisions before application code. |
+| 2 | [Instrument the .NET API](<Phase 2 - Instrument the .NET API.md>) | **Completed** | OTLP logs/traces/metrics, safe Npgsql pool identity, JSON console, sampling, and health trace filter. |
+| 3 | [Add Collector and signal backends](<Phase 3 - Add Collector and signal backends.md>) | **Completed** | Collector, Prometheus, Jaeger, Loki, Compose networking, retention, and signal paths. |
+| 4 | [Provision Grafana and correlation](<Phase 4 - Provision Grafana and correlation.md>) | **Completed** | Provisioned data sources and verified log-to-trace navigation; exemplar decision. |
+| 5 | [Refine operational logs and error correlation](<Phase 5 - Refine operational logs and error correlation.md>) | **Completed** | Correct retry levels, additive `traceId` in existing ProblemDetails paths, focused log review. |
+| 6 | [Validate and document operations](<Phase 6 - Validate and document operations.md>) | **Completed** | End-to-end/security/failure-isolation checks and operator instructions. |
+
+---
+
+## Implementation Summary & Sign-off
+
+All phases of the OpenTelemetry implementation plan have been executed and verified in sequence according to repository engineering standards:
+
+1. **Vendor-Neutral Telemetry Architecture**:
+   - `Kahoot.Api` instruments ASP.NET Core, .NET Runtime, and PostgreSQL (Npgsql) via official OpenTelemetry packages.
+   - All three telemetry signals (metrics, traces, logs) are exported via OTLP HTTP exclusively to the OpenTelemetry Collector Contrib gateway (`:4318`).
+   - The Collector routes metrics to Prometheus (`:9464` scrape), traces to Jaeger (`:4317` gRPC), and logs to Grafana Loki (`:3100/otlp` HTTP).
+   - Grafana (`:3000`) is pre-provisioned with all three data sources and provides automatic log-to-trace navigation using `traceId`.
+2. **Correlation & Logging Standards**:
+   - Every log record includes `TraceId`, `SpanId`, and `TraceFlags`.
+   - RFC 7807 `ProblemDetails` error responses include `["traceId"]` additively alongside `requestId` whenever an active trace exists.
+   - Structured JSON console logging remains independently available on `stdout`/`stderr`.
+3. **Resilience, Security & Performance**:
+   - The API startup and health checks (`/health`, `/health/ready`) operate completely independent of the observability stack.
+   - Unreachable backends drop telemetry gracefully in bounded queues without thread starvation or application degradation.
+   - Sensitive credentials, tokens, query parameters, and database connection strings are strictly redacted.
+   - High-frequency health probes are filtered out of distributed tracing.
+   - Database connection pool identity is safely parameterized as `KahootPrimary`.
+4. **Environment & Documentation Synchronization**:
+   - Environment variables (`OTEL_*`, `GRAFANA_*`) are strictly synchronized across `.env.example`, `.env.development`, and `.env.production`.
+   - Operator runbooks in `backend/README.md` and architecture contracts in `docs/` reflect the exact running topology.
 
 ## Cross-phase implementation rules
 

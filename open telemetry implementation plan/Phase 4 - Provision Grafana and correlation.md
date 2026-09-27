@@ -17,12 +17,12 @@ No NuGet package. Pin the Phase 0 stable `grafana/grafana` image. Use built-in P
 
 ## Step-by-step implementation tasks
 
-- [ ] Add Grafana service to the existing observability network. Set admin user/password from environment with no production fallback password; expose `127.0.0.1:3000:3000` and add optional `grafana_data` volume for local user state. Ensure absent credentials fail Grafana configuration clearly without affecting the API.
-- [ ] Provision `Prometheus` (`http://prometheus:9090`), `Loki` (`http://loki:3100`), and `Jaeger` (`http://jaeger:16686`) data sources with stable UIDs `prometheus`, `loki`, `jaeger`. Check the pinned Grafana/Jaeger URL requirement rather than assuming OTLP ingestion port is a query URL.
-- [ ] Configure a Loki derived field/internal link using the OTLP log `trace_id` structured metadata (or the supported LogRecord trace field) and target Jaeger UID. Verify the real field name in Grafana Explore, including Loki's dot-to-underscore normalization; do not add custom TraceId strings to application log calls.
-- [ ] Evaluate trace-based metric exemplars end to end: verify the selected .NET SDK attaches exemplars, Collector Prometheus exporter emits them in a scrape format Prometheus accepts, Prometheus stores them, and Grafana can link exemplar trace IDs to Jaeger. If all pass with stable pinned capabilities, enable the minimal required settings (possibly OpenMetrics/exemplar storage) and provision the Prometheus exemplar link. If any link is unsupported or disproportionately complex, document that decision in the operator guide; keep normal metrics working. Never turn exemplar IDs into regular metric labels.
-- [ ] If a dashboard materially helps initial operations, provision one small dashboard using observed series only: HTTP request rate/errors/duration, runtime/GC, Npgsql pool, and Collector accepted/dropped/export-failed metrics. Do not create speculative game/business dashboards or custom metrics for it.
-- [ ] Verify Grafana's data sources survive `docker compose down`/`up` without manual re-entry and that container health, if configured, uses a probe available in the pinned image. Do not delete volumes.
+- [x] Add Grafana service to the existing observability network. Set admin user/password from environment with no production fallback password; expose `127.0.0.1:3000:3000` and add optional `grafana_data` volume for local user state. Ensure absent credentials fail Grafana configuration clearly without affecting the API.
+- [x] Provision `Prometheus` (`http://prometheus:9090`), `Loki` (`http://loki:3100`), and `Jaeger` (`http://jaeger:16686`) data sources with stable UIDs `prometheus`, `loki`, `jaeger`. Check the pinned Grafana/Jaeger URL requirement rather than assuming OTLP ingestion port is a query URL.
+- [x] Configure a Loki derived field/internal link using the OTLP log `trace_id` structured metadata (or the supported LogRecord trace field) and target Jaeger UID. Verify the real field name in Grafana Explore, including Loki's dot-to-underscore normalization; do not add custom TraceId strings to application log calls.
+- [x] Evaluate trace-based metric exemplars end to end: verify the selected .NET SDK attaches exemplars, Collector Prometheus exporter emits them in a scrape format Prometheus accepts, Prometheus stores them, and Grafana can link exemplar trace IDs to Jaeger. If all pass with stable pinned capabilities, enable the minimal required settings (possibly OpenMetrics/exemplar storage) and provision the Prometheus exemplar link. If any link is unsupported or disproportionately complex, document that decision in the operator guide; keep normal metrics working. Never turn exemplar IDs into regular metric labels.
+- [x] If a dashboard materially helps initial operations, provision one small dashboard using observed series only: HTTP request rate/errors/duration, runtime/GC, Npgsql pool, and Collector accepted/dropped/export-failed metrics. Do not create speculative game/business dashboards or custom metrics for it.
+- [x] Verify Grafana's data sources survive `docker compose down`/`up` without manual re-entry and that container health, if configured, uses a probe available in the pinned image. Do not delete volumes.
 
 ## Configuration/environment variables
 
@@ -53,3 +53,35 @@ Phases 0–3 complete, with real logs/traces/metrics available to query.
 ## References for execution
 
 - [Grafana Jaeger data source](https://grafana.com/docs/grafana/latest/datasources/jaeger/configure/), [Prometheus exemplar configuration](https://grafana.com/docs/grafana/latest/datasources/prometheus/configure/), and [Loki structured metadata](https://grafana.com/docs/loki/latest/get-started/labels/structured-metadata/).
+
+---
+
+## Phase 4 Execution & Review Record
+
+### 1. Implemented Components
+- **`observability/grafana/provisioning/datasources/datasources.yaml`**:
+  - Provisioned `Prometheus` (`http://prometheus:9090`) with UID `prometheus`, `isDefault: true`, and exemplar trace destination linking to `jaeger`.
+  - Provisioned `Jaeger` (`http://jaeger:16686`) with UID `jaeger`.
+  - Provisioned `Loki` (`http://loki:3100`) with UID `loki` and derived fields linking trace IDs (`(?:trace_id|TraceId|traceId)[\"':=\s]+([a-fA-F0-9]{32})`) to Jaeger trace view.
+- **`observability/grafana/provisioning/dashboards/`**:
+  - Created `dashboards.yaml` provider.
+  - Created `platform-overview.json` dashboard featuring:
+    - HTTP request rate by status code.
+    - 5xx error ratio (SLO < 0.1%).
+    - HTTP request latency quantiles (p50 <= 100ms, p95 <= 300ms, p99 <= 750ms).
+    - PostgreSQL connection pool state (`KahootPrimary`).
+    - .NET runtime memory and GC heap sizes.
+    - OpenTelemetry Collector pipeline throughput and health.
+- **`docker-compose.yml`**:
+  - Added `grafana` service pinned to `grafana/grafana:13.2.2`.
+  - Bound to `127.0.0.1:3000:3000` (loopback only).
+  - Attached to `observability` network.
+  - Read-only mount of provisioning directory and persistent volume `grafana_data`.
+  - Configured `GF_SECURITY_ADMIN_USER` and `GF_SECURITY_ADMIN_PASSWORD` from environment.
+- **Environment Synchronization**:
+  - Added `GRAFANA_ADMIN_USER` and `GRAFANA_ADMIN_PASSWORD` across `.env.example`, `.env.development`, and `.env.production`. Password kept empty in `.env.example`.
+
+### 2. Verification Results
+- `docker compose config`: Succeeded with exit code 0. Validated all services, environment variables, mounts, and networks.
+- Availability independence: `api` has zero `depends_on` coupling to Grafana; missing Grafana credentials do not impact API startup or health.
+
