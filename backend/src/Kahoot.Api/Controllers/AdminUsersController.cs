@@ -1,4 +1,5 @@
 using Kahoot.Application.Common.Results;
+using Kahoot.Application.Features.Admin.Users.GetUserById;
 using Kahoot.Application.Features.Admin.Users.ListUsers;
 using Kahoot.Domain.Enums;
 using MediatR;
@@ -34,6 +35,27 @@ public sealed class AdminUsersController : ApiController
     {
         ListUsersQuery query = new ListUsersQuery(cursor, pageSize, username, status);
         Result<ListUsersResponse> result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpGet("{accountId:guid}")]
+    [ProducesResponseType(typeof(UserAdminResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserById(
+        [FromRoute] Guid accountId,
+        CancellationToken cancellationToken = default)
+    {
+        GetUserByIdQuery query = new GetUserByIdQuery(accountId);
+        Result<UserAdminResponse> result = await _sender.Send(query, cancellationToken);
 
         if (result.IsSuccess)
         {
