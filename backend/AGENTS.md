@@ -13,6 +13,11 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 > [!IMPORTANT]
 > If you want to use realtime in the project, then use **SignalR**.
 
+### Static File & Media Storage
+
+> [!IMPORTANT]
+> Store images and media files in the `wwwroot` directory in the backend (`src/Kahoot.Api/wwwroot`).
+
 ## Concurrency, MVCC, Security, and Performance Focus
 
 - **Production-Ready Multi-Replica SaaS Scale:** This project is a production-grade SaaS platform engineered for large volumes of concurrent users and deployed across multiple horizontally scaled replicas (containers/Kubernetes pods). Every feature, background worker, and startup routine must be designed with multi-instance concurrency in mind. Never assume a single instance: in-memory synchronization (`lock`, `SemaphoreSlim`) is insufficient for cluster-wide coordination.
