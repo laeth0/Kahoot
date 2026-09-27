@@ -12,7 +12,7 @@ This document defines the master quality assurance, verification, load testing, 
 
 ### 1.3 Core Verification Principles `[NORMATIVE]`
 * **`VERIF-TIME-001` (Deterministic Time Control)**: All business logic, deadline comparisons, and worker cycles depend on an abstract `TimeProvider`. Tests explicitly advance virtual time to verify expiration boundaries, countdown timers, grace periods, and worker schedules without fragile `Thread.Sleep` calls.
-* **`VERIF-OBS-001` (Observability & Telemetry Integration)**: Verification evidence is collected through test harness metrics, native database statistics, operating system diagnostic tools, structured application logs, and OpenTelemetry instrumentation where configured.
+* **`VERIF-OBS-001` (Observability & Telemetry Integration)**: Verification evidence is collected through test harness metrics, native database statistics, operating system diagnostic tools, structured application logs, and the standardized OpenTelemetry OTLP pipeline (metrics, distributed traces, and correlated logs).
 * **`VERIF-GATE-001` (Zero-Tolerance Quality Gates)**: Any test execution that exhibits data loss, cross-tenant leakage, duplicate scoring, seat over-allocation, or invalid state machine transitions constitutes a catastrophic failure that immediately blocks release.
 
 ---
