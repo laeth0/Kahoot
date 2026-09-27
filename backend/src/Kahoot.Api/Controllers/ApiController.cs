@@ -34,16 +34,23 @@ public abstract class ApiController : ControllerBase
             _ => error.Code
         };
 
+        Dictionary<string, object?> extensions = new()
+        {
+            ["code"] = error.Code,
+            ["requestId"] = HttpContext.TraceIdentifier
+        };
+
+        if (System.Diagnostics.Activity.Current is not null)
+        {
+            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
+        }
+
         return Problem(
             detail: error.Description,
             instance: HttpContext.Request.Path,
             statusCode: statusCode,
             title: title,
             type: $"https://api.kahoot-saas.local/errors/{error.Code}",
-            extensions: new Dictionary<string, object?>
-            {
-                ["code"] = error.Code,
-                ["requestId"] = HttpContext.TraceIdentifier
-            });
+            extensions: extensions);
     }
 }

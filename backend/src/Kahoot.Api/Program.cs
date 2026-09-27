@@ -11,6 +11,8 @@ using Scalar.AspNetCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 {
+    builder.AddObservability();
+
     builder.Services
         .AddControllers()
         .AddJsonOptions(options =>

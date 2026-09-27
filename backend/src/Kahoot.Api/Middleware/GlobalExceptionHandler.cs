@@ -31,11 +31,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Validation.Failed",
                 type: "https://api.kahoot-saas.local/errors/Validation.Failed",
-                extensions: new Dictionary<string, object?>
-                {
-                    ["code"] = "Validation.Failed",
-                    ["requestId"] = httpContext.TraceIdentifier
-                })
+                extensions: CreateExtensions(httpContext, "Validation.Failed"))
                 .ExecuteAsync(httpContext);
 
             return true;
@@ -49,11 +45,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
                 title: "Request.RateLimited",
                 detail: "Password hashing concurrency limit exceeded. Please try again later.",
                 type: "https://api.kahoot-saas.local/errors/Request.RateLimited",
-                extensions: new Dictionary<string, object?>
-                {
-                    ["code"] = "Request.RateLimited",
-                    ["requestId"] = httpContext.TraceIdentifier
-                })
+                extensions: CreateExtensions(httpContext, "Request.RateLimited"))
                 .ExecuteAsync(httpContext);
 
             return true;
@@ -70,11 +62,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
                 title: "Service.Unavailable",
                 detail: "The service is temporarily unavailable due to a database connection failure.",
                 type: "https://api.kahoot-saas.local/errors/Service.Unavailable",
-                extensions: new Dictionary<string, object?>
-                {
-                    ["code"] = "Service.Unavailable",
-                    ["requestId"] = httpContext.TraceIdentifier
-                })
+                extensions: CreateExtensions(httpContext, "Service.Unavailable"))
                 .ExecuteAsync(httpContext);
 
             return true;
@@ -84,8 +72,29 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
 
         await Results.Problem(
             statusCode: StatusCodes.Status500InternalServerError,
-            title: "An unexpected error occurred.").ExecuteAsync(httpContext);
+            title: "An unexpected error occurred.",
+            extensions: CreateExtensions(httpContext)).ExecuteAsync(httpContext);
 
         return true;
+    }
+
+    private static Dictionary<string, object?> CreateExtensions(HttpContext httpContext, string? code = null)
+    {
+        Dictionary<string, object?> extensions = new()
+        {
+            ["requestId"] = httpContext.TraceIdentifier
+        };
+
+        if (!string.IsNullOrEmpty(code))
+        {
+            extensions["code"] = code;
+        }
+
+        if (System.Diagnostics.Activity.Current is not null)
+        {
+            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
+        }
+
+        return extensions;
     }
 }
