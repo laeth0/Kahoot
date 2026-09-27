@@ -31,7 +31,7 @@ public static class ObservabilityInstaller
         string serviceName = string.IsNullOrWhiteSpace(configuredServiceName)
             ? "Kahoot.Api"
             : configuredServiceName.Trim();
-        string serviceVersion = typeof(Program).Assembly.GetName().Version?.ToString() ?? "1.0.0";
+        string serviceVersion = AssemblyReference.Assembly.GetName().Version?.ToString() ?? "1.0.0";
         string instanceId = Guid.NewGuid().ToString("N");
 
         Action<ResourceBuilder> configureResource = resource =>
