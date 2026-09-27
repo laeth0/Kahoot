@@ -48,6 +48,12 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(user => user.UpdatedAt)
             .IsRequired();
 
+        builder.Property(user => user.CreatedBy)
+            .IsRequired(false);
+
+        builder.Property(user => user.UpdatedBy)
+            .IsRequired(false);
+
         builder.HasIndex(user => user.NormalizedUsername)
             .IsUnique()
             .HasDatabaseName("ux_users_normalized_username");

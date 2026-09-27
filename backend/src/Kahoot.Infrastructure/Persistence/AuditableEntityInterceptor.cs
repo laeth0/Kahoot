@@ -1,3 +1,4 @@
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -8,10 +9,14 @@ namespace Kahoot.Infrastructure.Persistence;
 internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
 {
     private readonly TimeProvider _timeProvider;
+    private readonly ICurrentUser _currentUser;
 
-    public AuditableEntityInterceptor(TimeProvider timeProvider)
+    public AuditableEntityInterceptor(
+        TimeProvider timeProvider,
+        ICurrentUser currentUser)
     {
         _timeProvider = timeProvider;
+        _currentUser = currentUser;
     }
 
     public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
@@ -42,6 +47,7 @@ internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
     private void StampAuditFields(DbContext context)
     {
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+        Guid? currentUserId = _currentUser?.UserId;
 
         foreach (EntityEntry<IAuditableEntity> entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
@@ -49,11 +55,27 @@ internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
             {
                 entry.Entity.CreatedAt = utcNow;
                 entry.Entity.UpdatedAt = utcNow;
+
+                if (!entry.Entity.CreatedBy.HasValue)
+                {
+                    entry.Entity.CreatedBy = currentUserId;
+                }
+
+                if (!entry.Entity.UpdatedBy.HasValue)
+                {
+                    entry.Entity.UpdatedBy = currentUserId;
+                }
             }
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = utcNow;
                 entry.Property(e => e.CreatedAt).IsModified = false;
+                entry.Property(e => e.CreatedBy).IsModified = false;
+
+                if (currentUserId.HasValue)
+                {
+                    entry.Entity.UpdatedBy = currentUserId;
+                }
             }
         }
     }

@@ -38,5 +38,7 @@ public interface IAppDbContext
 
     Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken);
 
+    Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

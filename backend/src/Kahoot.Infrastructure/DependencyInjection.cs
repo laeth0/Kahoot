@@ -1,4 +1,6 @@
+using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure.Persistence;
+using Kahoot.Infrastructure.Realtime;
 using Kahoot.Infrastructure.ServiceCollectionExtension;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +17,9 @@ public static class DependencyInjection
         services.AddSecurity(configuration);
         services.AddHostedService<DatabaseSeeder>();
         services.AddHostedService<RefreshTokenCleanupWorker>();
+        services.AddSingleton<ISuspensionFinalizerChannel, SuspensionFinalizerChannel>();
+        services.AddHostedService<SuspensionFinalizerWorker>();
+        services.AddSingleton<ISocketEvictionService, SocketEvictionService>();
         services.AddSingleton(TimeProvider.System);
 
         return services;

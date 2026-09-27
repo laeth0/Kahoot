@@ -52,6 +52,14 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return users.Count == 0 ? null : users[0];
     }
 
+    public async Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken)
+    {
+        return await Users
+            .FromSqlInterpolated($"SELECT * FROM users WHERE role = {UserRole.SystemAdmin} AND status = {UserStatus.Active} ORDER BY id FOR UPDATE")
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

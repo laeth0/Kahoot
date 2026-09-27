@@ -237,7 +237,7 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `AUTH-SLO-002` | 02 | Refresh latency $p95 \le 150\text{ ms}$ | `AUTH-TEST-006` |
 | `ACCT-QUERY-001`| 03 | Administrative account listing with keyset pagination | `ACCT-TEST-001` |
 | `ACCT-QUERY-002`| 03 | Administrative privacy barrier (zero quiz disclosure) | `ACCT-TEST-001` |
-| `ACCT-SUSP-001`| 03 | Host suspension with step-up verification requirement | `ACCT-TEST-002` |
+| `ACCT-SUSP-001`| 03 | Host suspension requirement | `ACCT-TEST-002` |
 | `ACCT-SUSP-003`| 03 | Phase 1 suspension cutoff (tokens revoked, games terminal) | `ACCT-TEST-002`, `ACCT-TEST-007` |
 | `ACCT-SUSP-004`| 03 | Phase 2 bounded game finalization ($\le 10$ games/tx) | `ACCT-TEST-002`, `ACCT-TEST-008` |
 | `ACCT-REACT-001`| 03 | Reactivate host; prior tokens and games stay terminal | `ACCT-TEST-003`, `ACCT-TEST-009` |

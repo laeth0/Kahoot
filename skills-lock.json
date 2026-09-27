@@ -24,6 +24,12 @@
       "sourceType": "github",
       "skillPath": "plugins/dotnet-artisan/skills/dotnet-csharp/SKILL.md",
       "computedHash": "a5c642373eb317b41cc2ce1f415c825e5eb3b7ce4245296b9ce47eacd189d10c"
+    },
+    "signalr": {
+      "source": "managedcode/dotnet-skills",
+      "sourceType": "github",
+      "skillPath": "catalog/Frameworks/SignalR/skills/signalr/SKILL.md",
+      "computedHash": "a1663ab9eb44b13de9e4ef0e1d9fbe3b93c5c14e85c8ae9ae54d7c3dae663c90"
     }
   }
 }

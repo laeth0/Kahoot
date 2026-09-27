@@ -20,7 +20,7 @@ public static class PersistenceInstaller
             .Validate(options => options.MigrationCommandTimeoutSeconds > 0, "Database:MigrationCommandTimeoutSeconds must be greater than zero.")
             .ValidateOnStart();
 
-        services.AddSingleton<AuditableEntityInterceptor>();
+        services.AddScoped<AuditableEntityInterceptor>();
 
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {

@@ -36,6 +36,7 @@ public static class JwtAuthenticationInstaller
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes),
                     ValidateLifetime = true,
+                    RoleClaimType = "role",
                     // No clock skew: tokens expire exactly at Exp to keep the 15-minute access-token
                     // lifetime tight and consistent with the security model.
                     ClockSkew = TimeSpan.Zero
