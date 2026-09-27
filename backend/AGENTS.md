@@ -8,6 +8,11 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - Keep dependencies flowing in the existing direction. Put HTTP concerns in Api, application behavior, vertical feature slices, and contracts in Application, database and external-service implementations in Infrastructure, and core entities in Domain.
 - Make this project production-ready: write clean code, handle edge cases gracefully, follow idiomatic C#/.NET design patterns, and ensure strict separation of concerns.
 
+### Realtime Communication (SignalR)
+
+> [!IMPORTANT]
+> If you want to use realtime in the project, then use **SignalR**.
+
 ## Concurrency, MVCC, Security, and Performance Focus
 
 - **Production-Ready Multi-Replica SaaS Scale:** This project is a production-grade SaaS platform engineered for large volumes of concurrent users and deployed across multiple horizontally scaled replicas (containers/Kubernetes pods). Every feature, background worker, and startup routine must be designed with multi-instance concurrency in mind. Never assume a single instance: in-memory synchronization (`lock`, `SemaphoreSlim`) is insufficient for cluster-wide coordination.
