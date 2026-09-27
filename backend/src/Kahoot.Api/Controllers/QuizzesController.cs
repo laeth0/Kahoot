@@ -4,6 +4,7 @@ using Kahoot.Application.Features.Quizzes.CreateQuiz;
 using Kahoot.Application.Features.Quizzes.DeleteQuiz;
 using Kahoot.Application.Features.Quizzes.GetQuizById;
 using Kahoot.Application.Features.Quizzes.ListQuizzes;
+using Kahoot.Application.Features.Quizzes.PublishQuiz;
 using Kahoot.Application.Features.Quizzes.Questions;
 using Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 using Kahoot.Application.Features.Quizzes.Questions.DeleteQuestion;
@@ -233,6 +234,28 @@ public sealed class QuizzesController : ApiController
     {
         ReorderQuestionsCommand command = new ReorderQuestionsCommand(quizId, request.QuestionIds);
         Result<ReorderQuestionsResponse> result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("{quizId:guid}/publish")]
+    [ProducesResponseType(typeof(PublishQuizResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> PublishQuiz(
+        [FromRoute] Guid quizId,
+        CancellationToken cancellationToken = default)
+    {
+        PublishQuizCommand command = new PublishQuizCommand(quizId);
+        Result<PublishQuizResponse> result = await _sender.Send(command, cancellationToken);
 
         if (result.IsSuccess)
         {
