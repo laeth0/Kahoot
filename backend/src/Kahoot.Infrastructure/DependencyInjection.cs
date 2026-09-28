@@ -15,6 +15,7 @@ public static class DependencyInjection
     {
         services.AddPersistence(configuration);
         services.AddSecurity(configuration);
+        services.AddStorage(configuration);
         services.AddHostedService<DatabaseSeeder>();
         services.AddHostedService<RefreshTokenCleanupWorker>();
         services.AddSingleton<ISuspensionFinalizerChannel, SuspensionFinalizerChannel>();

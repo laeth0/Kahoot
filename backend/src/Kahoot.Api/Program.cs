@@ -36,8 +36,22 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 WebApplication app = builder.Build();
 {
+    string webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+    Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "staging"));
+
     app.UseExceptionHandler();
     app.UseHttpsRedirection();
+    app.UseStaticFiles(new StaticFileOptions
+    {
+        OnPrepareResponse = context =>
+        {
+            if (context.Context.Request.Path.StartsWithSegments("/uploads"))
+            {
+                context.Context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+                context.Context.Response.Headers.Append("Cache-Control", "public, max-age=31536000, immutable");
+            }
+        }
+    });
     app.UseRouting();
     app.UseCors("Frontend");
     app.UseAuthentication();

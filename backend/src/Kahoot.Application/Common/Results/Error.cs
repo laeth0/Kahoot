@@ -74,4 +74,20 @@ public sealed record Error(
             code,
             description,
             ErrorType.Failure);
+
+    public static Error TooLarge(
+        string code,
+        string description) =>
+        new(
+            code,
+            description,
+            ErrorType.TooLarge);
+
+    public static Error UnsupportedType(
+        string code,
+        string description) =>
+        new(
+            code,
+            description,
+            ErrorType.UnsupportedType);
 }
