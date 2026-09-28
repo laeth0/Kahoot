@@ -25,7 +25,7 @@ flowchart TD
     P1["Phase 1: Configuration & Secret Validation"] -->|Valid| P2["Phase 2: Database Migration (pg_advisory_xact_lock)"]
     P2 -->|Succeeded| P3["Phase 3: Administrator Seeding (If Enabled)"]
     P3 -->|Completed| P4["Phase 4: Workers, Readiness & Traffic Activation"]
-    
+
     P1 -->|Invalid| F1["Fail-Fast (Exit Code 1)"]
     P2 -->|Migration Failure| F2["Remain Not-Ready (/health/ready -> 503)"]
 ```
@@ -59,7 +59,7 @@ Workers run as internal hosted services and are strictly segregated by criticali
 * **`OPS-WORK-001` (Worker Classification)**:
   1. **Best-Effort Maintenance Workers**:
      * `RefreshTokenCleanupWorker`: Runs every 10–15 minutes; deletes expired tokens older than 7 days in batches of $\le 500$ rows.
-     * `OrphanMediaCleanupWorker`: Runs daily; reclaims unreferenced media older than 7 days using two-phase deletion.
+     * `OrphanImageCleanupWorker`: Runs daily; reclaims unreferenced images older than 7 days using two-phase deletion.
   2. **Correctness-Critical Finalization Workers**:
      * `AbandonedGameFinalizer`: Scans for unfinished games where Host disconnect grace (5 minutes) has expired. Must finalize abandonment authoritatively within $T_{\text{grace}} + 30\text{ seconds}$ maximum scheduling delay.
      * `SuspensionGameFinalizer`: Runs on startup and on-demand; resumes game materialization for accounts with `terminationPending == true`.
@@ -165,6 +165,6 @@ Workers run as internal hosted services and are strictly segregated by criticali
 | `OPS-TEST-005` | `OPS-LOG-002` | Security | Inspect application logs after failed login and WebSocket connect. | Passwords, raw tokens, and `access_token` query params are absent. |
 | `OPS-TEST-006` | `OPS-MIG-004`, `OPS-RISK-002` | Concurrency | Start 3 application containers simultaneously against same fresh DB. | Advisory lock prevents race; migrations run once; all 3 become ready. |
 | `OPS-TEST-007` | `OPS-HEALTH-001`, `OPS-RISK-003` | Non-Functional | Flood `/health/ready` with 1,000 requests during DB pause. | Coalescing/cache ensures DB connection pool is not overwhelmed; 503 returned gracefully. |
-| `OPS-TEST-008` | `OPS-WORK-001`, `OPS-RISK-004` | Fault Injection | Inject database timeout into `OrphanMediaCleanupWorker`. | Worker logs error, applies exponential backoff; container process does not crash. |
+| `OPS-TEST-008` | `OPS-WORK-001`, `OPS-RISK-004` | Fault Injection | Inject database timeout into `OrphanImageCleanupWorker`. | Worker logs error, applies exponential backoff; container process does not crash. |
 | `OPS-TEST-009` | `OPS-SHUT-001`, `OPS-RISK-005` | Lifecycle | Trigger graceful shutdown during active game session. | Sockets receive close frame; clients reconnect to peer instance; game does not abort. |
 | `OPS-TEST-010` | `OPS-MIG-001`, `OPS-MIG-002` | Boundary | Execute DDL migration with lock timeout against locked table. | Lock timeout aborts migration after 5s; zero long-running lock convoy. |

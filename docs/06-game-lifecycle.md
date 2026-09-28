@@ -33,7 +33,7 @@ stateDiagram-v2
 * **`GAME-STATE-002` (State Semantics)**:
   * `CREATED`: Ephemeral internal state during database transaction before lobby is exposed.
   * `LOBBY`: PIN is active. Players can join, pick nicknames, and receive tokens. **Players may join only in `LOBBY`.**
-  * `QUESTION_ACTIVE`: Question text, media, and choices broadcast. Countdown timer runs. Answer submissions open.
+  * `QUESTION_ACTIVE`: Question text, image, and choices broadcast. Countdown timer runs. Answer submissions open.
   * `QUESTION_RESULTS`: Submissions closed. Correct choices and aggregate answer distributions revealed.
   * `LEADERBOARD`: Cumulative ranked scores and podium positions displayed.
   * `FINISHED`: Permanent, immutable terminal state. PIN released. Player credentials enter 24-hour read-only recovery window. No further transitions allowed.
@@ -46,7 +46,7 @@ stateDiagram-v2
 * **`GAME-SNAP-001` (Creation Endpoint)**: `POST /api/games`
 * **`GAME-SNAP-002` (Execution & Deep Snapshot)**:
   * Verifies quiz belongs to authenticated Host and `IsPublished == true`.
-  * Atomically creates deep immutable snapshot tables: copies quiz title, question text, choices, correctness flags, media URLs, durations, and base points into game snapshot records.
+  * Atomically creates deep immutable snapshot tables: copies quiz title, question text, choices, correctness flags, image URLs, durations, and base points into game snapshot records.
   * Allocates a unique **4 to 8 numeric digit PIN** (preserving leading zeroes as strings, e.g., `"048912"`) that is not currently in use by any unfinished game.
   * Initializes game state: `Status = LOBBY`, `StateVersion = 1`, `CreatedAt = NOW()`.
   * Starts the initial Host-attachment grace timer (5 minutes).
@@ -154,7 +154,7 @@ Under full platform concurrency (200 simultaneous live games, 20,000 players):
 ## 5. Security & Threat Mitigations
 
 ### 5.1 Pre-Reveal Answer Concealment `[NORMATIVE]`
-* **`GAME-SEC-001` (Stripped Question Broadcast)**: When transitioning to `QUESTION_ACTIVE`, the player broadcast contains question text, choices (IDs and text only), duration, and media URL. Correctness flags (`isCorrect`) are strictly stripped on the server.
+* **`GAME-SEC-001` (Stripped Question Broadcast)**: When transitioning to `QUESTION_ACTIVE`, the player broadcast contains question text, choices (IDs and text only), duration, and image URL. Correctness flags (`isCorrect`) are strictly stripped on the server.
 
 ### 5.2 Terminal State Locking `[NORMATIVE]`
 * **`GAME-SEC-002` (Immutable Lock)**: Once `Status = FINISHED`, database constraints and application guards prevent answer insertion, score mutation, or participant deletion.

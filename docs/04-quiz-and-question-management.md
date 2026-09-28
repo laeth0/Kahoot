@@ -41,7 +41,7 @@ Quiz authoring allows Hosts to create structured educational content:
     ```json
     {
       "text": "What is the capital of France?",
-      "imageId": "img_01HPX...",
+      "imageId": "550e8400-e29b-41d4-a716-446655440001",
       "durationSeconds": 30,
       "basePoints": 1000,
       "choices": [
@@ -57,7 +57,7 @@ Quiz authoring allows Hosts to create structured educational content:
   * Resets `IsPublished = false`, increments quiz `Revision`.
 * **`QUIZ-QUEST-002` (Update Question)**:
   * **Endpoint**: `PUT /api/quizzes/{quizId}/questions/{questionId}`
-  * Updates text, duration, points, choices, or media. Replaces the complete choice set atomically.
+  * Updates text, duration, points, choices, or image. Replaces the complete choice set atomically.
   * Resets `IsPublished = false`, increments quiz `Revision`.
 * **`QUIZ-QUEST-003` (Delete Question)**:
   * **Endpoint**: `DELETE /api/quizzes/{quizId}/questions/{questionId}`
@@ -164,7 +164,7 @@ Under standard operational load:
 
 ## 5. Security & Threat Mitigations
 
-### 5.1 Cross-Tenant Media Attachment Defense `[NORMATIVE]`
+### 5.1 Cross-Tenant Image Attachment Defense `[NORMATIVE]`
 * **`QUIZ-SEC-001` (Tenant Match on Attachment)**:
   * When attaching a `imageId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on non-null values, so one image cannot be attached to multiple current questions.
   * An image that is missing, foreign, attached to another question, or already deleted by cleanup returns `400 Quiz.InvalidImageReference`. The tenant-matched foreign key and cleanup row lock serialize attachment with deletion.

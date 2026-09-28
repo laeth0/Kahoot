@@ -32,7 +32,7 @@ graph TD
     subgraph Level2 ["Level 2: Integration & Persistence Tests"]
         EFCore["PostgreSQL Data Isolation & Unique Constraints"]
         SignalRHub["SignalR Audience Segregation & Event Framing"]
-        Workers["Background Workers (Two-Phase Media, Token Cleanup, Abandonment)"]
+        Workers["Background Workers (Two-Phase Image, Token Cleanup, Abandonment)"]
     end
 
     subgraph Level3 ["Level 3: Multi-Agent Concurrency & Race Tests"]
@@ -73,7 +73,7 @@ graph TD
 | `PROFILE-BURST` | Platform answer storm | 30 sec | 5,000 answers/sec sustained for $\ge 5\text{ s}$ | $\ge 25,000$ valid answers ingested; $p95 \le 500\text{ ms}$; zero lost answers. | `PRF-BURST-001` |
 | `PROFILE-JOIN` | Lobby join storm | 60 sec | 1,500 joins/sec across 200 games | Seat reservations strictly $\le 500$/game; $p95 \le 500\text{ ms}$. | `PRF-JOIN-001` |
 | `PROFILE-RECON` | Network storm reconnection | 60 sec | 5,000 player reconnections in 60s | $p95 \le 3.0\text{ s}$; full state restored; zero duplicate scores. | `PRF-RECON-001` |
-| `PROFILE-MEDIA` | Media processing & delivery | 15 min | 50 concurrent uploads; 2,000 req/s delivery | Processing $p95 \le 2\text{ s}$; delivery $p95 \le 30\text{ ms}$; memory stable. | `PRF-MEDIA-001` |
+| `PROFILE-IMAGE` | Image processing & delivery | 15 min | 50 concurrent uploads; 2,000 req/s delivery | Processing $p95 \le 2\text{ s}$; delivery $p95 \le 30\text{ ms}$; memory stable. | `PRF-IMAGE-001` |
 | `PROFILE-SOAK` | Extended endurance soak test | 4 hours | 50%–70% target capacity (12k players, 120 games) | Trend analysis: zero monotonic memory growth; zero connection leaks. | `PRF-SOAK-001` |
 
 ### 3.2 Detailed Execution Protocols
@@ -104,7 +104,7 @@ graph TD
   * **Database Connection Leaks**: Active database pool connections return to minimum idle pool size during quiet periods. Zero unclosed connection handles.
   * **Background Worker Health**:
     * `RefreshTokenCleanupWorker` continuously drains backlog ($\ge 20,000$ rows/hour).
-    * `OrphanMediaCleanupWorker` safely reclaims unreferenced media without deadlocking active quiz edits.
+    * `OrphanImageCleanupWorker` safely reclaims unreferenced images without deadlocking active quiz edits.
     * `AbandonedGameFinalizer` transitions orphaned games to `FINISHED` within $300\text{s} + 30\text{s}$ of Host absence.
 
 #### 3. Over-Capacity Tests (110%, 125%, 150%) `[NORMATIVE]`
@@ -192,7 +192,7 @@ To prove resilience, the test suite injects faults at specific, controlled execu
 | `FAULT-03` | Network severed immediately before COMMIT. | Rollback integrity. | Connection drop causes database rollback; client retry creates fresh transaction. | `FLT-TEST-003` |
 | `FAULT-04` | Network severed after COMMIT but before HTTP response. | Outcome B idempotency. | State is durable; client retries with idempotency key; receives committed response. | `FLT-TEST-004` |
 | `FAULT-05` | Realtime broadcast failure after COMMIT. | Commit-first priority. | DB state is authoritative; clients detect sequence gap and resynchronize. | `FLT-TEST-005` |
-| `FAULT-06` | Storage disk fills during media re-encoding write. | Clean rollback. | Temp file cleaned; metadata insert aborted; `503 Image.StorageUnavailable` returned. | `FLT-TEST-006` |
+| `FAULT-06` | Storage disk fills during image re-encoding write. | Clean rollback. | Temp file cleaned; metadata insert aborted; `503 Image.StorageUnavailable` returned. | `FLT-TEST-006` |
 | `FAULT-07` | Terminate backend container during active 500-player game. | Stateless tier recovery. | Sockets severed; clients reconnect to peer instance; game continues without state loss. | `FLT-TEST-007` |
 | `FAULT-08` | Pause PostgreSQL process for 8 seconds. | Connection pool resilience. | Requests within timeout wait; requests exceeding timeout fail with 503; auto-recovers upon unpause. | `FLT-TEST-008` |
 | `FAULT-09` | Inject 10% packet drop in test harness realtime traffic. | Message gap resynchronization. | Clients detect `stateVersion` gaps; invoke catch-up; game remains in exact sync. | `FLT-TEST-009` |
@@ -253,20 +253,20 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `QUIZ-PUB-001`  | 04 | Publication validation rules (1–200 questions, 2–6 choices) | `QUIZ-TEST-003`, `QUIZ-TEST-010` |
 | `QUIZ-LIMIT-001`| 04 | Technical safety limit: max 200 questions per quiz | `QUIZ-TEST-006` |
 | `QUIZ-OVERFLOW-001`| 04 | Checked 64-bit arithmetic on maximum score | `QUIZ-TEST-009` |
-| `QUIZ-SEC-001`  | 04 | Cross-tenant media attachment rejected (400) | `QUIZ-TEST-011` |
+| `QUIZ-SEC-001`  | 04 | Cross-tenant image attachment rejected (400) | `QUIZ-TEST-011` |
 | `QUIZ-SLO-001`  | 04 | Publish 200-question quiz $p95 \le 300\text{ ms}$ | `QUIZ-TEST-010` |
-| `MED-UPL-001`   | 05 | Image upload endpoint `POST /api/uploads/images` | `MED-TEST-001` |
-| `MED-UPL-003`   | 05 | MIME sniff, bomb guard ($\le 64\text{MB}$), EXIF strip, re-encode | `MED-TEST-001`, `MED-TEST-006` |
-| `MED-MODEL-001` | 05 | Dedicated question-image record with one current question owner | `MED-TEST-002` |
-| `MED-MODEL-002` | 05 | Snapshot image reference preserves historical bytes | `MED-TEST-012` |
-| `MED-ATT-001`   | 05 | Question attachment validates ownership and single-owner rule | `MED-TEST-002` |
-| `MED-PUB-001`   | 05 | Public image delivery at `/uploads/{filename}` | `MED-TEST-003` |
-| `MED-PUB-002`   | 05 | Public cache header: `max-age=31536000, immutable` | `MED-TEST-003` |
-| `MED-LIFE-001`  | 05 | Historical game snapshots retain question images while snapshots exist | `MED-TEST-012` |
-| `MED-LIFE-002`  | 05 | Unclaimed image uploads are reclaimed after seven days | `MED-TEST-013` |
-| `MED-LIFE-003`  | 05 | Bounded DB-first cleanup of unreferenced image rows | `MED-TEST-009` |
-| `MED-LIFE-004`  | 05 | File unlink and orphan-file reconciliation after DB deletion | `MED-TEST-010` |
-| `MED-SLO-003`   | 05 | Public image delivery throughput 2,000 req/s, $p95 \le 30\text{ ms}$ | `MED-TEST-011` |
+| `IMG-UPL-001`   | 05 | Image upload endpoint `POST /api/uploads/images` | `IMG-TEST-001` |
+| `IMG-UPL-003`   | 05 | MIME sniff, bomb guard ($\le 64\text{MB}$), EXIF strip, re-encode | `IMG-TEST-001`, `IMG-TEST-006` |
+| `IMG-MODEL-001` | 05 | Dedicated question-image record with one current question owner | `IMG-TEST-002` |
+| `IMG-MODEL-002` | 05 | Snapshot image reference preserves historical bytes | `IMG-TEST-012` |
+| `IMG-ATT-001`   | 05 | Question attachment validates ownership and single-owner rule | `IMG-TEST-002` |
+| `IMG-PUB-001`   | 05 | Public image delivery at `/uploads/{filename}` | `IMG-TEST-003` |
+| `IMG-PUB-002`   | 05 | Public cache header: `max-age=31536000, immutable` | `IMG-TEST-003` |
+| `IMG-LIFE-001`  | 05 | Historical game snapshots retain question images while snapshots exist | `IMG-TEST-012` |
+| `IMG-LIFE-002`  | 05 | Unclaimed image uploads are reclaimed after seven days | `IMG-TEST-013` |
+| `IMG-LIFE-003`  | 05 | Bounded DB-first cleanup of unreferenced image rows | `IMG-TEST-009` |
+| `IMG-LIFE-004`  | 05 | File unlink and orphan-file reconciliation after DB deletion | `IMG-TEST-010` |
+| `IMG-SLO-003`   | 05 | Public image delivery throughput 2,000 req/s, $p95 \le 30\text{ ms}$ | `IMG-TEST-011` |
 | `GAME-STATE-001`| 06 | Canonical 6-state machine (zero aliases) | `GAME-TEST-002` |
 | `GAME-SNAP-002` | 06 | Deep immutable snapshot on game creation; 4–8 digit PIN | `GAME-TEST-001` |
 | `GAME-AUTO-001` | 06 | Deadline stops answers; does NOT change game state | `GAME-TEST-005` |
@@ -332,7 +332,7 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `ARCH-AVAIL-001`| 13 | 99.9% monthly service availability math and exclusions | `ARCH-TEST-003` |
 | `ARCH-DR-001`   | 13 | RPO $\le 5\text{ minutes}$, RTO $\le 30\text{ minutes}$ | `ARCH-TEST-009` |
 | `ARCH-DR-002`   | 13 | Fail-closed security reconciliation upon disaster restore | `ARCH-TEST-007` |
-| `ARCH-DR-003`   | 13 | Database + media volume restore reconciliation | `ARCH-TEST-008` |
+| `ARCH-DR-003`   | 13 | Database + image volume restore reconciliation | `ARCH-TEST-008` |
 
 ---
 

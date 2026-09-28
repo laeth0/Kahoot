@@ -45,7 +45,7 @@ Reconnection enables Players to recover their active game state after network dr
 | Current Game State | Catch-Up Data Returned to Reconnecting Player | Pre-Reveal Privacy Rule |
 | :--- | :--- | :--- |
 | **`LOBBY`** | `gameId`, `status: "LOBBY"`, `title`, `nickname`, `seatNumber`, `totalParticipants`. | Standard lobby view. |
-| **`QUESTION_ACTIVE`** | Active question snapshot (question text, media URL, choices with IDs/text only, index, total questions), server `deadlineUtc`, remaining seconds, and `alreadyAnswered: boolean`. | **Correct choices (`isCorrect`) are strictly omitted.** Provisional points earned are withheld from personal score. |
+| **`QUESTION_ACTIVE`** | Active question snapshot (question text, image URL, choices with IDs/text only, index, total questions), server `deadlineUtc`, remaining seconds, and `alreadyAnswered: boolean`. | **Correct choices (`isCorrect`) are strictly omitted.** Provisional points earned are withheld from personal score. |
 | **`QUESTION_RESULTS`** | Active question snapshot, correct choice IDs, aggregate per-choice selection counts, personal answer submission, points awarded, and updated total score. | Full reveal of question results. |
 | **`LEADERBOARD`** | Top 5 ranked players, reconnecting player's personal score and sequential rank, and current game status. | Visible standings. |
 | **`FINISHED`** | Final podium (top 3), complete personal score, final sequential rank, and total accepted answers. | Read-only final summary. |

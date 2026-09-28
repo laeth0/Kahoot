@@ -1,3 +1,4 @@
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
@@ -13,6 +14,9 @@ namespace Kahoot.Application.Features.Quizzes.Questions.UpdateQuestion;
 
 public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestionCommand, QuestionResponse>
 {
+    private const string ImageOwnershipConstraintName = "ux_questions_image_id";
+    private const string CompositeImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
+
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
     private readonly TimeProvider _timeProvider;
@@ -98,7 +102,9 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
                     .Where(candidate => candidate.Id == oldImageId.Value && candidate.HostAccountId == hostAccountId)
                     .SingleOrDefaultAsync(cancellationToken);
 
-                if (oldImage is not null)
+                if (oldImage is not null &&
+                    !await _dbContext.GameQuestionSnapshots
+                        .AnyAsync(snapshot => snapshot.ImageId == oldImage.Id, cancellationToken))
                 {
                     oldImage.UnreferencedSince = _timeProvider.GetUtcNow();
                 }
@@ -146,7 +152,16 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
         quiz.IsPublished = false;
         quiz.Revision++;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (UniqueConstraintViolationException exception) when (
+            string.Equals(exception.ConstraintName, ImageOwnershipConstraintName, StringComparison.Ordinal) ||
+            string.Equals(exception.ConstraintName, CompositeImageOwnershipConstraintName, StringComparison.Ordinal))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
         await transaction.CommitAsync(cancellationToken);
 
         QuestionResponse response = new QuestionResponse(

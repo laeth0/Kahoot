@@ -82,7 +82,9 @@ public sealed class DeleteQuestionCommandHandler : ICommandHandler<DeleteQuestio
                 .Where(candidate => candidate.Id == question.ImageId.Value && candidate.HostAccountId == hostAccountId)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (image is not null)
+            if (image is not null &&
+                !await _dbContext.GameQuestionSnapshots
+                    .AnyAsync(snapshot => snapshot.ImageId == image.Id, cancellationToken))
             {
                 image.UnreferencedSince = _timeProvider.GetUtcNow();
             }

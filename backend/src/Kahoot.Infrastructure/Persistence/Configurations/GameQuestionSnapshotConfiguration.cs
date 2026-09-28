@@ -78,7 +78,7 @@ public sealed class GameQuestionSnapshotConfiguration : IEntityTypeConfiguration
         builder.HasOne<QuestionImage>()
             .WithMany()
             .HasForeignKey(question => new { question.ImageId, question.HostAccountId })
-            .HasPrincipalKey(media => new { media.Id, media.HostAccountId })
+            .HasPrincipalKey(image => new { image.Id, image.HostAccountId })
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
     }
