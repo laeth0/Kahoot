@@ -13,8 +13,7 @@ namespace Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 
 public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionCommand, QuestionResponse>
 {
-    private const string ImageOwnershipConstraintName = "ux_questions_image_id";
-    private const string CompositeImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
+    private const string ImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
 
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
@@ -131,8 +130,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (UniqueConstraintViolationException exception) when (
-            string.Equals(exception.ConstraintName, ImageOwnershipConstraintName, StringComparison.Ordinal) ||
-            string.Equals(exception.ConstraintName, CompositeImageOwnershipConstraintName, StringComparison.Ordinal))
+            string.Equals(exception.ConstraintName, ImageOwnershipConstraintName, StringComparison.Ordinal))
         {
             return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
         }

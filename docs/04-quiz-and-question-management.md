@@ -166,7 +166,7 @@ Under standard operational load:
 
 ### 5.1 Cross-Tenant Image Attachment Defense `[NORMATIVE]`
 * **`QUIZ-SEC-001` (Tenant Match on Attachment)**:
-  * When attaching a `imageId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on non-null values, so one image cannot be attached to multiple current questions.
+  * When attaching a `imageId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on `(ImageId, HostAccountId)`, so one image cannot be attached to multiple current questions.
   * An image that is missing, foreign, attached to another question, or already deleted by cleanup returns `400 Quiz.InvalidImageReference`. The tenant-matched foreign key and cleanup row lock serialize attachment with deletion.
 
 ### 5.2 Content Sanitization & XSS Defense `[NORMATIVE]`

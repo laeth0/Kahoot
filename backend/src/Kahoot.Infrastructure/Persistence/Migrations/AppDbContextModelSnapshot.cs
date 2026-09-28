@@ -702,10 +702,6 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                     b.HasAlternateKey("Id", "HostAccountId")
                         .HasName("ak_questions_id_host_account_id");
 
-                    b.HasIndex("ImageId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_questions_image_id");
-
                     b.HasIndex("Id", "HostAccountId")
                         .IsUnique()
                         .HasDatabaseName("ux_questions_id_host_account");

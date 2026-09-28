@@ -86,11 +86,6 @@ public partial class RenameQuestionImages : Migration
             table: "questions",
             columns: new[] { "image_id", "host_account_id" },
             unique: true);
-        migrationBuilder.CreateIndex(
-            name: "ux_questions_image_id",
-            table: "questions",
-            column: "image_id",
-            unique: true);
 
         migrationBuilder.AddForeignKey(
             name: "fk_game_question_snapshots_question_images_image_id_host_accou",
@@ -117,7 +112,6 @@ public partial class RenameQuestionImages : Migration
             name: "fk_questions_question_images_image_id_host_account_id",
             table: "questions");
         migrationBuilder.DropIndex(name: "ix_questions_image_id_host_account_id", table: "questions");
-        migrationBuilder.DropIndex(name: "ux_questions_image_id", table: "questions");
         migrationBuilder.DropIndex(name: "ix_question_images_orphan_cleanup", table: "question_images");
 
         migrationBuilder.AlterDatabase()
@@ -149,7 +143,9 @@ public partial class RenameQuestionImages : Migration
             ALTER TABLE media_items RENAME CONSTRAINT ak_question_images_id_host_account_id TO ak_media_items_id_host_account_id;
             ALTER TABLE media_items RENAME CONSTRAINT fk_question_images_users_host_account_id TO fk_media_items_users_host_account_id;
             UPDATE media_items AS image
-            SET reference_count = (SELECT COUNT(*) FROM questions WHERE media_item_id = image.id);
+            SET reference_count =
+                (SELECT COUNT(*) FROM questions WHERE media_item_id = image.id) +
+                (SELECT COUNT(*) FROM game_question_snapshots WHERE media_item_id = image.id);
             """);
 
         migrationBuilder.CreateIndex(

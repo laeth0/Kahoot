@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kahoot.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260928155758_RenameQuestionImages")]
+    [Migration("20260928160550_RenameQuestionImages")]
     partial class RenameQuestionImages
     {
         /// <inheritdoc />
@@ -704,10 +704,6 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
 
                     b.HasAlternateKey("Id", "HostAccountId")
                         .HasName("ak_questions_id_host_account_id");
-
-                    b.HasIndex("ImageId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_questions_image_id");
 
                     b.HasIndex("Id", "HostAccountId")
                         .IsUnique()

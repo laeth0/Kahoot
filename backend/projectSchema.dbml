@@ -144,7 +144,7 @@ Table questions {
 
   indexes {
     (id, host_account_id) [unique, name: 'ux_questions_id_host_account']
-    image_id [unique, name: 'ux_questions_image_id']
+    (image_id, host_account_id) [unique, name: 'ix_questions_image_id_host_account_id']
     (quiz_id, order_index) [unique, name: 'ux_questions_quiz_order']
     (host_account_id, quiz_id, order_index) [name: 'ix_questions_host_account_quiz_order']
   }
@@ -241,7 +241,7 @@ Table game_question_snapshots {
     (id, host_account_id) [unique, name: 'ux_game_questions_id_host_account']
     (id, host_account_id, game_id) [unique, name: 'ux_game_questions_id_host_account_game']
     (game_id, order_index) [unique, name: 'ux_game_questions_game_order']
-    (image_id, host_account_id) [name: 'ix_game_questions_image_host_account']
+    (image_id, host_account_id) [name: 'ix_game_question_snapshots_image_id_host_account_id']
     (host_account_id, game_id, order_index) [name: 'ix_game_questions_host_account_game_order']
   }
 

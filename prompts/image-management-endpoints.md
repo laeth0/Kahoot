@@ -59,8 +59,8 @@ This document specifies the REST API endpoints and background processing contrac
      - Client-provided filenames are strictly discarded.
      - Generates a cryptographically random UUIDv4 (`Guid.NewGuid()`).
      - Writes to temporary staging quarantine first; moves to destination `/uploads/{guid}.{extension}` under backend static web root (`wwwroot/uploads`).
-  10. **Atomic Metadata Persistence (`IMG-UPL-003.8`, `IMG-RISK-002`)**:
-      - Inserts record into `QuestionImage` PostgreSQL table within database transaction:
+  10. **Metadata Persistence and File Compensation (`IMG-UPL-003.8`, `IMG-RISK-002`)**:
+      - After the sanitized file is durable, inserts a `QuestionImage` row in a database transaction. Compensate for file writes when the database commit fails:
         - `Id`: Generated Guid (UUIDv4)
         - `HostAccountId`: Authenticated Host user ID
         - `StoragePath`: `/uploads/{guid}.{extension}`

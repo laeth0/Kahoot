@@ -37,10 +37,6 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .IsUnique()
             .HasDatabaseName("ux_questions_id_host_account");
 
-        builder.HasIndex(question => question.ImageId)
-            .IsUnique()
-            .HasDatabaseName("ux_questions_image_id");
-
         builder.HasIndex(question => new { question.QuizId, question.OrderIndex })
             .IsUnique()
             .HasDatabaseName("ux_questions_quiz_order");
