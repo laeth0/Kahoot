@@ -26,6 +26,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
                 statusCode: StatusCodes.Status413PayloadTooLarge,
                 title: "Payload too large",
                 detail: ImageErrors.TooLarge.Description,
+                type: "https://api.kahoot-saas.local/errors/Image.TooLarge",
                 extensions: CreateExtensions(httpContext, ImageErrors.TooLarge.Code))
                 .ExecuteAsync(httpContext);
 

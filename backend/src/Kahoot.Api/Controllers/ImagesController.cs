@@ -114,7 +114,6 @@ public sealed class ImagesController : ApiController
 
         if (result.IsSuccess)
         {
-            Response.Headers.Location = result.Value.Url;
             return Created(result.Value.Url, result.Value);
         }
 
