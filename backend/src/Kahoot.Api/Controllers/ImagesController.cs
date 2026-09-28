@@ -71,13 +71,30 @@ public sealed class ImagesController : ApiController
         return Problem(result.Error);
     }
 
-    [HttpGet("uploads/{filename}")]
+    [HttpGet("uploads")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public IActionResult GetUploadsRoot()
+    {
+        return Problem(ImageErrors.NotFound);
+    }
+
+    [HttpGet("uploads/{*filename}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
-    public IActionResult GetImage([FromRoute] string filename)
+    public IActionResult GetImage([FromRoute] string? filename)
     {
-        if (string.IsNullOrWhiteSpace(filename) || !ValidImageFilenameRegex.IsMatch(filename))
+        string rawPath = HttpContext.Request.Path.Value ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(filename)
+            || rawPath.Contains("%2e%2e", StringComparison.OrdinalIgnoreCase)
+            || rawPath.Contains("%2f", StringComparison.OrdinalIgnoreCase)
+            || rawPath.Contains("%5c", StringComparison.OrdinalIgnoreCase)
+            || filename.Contains("..")
+            || filename.Contains('/')
+            || filename.Contains('\\')
+            || !ValidImageFilenameRegex.IsMatch(filename))
         {
             return Problem(ImageErrors.NotFound);
         }
