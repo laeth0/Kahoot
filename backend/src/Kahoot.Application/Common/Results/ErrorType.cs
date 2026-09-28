@@ -10,5 +10,7 @@ public enum ErrorType
     Unauthorized,
     Forbidden,
     RateLimited,
-    Unavailable
+    Unavailable,
+    TooLarge,
+    UnsupportedType
 }

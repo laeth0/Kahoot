@@ -1,6 +1,8 @@
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /app/wwwroot/uploads/staging \
+    && chown -R $APP_UID:$APP_UID /app/wwwroot
 USER $APP_UID
 WORKDIR /app
 EXPOSE 8080

@@ -17,6 +17,8 @@ public abstract class ApiController : ControllerBase
             ErrorType.RateLimited => StatusCodes.Status429TooManyRequests,
             ErrorType.Unavailable => StatusCodes.Status503ServiceUnavailable,
             ErrorType.Validation => StatusCodes.Status400BadRequest,
+            ErrorType.TooLarge => StatusCodes.Status413PayloadTooLarge,
+            ErrorType.UnsupportedType => StatusCodes.Status415UnsupportedMediaType,
             _ => StatusCodes.Status500InternalServerError
         };
 
@@ -32,6 +34,11 @@ public abstract class ApiController : ControllerBase
             "Request.RateLimited" => "Rate limited",
             "Service.Unavailable" => "Service unavailable",
             "Validation.Failed" => "Validation failed",
+            "Image.InvalidImage" => "Invalid image",
+            "Image.TooLarge" => "Payload too large",
+            "Image.UnsupportedType" => "Unsupported media type",
+            "Image.StorageUnavailable" => "Storage unavailable",
+            "Image.NotFound" => "Image not found",
             "Quiz.NotFound" => "Quiz not found",
             "Quiz.QuestionNotFound" => "Question not found",
             "Quiz.InUse" => "Quiz in use",

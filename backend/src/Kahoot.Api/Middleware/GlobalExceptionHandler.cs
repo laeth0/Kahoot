@@ -1,4 +1,5 @@
 using FluentValidation;
+using Kahoot.Application.Features.Images;
 using Microsoft.AspNetCore.Diagnostics;
 
 namespace Kahoot.Api.Middleware;
@@ -17,6 +18,21 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
+        if (exception is BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge } &&
+            string.Equals(httpContext.Request.Path.Value, "/api/uploads/images", StringComparison.OrdinalIgnoreCase))
+        {
+            await Results.Problem(
+                instance: httpContext.Request.Path,
+                statusCode: StatusCodes.Status413PayloadTooLarge,
+                title: "Payload too large",
+                detail: ImageErrors.TooLarge.Description,
+                type: "https://api.kahoot-saas.local/errors/Image.TooLarge",
+                extensions: CreateExtensions(httpContext, ImageErrors.TooLarge.Code))
+                .ExecuteAsync(httpContext);
+
+            return true;
+        }
+
         if (exception is ValidationException validationException)
         {
             Dictionary<string, string[]> errors = validationException.Errors

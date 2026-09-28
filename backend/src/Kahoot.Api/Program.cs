@@ -36,6 +36,9 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 WebApplication app = builder.Build();
 {
+    string webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
+    Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "staging"));
+
     app.UseExceptionHandler();
     app.UseHttpsRedirection();
     app.UseRouting();

@@ -39,12 +39,15 @@ Set `API_PORT` or `POSTGRES_PORT` in `.env` if those host ports are occupied. Co
 
 The following Docker named volumes persist across normal `docker compose down`:
 - `postgres_data`: Relational database storage.
+- `image_uploads`: Sanitized question images and temporary upload staging under `/app/wwwroot/uploads`.
 - `prometheus_data`: Time-series metrics with a retention window of 7 days (`--storage.tsdb.retention.time=7d`) and a 2GB ceiling.
 - `loki_data`: Structured application logs with a retention window of 7 days (`retention_period: 168h`).
 - `grafana_data`: Grafana state, dashboard preferences, and credentials.
 
 > [!WARNING]
-> Running `docker compose down -v` permanently destroys all local database data and collected telemetry storage volumes. Use `docker compose down` for normal stopping and restarts.
+> Running `docker compose down -v` permanently destroys local database data, uploaded images, and collected telemetry storage volumes. Use `docker compose down` for normal stopping and restarts.
+
+When running API replicas on different hosts, mount the same durable, writable image volume at `/app/wwwroot/uploads` on every replica. Each replica serves public image URLs and runs orphan cleanup; independent local volumes would produce missing images and incomplete cleanup. The staging directory must remain inaccessible to public static-file servers.
 
 > [!NOTE]
 > In the single-host baseline deployment, Jaeger uses its default in-memory trace storage. Traces are ephemeral and reset whenever the Jaeger container restarts.
@@ -125,6 +128,8 @@ To run the API directly on your development workstation while keeping PostgreSQL
 ## Database Migrations & Multi-Replica Startup
 
 The API requires a valid database connection at startup and automatically applies pending EF Core migrations. Migration failures stop the application.
+
+This branch currently has no EF migration files. A fresh database cannot be initialized from this branch until a baseline migration is generated and reviewed.
 
 Replicas coordinate migrations using a PostgreSQL transaction-level advisory lock (`pg_advisory_xact_lock`). A waiting replica begins serving traffic only after it acquires the lock and EF Core confirms migrations are applied. Transient connection failures before migration begins are retried with bounded backoff. Migration commands use `Database:MigrationCommandTimeoutSeconds` (300 seconds by default); lock acquisition timeout during migration is bounded to 5 seconds.
 
