@@ -20,6 +20,7 @@ public static class DependencyInjection
         services.AddHostedService<RefreshTokenCleanupWorker>();
         services.AddSingleton<ISuspensionFinalizerChannel, SuspensionFinalizerChannel>();
         services.AddHostedService<SuspensionFinalizerWorker>();
+        services.AddHostedService<QuestionImageCleanupWorker>();
         services.AddSingleton<ISocketEvictionService, SocketEvictionService>();
         services.AddSingleton(TimeProvider.System);
 

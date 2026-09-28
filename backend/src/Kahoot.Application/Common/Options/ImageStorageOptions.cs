@@ -19,4 +19,16 @@ public sealed class ImageStorageOptions
     public long MaxDecodeMemoryBytes { get; set; } = 67_108_864;
 
     public double MinimumFreeStorageRatio { get; set; } = 0.10;
+
+    public int OrphanRetentionDays { get; set; } = 7;
+
+    public int StagingQuarantineHours { get; set; } = 24;
+
+    public int CleanupIntervalMinutes { get; set; } = 10;
+
+    public int CleanupBatchSize { get; set; } = 100;
+
+    public int MaxBatchesPerPass { get; set; } = 20;
+
+    public int ReconciliationBatchSize { get; set; } = 200;
 }
