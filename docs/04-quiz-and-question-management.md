@@ -1,6 +1,6 @@
 # 04. Quiz and Question Authoring
 
-This document defines the normative requirements for authoring quizzes, questions, choices, media attachments, question reordering, publication validation, immutable snapshot creation, and quiz deletion. It unifies both functional specifications and non-functional requirements (technical safety bounds, publication latency SLOs, integer overflow prevention, and concurrency rules) into a single document.
+This document defines the normative requirements for authoring quizzes, questions, text-only choices, question image attachments, question reordering, publication validation, immutable snapshot creation, and quiz deletion. It unifies both functional specifications and non-functional requirements (technical safety bounds, publication latency SLOs, integer overflow prevention, and concurrency rules) into a single document.
 
 ---
 
@@ -30,7 +30,7 @@ Quiz authoring allows Hosts to create structured educational content:
   * **Rules**: Updates title and description. Any edit immediately resets `IsPublished = false` and increments `Revision`.
 * **`QUIZ-DEL-001` (Delete Rules & Lifecycle Invariants)**:
   * **Endpoint**: `DELETE /api/quizzes/{quizId}`
-  * **Never-Played Invariant**: A quiz that has **never** been used to launch a game session may be permanently deleted. Any media items referenced solely by this quiz become unreferenced (`UnreferencedSince = NOW()`).
+  * **Never-Played Invariant**: A quiz that has **never** been used to launch a game session may be permanently deleted. Its question images become eligible for orphan retention once no question or game snapshot references them.
   * **Ever-Played Invariant**: A quiz that has been used in **any** game session (active or finished) can **never** be deleted, returning `409 Quiz.HasSessions` to preserve historical integrity.
   * **Active Session Lock**: If a game session launched from this quiz is currently unfinished, deletion is rejected with `409 Quiz.InUse`.
 
@@ -41,7 +41,7 @@ Quiz authoring allows Hosts to create structured educational content:
     ```json
     {
       "text": "What is the capital of France?",
-      "mediaId": "med_01HPX...",
+      "imageId": "550e8400-e29b-41d4-a716-446655440001",
       "durationSeconds": 30,
       "basePoints": 1000,
       "choices": [
@@ -52,12 +52,13 @@ Quiz authoring allows Hosts to create structured educational content:
       ]
     }
     ```
-  * Appends question to the end of the quiz with contiguous zero-based `OrderIndex`.
+  * Appends question to the end of the quiz with contiguous zero-based `OrderIndex`. A question has at most one optional image; answers and choices remain text-only.
+  * Question create/update and quiz detail responses include nullable `imageId` and `imageUrl`; `imageUrl` is the immutable public `/uploads/` path returned for the stored question image.
   * Technical Limit Check: Fails with `400 Validation.Failed` if quiz already contains 200 questions.
   * Resets `IsPublished = false`, increments quiz `Revision`.
 * **`QUIZ-QUEST-002` (Update Question)**:
   * **Endpoint**: `PUT /api/quizzes/{quizId}/questions/{questionId}`
-  * Updates text, duration, points, choices, or media. Replaces the complete choice set atomically.
+  * Updates text, duration, points, choices, or image. Replaces the complete choice set atomically.
   * Resets `IsPublished = false`, increments quiz `Revision`.
 * **`QUIZ-QUEST-003` (Delete Question)**:
   * **Endpoint**: `DELETE /api/quizzes/{quizId}/questions/{questionId}`
@@ -87,7 +88,7 @@ Quiz authoring allows Hosts to create structured educational content:
     5. Every question has between **2 and 6 choices** (inclusive).
     6. Every choice has non-whitespace `text` (1–300 chars).
     7. Every question has **at least 1 choice** marked `isCorrect = true` (multiple correct choices permitted).
-    8. Any referenced `mediaId` exists, is stored, and belongs to the **same Host tenant**.
+    8. Any referenced `imageId` identifies a committed question image owned by the **same Host tenant** and attached only to that question.
     9. Arithmetic Safety: Total potential maximum score does not overflow signed 64-bit integer (`long.MaxValue`).
   * **Outcome**: Sets `IsPublished = true`, increments `Revision`. Retrying publication of an unchanged valid quiz is an idempotent `200 OK`.
 
@@ -133,7 +134,7 @@ Quiz authoring allows Hosts to create structured educational content:
 | :--- | :--- | :--- | :--- |
 | **400** | `Validation.Failed` | Boundary violation, empty text, or points overflow. | `QUIZ-ERR-001` |
 | **400** | `Quiz.QuestionSetMismatch` | Reorder list does not match current quiz question IDs. | `QUIZ-ERR-002` |
-| **400** | `Quiz.InvalidMediaReference` | Attached media ID does not exist, uncommitted, or belongs to another tenant. | `QUIZ-ERR-003` |
+| **400** | `Quiz.InvalidImageReference` | Image ID does not exist, is incomplete, belongs to another tenant, is attached to a different question, or was removed by cleanup. | `QUIZ-ERR-003` |
 | **404** | `Quiz.NotFound` | Quiz does not exist or belongs to another Host tenant. | `QUIZ-ERR-004` |
 | **404** | `Quiz.QuestionNotFound` | Question does not exist within the specified quiz. | `QUIZ-ERR-005` |
 | **409** | `Quiz.InUse` | Attempting to edit a quiz while an active game session is running. | `QUIZ-ERR-006` |
@@ -164,14 +165,10 @@ Under standard operational load:
 
 ## 5. Security & Threat Mitigations
 
-### 5.1 Cross-Tenant Media Attachment Defense `[NORMATIVE]`
+### 5.1 Cross-Tenant Image Attachment Defense `[NORMATIVE]`
 * **`QUIZ-SEC-001` (Tenant Match on Attachment)**:
-  * When attaching a `mediaId` to a question, the server verifies:
-    ```sql
-    -- NON-NORMATIVE REFERENCE EXAMPLE
-    SELECT 1 FROM MediaItems WHERE MediaId = @MediaId AND HostAccountId = @CurrentHostAccountId;
-    ```
-  * If the media belongs to another tenant or does not exist, returns `400 Quiz.InvalidMediaReference`.
+  * When attaching a `imageId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on `(ImageId, HostAccountId)`, so one image cannot be attached to multiple current questions.
+  * An image that is missing, foreign, attached to another question, or already deleted by cleanup returns `400 Quiz.InvalidImageReference`. The tenant-matched foreign key and cleanup row lock serialize attachment with deletion.
 
 ### 5.2 Content Sanitization & XSS Defense `[NORMATIVE]`
 * **`QUIZ-SEC-002` (Plain-Text Handling)**:
@@ -197,7 +194,7 @@ Under standard operational load:
 | `QUIZ-RISK-002` | Two browser tabs concurrently edit same quiz. | Lost updates or overwritten questions. | Optimistic concurrency via `Revision` column; first commits, second receives `409 Quiz.ConcurrentModification`. | Client reloads fresh quiz and reapplies edit. | `QUIZ-TEST-008` |
 | `QUIZ-RISK-003` | Host creates 200 questions with massive base points causing integer overflow. | Runtime exceptions or corrupted scores in database. | Publication validation evaluates checked sum against `long.MaxValue`; rejects with `400 Validation.Failed`. | Bounded score math. | `QUIZ-TEST-009` |
 | `QUIZ-RISK-004` | Question deletion race against game creation snapshot. | Game snapshot captures partial or inconsistent question set. | Game creation executes in serializable/snapshot isolation transaction; snapshot captures consistent committed state. | Read committed snapshot isolation. | `QUIZ-TEST-010` |
-| `QUIZ-RISK-005` | Media cleanup worker runs while Host attaches image to question. | Question references unlinked/missing image. | Shared reference increment or two-phase deletion check ensures referenced image is preserved. | Two-phase media lifecycle. | `QUIZ-TEST-011` |
+| `QUIZ-RISK-005` | Image cleanup runs while Host attaches an image to a question. | Question references a missing file. | Cleanup locks and rechecks the image row; the foreign key prevents a committed question reference to a deleted row. | Database-first cleanup. | `QUIZ-TEST-011` |
 
 ---
 
@@ -215,4 +212,4 @@ Under standard operational load:
 | `QUIZ-TEST-008` | `QUIZ-ERR-008`, `QUIZ-RISK-002` | Concurrency | Concurrent question insertion and reordering against same quiz revision. | Exactly one commits; second fails with `409 Quiz.ConcurrentModification`. |
 | `QUIZ-TEST-009` | `QUIZ-OVERFLOW-001`, `QUIZ-RISK-003` | Boundary | Publish quiz where base points sum overflows `long.MaxValue`. | Validation fails with `400 Validation.Failed`. |
 | `QUIZ-TEST-010` | `QUIZ-PUB-001`, `QUIZ-SLO-001` | Non-Functional | Measure publication latency of maximum 200-question quiz. | Meets $p95 \le 300\text{ ms}$. |
-| `QUIZ-TEST-011` | `QUIZ-SEC-001`, `QUIZ-RISK-005` | Security | Host A attempts to attach Host B's uploaded `mediaId` to Question. | Rejected with `400 Quiz.InvalidMediaReference`. |
+| `QUIZ-TEST-011` | `QUIZ-SEC-001`, `QUIZ-RISK-005` | Security | Host A attempts to attach Host B's uploaded `imageId` to Question. | Rejected with `400 Quiz.InvalidImageReference`. |

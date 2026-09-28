@@ -20,11 +20,6 @@ Enum user_status {
   Suspended
 }
 
-Enum media_status {
-  ACTIVE
-  DELETION_PENDING
-}
-
 Enum game_status {
   CREATED
   LOBBY
@@ -107,7 +102,7 @@ Table quizzes {
   }
 }
 
-Table media_items {
+Table question_images {
   id uuid [pk, not null]
   host_account_id uuid [not null, ref: > users.id]
 
@@ -118,21 +113,20 @@ Table media_items {
   pixel_width int [not null]
   pixel_height int [not null]
 
-  status media_status [not null]
-  reference_count int [not null, default: 0]
   unreferenced_since timestamptz [null]
   created_at timestamptz [not null]
 
   indexes {
-    (id, host_account_id) [unique, name: 'ux_media_items_id_host_account']
-    storage_path [unique, name: 'ux_media_items_storage_path']
-    (host_account_id, created_at, id) [name: 'ix_media_items_host_account_created_id']
-    (status, reference_count, unreferenced_since) [name: 'ix_media_items_orphan_cleanup']
+    (id, host_account_id) [unique, name: 'ux_question_images_id_host_account']
+    storage_path [unique, name: 'ux_question_images_storage_path']
+    (host_account_id, created_at, id) [name: 'ix_question_images_host_account_created_id']
+    unreferenced_since [name: 'ix_question_images_orphan_cleanup']
   }
 
   Note: '''
-  ReferenceCount includes current authoring references and immutable game-snapshot
-  references. A referenced row must not be physically deleted.
+  Each image has a distinct immutable storage path. An uploaded image starts
+  unreferenced. Retention is determined by question and game-snapshot foreign keys,
+  not a stored reference count or deletion status.
   '''
 }
 
@@ -142,7 +136,7 @@ Table questions {
   quiz_id uuid [not null]
 
   text varchar(500) [not null]
-  media_item_id uuid [null]
+  image_id uuid [null]
 
   duration_seconds int [not null]
   base_points int [not null]
@@ -150,6 +144,7 @@ Table questions {
 
   indexes {
     (id, host_account_id) [unique, name: 'ux_questions_id_host_account']
+    (image_id, host_account_id) [unique, name: 'ix_questions_image_id_host_account_id']
     (quiz_id, order_index) [unique, name: 'ux_questions_quiz_order']
     (host_account_id, quiz_id, order_index) [name: 'ix_questions_host_account_quiz_order']
   }
@@ -227,8 +222,8 @@ Table game_question_snapshots {
   order_index int [not null]
   text varchar(500) [not null]
 
-  media_item_id uuid [null]
-  media_url varchar(512) [null]
+  image_id uuid [null]
+  image_url varchar(512) [null]
 
   duration_seconds int [not null]
   base_points int [not null]
@@ -246,11 +241,12 @@ Table game_question_snapshots {
     (id, host_account_id) [unique, name: 'ux_game_questions_id_host_account']
     (id, host_account_id, game_id) [unique, name: 'ux_game_questions_id_host_account_game']
     (game_id, order_index) [unique, name: 'ux_game_questions_game_order']
+    (image_id, host_account_id) [name: 'ix_game_question_snapshots_image_id_host_account_id']
     (host_account_id, game_id, order_index) [name: 'ix_game_questions_host_account_game_order']
   }
 
   Note: '''
-  Snapshot content fields (Text, MediaUrl, DurationSeconds, BasePoints) are copied
+  Snapshot content fields (Text, ImageUrl, DurationSeconds, BasePoints) are copied
   at game creation and never follow later quiz edits.
 
   InitialEligibleParticipantCount is intentionally separate from
@@ -418,7 +414,7 @@ Table game_command_idempotency {
 // Quiz authoring
 
 Ref: questions.(quiz_id, host_account_id) > quizzes.(id, host_account_id) [delete: cascade]
-Ref: questions.(media_item_id, host_account_id) > media_items.(id, host_account_id) [delete: restrict]
+Ref: questions.(image_id, host_account_id) > question_images.(id, host_account_id) [delete: restrict]
 Ref: choices.(question_id, host_account_id) > questions.(id, host_account_id) [delete: cascade]
 
 
@@ -426,7 +422,7 @@ Ref: choices.(question_id, host_account_id) > questions.(id, host_account_id) [d
 
 Ref: games.(source_quiz_id, host_account_id) > quizzes.(id, host_account_id) [delete: restrict]
 Ref: game_question_snapshots.(game_id, host_account_id) > games.(id, host_account_id) [delete: restrict]
-Ref: game_question_snapshots.(media_item_id, host_account_id) > media_items.(id, host_account_id) [delete: restrict]
+Ref: game_question_snapshots.(image_id, host_account_id) > question_images.(id, host_account_id) [delete: restrict]
 Ref: game_choice_snapshots.(game_question_id, host_account_id) > game_question_snapshots.(id, host_account_id) [delete: restrict]
 
 

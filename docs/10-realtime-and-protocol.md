@@ -50,7 +50,7 @@ Realtime communication coordinates live quiz synchronization across distributed 
 | :--- | :--- | :--- | :--- |
 | `ParticipantPresenceChanged` | Both | `connectedParticipantCount`, `reservedParticipantCount`, `presenceVersion`, participant nickname, and event reason (`Joined`, `Disconnected`, `Reconnected`, `Removed`). Zero tokens or connection IDs disclosed. | `RT-EVT-001` |
 | `ParticipantRemoved` | Evicted Client | Targeted directly to the evicted participant's socket; payload contains `{ "participantId": "..." }`. Connection is severed immediately. | `RT-EVT-002` |
-| `QuestionStarted` | Players | Question text, choices (IDs and text only), media URL, question index, total questions, start time, deadline. **Correct choice indicators (`isCorrect`) are strictly withheld.** | `RT-EVT-003` |
+| `QuestionStarted` | Players | Question text, choices (IDs and text only), image URL, question index, total questions, start time, deadline. **Correct choice indicators (`isCorrect`) are strictly withheld.** | `RT-EVT-003` |
 | `QuestionStartedForHost` | Hosts | Full question projection including `correctChoiceIds`, base points, duration, and `effectiveEligibleParticipantCount`. | `RT-EVT-004` |
 | `QuestionEnded` | Both | Revealed results: `correctChoiceIds`, per-choice selection counts, total answers received, and historical eligible denominator. | `RT-EVT-005` |
 | `LeaderboardUpdated` | Both | Visible ranked standings of non-removed participants: `rank`, `nickname`, `score`. | `RT-EVT-006` |
@@ -64,7 +64,7 @@ Realtime communication coordinates live quiz synchronization across distributed 
 Auth Routes:         POST /api/auth/{register, login, refresh, logout, logout-all, change-password} (Owned by Doc 02)
 Admin Routes:        GET /api/admin/users, POST /api/admin/users/{id}/{suspend, reactivate}, etc. (Owned by Doc 03)
 Quiz Routes:         GET/POST /api/quizzes, PUT/DELETE /api/quizzes/{id}, questions CRUD, reorder, publish (Owned by Doc 04)
-Media Routes:        POST /api/uploads/images, GET /uploads/{filename} (Owned by Doc 05)
+Image Routes:        POST /api/uploads/images, GET /uploads/{filename} (Owned by Doc 05)
 Game Controls:       POST /api/games, POST /api/games/{id}/{start, end-question, show-leaderboard, advance, end} (Owned by Doc 06)
 Lobby Routes:        POST /api/games/join, DELETE /api/games/{id}/participants/{pid} (Owned by Doc 07)
 Health Endpoints:    GET /health/live, GET /health/ready, GET /health (Owned by Doc 12)

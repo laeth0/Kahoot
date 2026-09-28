@@ -12,9 +12,9 @@ public sealed class GameQuestionSnapshot
 
     public required string Text { get; set; }
 
-    public Guid? MediaItemId { get; set; }
+    public Guid? ImageId { get; set; }
 
-    public string? MediaUrl { get; set; }
+    public string? ImageUrl { get; set; }
 
     public int DurationSeconds { get; set; }
 

@@ -10,8 +10,8 @@ The platform is designed strictly as a **multi-tenant SaaS platform where each r
 
 ### 1.1 Actor Definitions
 * **`RA-ACTOR-001`**: The platform defines exactly three conceptual actors with strict authority boundaries:
-  1. **System Administrator**: A dedicated platform-level operational account. Responsible for system health, platform account queries, and account lifecycle management (suspension/reactivation). Strictly barred from viewing, editing, or participating in private tenant data (quizzes, questions, gameplay, answers, media metadata).
-  2. **Registered User / Host**: A normal registered user account. Represents exactly one tenant boundary. Possesses full ownership of their own tenant-scoped resources: quizzes, questions, media, live game sessions, and reports.
+  1. **System Administrator**: A dedicated platform-level operational account. Responsible for system health, platform account queries, and account lifecycle management (suspension/reactivation). Strictly barred from viewing, editing, or participating in private tenant data (quizzes, questions, gameplay, answers, image metadata).
+  2. **Registered User / Host**: A normal registered user account. Represents exactly one tenant boundary. Possesses full ownership of their own tenant-scoped resources: quizzes, questions, image, live game sessions, and reports.
   3. **Player / Participant**: An ephemeral, account-free participant in a specific game. Possesses no tenant ownership. Restricted strictly to the specific game session in which they joined via PIN/link. Zero access to Host or Admin APIs.
 
 ### 1.2 Tenant & Ownership Invariants `[NORMATIVE]`
@@ -35,17 +35,17 @@ The backend enforces this matrix across every REST endpoint, SignalR hub method,
 | **Login / Authenticate** | Public flow | Public flow | Public flow | `AUTH-LOGIN-001` |
 | **Token Refresh / Logout** | Own session only | Own session only | No account authority | `AUTH-REF-001` |
 | **Author / Publish Quizzes & Questions** | Own tenant only | No | No | `QUIZ-AUTH-001` |
-| **Upload / Manage Media** | Own tenant only | No | No | `MED-UPL-001` |
+| **Upload / Manage Image** | Own tenant only | No | No | `IMG-UPL-001` |
 | **Create & Control Game Sessions** | Own game only | No | No | `GAME-CTRL-001` |
 | **List / Search Accounts** | No | Yes | No | `ACCT-QUERY-001` |
 | **Suspend / Reactivate Accounts** | No | Yes (last-admin protected) | No | `ACCT-SUSP-001` |
 | **Join Game Lobby via PIN & Nickname** | Public Player flow | Public Player flow | Public flow (no special privilege) | `JOIN-FLOW-001` |
 | **Submit Answers / Reconnect** | Only via Player session | Only via Player session | Own game & participant only | `PLAY-ANS-001` |
 | **Subscribe to Host Realtime Events** | Own game only | No | No | `RT-HOST-001` |
-| **Fetch Public Game Image Bytes** | Yes | Yes | Yes | `MED-PUB-001` |
+| **Fetch Public Game Image Bytes** | Yes | Yes | Yes | `IMG-PUB-001` |
 
 ### 2.2 Host Ownership & Effective Tenant Derivation
-* **`RA-OWN-001` (Exclusive Ownership)**: Quizzes, questions, choices, media items, game sessions, immutable snapshots, participants, answers, scores, and leaderboards belong exclusively to one Host tenant.
+* **`RA-OWN-001` (Exclusive Ownership)**: Quizzes, questions, choices, question images, game sessions, immutable snapshots, participants, answers, scores, and leaderboards belong exclusively to one Host tenant.
 * **`RA-OWN-002` (Hierarchical Inheritance)**: Questions and choices strictly inherit the tenant boundary of their parent quiz. Snapshots, participants, and answers strictly inherit the tenant boundary of their game session.
 * **`RA-ISOL-001` (Foreign Resource Concealment)**: Accessing a resource belonging to another tenant returns `404 Quiz.NotFound` or `404 Game.NotFound` rather than disclosing resource existence via 403 Forbidden.
 
@@ -147,13 +147,13 @@ Stored Canonical Form: NormalizedUsername / NormalizedNickname (Strict DB unique
 
 ### 4.2 Multi-Tenant Database Segregation Invariants
 * **`RA-ISOL-002` (Persistence Filtering)**: Every tenant-scoped query must enforce `HostAccountId = @CurrentHostAccountId` as its primary filter prior to evaluating secondary filters, sorting, or pagination cursors.
-* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `MediaItems`, `Games`) must include `HostAccountId` as the leading column in composite clustering keys or primary indexes:
+* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `QuestionImages`, `Games`) must include `HostAccountId` as the leading column in composite clustering keys or primary indexes:
   ```sql
   -- NON-NORMATIVE REFERENCE EXAMPLE
   CREATE INDEX IX_Quizzes_HostAccountId_CreatedAt ON Quizzes (HostAccountId, CreatedAt DESC);
   CREATE INDEX IX_Games_HostAccountId_Status ON Games (HostAccountId, Status);
   ```
-* **`RA-ISOL-004` (Integrity Constraints)**: Database relational constraints must prevent creating cross-tenant relationships (e.g., associating a Question with a Quiz of a different tenant, or referencing another tenant's MediaItem).
+* **`RA-ISOL-004` (Integrity Constraints)**: Database relational constraints must prevent creating cross-tenant relationships (e.g., associating a Question with a Quiz of a different tenant, or referencing another tenant's QuestionImage).
 
 ---
 

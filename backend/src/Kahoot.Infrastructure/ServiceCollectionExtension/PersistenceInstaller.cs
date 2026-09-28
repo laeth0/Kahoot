@@ -32,7 +32,6 @@ public static class PersistenceInstaller
 
             dataSourceBuilder.MapEnum<UserRole>("user_role");
             dataSourceBuilder.MapEnum<UserStatus>("user_status");
-            dataSourceBuilder.MapEnum<MediaStatus>("media_status");
             dataSourceBuilder.MapEnum<GameStatus>("game_status");
 
             return dataSourceBuilder.Build();
@@ -49,7 +48,6 @@ public static class PersistenceInstaller
             {
                 npgsqlOptions.MapEnum<UserRole>("user_role");
                 npgsqlOptions.MapEnum<UserStatus>("user_status");
-                npgsqlOptions.MapEnum<MediaStatus>("media_status");
                 npgsqlOptions.MapEnum<GameStatus>("game_status");
                 npgsqlOptions.CommandTimeout(dbOptions.CommandTimeoutSeconds);
             });

@@ -8,7 +8,7 @@ This document defines the technical software architecture, containerized infrast
 ### 1.2 Actors & Stakeholders
 * **System Operators / DevOps**: Provision container topology, configure production environment variables, execute zero-downtime rolling deployments, monitor system health, and manage backup/restore operations.
 * **System Administrators**: Perform administrative tenant lifecycle operations and manage elevated accounts.
-* **Registered Hosts**: Access web dashboard, author quizzes, upload question media, and host live games via HTTPS and WSS connections.
+* **Registered Hosts**: Access web dashboard, author quizzes, upload question image, and host live games via HTTPS and WSS connections.
 * **Anonymous Players**: Join live game sessions via PIN or join link without registration, receiving question broadcasts and submitting real-time answers via WSS and REST.
 
 ### 1.3 Tenant & System Invariants `[NORMATIVE]`
@@ -50,7 +50,7 @@ graph TD
     subgraph Infra ["Kahoot.Infrastructure (External Concerns & IO)"]
         EF["EF Core & PostgreSQL Npgsql Provider"]
         Hashing["Argon2id & BCrypt Credential Hashes"]
-        Storage["Media Storage Driver (Local/Shared Volume)"]
+        Storage["Image Storage Driver (Local/Shared Volume)"]
         Workers["Background Periodic Workers"]
     end
 
@@ -72,8 +72,8 @@ graph TD
 3. **`Kahoot.Infrastructure`**:
    * Implements persistence using Entity Framework Core with the PostgreSQL Npgsql driver.
    * Implements Argon2id password hashing and SHA-256 token hashing.
-   * Implements media storage adapters and image processing pipelines.
-   * Hosts background services (`RefreshTokenCleanupWorker`, `OrphanMediaCleanupWorker`, `AbandonedGameFinalizer`, `SuspensionGameFinalizer`).
+   * Implements image storage adapters and image processing pipelines.
+   * Hosts background services (`RefreshTokenCleanupWorker`, `OrphanImageCleanupWorker`, `AbandonedGameFinalizer`, `SuspensionGameFinalizer`).
 4. **`Kahoot.Api`**:
    * Exposes RESTful HTTP endpoints and SignalR WebSocket hub (`/hubs/game`).
    * Resolves caller identity from validated JWT access tokens or player session token hashes.
@@ -87,7 +87,7 @@ graph TD
   * `frontend` (React / Vite): Static SPA distribution.
   * `backend` (ASP.NET Core 8+): Single modular monolith container.
   * `db` (PostgreSQL 16+): Dedicated relational database volume (`db_data`).
-  * `media_volume`: Persistent volume for `/app/uploads`.
+  * `image_volume`: Persistent volume for `/app/uploads`.
   * Observability subsystem (on internal `observability` network):
     * `otel-collector` (OpenTelemetry Collector Contrib): OTLP gateway receiving traces, metrics, and logs from `backend`.
     * `prometheus`: Metrics storage and query engine scraping `otel-collector` (persistent volume `prometheus_data`).
@@ -98,7 +98,7 @@ graph TD
   To support target SaaS scale (25,000 concurrent WebSockets, 5,000 answers/sec), the architecture specifies the following required properties for horizontal scaling without prematurely mandating specific cloud products:
   1. **Stateless Application Cluster**: Multiple backend replica instances running concurrently.
   2. **Distributed Realtime Routing Mechanism**: A shared message/routing abstraction ensuring events broadcast on one instance reach subscribers connected to other instances.
-  3. **Shared Durable Media Storage**: Media files written by one instance must be immediately accessible to all instances.
+  3. **Shared Durable Image Storage**: Image files written by one instance must be immediately accessible to all instances.
   4. **Cross-Instance Revocation Propagation**: Account suspension, password changes, and token revocations must propagate across all backend nodes within $\le 100\text{ ms}$.
   5. **Concurrency Guarantees**: Cross-instance concurrency must rely on database uniqueness constraints, optimistic concurrency (`stateVersion`), and transactional locks rather than process-local memory.
 
@@ -170,7 +170,7 @@ server {
         access_log off;
     }
 
-    # Public Processed Media Delivery (Canonical Path: /uploads/)
+    # Public Processed Image Delivery (Canonical Path: /uploads/)
     location /uploads/ {
         proxy_pass http://backend_nodes;
         proxy_cache_valid 200 30d;
@@ -207,7 +207,7 @@ Production configuration loaded via non-committed `.env` files:
 | `BOOTSTRAP_ADMIN_ENABLED` | `true` (initial boot only) | No | Gates initial System Administrator seeding. | `ARCH-CFG-014` |
 | `BOOTSTRAP_ADMIN_USERNAME` | `sysadmin` | No | Username for bootstrap administrator. | `ARCH-CFG-015` |
 | `BOOTSTRAP_ADMIN_PASSWORD` | One-time bootstrap secret (min 16 chars) | **YES** | Initial admin password. Rotated after boot. | `ARCH-CFG-016` |
-| `STORAGE_MEDIA_PATH` | `/app/uploads` | No | Physical volume mount path for media storage. | `ARCH-CFG-017` |
+| `STORAGE_IMAGE_PATH` | `/app/uploads` | No | Physical volume mount path for image storage. | `ARCH-CFG-017` |
 | `ASPNETCORE_ENVIRONMENT` | `Production` | No | Runtime mode; disables Swagger and debug endpoints. | `ARCH-CFG-018` |
 | `OTEL_SERVICE_NAME` | `kahoot-api` | No | Logical service name for OpenTelemetry resource attributes. | `ARCH-CFG-019` |
 | `OTEL_RESOURCE_ATTRIBUTES` | `deployment.environment.name=production` | No | Standard OpenTelemetry comma-separated resource attributes. | `ARCH-CFG-020` |
@@ -294,7 +294,7 @@ graph LR
   3. **Player Reconnection & Catch-Up**: Restoring dropped player sessions.
   4. **Normal Interactive APIs**: Quiz authoring, question editing, and lobby joins.
   5. **Administrative Bulk Queries**: Account listings and search.
-  6. **Background Maintenance**: Media cleanup and expired token purging yield completely during peak load.
+  6. **Background Maintenance**: Image cleanup and expired token purging yield completely during peak load.
 * **`ARCH-OVERLOAD-002` (Overload Invariants)**: Under severe traffic spikes:
   * The system must never corrupt data or accept and then silently drop an answer.
   * The system must reject lower-priority operations with `429 Request.RateLimited` or `503 Service.Unavailable` rather than allowing unbounded memory queues or thread pool starvation.
@@ -352,10 +352,10 @@ graph LR
     4. Expire pre-disaster player session tokens.
   * **Security Guarantee**: Stale pre-disaster credentials can **never** regain valid authority over a restored system.
 
-### 5.2 Database & Media Storage Restore Consistency `[NORMATIVE]`
+### 5.2 Database & Image Storage Restore Consistency `[NORMATIVE]`
 * **`ARCH-DR-003` (Storage Mismatch Reconciliation)**:
-  PostgreSQL metadata and media file storage may be restored from different backup points. The reconciliation script handles inconsistencies:
-  * **DB record exists, image file missing**: Question remains queryable, but missing image returns placeholder or graceful degraded marker. Media marked for re-upload.
+  PostgreSQL metadata and image file storage may be restored from different backup points. The reconciliation script handles inconsistencies:
+  * **DB record exists, image file missing**: Question remains queryable, but missing image returns placeholder or graceful degraded marker. Image marked for re-upload.
   * **Image file exists, DB record missing**: File is treated as unreferenced quarantine file and collected after the retention window.
   * **Historical Snapshot missing image**: Snapshot text and choices remain intact; client renders question gracefully without image.
 
@@ -371,7 +371,7 @@ graph LR
 | `ARCH-RISK-002` | Server crashes during live 500-player game. | Ephemeral WebSocket connections dropped. | Application is stateless. Surviving/restarted instances load authoritative state from PostgreSQL; players reconnect. | Indexed token catch-up. | `ARCH-TEST-005` |
 | `ARCH-RISK-003` | Flash crowd: 10,000 players join concurrently. | CPU saturation or memory exhaustion. | Ingress buffers capped; rate limiters enforce quotas; excess requests receive 429; no process crash. | Multi-tier rate limiting. | `ARCH-TEST-006` |
 | `ARCH-RISK-004` | Disaster recovery restores database to $T - 4\text{ minutes}$, resurrecting suspended Host. | Malicious or suspended Host regains access to account. | DR reconciliation protocol invalidates all prior refresh families and forces fresh login; verifies status. | Fail-closed security reconciliation. | `ARCH-TEST-007` |
-| `ARCH-RISK-005` | Media volume snapshot timestamp lags DB backup timestamp. | Questions point to missing media files. | Media delivery returns `404 Media.NotFound`; application renders question with fallback placeholder; no crash. | Graceful image degradation. | `ARCH-TEST-008` |
+| `ARCH-RISK-005` | Image volume snapshot timestamp lags DB backup timestamp. | Questions point to missing image files. | Image delivery returns `404 Image.NotFound`; application renders question with fallback placeholder; no crash. | Graceful image degradation. | `ARCH-TEST-008` |
 
 ---
 
@@ -386,5 +386,5 @@ graph LR
 | `ARCH-TEST-005` | `ARCH-APP-001`, `ARCH-RISK-002` | Fault Injection | Kill backend container during active question; start new container. | Surviving/new container reads state from DB; players reconnect without data loss. |
 | `ARCH-TEST-006` | `ARCH-OVERLOAD-001`, `ARCH-RISK-003`| Capacity | Apply 150% target load (6,000 req/s burst). | Core gameplay prioritized; excess shed with 429/503; zero state corruption. |
 | `ARCH-TEST-007` | `ARCH-DR-002`, `ARCH-RISK-004` | Disaster Recovery | Restore DB backup predating a Host suspension; execute reconciliation script. | All sessions revoked; re-authentication required; suspended account remains blocked. |
-| `ARCH-TEST-008` | `ARCH-DR-003`, `ARCH-RISK-005` | Disaster Recovery | Restore DB with missing media volume snapshot. | Questions load successfully; missing media renders placeholder without server exception. |
+| `ARCH-TEST-008` | `ARCH-DR-003`, `ARCH-RISK-005` | Disaster Recovery | Restore DB with missing image volume snapshot. | Questions load successfully; missing image renders placeholder without server exception. |
 | `ARCH-TEST-009` | `ARCH-DR-001` | Disaster Recovery | Full cold DR drill from backup dump and WAL archives. | Verified `/health/ready` HTTP 200 state achieved within $\le 30\text{ minutes}$; RPO $\le 5\text{ minutes}$. |

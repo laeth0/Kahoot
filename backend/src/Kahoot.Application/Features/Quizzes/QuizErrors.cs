@@ -28,9 +28,9 @@ public static class QuizErrors
         "Quiz.QuestionSetMismatch",
         "The question IDs provided for reordering do not match the quiz's current questions.");
 
-    public static readonly Error InvalidMediaReference = Error.Validation(
-        "Quiz.InvalidMediaReference",
-        "The referenced media item does not exist or belongs to another account.");
+    public static readonly Error InvalidImageReference = Error.Validation(
+        "Quiz.InvalidImageReference",
+        "The referenced image is unavailable, belongs to another account, or is attached to another question.");
 
     public static readonly Error QuestionLimitExceeded = Error.Validation(
         "Validation.Failed",

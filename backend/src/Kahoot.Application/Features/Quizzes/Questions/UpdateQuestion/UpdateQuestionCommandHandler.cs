@@ -1,3 +1,4 @@
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
@@ -13,6 +14,9 @@ namespace Kahoot.Application.Features.Quizzes.Questions.UpdateQuestion;
 
 public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestionCommand, QuestionResponse>
 {
+    private const string ImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
+    private const string ImageReferenceConstraintName = "fk_questions_question_images_image_id_host_account_id";
+
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
     private readonly TimeProvider _timeProvider;
@@ -70,43 +74,52 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
             return Result.Failure<QuestionResponse>(QuizErrors.QuestionNotFound);
         }
 
-        Guid? oldMediaId = question.MediaItemId;
-        Guid? newMediaId = request.MediaId;
+        Guid? oldImageId = question.ImageId;
+        Guid? newImageId = request.ImageId;
+        string? imageUrl = null;
 
-        if (oldMediaId != newMediaId)
+        if (oldImageId != newImageId)
         {
-            if (newMediaId.HasValue)
+            if (newImageId.HasValue)
             {
-                MediaItem? newMedia = await _dbContext.MediaItems
-                    .TagWith("Quizzes:UpdateQuestion:ValidateNewMedia")
-                    .Where(m => m.Id == newMediaId.Value && m.HostAccountId == hostAccountId)
+                QuestionImage? newImage = await _dbContext.QuestionImages
+                    .TagWith("Quizzes:UpdateQuestion:ValidateNewImage")
+                    .Where(candidate => candidate.Id == newImageId.Value && candidate.HostAccountId == hostAccountId)
                     .SingleOrDefaultAsync(cancellationToken);
 
-                if (newMedia is null || newMedia.Status != MediaStatus.Active)
+                if (newImage is null || await _dbContext.Questions
+                        .AnyAsync(existing => existing.ImageId == newImage.Id, cancellationToken))
                 {
-                    return Result.Failure<QuestionResponse>(QuizErrors.InvalidMediaReference);
+                    return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
                 }
 
-                newMedia.ReferenceCount++;
-                newMedia.UnreferencedSince = null;
+                imageUrl = newImage.StoragePath;
+                newImage.UnreferencedSince = null;
             }
 
-            if (oldMediaId.HasValue)
+            if (oldImageId.HasValue)
             {
-                MediaItem? oldMedia = await _dbContext.MediaItems
-                    .TagWith("Quizzes:UpdateQuestion:GetOldMedia")
-                    .Where(m => m.Id == oldMediaId.Value && m.HostAccountId == hostAccountId)
+                QuestionImage? oldImage = await _dbContext.QuestionImages
+                    .TagWith("Quizzes:UpdateQuestion:GetOldImage")
+                    .Where(candidate => candidate.Id == oldImageId.Value && candidate.HostAccountId == hostAccountId)
                     .SingleOrDefaultAsync(cancellationToken);
 
-                if (oldMedia is not null)
+                if (oldImage is not null &&
+                    !await _dbContext.GameQuestionSnapshots
+                        .AnyAsync(snapshot => snapshot.ImageId == oldImage.Id, cancellationToken))
                 {
-                    oldMedia.ReferenceCount = Math.Max(0, oldMedia.ReferenceCount - 1);
-                    if (oldMedia.ReferenceCount == 0)
-                    {
-                        oldMedia.UnreferencedSince = _timeProvider.GetUtcNow();
-                    }
+                    oldImage.UnreferencedSince = _timeProvider.GetUtcNow();
                 }
             }
+        }
+
+        if (oldImageId == newImageId && newImageId.HasValue)
+        {
+            imageUrl = await _dbContext.QuestionImages
+                .AsNoTracking()
+                .Where(image => image.Id == newImageId.Value && image.HostAccountId == hostAccountId)
+                .Select(image => image.StoragePath)
+                .SingleOrDefaultAsync(cancellationToken);
         }
 
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -143,14 +156,32 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
         _dbContext.Choices.AddRange(newChoices);
 
         question.Text = request.Text.Trim();
-        question.MediaItemId = request.MediaId;
+        question.ImageId = request.ImageId;
         question.DurationSeconds = request.DurationSeconds;
         question.BasePoints = request.BasePoints;
 
         quiz.IsPublished = false;
         quiz.Revision++;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        try
+        {
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (UniqueConstraintViolationException exception) when (
+            string.Equals(exception.ConstraintName, ImageOwnershipConstraintName, StringComparison.Ordinal))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
+        catch (ForeignKeyConstraintViolationException exception) when (
+            string.Equals(exception.ConstraintName, ImageReferenceConstraintName, StringComparison.Ordinal))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
+        catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is QuestionImage))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
         await transaction.CommitAsync(cancellationToken);
 
         QuestionResponse response = new QuestionResponse(
@@ -158,7 +189,8 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
             question.QuizId,
             question.OrderIndex,
             question.Text,
-            question.MediaItemId,
+            question.ImageId,
+            imageUrl,
             question.DurationSeconds,
             question.BasePoints,
             choiceResponses);

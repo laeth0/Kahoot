@@ -38,7 +38,7 @@ public abstract class ApiController : ControllerBase
             "Quiz.HasSessions" => "Quiz has sessions",
             "Quiz.ConcurrentModification" => "Concurrent modification",
             "Quiz.QuestionSetMismatch" => "Question set mismatch",
-            "Quiz.InvalidMediaReference" => "Invalid media reference",
+            "Quiz.InvalidImageReference" => "Invalid image reference",
             _ => error.Code
         };
 
