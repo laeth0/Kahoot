@@ -63,35 +63,24 @@ public sealed class DeleteQuizCommandHandler : ICommandHandler<DeleteQuizCommand
             return Result.Failure(QuizErrors.HasSessions);
         }
 
-        List<Guid> mediaIdsInQuiz = await _dbContext.Questions
-            .TagWith("Quizzes:DeleteQuiz:GetMediaIds")
-            .Where(q => q.QuizId == quiz.Id && q.HostAccountId == hostAccountId && q.MediaItemId.HasValue)
-            .Select(q => q.MediaItemId!.Value)
+        List<Guid> imageIdsInQuiz = await _dbContext.Questions
+            .TagWith("Quizzes:DeleteQuiz:GetImageIds")
+            .Where(q => q.QuizId == quiz.Id && q.HostAccountId == hostAccountId && q.ImageId.HasValue)
+            .Select(q => q.ImageId!.Value)
             .ToListAsync(cancellationToken);
 
-        if (mediaIdsInQuiz.Count > 0)
+        if (imageIdsInQuiz.Count > 0)
         {
-            Dictionary<Guid, int> mediaReferenceCounts = mediaIdsInQuiz
-                .GroupBy(id => id)
-                .ToDictionary(g => g.Key, g => g.Count());
-
-            List<Guid> distinctMediaIds = mediaReferenceCounts.Keys.ToList();
-
-            List<MediaItem> mediaItems = await _dbContext.MediaItems
-                .TagWith("Quizzes:DeleteQuiz:ReconcileMediaReferences")
-                .Where(m => distinctMediaIds.Contains(m.Id) && m.HostAccountId == hostAccountId)
+            List<QuestionImage> images = await _dbContext.QuestionImages
+                .TagWith("Quizzes:DeleteQuiz:GetImages")
+                .Where(image => imageIdsInQuiz.Contains(image.Id) && image.HostAccountId == hostAccountId)
                 .ToListAsync(cancellationToken);
 
             DateTimeOffset utcNow = _timeProvider.GetUtcNow();
 
-            foreach (MediaItem media in mediaItems)
+            foreach (QuestionImage image in images)
             {
-                int countToRemove = mediaReferenceCounts[media.Id];
-                media.ReferenceCount = Math.Max(0, media.ReferenceCount - countToRemove);
-                if (media.ReferenceCount == 0)
-                {
-                    media.UnreferencedSince = utcNow;
-                }
+                image.UnreferencedSince = utcNow;
             }
         }
 

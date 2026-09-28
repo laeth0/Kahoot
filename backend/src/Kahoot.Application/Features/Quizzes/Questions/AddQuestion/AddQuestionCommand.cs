@@ -6,7 +6,7 @@ namespace Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 public sealed record AddQuestionCommand(
     Guid QuizId,
     string Text,
-    Guid? MediaId,
+    Guid? ImageId,
     int DurationSeconds,
     int BasePoints,
     IReadOnlyList<ChoiceRequest> Choices) : ICommand<QuestionResponse>;

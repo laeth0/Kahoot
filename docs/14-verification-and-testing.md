@@ -139,7 +139,7 @@ To guarantee absolute mathematical data integrity across multi-threaded and mult
 | `RACE-QZ-03` | Quiz Deletion vs. Game Creation | Deletion commits first (`204 No Content`); game creation fails with `404 Quiz.NotFound`. | Game creation commits first; quiz marked in-use; deletion attempt fails with `409 Quiz.HasSessions`. | `RACE-VER-011` |
 | `RACE-QZ-04` | Question Reorder vs. Question Insertion | Reorder commits first (`Revision = K+1`); insertion with stale revision fails with `409 Quiz.ConcurrentModification`. | Insertion commits first; reorder fails with `400 Quiz.QuestionSetMismatch` (missing new question ID) or 409. | `RACE-VER-012` |
 | `RACE-QZ-05` | Question Reorder vs. Question Deletion | Reorder commits first; deletion removes target and re-indexes. | Deletion commits first; reorder payload contains deleted question ID, fails with `400 Quiz.QuestionSetMismatch`. | `RACE-VER-013` |
-| `RACE-QZ-06` | Question Image Attachment vs. Orphan Cleanup | Attachment commits first; cleanup detects the question reference and skips deletion. | Cleanup deletes the image row first; attachment fails with `400 Quiz.InvalidMediaReference`. | `RACE-VER-014` |
+| `RACE-QZ-06` | Question Image Attachment vs. Orphan Cleanup | Attachment commits first; cleanup detects the question reference and skips deletion. | Cleanup deletes the image row first; attachment fails with `400 Quiz.InvalidImageReference`. | `RACE-VER-014` |
 
 ### 4.3 Game Lifecycle & Live Gameplay Races
 | Race ID | Competing Operations | Order A Resolution (First Wins) | Order B Resolution (Second Wins) | Stable Req ID |
@@ -192,7 +192,7 @@ To prove resilience, the test suite injects faults at specific, controlled execu
 | `FAULT-03` | Network severed immediately before COMMIT. | Rollback integrity. | Connection drop causes database rollback; client retry creates fresh transaction. | `FLT-TEST-003` |
 | `FAULT-04` | Network severed after COMMIT but before HTTP response. | Outcome B idempotency. | State is durable; client retries with idempotency key; receives committed response. | `FLT-TEST-004` |
 | `FAULT-05` | Realtime broadcast failure after COMMIT. | Commit-first priority. | DB state is authoritative; clients detect sequence gap and resynchronize. | `FLT-TEST-005` |
-| `FAULT-06` | Storage disk fills during media re-encoding write. | Clean rollback. | Temp file cleaned; metadata insert aborted; `503 Media.StorageUnavailable` returned. | `FLT-TEST-006` |
+| `FAULT-06` | Storage disk fills during media re-encoding write. | Clean rollback. | Temp file cleaned; metadata insert aborted; `503 Image.StorageUnavailable` returned. | `FLT-TEST-006` |
 | `FAULT-07` | Terminate backend container during active 500-player game. | Stateless tier recovery. | Sockets severed; clients reconnect to peer instance; game continues without state loss. | `FLT-TEST-007` |
 | `FAULT-08` | Pause PostgreSQL process for 8 seconds. | Connection pool resilience. | Requests within timeout wait; requests exceeding timeout fail with 503; auto-recovers upon unpause. | `FLT-TEST-008` |
 | `FAULT-09` | Inject 10% packet drop in test harness realtime traffic. | Message gap resynchronization. | Clients detect `stateVersion` gaps; invoke catch-up; game remains in exact sync. | `FLT-TEST-009` |
@@ -259,7 +259,6 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `MED-UPL-003`   | 05 | MIME sniff, bomb guard ($\le 64\text{MB}$), EXIF strip, re-encode | `MED-TEST-001`, `MED-TEST-006` |
 | `MED-MODEL-001` | 05 | Dedicated question-image record with one current question owner | `MED-TEST-002` |
 | `MED-MODEL-002` | 05 | Snapshot image reference preserves historical bytes | `MED-TEST-012` |
-| `MED-MODEL-003` | 05 | No stored image reference counter | `MED-TEST-013` |
 | `MED-ATT-001`   | 05 | Question attachment validates ownership and single-owner rule | `MED-TEST-002` |
 | `MED-PUB-001`   | 05 | Public image delivery at `/uploads/{filename}` | `MED-TEST-003` |
 | `MED-PUB-002`   | 05 | Public cache header: `max-age=31536000, immutable` | `MED-TEST-003` |

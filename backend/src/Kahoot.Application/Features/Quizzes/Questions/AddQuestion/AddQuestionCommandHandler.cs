@@ -65,20 +65,20 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             return Result.Failure<QuestionResponse>(QuizErrors.QuestionLimitExceeded);
         }
 
-        if (request.MediaId.HasValue)
+        if (request.ImageId.HasValue)
         {
-            MediaItem? mediaItem = await _dbContext.MediaItems
-                .TagWith("Quizzes:AddQuestion:ValidateMedia")
-                .Where(m => m.Id == request.MediaId.Value && m.HostAccountId == hostAccountId)
+            QuestionImage? image = await _dbContext.QuestionImages
+                .TagWith("Quizzes:AddQuestion:ValidateImage")
+                .Where(candidate => candidate.Id == request.ImageId.Value && candidate.HostAccountId == hostAccountId)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (mediaItem is null || mediaItem.Status != MediaStatus.Active)
+            if (image is null || await _dbContext.Questions
+                    .AnyAsync(existing => existing.ImageId == image.Id, cancellationToken))
             {
-                return Result.Failure<QuestionResponse>(QuizErrors.InvalidMediaReference);
+                return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
             }
 
-            mediaItem.ReferenceCount++;
-            mediaItem.UnreferencedSince = null;
+            image.UnreferencedSince = null;
         }
 
         Question question = new Question
@@ -87,7 +87,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             HostAccountId = hostAccountId,
             QuizId = quiz.Id,
             Text = request.Text.Trim(),
-            MediaItemId = request.MediaId,
+            ImageId = request.ImageId,
             DurationSeconds = request.DurationSeconds,
             BasePoints = request.BasePoints,
             OrderIndex = currentQuestionCount
@@ -129,7 +129,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             question.QuizId,
             question.OrderIndex,
             question.Text,
-            question.MediaItemId,
+            question.ImageId,
             question.DurationSeconds,
             question.BasePoints,
             choiceResponses);

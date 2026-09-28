@@ -151,7 +151,7 @@ public sealed class QuizzesController : ApiController
         AddQuestionCommand command = new AddQuestionCommand(
             quizId,
             request.Text,
-            request.MediaId,
+            request.ImageId,
             request.DurationSeconds,
             request.BasePoints,
             request.Choices);
@@ -183,7 +183,7 @@ public sealed class QuizzesController : ApiController
             quizId,
             questionId,
             request.Text,
-            request.MediaId,
+            request.ImageId,
             request.DurationSeconds,
             request.BasePoints,
             request.Choices);

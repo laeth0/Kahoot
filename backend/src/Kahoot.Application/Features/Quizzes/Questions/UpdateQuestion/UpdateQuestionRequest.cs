@@ -4,7 +4,7 @@ namespace Kahoot.Application.Features.Quizzes.Questions.UpdateQuestion;
 
 public sealed record UpdateQuestionRequest(
     string Text,
-    Guid? MediaId,
+    Guid? ImageId,
     int DurationSeconds,
     int BasePoints,
     IReadOnlyList<ChoiceRequest> Choices);

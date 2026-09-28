@@ -25,9 +25,9 @@ public sealed class GameQuestionSnapshotConfiguration : IEntityTypeConfiguration
             .HasMaxLength(500)
             .IsRequired();
 
-        builder.Property(question => question.MediaItemId);
+        builder.Property(question => question.ImageId);
 
-        builder.Property(question => question.MediaUrl)
+        builder.Property(question => question.ImageUrl)
             .HasMaxLength(512);
 
         builder.Property(question => question.DurationSeconds)
@@ -75,9 +75,9 @@ public sealed class GameQuestionSnapshotConfiguration : IEntityTypeConfiguration
             .HasPrincipalKey(game => new { game.Id, game.HostAccountId })
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne<MediaItem>()
+        builder.HasOne<QuestionImage>()
             .WithMany()
-            .HasForeignKey(question => new { question.MediaItemId, question.HostAccountId })
+            .HasForeignKey(question => new { question.ImageId, question.HostAccountId })
             .HasPrincipalKey(media => new { media.Id, media.HostAccountId })
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);

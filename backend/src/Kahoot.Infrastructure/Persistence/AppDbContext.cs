@@ -20,7 +20,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<Quiz> Quizzes => Set<Quiz>();
 
-    public DbSet<MediaItem> MediaItems => Set<MediaItem>();
+    public DbSet<QuestionImage> QuestionImages => Set<QuestionImage>();
 
     public DbSet<Question> Questions => Set<Question>();
 

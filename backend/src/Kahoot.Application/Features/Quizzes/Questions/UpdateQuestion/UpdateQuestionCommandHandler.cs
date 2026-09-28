@@ -70,41 +70,37 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
             return Result.Failure<QuestionResponse>(QuizErrors.QuestionNotFound);
         }
 
-        Guid? oldMediaId = question.MediaItemId;
-        Guid? newMediaId = request.MediaId;
+        Guid? oldImageId = question.ImageId;
+        Guid? newImageId = request.ImageId;
 
-        if (oldMediaId != newMediaId)
+        if (oldImageId != newImageId)
         {
-            if (newMediaId.HasValue)
+            if (newImageId.HasValue)
             {
-                MediaItem? newMedia = await _dbContext.MediaItems
-                    .TagWith("Quizzes:UpdateQuestion:ValidateNewMedia")
-                    .Where(m => m.Id == newMediaId.Value && m.HostAccountId == hostAccountId)
+                QuestionImage? newImage = await _dbContext.QuestionImages
+                    .TagWith("Quizzes:UpdateQuestion:ValidateNewImage")
+                    .Where(candidate => candidate.Id == newImageId.Value && candidate.HostAccountId == hostAccountId)
                     .SingleOrDefaultAsync(cancellationToken);
 
-                if (newMedia is null || newMedia.Status != MediaStatus.Active)
+                if (newImage is null || await _dbContext.Questions
+                        .AnyAsync(existing => existing.ImageId == newImage.Id, cancellationToken))
                 {
-                    return Result.Failure<QuestionResponse>(QuizErrors.InvalidMediaReference);
+                    return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
                 }
 
-                newMedia.ReferenceCount++;
-                newMedia.UnreferencedSince = null;
+                newImage.UnreferencedSince = null;
             }
 
-            if (oldMediaId.HasValue)
+            if (oldImageId.HasValue)
             {
-                MediaItem? oldMedia = await _dbContext.MediaItems
-                    .TagWith("Quizzes:UpdateQuestion:GetOldMedia")
-                    .Where(m => m.Id == oldMediaId.Value && m.HostAccountId == hostAccountId)
+                QuestionImage? oldImage = await _dbContext.QuestionImages
+                    .TagWith("Quizzes:UpdateQuestion:GetOldImage")
+                    .Where(candidate => candidate.Id == oldImageId.Value && candidate.HostAccountId == hostAccountId)
                     .SingleOrDefaultAsync(cancellationToken);
 
-                if (oldMedia is not null)
+                if (oldImage is not null)
                 {
-                    oldMedia.ReferenceCount = Math.Max(0, oldMedia.ReferenceCount - 1);
-                    if (oldMedia.ReferenceCount == 0)
-                    {
-                        oldMedia.UnreferencedSince = _timeProvider.GetUtcNow();
-                    }
+                    oldImage.UnreferencedSince = _timeProvider.GetUtcNow();
                 }
             }
         }
@@ -143,7 +139,7 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
         _dbContext.Choices.AddRange(newChoices);
 
         question.Text = request.Text.Trim();
-        question.MediaItemId = request.MediaId;
+        question.ImageId = request.ImageId;
         question.DurationSeconds = request.DurationSeconds;
         question.BasePoints = request.BasePoints;
 
@@ -158,7 +154,7 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
             question.QuizId,
             question.OrderIndex,
             question.Text,
-            question.MediaItemId,
+            question.ImageId,
             question.DurationSeconds,
             question.BasePoints,
             choiceResponses);

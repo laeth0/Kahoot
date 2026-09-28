@@ -41,7 +41,7 @@ Quiz authoring allows Hosts to create structured educational content:
     ```json
     {
       "text": "What is the capital of France?",
-      "mediaId": "med_01HPX...",
+      "imageId": "img_01HPX...",
       "durationSeconds": 30,
       "basePoints": 1000,
       "choices": [
@@ -87,7 +87,7 @@ Quiz authoring allows Hosts to create structured educational content:
     5. Every question has between **2 and 6 choices** (inclusive).
     6. Every choice has non-whitespace `text` (1–300 chars).
     7. Every question has **at least 1 choice** marked `isCorrect = true` (multiple correct choices permitted).
-    8. Any referenced `mediaId` identifies a committed question image owned by the **same Host tenant** and attached only to that question.
+    8. Any referenced `imageId` identifies a committed question image owned by the **same Host tenant** and attached only to that question.
     9. Arithmetic Safety: Total potential maximum score does not overflow signed 64-bit integer (`long.MaxValue`).
   * **Outcome**: Sets `IsPublished = true`, increments `Revision`. Retrying publication of an unchanged valid quiz is an idempotent `200 OK`.
 
@@ -133,7 +133,7 @@ Quiz authoring allows Hosts to create structured educational content:
 | :--- | :--- | :--- | :--- |
 | **400** | `Validation.Failed` | Boundary violation, empty text, or points overflow. | `QUIZ-ERR-001` |
 | **400** | `Quiz.QuestionSetMismatch` | Reorder list does not match current quiz question IDs. | `QUIZ-ERR-002` |
-| **400** | `Quiz.InvalidMediaReference` | Image ID does not exist, is incomplete, belongs to another tenant, is attached to a different question, or was removed by cleanup. | `QUIZ-ERR-003` |
+| **400** | `Quiz.InvalidImageReference` | Image ID does not exist, is incomplete, belongs to another tenant, is attached to a different question, or was removed by cleanup. | `QUIZ-ERR-003` |
 | **404** | `Quiz.NotFound` | Quiz does not exist or belongs to another Host tenant. | `QUIZ-ERR-004` |
 | **404** | `Quiz.QuestionNotFound` | Question does not exist within the specified quiz. | `QUIZ-ERR-005` |
 | **409** | `Quiz.InUse` | Attempting to edit a quiz while an active game session is running. | `QUIZ-ERR-006` |
@@ -166,8 +166,8 @@ Under standard operational load:
 
 ### 5.1 Cross-Tenant Media Attachment Defense `[NORMATIVE]`
 * **`QUIZ-SEC-001` (Tenant Match on Attachment)**:
-  * When attaching a `mediaId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on non-null values, so one image cannot be attached to multiple current questions.
-  * An image that is missing, foreign, attached to another question, or already deleted by cleanup returns `400 Quiz.InvalidMediaReference`. The tenant-matched foreign key and cleanup row lock serialize attachment with deletion.
+  * When attaching a `imageId` to a question, the server verifies a committed `QuestionImage` row with the same `HostAccountId` as the question. `Question.ImageId` has a tenant-matched foreign key and a unique index on non-null values, so one image cannot be attached to multiple current questions.
+  * An image that is missing, foreign, attached to another question, or already deleted by cleanup returns `400 Quiz.InvalidImageReference`. The tenant-matched foreign key and cleanup row lock serialize attachment with deletion.
 
 ### 5.2 Content Sanitization & XSS Defense `[NORMATIVE]`
 * **`QUIZ-SEC-002` (Plain-Text Handling)**:
@@ -211,4 +211,4 @@ Under standard operational load:
 | `QUIZ-TEST-008` | `QUIZ-ERR-008`, `QUIZ-RISK-002` | Concurrency | Concurrent question insertion and reordering against same quiz revision. | Exactly one commits; second fails with `409 Quiz.ConcurrentModification`. |
 | `QUIZ-TEST-009` | `QUIZ-OVERFLOW-001`, `QUIZ-RISK-003` | Boundary | Publish quiz where base points sum overflows `long.MaxValue`. | Validation fails with `400 Validation.Failed`. |
 | `QUIZ-TEST-010` | `QUIZ-PUB-001`, `QUIZ-SLO-001` | Non-Functional | Measure publication latency of maximum 200-question quiz. | Meets $p95 \le 300\text{ ms}$. |
-| `QUIZ-TEST-011` | `QUIZ-SEC-001`, `QUIZ-RISK-005` | Security | Host A attempts to attach Host B's uploaded `mediaId` to Question. | Rejected with `400 Quiz.InvalidMediaReference`. |
+| `QUIZ-TEST-011` | `QUIZ-SEC-001`, `QUIZ-RISK-005` | Security | Host A attempts to attach Host B's uploaded `imageId` to Question. | Rejected with `400 Quiz.InvalidImageReference`. |

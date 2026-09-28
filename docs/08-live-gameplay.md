@@ -28,7 +28,7 @@ Live gameplay is the real-time competitive core of the platform:
       "questionIndex": 0,
       "totalQuestions": 10,
       "text": "What is the capital of France?",
-      "mediaUrl": "/uploads/550e8400-e29b-41d4-a716-446655440000.png",
+      "imageUrl": "/uploads/550e8400-e29b-41d4-a716-446655440000.png",
       "durationSeconds": 30,
       "choices": [
         { "choiceId": "chc_01", "text": "Paris" },

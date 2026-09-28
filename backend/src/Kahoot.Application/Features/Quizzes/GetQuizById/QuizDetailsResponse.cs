@@ -10,7 +10,7 @@ public sealed record QuizQuestionDetailsResponse(
     Guid Id,
     int OrderIndex,
     string Text,
-    Guid? MediaId,
+    Guid? ImageId,
     int DurationSeconds,
     int BasePoints,
     IReadOnlyList<QuizChoiceDetailsResponse> Choices);

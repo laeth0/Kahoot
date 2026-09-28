@@ -12,7 +12,7 @@ public interface IAppDbContext
 
     DbSet<Quiz> Quizzes { get; }
 
-    DbSet<MediaItem> MediaItems { get; }
+    DbSet<QuestionImage> QuestionImages { get; }
 
     DbSet<Question> Questions { get; }
 

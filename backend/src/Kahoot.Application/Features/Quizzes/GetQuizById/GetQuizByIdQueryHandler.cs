@@ -79,7 +79,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
                     question.Id,
                     question.OrderIndex,
                     question.Text,
-                    question.MediaItemId,
+                    question.ImageId,
                     question.DurationSeconds,
                     question.BasePoints,
                     choiceResponses));

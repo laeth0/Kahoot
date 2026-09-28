@@ -10,7 +10,9 @@ public sealed class Question
 
     public required string Text { get; set; }
 
-    public Guid? MediaItemId { get; set; }
+    public Guid? ImageId { get; set; }
+
+    public QuestionImage? Image { get; set; }
 
     public int DurationSeconds { get; set; }
 

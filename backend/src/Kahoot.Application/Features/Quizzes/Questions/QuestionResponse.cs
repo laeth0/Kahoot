@@ -11,7 +11,7 @@ public sealed record QuestionResponse(
     Guid QuizId,
     int OrderIndex,
     string Text,
-    Guid? MediaId,
+    Guid? ImageId,
     int DurationSeconds,
     int BasePoints,
     IReadOnlyList<ChoiceResponse> Choices);

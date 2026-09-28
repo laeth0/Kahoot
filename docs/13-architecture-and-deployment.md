@@ -371,7 +371,7 @@ graph LR
 | `ARCH-RISK-002` | Server crashes during live 500-player game. | Ephemeral WebSocket connections dropped. | Application is stateless. Surviving/restarted instances load authoritative state from PostgreSQL; players reconnect. | Indexed token catch-up. | `ARCH-TEST-005` |
 | `ARCH-RISK-003` | Flash crowd: 10,000 players join concurrently. | CPU saturation or memory exhaustion. | Ingress buffers capped; rate limiters enforce quotas; excess requests receive 429; no process crash. | Multi-tier rate limiting. | `ARCH-TEST-006` |
 | `ARCH-RISK-004` | Disaster recovery restores database to $T - 4\text{ minutes}$, resurrecting suspended Host. | Malicious or suspended Host regains access to account. | DR reconciliation protocol invalidates all prior refresh families and forces fresh login; verifies status. | Fail-closed security reconciliation. | `ARCH-TEST-007` |
-| `ARCH-RISK-005` | Media volume snapshot timestamp lags DB backup timestamp. | Questions point to missing media files. | Media delivery returns `404 Media.NotFound`; application renders question with fallback placeholder; no crash. | Graceful image degradation. | `ARCH-TEST-008` |
+| `ARCH-RISK-005` | Media volume snapshot timestamp lags DB backup timestamp. | Questions point to missing media files. | Media delivery returns `404 Image.NotFound`; application renders question with fallback placeholder; no crash. | Graceful image degradation. | `ARCH-TEST-008` |
 
 ---
 

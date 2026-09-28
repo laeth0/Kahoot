@@ -1,8 +1,6 @@
-using Kahoot.Domain.Enums;
-
 namespace Kahoot.Domain.Entities;
 
-public sealed class MediaItem
+public sealed class QuestionImage
 {
     public Guid Id { get; set; }
 
@@ -17,10 +15,6 @@ public sealed class MediaItem
     public int PixelWidth { get; set; }
 
     public int PixelHeight { get; set; }
-
-    public MediaStatus Status { get; set; } = MediaStatus.Active;
-
-    public int ReferenceCount { get; set; }
 
     public DateTimeOffset? UnreferencedSince { get; set; }
 

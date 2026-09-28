@@ -22,7 +22,7 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasMaxLength(500)
             .IsRequired();
 
-        builder.Property(question => question.MediaItemId);
+        builder.Property(question => question.ImageId);
 
         builder.Property(question => question.DurationSeconds)
             .IsRequired();
@@ -37,6 +37,10 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .IsUnique()
             .HasDatabaseName("ux_questions_id_host_account");
 
+        builder.HasIndex(question => question.ImageId)
+            .IsUnique()
+            .HasDatabaseName("ux_questions_image_id");
+
         builder.HasIndex(question => new { question.QuizId, question.OrderIndex })
             .IsUnique()
             .HasDatabaseName("ux_questions_quiz_order");
@@ -50,10 +54,10 @@ public sealed class QuestionConfiguration : IEntityTypeConfiguration<Question>
             .HasPrincipalKey(quiz => new { quiz.Id, quiz.HostAccountId })
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne<MediaItem>()
-            .WithMany()
-            .HasForeignKey(question => new { question.MediaItemId, question.HostAccountId })
-            .HasPrincipalKey(media => new { media.Id, media.HostAccountId })
+        builder.HasOne(question => question.Image)
+            .WithOne()
+            .HasForeignKey<Question>(question => new { question.ImageId, question.HostAccountId })
+            .HasPrincipalKey<QuestionImage>(image => new { image.Id, image.HostAccountId })
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
     }

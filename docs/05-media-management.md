@@ -15,20 +15,19 @@ Question image management handles images attached to quiz questions. Quizzes, an
   * Media ownership metadata, private inventories, and attachment rights are strictly protected tenant resources.
 
 ### 1.1 Data Model Decision `[NORMATIVE]`
-* **`MED-MODEL-001` (Question-Scoped Image Records)**: Use a dedicated `QuestionImage` (`question_images`) record for each uploaded question image. Store `Id`, `HostAccountId`, `StoragePath`, validated content type and dimensions, `UnreferencedSince` and `CreatedAt`. `Question.ImageId` is nullable and references the record with a tenant-matched foreign key. A unique index on non-null `Question.ImageId` permits at most one current question owner per image. Give every image record a distinct immutable file path, enforced by a unique `StoragePath` constraint. Index `UnreferencedSince` for bounded cleanup and each snapshot image foreign key for retention checks. Preserve the existing request and response field name `mediaId` as the opaque image ID; the public API does not need a rename to simplify persistence.
+* **`MED-MODEL-001` (Question-Scoped Image Records)**: Use a dedicated `QuestionImage` (`question_images`) record for each uploaded question image. Store `Id`, `HostAccountId`, `StoragePath`, validated content type and dimensions, `UnreferencedSince` and `CreatedAt`. `Question.ImageId` is nullable and references the record with a tenant-matched foreign key. A unique index on non-null `Question.ImageId` permits at most one current question owner per image. Give every image record a distinct immutable file path, enforced by a unique `StoragePath` constraint. Index `UnreferencedSince` for bounded cleanup and each snapshot image foreign key for retention checks. Use `imageId` for the opaque image ID in requests and responses.
 * **`MED-MODEL-002` (Historical References)**: A game question snapshot retains its immutable image URL and an optional foreign key to the same `QuestionImage` record. Multiple game snapshots may retain the same question image because they are historical references, not additional authoring owners. Snapshot foreign keys restrict deletion of the image record. Image bytes are never overwritten at an existing URL.
-* **`MED-MODEL-003` (No Stored Reference Counter)**: Do not persist `ReferenceCount`. Current ownership comes from `Question.ImageId`; historical retention comes from snapshot foreign keys. Cleanup checks both relationships directly, using indexes on `Question.ImageId` and snapshot image IDs. This avoids counter drift across question edits, deletes, and game creation.
 * **Future Profile Images**: If profile images are introduced, specify their visibility, authorization, and lifecycle separately. A nullable `User.ProfileImageId` with a profile-specific record, direct profile image columns, or a dedicated profile image table can be selected then. Reuse the image validation and storage implementation where appropriate; do not make profile images share the question image table or its public delivery policy by default.
 
 | Design | Fit for current requirements | Main cost |
 | :--- | :--- | :--- |
 | Image metadata columns directly on `questions` | Simple only when an image is uploaded and replaced in the same question operation. | The existing upload-before-attachment flow needs a durable claim token; old image metadata must remain available for game snapshots after replacement. |
 | Dedicated `question_images` table, one current question per image | **Recommended.** Keeps upload metadata and historical file retention in one small, purpose-specific model. | Requires a small cleanup process for unclaimed and detached files. |
-| Generic `media_items` table with `ReferenceCount` | Useful only if unrelated entities share assets and lifecycle policy, which is not required here. | Adds a generic domain contract and a mutable counter that must match every current and historical relationship. |
+| Generic `media_items` table | Useful only if unrelated entities share assets and lifecycle policy, which is not required here. | Adds a cross-entity contract and shared lifecycle rules without a current use case. |
 
 This design keeps image processing and filesystem access in Infrastructure; quiz authoring and game snapshot features use a question-image contract through the existing application boundary. The database enforces tenant ownership and single current question ownership. A public image URL grants access to bytes, never the right to attach the image to a question. The two indexed existence checks in cleanup scale with the number of eligible orphan candidates, not with the total image inventory. Storage grows with retained game snapshots; no schema choice can reclaim an image while history still references it. A later profile feature can use a separate data model without inheriting question-image public access.
 
-**Implementation status (non-normative):** The current backend model and DBML still use `MediaItem`, `media_items`, and `ReferenceCount`; current counter updates appear only in question authoring handlers, so they do not yet implement the documented snapshot-retention invariant. Applying this decision requires a schema migration and authoring/snapshot handler updates. Before adding the single-owner constraint, audit existing rows for images attached to multiple questions. Give each current question its own image record and file where sharing exists, while preserving old image records and URLs referenced by game snapshots.
+**Migration note (non-normative):** Before adding the single-owner constraint, audit existing rows for images attached to multiple questions. Give each current question its own image record and file where sharing exists, while preserving old image records and URLs referenced by game snapshots.
 
 ---
 
@@ -38,9 +37,9 @@ This design keeps image processing and filesystem access in Infrastructure; quiz
 * **`MED-UPL-001` (Upload Endpoint)**: `POST /api/uploads/images`
 * **`MED-UPL-002` (Payload & Constraints)**: Multipart form upload with field `file`. Maximum byte size: $5\text{ MiB}$ ($5,242,880\text{ bytes}$).
 * **`MED-UPL-003` (Validation & Sanitization Pipeline)**:
-  1. **Header & Signature Sniffing**: Inspects initial magic numbers to verify genuine image format (JPEG, PNG, WebP). Files claiming an image extension but failing magic byte checks are rejected with `400 Media.InvalidImage`.
+  1. **Header & Signature Sniffing**: Inspects initial magic numbers to verify genuine image format (JPEG, PNG, WebP). Files claiming an image extension but failing magic byte checks are rejected with `400 Image.InvalidImage`.
   2. **Dimension & Decompression Bomb Guards**: Decoder checks declared width/height before full bitmap allocation. Width $\le 4,096\text{px}$, Height $\le 4,096\text{px}$, and total pixel count $\le 16,777,216\text{ pixels}$. Total uncompressed decode memory must not exceed $64\text{ MiB}$.
-  3. **Animation / Multi-Frame Handling**: Animated WebP and animated PNG (APNG) are processed by decoding strictly the **first frame** as a static image, or rejected with `415 Media.UnsupportedType`.
+  3. **Animation / Multi-Frame Handling**: Animated WebP and animated PNG (APNG) are processed by decoding strictly the **first frame** as a static image, or rejected with `415 Image.UnsupportedType`.
   4. **Orientation Correction**: Reads EXIF orientation flags and applies necessary rotation/flip to pixel data *before* metadata stripping, preventing sideways/upside-down rendering.
   5. **Metadata Stripping**: Completely strips all EXIF, IPTC, and XMP metadata (removing GPS coordinates, camera serial numbers, and creator tags).
   6. **Re-Encoding & Polyglot Elimination**: Re-encodes image into canonical JPEG, PNG, or WebP. Eliminates trailing polyglot payloads, embedded HTML/script blocks, and corrupt chunk structures. *(Non-Claim: Re-encoding does NOT guarantee elimination of steganographic data concealed in raw pixel values).*
@@ -49,17 +48,17 @@ This design keeps image processing and filesystem access in Infrastructure; quiz
 * **`MED-UPL-004` (Upload Response)**: `201 Created`
   ```json
   {
-    "mediaId": "med_01HPX9...",
+    "imageId": "img_01HPX9...",
     "url": "/uploads/550e8400-e29b-41d4-a716-446655440000.png"
   }
   ```
 
 ### 2.2 Media Attachment to Questions `[NORMATIVE]`
 * **`MED-ATT-001` (Attachment Contract)**:
-  * Host specifies `mediaId` during question creation or edit.
+  * Host specifies `imageId` during question creation or edit.
   * Server verifies that the committed `QuestionImage` row exists and belongs to the current Host.
   * The image must not be attached to a different current question. A unique index on non-null `Question.ImageId` enforces this invariant under concurrent requests.
-  * Foreign images, images attached to a different question, or images already removed by cleanup return `400 Quiz.InvalidMediaReference`.
+  * Foreign images, images attached to a different question, or images already removed by cleanup return `400 Quiz.InvalidImageReference`.
   * Attachment, replacement, and question deletion update the question's nullable image foreign key in the quiz transaction. Set `UnreferencedSince = NULL` on attachment; on detachment, set it to the current time only if no snapshot retains the old image. If snapshot deletion is ever supported, set it when the last snapshot reference disappears.
 
 ### 2.3 Public Image Delivery Boundary `[NORMATIVE]`
@@ -73,7 +72,7 @@ This design keeps image processing and filesystem access in Infrastructure; quiz
 * **`MED-PUB-003` (Security Restrictions)**: Directory browsing and script execution are strictly disabled in `/uploads`.
 
 ### 2.4 Orphan Cleanup and Historical Retention `[NORMATIVE]`
-PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still needed for uploads never attached to a question and images detached after a question edit or deletion. A stored reference counter and a database tombstone state are unnecessary when question and snapshot foreign keys determine whether the image is still in use.
+PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still needed for uploads never attached to a question and images detached after a question edit or deletion. Question and snapshot foreign keys determine whether an image is still in use, allowing database-first deletion without a tombstone state.
 
 1. **`MED-LIFE-001` (Historical Protection Invariant)**:
    * An image referenced by a current question or any retained game question snapshot is never eligible for physical deletion. Snapshot URLs alone are not used to decide retention; the indexed snapshot image foreign key is authoritative.
@@ -107,12 +106,12 @@ PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still
 
 | Status | Code | Meaning | Stable Req ID |
 | :--- | :--- | :--- | :--- |
-| **400** | `Media.InvalidImage` | Corrupt file, truncated chunks, dimensions $> 4096\text{px}$, or decode memory $> 64\text{ MiB}$. | `MED-ERR-001` |
-| **400** | `Quiz.InvalidMediaReference` | Image does not exist, upload is incomplete, belongs to another tenant, or is attached to a different question. | `MED-ERR-002` |
-| **404** | `Media.NotFound` | Image file not found on storage volume during public GET. | `MED-ERR-003` |
-| **413** | `Media.TooLarge` | Raw upload payload exceeds 5 MiB. | `MED-ERR-004` |
-| **415** | `Media.UnsupportedType` | Disallowed MIME type (e.g., SVG, GIF, BMP, TIFF, EXE). | `MED-ERR-005` |
-| **503** | `Media.StorageUnavailable` | Local storage volume write failure or storage disk full. | `MED-ERR-006` |
+| **400** | `Image.InvalidImage` | Corrupt file, truncated chunks, dimensions $> 4096\text{px}$, or decode memory $> 64\text{ MiB}$. | `MED-ERR-001` |
+| **400** | `Quiz.InvalidImageReference` | Image does not exist, upload is incomplete, belongs to another tenant, or is attached to a different question. | `MED-ERR-002` |
+| **404** | `Image.NotFound` | Image file not found on storage volume during public GET. | `MED-ERR-003` |
+| **413** | `Image.TooLarge` | Raw upload payload exceeds 5 MiB. | `MED-ERR-004` |
+| **415** | `Image.UnsupportedType` | Disallowed MIME type (e.g., SVG, GIF, BMP, TIFF, EXE). | `MED-ERR-005` |
+| **503** | `Image.StorageUnavailable` | Local storage volume write failure or storage disk full. | `MED-ERR-006` |
 
 ---
 
@@ -133,8 +132,8 @@ PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still
 
 ### 5.1 Defense Against Malicious Image Formats `[NORMATIVE]`
 * **`MED-SEC-001` (Polyglot Elimination)**: Images are decoded into raw pixel memory buffers and reconstructed. Embedded scripts, trailing HTML, and malformed container structures are dropped.
-* **`MED-SEC-002` (Path Traversal Elimination)**: Client-supplied filenames are ignored. Server assigns UUIDv4 filenames. URLs with traversal tokens (`..`, `/`, `\`, `%2e%2e`) return `404 Media.NotFound`.
-* **`MED-SEC-003` (Storage Exhaustion Defenses)**: Inbound uploads check available storage disk space before accepting payload stream. If storage free space is $< 10\%$, upload returns `503 Media.StorageUnavailable`.
+* **`MED-SEC-002` (Path Traversal Elimination)**: Client-supplied filenames are ignored. Server assigns UUIDv4 filenames. URLs with traversal tokens (`..`, `/`, `\`, `%2e%2e`) return `404 Image.NotFound`.
+* **`MED-SEC-003` (Storage Exhaustion Defenses)**: Inbound uploads check available storage disk space before accepting payload stream. If storage free space is $< 10\%$, upload returns `503 Image.StorageUnavailable`.
 
 ---
 
@@ -142,7 +141,7 @@ PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still
 
 ### 6.1 State-Changing Commit Outcome Contract `[NORMATIVE]`
 * **Outcome A (Failure before commit)**: Upload stream aborts or image fails validation: storage file deleted/quarantined; no DB record committed. Caller retries safely.
-* **Outcome B (Commit succeeded, response lost)**: Media record and file committed; response dropped. Caller retrying upload receives a new `mediaId`. The unacknowledged first image remains unreferenced and is safely reclaimed after 7 days.
+* **Outcome B (Commit succeeded, response lost)**: Media record and file committed; response dropped. Caller retrying upload receives a new `imageId`. The unacknowledged first image remains unreferenced and is safely reclaimed after 7 days.
 * **Outcome C (Outcome unknown to caller)**: Network timeout during upload. Caller retries upload with fresh file; unreferenced orphan is collected automatically.
 
 ### 6.2 Per-Topic Failure-Mode & Risk Matrix `[NORMATIVE]`
@@ -162,15 +161,15 @@ PostgreSQL and file storage cannot commit or delete atomically. Cleanup is still
 | Test ID | Mapped Requirement IDs | Category | Description & Preconditions | Expected Outcome |
 | :--- | :--- | :--- | :--- | :--- |
 | `MED-TEST-001` | `MED-UPL-001`, `MED-UPL-003` | Functional | Host uploads valid PNG (2 MB, $1920\times 1080$). | `201 Created` with `/uploads/{guid}.png`; EXIF stripped. |
-| `MED-TEST-002` | `MED-ATT-001`, `MED-MODEL-001` | Functional | Host attaches uploaded image to a question, then attempts to attach it to a second question. | First attachment succeeds; second fails with `400 Quiz.InvalidMediaReference`. |
+| `MED-TEST-002` | `MED-ATT-001`, `MED-MODEL-001` | Functional | Host attaches uploaded image to a question, then attempts to attach it to a second question. | First attachment succeeds; second fails with `400 Quiz.InvalidImageReference`. |
 | `MED-TEST-003` | `MED-PUB-001`, `MED-PUB-002` | Functional | Public anonymous client requests image URL. | `200 OK` with `Cache-Control: public, max-age=31536000, immutable` and `nosniff`. |
-| `MED-TEST-004` | `MED-BOUND-001`, `MED-ERR-004` | Boundary | Upload file size $5,242,880$ bytes vs $5,242,881$ bytes. | $5,242,880$ succeeds; $5,242,881$ fails with `413 Media.TooLarge`. |
-| `MED-TEST-005` | `MED-BOUND-002`, `MED-ERR-001` | Boundary | Upload image with dimensions $4096\times 4096$ vs $4097\times 4096$. | $4096$ succeeds; $4097$ fails with `400 Media.InvalidImage`. |
-| `MED-TEST-006` | `MED-BOUND-004`, `MED-RISK-005` | Security / Boundary | Upload malformed decompression bomb requiring $> 64\text{ MiB}$ decode buffer. | Decode aborted; returns `400 Media.InvalidImage`; process RAM stable. |
+| `MED-TEST-004` | `MED-BOUND-001`, `MED-ERR-004` | Boundary | Upload file size $5,242,880$ bytes vs $5,242,881$ bytes. | $5,242,880$ succeeds; $5,242,881$ fails with `413 Image.TooLarge`. |
+| `MED-TEST-005` | `MED-BOUND-002`, `MED-ERR-001` | Boundary | Upload image with dimensions $4096\times 4096$ vs $4097\times 4096$. | $4096$ succeeds; $4097$ fails with `400 Image.InvalidImage`. |
+| `MED-TEST-006` | `MED-BOUND-004`, `MED-RISK-005` | Security / Boundary | Upload malformed decompression bomb requiring $> 64\text{ MiB}$ decode buffer. | Decode aborted; returns `400 Image.InvalidImage`; process RAM stable. |
 | `MED-TEST-007` | `MED-RISK-001` | Fault Injection | Interrupt upload after the final file is written but before metadata commits. | No DB row remains; the final file is removed by compensation or later orphan-file reconciliation. |
-| `MED-TEST-008` | `MED-ERR-006`, `MED-RISK-002` | Fault Injection | Simulate read-only storage volume during image upload. | Upload fails with `503 Media.StorageUnavailable`; zero orphan DB records. |
-| `MED-TEST-009` | `MED-LIFE-003`, `MED-RISK-003` | Concurrency | Host attaches a seven-day-old unreferenced image while cleanup runs. | Either attachment commits and cleanup preserves the row and file, or cleanup deletes the row first and attachment receives `400 Quiz.InvalidMediaReference`. |
+| `MED-TEST-008` | `MED-ERR-006`, `MED-RISK-002` | Fault Injection | Simulate read-only storage volume during image upload. | Upload fails with `503 Image.StorageUnavailable`; zero orphan DB records. |
+| `MED-TEST-009` | `MED-LIFE-003`, `MED-RISK-003` | Concurrency | Host attaches a seven-day-old unreferenced image while cleanup runs. | Either attachment commits and cleanup preserves the row and file, or cleanup deletes the row first and attachment receives `400 Quiz.InvalidImageReference`. |
 | `MED-TEST-010` | `MED-LIFE-004`, `MED-RISK-004` | Fault Injection | Crash worker after deleting the image row and before unlinking its file. | Reconciliation removes the orphan file; no question or snapshot reference was deleted. |
 | `MED-TEST-011` | `MED-SLO-003` | Non-Functional | Benchmark public image delivery under 2,000 req/s. | Serves with $p95 \le 30\text{ ms}$; zero server memory growth. |
 | `MED-TEST-012` | `MED-LIFE-001`, `MED-MODEL-002` | Functional | Replace a question image after a game snapshot was created, then run orphan cleanup. | The old file and snapshot URL remain available while the snapshot exists. |
-| `MED-TEST-013` | `MED-LIFE-002`, `MED-MODEL-003` | Schema / Functional | Confirm the schema has no `ReferenceCount`; upload an image and never attach it; allow seven days to elapse. | Cleanup removes its file and row after confirming no question or snapshot reference. |
+| `MED-TEST-013` | `MED-LIFE-002` | Functional | Upload an image and never attach it; allow seven days to elapse. | Cleanup removes its file and row after confirming no question or snapshot reference. |

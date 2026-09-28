@@ -75,20 +75,16 @@ public sealed class DeleteQuestionCommandHandler : ICommandHandler<DeleteQuestio
 
         _dbContext.Questions.Remove(question);
 
-        if (question.MediaItemId.HasValue)
+        if (question.ImageId.HasValue)
         {
-            MediaItem? mediaItem = await _dbContext.MediaItems
-                .TagWith("Quizzes:DeleteQuestion:ReconcileMedia")
-                .Where(m => m.Id == question.MediaItemId.Value && m.HostAccountId == hostAccountId)
+            QuestionImage? image = await _dbContext.QuestionImages
+                .TagWith("Quizzes:DeleteQuestion:GetImage")
+                .Where(candidate => candidate.Id == question.ImageId.Value && candidate.HostAccountId == hostAccountId)
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (mediaItem is not null)
+            if (image is not null)
             {
-                mediaItem.ReferenceCount = Math.Max(0, mediaItem.ReferenceCount - 1);
-                if (mediaItem.ReferenceCount == 0)
-                {
-                    mediaItem.UnreferencedSince = _timeProvider.GetUtcNow();
-                }
+                image.UnreferencedSince = _timeProvider.GetUtcNow();
             }
         }
 

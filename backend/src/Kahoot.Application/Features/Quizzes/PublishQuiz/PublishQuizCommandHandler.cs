@@ -165,25 +165,25 @@ public sealed class PublishQuizCommandHandler : ICommandHandler<PublishQuizComma
             }
         }
 
-        // Checklist Rule 8: Any referenced mediaId exists, is stored (Status == Active), and belongs to the same Host tenant
-        List<Guid> mediaIds = questions
-            .Where(q => q.MediaItemId.HasValue)
-            .Select(q => q.MediaItemId!.Value)
+        // Checklist Rule 8: Every image belongs to this host and still exists.
+        List<Guid> imageIds = questions
+            .Where(q => q.ImageId.HasValue)
+            .Select(q => q.ImageId!.Value)
             .Distinct()
             .ToList();
 
-        if (mediaIds.Count > 0)
+        if (imageIds.Count > 0)
         {
-            List<MediaItem> activeMediaItems = await _dbContext.MediaItems
-                .TagWith("Quizzes:Publish:ValidateMedia")
-                .Where(m => mediaIds.Contains(m.Id) && m.HostAccountId == hostAccountId && m.Status == MediaStatus.Active)
+            List<QuestionImage> questionImages = await _dbContext.QuestionImages
+                .TagWith("Quizzes:Publish:ValidateImages")
+                .Where(image => imageIds.Contains(image.Id) && image.HostAccountId == hostAccountId)
                 .ToListAsync(cancellationToken);
 
-            if (activeMediaItems.Count != mediaIds.Count)
+            if (questionImages.Count != imageIds.Count)
             {
                 return Result.Failure<PublishQuizResponse>(Error.Validation(
                     "Validation.Failed",
-                    "One or more referenced media items do not exist, are not active, or belong to another account."));
+                    "One or more referenced images do not exist or belong to another account."));
             }
         }
 
