@@ -32,6 +32,12 @@ public sealed class ImageStorageService : IImageStorageService
         _logger = logger;
     }
 
+    public bool IsStorageAvailable()
+    {
+        string uploadsDirectory = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", _options.UploadsSubdirectory);
+        return HasSufficientFreeDiskSpace(uploadsDirectory);
+    }
+
     public async Task<Result<SanitizedImageResult>> SanitizeAndPersistAsync(
         Stream sourceStream,
         string originalFileName,
@@ -42,8 +48,21 @@ public sealed class ImageStorageService : IImageStorageService
         string uploadsDir = Path.Combine(webRoot, _options.UploadsSubdirectory);
         string stagingDir = Path.Combine(webRoot, _options.StagingSubdirectory);
 
-        Directory.CreateDirectory(uploadsDir);
-        Directory.CreateDirectory(stagingDir);
+        try
+        {
+            Directory.CreateDirectory(uploadsDir);
+            Directory.CreateDirectory(stagingDir);
+        }
+        catch (IOException exception)
+        {
+            _logger.LogError(exception, "Could not prepare image storage directories.");
+            return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+        }
+        catch (UnauthorizedAccessException exception)
+        {
+            _logger.LogError(exception, "Could not access image storage directories.");
+            return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+        }
 
         if (!HasSufficientFreeDiskSpace(uploadsDir))
         {
@@ -51,22 +70,31 @@ public sealed class ImageStorageService : IImageStorageService
             return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
         }
 
-        MemoryStream memoryStream = new MemoryStream();
+        string sourceStagingFilePath = Path.Combine(stagingDir, $"{Guid.NewGuid():D}.tmp");
         try
         {
             byte[] buffer = new byte[81920];
             int bytesRead;
             long totalRead = 0;
 
-            while ((bytesRead = await sourceStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            await using (FileStream stagingWriteStream = new FileStream(
+                sourceStagingFilePath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 81920,
+                useAsync: true))
             {
-                totalRead += bytesRead;
-                if (totalRead > _options.MaxFileSizeBytes)
+                while ((bytesRead = await sourceStream.ReadAsync(buffer.AsMemory(), cancellationToken)) > 0)
                 {
-                    return Result.Failure<SanitizedImageResult>(ImageErrors.TooLarge);
-                }
+                    totalRead += bytesRead;
+                    if (totalRead > _options.MaxFileSizeBytes)
+                    {
+                        return Result.Failure<SanitizedImageResult>(ImageErrors.TooLarge);
+                    }
 
-                await memoryStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                    await stagingWriteStream.WriteAsync(buffer.AsMemory(0, bytesRead), cancellationToken);
+                }
             }
 
             if (totalRead == 0)
@@ -80,8 +108,28 @@ public sealed class ImageStorageService : IImageStorageService
             bool isDisallowedExtensionOrMime = extension is ".gif" or ".svg" or ".bmp" or ".tiff" or ".tif" or ".ico" or ".exe" or ".dll" or ".sh" or ".bat" or ".cmd" or ".html" or ".htm" or ".xml" or ".json"
                 || normalizedContentType is "image/gif" or "image/svg+xml" or "image/bmp" or "image/tiff" or "image/x-icon" or "application/x-msdownload";
 
-            byte[] bytes = memoryStream.GetBuffer();
-            long length = memoryStream.Length;
+            await using FileStream imageSourceStream = new FileStream(
+                sourceStagingFilePath,
+                FileMode.Open,
+                FileAccess.Read,
+                FileShare.Read,
+                bufferSize: 81920,
+                useAsync: true);
+
+            byte[] bytes = new byte[256];
+            int headerLength = 0;
+            while (headerLength < bytes.Length)
+            {
+                bytesRead = await imageSourceStream.ReadAsync(bytes.AsMemory(headerLength), cancellationToken);
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                headerLength += bytesRead;
+            }
+
+            long length = totalRead;
 
             bool isGif = length >= 6 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46 && bytes[3] == 0x38 && (bytes[4] == 0x37 || bytes[4] == 0x39) && bytes[5] == 0x61;
             bool isBmp = length >= 2 && bytes[0] == 0x42 && bytes[1] == 0x4D;
@@ -112,13 +160,22 @@ public sealed class ImageStorageService : IImageStorageService
                 return Result.Failure<SanitizedImageResult>(ImageErrors.UnsupportedType);
             }
 
-            memoryStream.Position = 0;
+            imageSourceStream.Position = 0;
             ImageInfo? imageInfo;
             try
             {
-                imageInfo = await Image.IdentifyAsync(memoryStream, cancellationToken);
+                imageInfo = await Image.IdentifyAsync(imageSourceStream, cancellationToken);
             }
-            catch (Exception exception)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogError(exception, "Could not read staged image headers.");
+                return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
             {
                 _logger.LogWarning(exception, "Image.IdentifyAsync rejected malformed image header.");
                 return Result.Failure<SanitizedImageResult>(ImageErrors.InvalidImage);
@@ -149,13 +206,25 @@ public sealed class ImageStorageService : IImageStorageService
                 return Result.Failure<SanitizedImageResult>(ImageErrors.InvalidImage);
             }
 
-            memoryStream.Position = 0;
+            imageSourceStream.Position = 0;
             Image<Rgba32> image;
             try
             {
-                image = await Image.LoadAsync<Rgba32>(memoryStream, cancellationToken);
+                image = await Image.LoadAsync<Rgba32>(
+                    new DecoderOptions { MaxFrames = 1 },
+                    imageSourceStream,
+                    cancellationToken);
             }
-            catch (Exception exception)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogError(exception, "Could not read staged image data.");
+                return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
             {
                 _logger.LogWarning(exception, "Image.LoadAsync rejected invalid image payload.");
                 return Result.Failure<SanitizedImageResult>(ImageErrors.InvalidImage);
@@ -163,15 +232,15 @@ public sealed class ImageStorageService : IImageStorageService
 
             using (image)
             {
-                if (image.Frames.Count > 1)
+                try
                 {
-                    while (image.Frames.Count > 1)
-                    {
-                        image.Frames.RemoveFrame(1);
-                    }
+                    image.Mutate(context => context.AutoOrient());
                 }
-
-                image.Mutate(context => context.AutoOrient());
+                catch (ImageFormatException exception)
+                {
+                    _logger.LogWarning(exception, "Could not orient malformed image metadata.");
+                    return Result.Failure<SanitizedImageResult>(ImageErrors.InvalidImage);
+                }
 
                 image.Metadata.ExifProfile = null;
                 image.Metadata.IptcProfile = null;
@@ -183,19 +252,19 @@ public sealed class ImageStorageService : IImageStorageService
 
                 if (isJpeg)
                 {
-                    encoder = new JpegEncoder { Quality = 85 };
+                    encoder = new JpegEncoder { Quality = 85, SkipMetadata = true };
                     targetExtension = ".jpg";
                     targetContentType = "image/jpeg";
                 }
                 else if (isPng)
                 {
-                    encoder = new PngEncoder();
+                    encoder = new PngEncoder { SkipMetadata = true };
                     targetExtension = ".png";
                     targetContentType = "image/png";
                 }
                 else
                 {
-                    encoder = new WebpEncoder();
+                    encoder = new WebpEncoder { SkipMetadata = true };
                     targetExtension = ".webp";
                     targetContentType = "image/webp";
                 }
@@ -220,13 +289,18 @@ public sealed class ImageStorageService : IImageStorageService
                     {
                         await image.SaveAsync(stagingStream, encoder, cancellationToken);
                         await stagingStream.FlushAsync(cancellationToken);
+                        stagingStream.Flush(flushToDisk: true);
                     }
 
                     File.Move(stagingFilePath, destinationFilePath, overwrite: false);
                 }
-                catch (IOException ioException)
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {
-                    _logger.LogError(ioException, "Disk I/O error occurred during image persistence.");
+                    throw;
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogError(exception, "Disk I/O error occurred during image persistence.");
                     return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
                 }
                 finally
@@ -244,7 +318,17 @@ public sealed class ImageStorageService : IImageStorageService
                     }
                 }
 
-                long finalByteSize = new FileInfo(destinationFilePath).Length;
+                long finalByteSize;
+                try
+                {
+                    finalByteSize = new FileInfo(destinationFilePath).Length;
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                    _logger.LogError(exception, "Could not verify the written image file.");
+                    CompensateFile(relativeStoragePath);
+                    return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+                }
                 int finalPixelWidth = image.Width;
                 int finalPixelHeight = image.Height;
 
@@ -254,15 +338,30 @@ public sealed class ImageStorageService : IImageStorageService
                     targetContentType,
                     finalByteSize,
                     finalPixelWidth,
-                    finalPixelHeight,
-                    destinationFilePath);
+                    finalPixelHeight);
 
                 return Result.Success(result);
             }
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogError(exception, "Could not stage or read the uploaded image.");
+            return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
+        }
         finally
         {
-            await memoryStream.DisposeAsync();
+            try
+            {
+                File.Delete(sourceStagingFilePath);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                _logger.LogWarning(exception, "Could not remove staged upload {Path}.", sourceStagingFilePath);
+            }
         }
     }
 
@@ -311,16 +410,10 @@ public sealed class ImageStorageService : IImageStorageService
         try
         {
             string fullPath = Path.GetFullPath(targetDirectory);
-            string? root = Path.GetPathRoot(fullPath);
-            if (string.IsNullOrEmpty(root))
-            {
-                return false;
-            }
-
-            DriveInfo driveInfo = new DriveInfo(root);
+            DriveInfo driveInfo = new DriveInfo(fullPath);
             if (driveInfo.TotalSize <= 0)
             {
-                return true;
+                return false;
             }
 
             double freeRatio = (double)driveInfo.AvailableFreeSpace / driveInfo.TotalSize;
@@ -328,8 +421,8 @@ public sealed class ImageStorageService : IImageStorageService
         }
         catch (Exception exception)
         {
-            _logger.LogWarning(exception, "Could not query drive free space for {Directory}. Permitting operation.", targetDirectory);
-            return true;
+            _logger.LogWarning(exception, "Could not query drive free space for {Directory}; rejecting upload.", targetDirectory);
+            return false;
         }
     }
 

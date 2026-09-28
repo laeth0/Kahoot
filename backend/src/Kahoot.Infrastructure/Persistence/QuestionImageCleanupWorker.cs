@@ -22,6 +22,7 @@ internal sealed class QuestionImageCleanupWorker : BackgroundService
     private readonly IHostEnvironment _hostEnvironment;
     private readonly ImageStorageOptions _options;
     private readonly ILogger<QuestionImageCleanupWorker> _logger;
+    private IEnumerator<FileInfo>? _reconciliationEnumerator;
 
     public QuestionImageCleanupWorker(
         IServiceScopeFactory scopeFactory,
@@ -52,6 +53,10 @@ internal sealed class QuestionImageCleanupWorker : BackgroundService
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
             // Application shutdown cancels the periodic timer or current pass.
+        }
+        finally
+        {
+            _reconciliationEnumerator?.Dispose();
         }
     }
 
@@ -277,17 +282,32 @@ internal sealed class QuestionImageCleanupWorker : BackgroundService
     {
         if (!Directory.Exists(uploadsDir))
         {
+            _reconciliationEnumerator?.Dispose();
+            _reconciliationEnumerator = null;
             return;
         }
 
         try
         {
-            DirectoryInfo directoryInfo = new DirectoryInfo(uploadsDir);
             List<FileInfo> candidateFiles = new List<FileInfo>();
+            int maxFilesInspected = _options.ReconciliationBatchSize * _options.MaxBatchesPerPass;
 
-            foreach (FileInfo file in directoryInfo.EnumerateFiles("*", SearchOption.TopDirectoryOnly))
+            for (int inspected = 0; inspected < maxFilesInspected; inspected++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
+
+                _reconciliationEnumerator ??= new DirectoryInfo(uploadsDir)
+                    .EnumerateFiles("*", SearchOption.TopDirectoryOnly)
+                    .GetEnumerator();
+
+                if (!_reconciliationEnumerator.MoveNext())
+                {
+                    _reconciliationEnumerator.Dispose();
+                    _reconciliationEnumerator = null;
+                    break;
+                }
+
+                FileInfo file = _reconciliationEnumerator.Current;
 
                 string extension = file.Extension;
                 if (!extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) &&
@@ -320,6 +340,8 @@ internal sealed class QuestionImageCleanupWorker : BackgroundService
         }
         catch (Exception exception)
         {
+            _reconciliationEnumerator?.Dispose();
+            _reconciliationEnumerator = null;
             _logger.LogWarning(
                 exception,
                 "Error occurred during filesystem reconciliation pass. EventName={EventName}",

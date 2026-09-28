@@ -12,10 +12,22 @@ public static class StorageInstaller
     {
         services.AddOptions<ImageStorageOptions>()
             .Bind(configuration.GetSection(ImageStorageOptions.SectionName))
-            .Validate(options => options.MaxFileSizeBytes > 0, "ImageStorage:MaxFileSizeBytes must be greater than zero.")
-            .Validate(options => options.MaxWidth > 0 && options.MaxHeight > 0, "ImageStorage:MaxWidth and MaxHeight must be greater than zero.")
-            .Validate(options => options.MaxPixelArea > 0, "ImageStorage:MaxPixelArea must be greater than zero.")
-            .Validate(options => options.MinimumFreeStorageRatio > 0 && options.MinimumFreeStorageRatio < 1.0, "ImageStorage:MinimumFreeStorageRatio must be between 0 and 1.")
+            .Validate(options => options.UploadsSubdirectory == "uploads" && options.StagingSubdirectory == "uploads/staging",
+                "ImageStorage paths must match the public uploads route and remain on the same volume.")
+            .Validate(options => options.MaxFileSizeBytes == 5_242_880,
+                "ImageStorage:MaxFileSizeBytes must match the 5 MiB upload contract.")
+            .Validate(options => options.MaxWidth == 4096 && options.MaxHeight == 4096 &&
+                                 options.MaxPixelArea == 16_777_216 && options.MaxDecodeMemoryBytes == 67_108_864,
+                "ImageStorage image dimensions and decode budget must match the upload contract.")
+            .Validate(options => options.MinimumFreeStorageRatio == 0.10,
+                "ImageStorage:MinimumFreeStorageRatio must match the 10 percent storage reserve contract.")
+            .Validate(options => options.OrphanRetentionDays == 7 && options.StagingQuarantineHours == 24,
+                "ImageStorage retention periods must match the image lifecycle contract.")
+            .Validate(options => options.CleanupIntervalMinutes > 0 &&
+                                 options.CleanupBatchSize is > 0 and <= 1000 &&
+                                 options.MaxBatchesPerPass is > 0 and <= 100 &&
+                                 options.ReconciliationBatchSize is > 0 and <= 1000,
+                "ImageStorage cleanup interval and batch limits must be bounded and positive.")
             .ValidateOnStart();
 
         services.AddSingleton<IImageStorageService, ImageStorageService>();

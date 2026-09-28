@@ -8,11 +8,12 @@ public sealed record SanitizedImageResult(
     string ContentType,
     long ByteSize,
     int PixelWidth,
-    int PixelHeight,
-    string PhysicalFilePath);
+    int PixelHeight);
 
 public interface IImageStorageService
 {
+    bool IsStorageAvailable();
+
     Task<Result<SanitizedImageResult>> SanitizeAndPersistAsync(
         Stream sourceStream,
         string originalFileName,

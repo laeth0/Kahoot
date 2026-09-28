@@ -1,11 +1,13 @@
 namespace Kahoot.Application.Features.Images.UploadImage;
 
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
 using Kahoot.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageCommand, UploadImageResponse>
@@ -86,15 +88,26 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-        catch (Exception exception)
+        catch (Exception exception) when (exception is DbUpdateException or
+                                          UniqueConstraintViolationException or
+                                          ForeignKeyConstraintViolationException)
         {
             _logger.LogError(
                 exception,
-                "Database commit failed for QuestionImage {ImageId}. Initiating file compensation for {StoragePath}.",
+                "Database rejected QuestionImage {ImageId}; compensating file {StoragePath}.",
                 sanitized.ImageId,
                 sanitized.StoragePath);
 
             _imageStorageService.CompensateFile(sanitized.StoragePath);
+            throw;
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(
+                exception,
+                "QuestionImage {ImageId} commit outcome is uncertain; retaining file {StoragePath} for reconciliation.",
+                sanitized.ImageId,
+                sanitized.StoragePath);
             throw;
         }
 

@@ -19,6 +19,8 @@ services:
       OTEL_TRACES_SAMPLER_ARG: "${OTEL_TRACES_SAMPLER_ARG:-0.10}"
     ports:
       - "127.0.0.1:${API_PORT}:8080"
+    volumes:
+      - image_uploads:/app/wwwroot/uploads
     depends_on:
       db:
         condition: service_healthy
@@ -118,6 +120,7 @@ services:
 
 volumes:
   postgres_data:
+  image_uploads:
   prometheus_data:
   loki_data:
   grafana_data:
