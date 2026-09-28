@@ -38,7 +38,7 @@ Account lifecycle governs administrative oversight of Host accounts and platform
       "terminationPending": false
     }
     ```
-  * **Privacy Guarantee**: Administrative responses must **never** join, project, or disclose private tenant content (quizzes, question text, choices, media items, game history, player answers, or scores).
+  * **Privacy Guarantee**: Administrative responses must **never** join, project, or disclose private tenant content (quizzes, question text, choices, question images, game history, player answers, or scores).
 
 ### 2.2 Immediate Account Suspension & Bounded Finalization `[NORMATIVE]`
 * **`ACCT-SUSP-001` (Suspension Endpoint)**:

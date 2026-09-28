@@ -45,7 +45,7 @@ The backend enforces this matrix across every REST endpoint, SignalR hub method,
 | **Fetch Public Game Image Bytes** | Yes | Yes | Yes | `MED-PUB-001` |
 
 ### 2.2 Host Ownership & Effective Tenant Derivation
-* **`RA-OWN-001` (Exclusive Ownership)**: Quizzes, questions, choices, media items, game sessions, immutable snapshots, participants, answers, scores, and leaderboards belong exclusively to one Host tenant.
+* **`RA-OWN-001` (Exclusive Ownership)**: Quizzes, questions, choices, question images, game sessions, immutable snapshots, participants, answers, scores, and leaderboards belong exclusively to one Host tenant.
 * **`RA-OWN-002` (Hierarchical Inheritance)**: Questions and choices strictly inherit the tenant boundary of their parent quiz. Snapshots, participants, and answers strictly inherit the tenant boundary of their game session.
 * **`RA-ISOL-001` (Foreign Resource Concealment)**: Accessing a resource belonging to another tenant returns `404 Quiz.NotFound` or `404 Game.NotFound` rather than disclosing resource existence via 403 Forbidden.
 
@@ -147,13 +147,13 @@ Stored Canonical Form: NormalizedUsername / NormalizedNickname (Strict DB unique
 
 ### 4.2 Multi-Tenant Database Segregation Invariants
 * **`RA-ISOL-002` (Persistence Filtering)**: Every tenant-scoped query must enforce `HostAccountId = @CurrentHostAccountId` as its primary filter prior to evaluating secondary filters, sorting, or pagination cursors.
-* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `MediaItems`, `Games`) must include `HostAccountId` as the leading column in composite clustering keys or primary indexes:
+* **`RA-ISOL-003` (Composite Indexing)**: Tenant-scoped tables (`Quizzes`, `Questions`, `QuestionImages`, `Games`) must include `HostAccountId` as the leading column in composite clustering keys or primary indexes:
   ```sql
   -- NON-NORMATIVE REFERENCE EXAMPLE
   CREATE INDEX IX_Quizzes_HostAccountId_CreatedAt ON Quizzes (HostAccountId, CreatedAt DESC);
   CREATE INDEX IX_Games_HostAccountId_Status ON Games (HostAccountId, Status);
   ```
-* **`RA-ISOL-004` (Integrity Constraints)**: Database relational constraints must prevent creating cross-tenant relationships (e.g., associating a Question with a Quiz of a different tenant, or referencing another tenant's MediaItem).
+* **`RA-ISOL-004` (Integrity Constraints)**: Database relational constraints must prevent creating cross-tenant relationships (e.g., associating a Question with a Quiz of a different tenant, or referencing another tenant's QuestionImage).
 
 ---
 

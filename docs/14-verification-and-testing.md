@@ -139,7 +139,7 @@ To guarantee absolute mathematical data integrity across multi-threaded and mult
 | `RACE-QZ-03` | Quiz Deletion vs. Game Creation | Deletion commits first (`204 No Content`); game creation fails with `404 Quiz.NotFound`. | Game creation commits first; quiz marked in-use; deletion attempt fails with `409 Quiz.HasSessions`. | `RACE-VER-011` |
 | `RACE-QZ-04` | Question Reorder vs. Question Insertion | Reorder commits first (`Revision = K+1`); insertion with stale revision fails with `409 Quiz.ConcurrentModification`. | Insertion commits first; reorder fails with `400 Quiz.QuestionSetMismatch` (missing new question ID) or 409. | `RACE-VER-012` |
 | `RACE-QZ-05` | Question Reorder vs. Question Deletion | Reorder commits first; deletion removes target and re-indexes. | Deletion commits first; reorder payload contains deleted question ID, fails with `400 Quiz.QuestionSetMismatch`. | `RACE-VER-013` |
-| `RACE-QZ-06` | Media Question Attachment vs. Orphan Cleanup | Attachment commits first (`ReferenceCount = 1`); cleanup worker detects reference and skips deletion. | Cleanup worker sets `DELETION_PENDING` and unlinks file; attachment fails with `400 Quiz.InvalidMediaReference`. | `RACE-VER-014` |
+| `RACE-QZ-06` | Question Image Attachment vs. Orphan Cleanup | Attachment commits first; cleanup detects the question reference and skips deletion. | Cleanup deletes the image row first; attachment fails with `400 Quiz.InvalidMediaReference`. | `RACE-VER-014` |
 
 ### 4.3 Game Lifecycle & Live Gameplay Races
 | Race ID | Competing Operations | Order A Resolution (First Wins) | Order B Resolution (Second Wins) | Stable Req ID |
@@ -173,7 +173,7 @@ To guarantee absolute mathematical data integrity across multi-threaded and mult
 | Race ID | Competing Operations | Order A Resolution (First Wins) | Order B Resolution (Second Wins) | Stable Req ID |
 | :---: | :--- | :--- | :--- | :--- |
 | `RACE-OPS-01` | Two Cleanup Workers Competing on Same Rows | Worker 1 acquires rows with `SKIP LOCKED`; deletes batch. | Worker 2 skips locked rows; processes next available batch without deadlock. | `RACE-VER-035` |
-| `RACE-OPS-02` | Orphan Media Cleanup vs. New Question Reference | Reference added; `ReferenceCount = 1`; cleanup skips deletion. | Cleanup tombstones row (`DELETION_PENDING`); attachment fails with 400. | `RACE-VER-036` |
+| `RACE-OPS-02` | Orphan Image Cleanup vs. New Question Reference | Attachment commits first; cleanup skips the referenced image. | Cleanup deletes the image row first; attachment fails with 400. | `RACE-VER-036` |
 | `RACE-OPS-03` | Schema Migration vs. Startup Replica Instances | Replica 1 acquires advisory lock; executes DDL migration. | Replicas 2 and 3 wait on advisory lock; on release, verify schema version and start. | `RACE-VER-037` |
 | `RACE-OPS-04` | Backup Dump vs. Active Write Burst | PostgreSQL MVCC snapshot captures consistent point-in-time state without locking writers. | Concurrent writes proceed; WAL logs record delta for Point-in-Time Recovery. | `RACE-VER-038` |
 | `RACE-OPS-05` | Disaster Recovery Restore vs. Credential Freshness | Restored DB predating suspension reconciles: invalidates all refresh families, forces re-login, terminates games. | Stale credentials cannot authenticate; security fails closed. | `RACE-VER-039` |
@@ -257,12 +257,16 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `QUIZ-SLO-001`  | 04 | Publish 200-question quiz $p95 \le 300\text{ ms}$ | `QUIZ-TEST-010` |
 | `MED-UPL-001`   | 05 | Image upload endpoint `POST /api/uploads/images` | `MED-TEST-001` |
 | `MED-UPL-003`   | 05 | MIME sniff, bomb guard ($\le 64\text{MB}$), EXIF strip, re-encode | `MED-TEST-001`, `MED-TEST-006` |
-| `MED-ATT-001`   | 05 | Question attachment increments RefCount; clears UnreferencedSince | `MED-TEST-002` |
+| `MED-MODEL-001` | 05 | Dedicated question-image record with one current question owner | `MED-TEST-002` |
+| `MED-MODEL-002` | 05 | Snapshot image reference preserves historical bytes | `MED-TEST-012` |
+| `MED-MODEL-003` | 05 | No stored image reference counter | `MED-TEST-013` |
+| `MED-ATT-001`   | 05 | Question attachment validates ownership and single-owner rule | `MED-TEST-002` |
 | `MED-PUB-001`   | 05 | Public image delivery at `/uploads/{filename}` | `MED-TEST-003` |
 | `MED-PUB-002`   | 05 | Public cache header: `max-age=31536000, immutable` | `MED-TEST-003` |
-| `MED-LIFE-001`  | 05 | Historical game snapshots protect media permanently | `MED-TEST-002`, `MED-TEST-009` |
-| `MED-LIFE-003`  | 05 | Two-phase cleanup: Phase 1 DB tombstone (DELETION_PENDING) | `MED-TEST-009` |
-| `MED-LIFE-004`  | 05 | Two-phase cleanup: Phase 2 physical unlink & row delete | `MED-TEST-010` |
+| `MED-LIFE-001`  | 05 | Historical game snapshots retain question images while snapshots exist | `MED-TEST-012` |
+| `MED-LIFE-002`  | 05 | Unclaimed image uploads are reclaimed after seven days | `MED-TEST-013` |
+| `MED-LIFE-003`  | 05 | Bounded DB-first cleanup of unreferenced image rows | `MED-TEST-009` |
+| `MED-LIFE-004`  | 05 | File unlink and orphan-file reconciliation after DB deletion | `MED-TEST-010` |
 | `MED-SLO-003`   | 05 | Public image delivery throughput 2,000 req/s, $p95 \le 30\text{ ms}$ | `MED-TEST-011` |
 | `GAME-STATE-001`| 06 | Canonical 6-state machine (zero aliases) | `GAME-TEST-002` |
 | `GAME-SNAP-002` | 06 | Deep immutable snapshot on game creation; 4–8 digit PIN | `GAME-TEST-001` |
