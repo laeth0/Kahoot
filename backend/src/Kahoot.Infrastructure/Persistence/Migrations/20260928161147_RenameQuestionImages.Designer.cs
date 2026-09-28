@@ -13,7 +13,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kahoot.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260928160550_RenameQuestionImages")]
+    [Migration("20260928161147_RenameQuestionImages")]
     partial class RenameQuestionImages
     {
         /// <inheritdoc />

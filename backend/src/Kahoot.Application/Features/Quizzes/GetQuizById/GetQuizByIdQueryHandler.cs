@@ -46,6 +46,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
         List<Question> questions = await _dbContext.Questions
             .AsNoTracking()
             .TagWith("Quizzes:GetQuizQuestions")
+            .Include(question => question.Image)
             .Where(question => question.QuizId == quiz.Id && question.HostAccountId == hostAccountId)
             .OrderBy(question => question.OrderIndex)
             .ToListAsync(cancellationToken);
@@ -80,6 +81,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
                     question.OrderIndex,
                     question.Text,
                     question.ImageId,
+                    question.Image?.StoragePath,
                     question.DurationSeconds,
                     question.BasePoints,
                     choiceResponses));

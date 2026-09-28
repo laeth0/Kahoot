@@ -12,6 +12,7 @@ public sealed record QuestionResponse(
     int OrderIndex,
     string Text,
     Guid? ImageId,
+    string? ImageUrl,
     int DurationSeconds,
     int BasePoints,
     IReadOnlyList<ChoiceResponse> Choices);

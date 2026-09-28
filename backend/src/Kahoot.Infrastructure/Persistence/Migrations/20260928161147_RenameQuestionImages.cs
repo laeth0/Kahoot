@@ -146,6 +146,7 @@ public partial class RenameQuestionImages : Migration
             SET reference_count =
                 (SELECT COUNT(*) FROM questions WHERE media_item_id = image.id) +
                 (SELECT COUNT(*) FROM game_question_snapshots WHERE media_item_id = image.id);
+            ALTER TABLE media_items ALTER COLUMN status DROP DEFAULT;
             """);
 
         migrationBuilder.CreateIndex(

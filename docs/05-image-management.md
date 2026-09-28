@@ -56,6 +56,7 @@ This design keeps image processing and filesystem access in Infrastructure; quiz
 ### 2.2 Image Attachment to Questions `[NORMATIVE]`
 * **`IMG-ATT-001` (Attachment Contract)**:
   * Host specifies `imageId` during question creation or edit.
+  * Question authoring and quiz detail responses expose the image ID and public `imageUrl`, or null values when no image is attached.
   * Server verifies that the committed `QuestionImage` row exists and belongs to the current Host.
   * The image must not be attached to a different current question. A unique index on `(Question.ImageId, Question.HostAccountId)` enforces this invariant under concurrent requests.
   * Foreign images, images attached to a different question, or images already removed by cleanup return `400 Quiz.InvalidImageReference`.

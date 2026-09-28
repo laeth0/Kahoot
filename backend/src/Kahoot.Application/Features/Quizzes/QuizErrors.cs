@@ -30,7 +30,7 @@ public static class QuizErrors
 
     public static readonly Error InvalidImageReference = Error.Validation(
         "Quiz.InvalidImageReference",
-        "The referenced image does not exist, belongs to another account, or is attached to another question.");
+        "The referenced image is unavailable, belongs to another account, or is attached to another question.");
 
     public static readonly Error QuestionLimitExceeded = Error.Validation(
         "Validation.Failed",

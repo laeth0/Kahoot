@@ -15,6 +15,7 @@ namespace Kahoot.Application.Features.Quizzes.Questions.UpdateQuestion;
 public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestionCommand, QuestionResponse>
 {
     private const string ImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
+    private const string ImageReferenceConstraintName = "fk_questions_question_images_image_id_host_account_id";
 
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
@@ -75,6 +76,7 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
 
         Guid? oldImageId = question.ImageId;
         Guid? newImageId = request.ImageId;
+        string? imageUrl = null;
 
         if (oldImageId != newImageId)
         {
@@ -91,6 +93,7 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
                     return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
                 }
 
+                imageUrl = newImage.StoragePath;
                 newImage.UnreferencedSince = null;
             }
 
@@ -108,6 +111,15 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
                     oldImage.UnreferencedSince = _timeProvider.GetUtcNow();
                 }
             }
+        }
+
+        if (oldImageId == newImageId && newImageId.HasValue)
+        {
+            imageUrl = await _dbContext.QuestionImages
+                .AsNoTracking()
+                .Where(image => image.Id == newImageId.Value && image.HostAccountId == hostAccountId)
+                .Select(image => image.StoragePath)
+                .SingleOrDefaultAsync(cancellationToken);
         }
 
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
@@ -160,6 +172,16 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
         {
             return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
         }
+        catch (ForeignKeyConstraintViolationException exception) when (
+            string.Equals(exception.ConstraintName, ImageReferenceConstraintName, StringComparison.Ordinal))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
+        catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is QuestionImage))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
         await transaction.CommitAsync(cancellationToken);
 
         QuestionResponse response = new QuestionResponse(
@@ -168,6 +190,7 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
             question.OrderIndex,
             question.Text,
             question.ImageId,
+            imageUrl,
             question.DurationSeconds,
             question.BasePoints,
             choiceResponses);

@@ -14,6 +14,7 @@ namespace Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionCommand, QuestionResponse>
 {
     private const string ImageOwnershipConstraintName = "ix_questions_image_id_host_account_id";
+    private const string ImageReferenceConstraintName = "fk_questions_question_images_image_id_host_account_id";
 
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
@@ -68,6 +69,8 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             return Result.Failure<QuestionResponse>(QuizErrors.QuestionLimitExceeded);
         }
 
+        string? imageUrl = null;
+
         if (request.ImageId.HasValue)
         {
             QuestionImage? image = await _dbContext.QuestionImages
@@ -81,6 +84,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
                 return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
             }
 
+            imageUrl = image.StoragePath;
             image.UnreferencedSince = null;
         }
 
@@ -134,6 +138,16 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
         {
             return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
         }
+        catch (ForeignKeyConstraintViolationException exception) when (
+            string.Equals(exception.ConstraintName, ImageReferenceConstraintName, StringComparison.Ordinal))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
+        catch (DbUpdateConcurrencyException exception) when (
+            exception.Entries.Any(entry => entry.Entity is QuestionImage))
+        {
+            return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
+        }
 
         QuestionResponse response = new QuestionResponse(
             question.Id,
@@ -141,6 +155,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             question.OrderIndex,
             question.Text,
             question.ImageId,
+            imageUrl,
             question.DurationSeconds,
             question.BasePoints,
             choiceResponses);

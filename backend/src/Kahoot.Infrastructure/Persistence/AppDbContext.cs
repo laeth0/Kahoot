@@ -82,6 +82,13 @@ public sealed class AppDbContext : DbContext, IAppDbContext
                 postgresException.ConstraintName,
                 ex);
         }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+        {
+            throw new ForeignKeyConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -99,6 +106,13 @@ public sealed class AppDbContext : DbContext, IAppDbContext
                                            postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
         {
             throw new UniqueConstraintViolationException(
+                postgresException.ConstraintName,
+                ex);
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
+                                           postgresException.SqlState == PostgresErrorCodes.ForeignKeyViolation)
+        {
+            throw new ForeignKeyConstraintViolationException(
                 postgresException.ConstraintName,
                 ex);
         }

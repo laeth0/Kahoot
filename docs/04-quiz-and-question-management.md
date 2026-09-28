@@ -53,6 +53,7 @@ Quiz authoring allows Hosts to create structured educational content:
     }
     ```
   * Appends question to the end of the quiz with contiguous zero-based `OrderIndex`. A question has at most one optional image; answers and choices remain text-only.
+  * Question create/update and quiz detail responses include nullable `imageId` and `imageUrl`; `imageUrl` is the immutable public `/uploads/` path returned for the stored question image.
   * Technical Limit Check: Fails with `400 Validation.Failed` if quiz already contains 200 questions.
   * Resets `IsPublished = false`, increments quiz `Revision`.
 * **`QUIZ-QUEST-002` (Update Question)**:
