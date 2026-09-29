@@ -49,7 +49,6 @@ public static class RealtimeInstaller
         services.AddScoped<IGameNotificationService, GameNotificationService>();
         services.AddScoped<IPinGeneratorService, PinGeneratorService>();
         services.AddScoped<IGameCommandIdempotencyService, GameCommandIdempotencyService>();
-        services.AddScoped<IGameAutoCloseService, GameAutoCloseService>();
 
         return services;
     }

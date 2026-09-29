@@ -131,7 +131,9 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             .CountAsync(snapshot => snapshot.GameId == game.Id && snapshot.HostAccountId == hostAccountId,
                 cancellationToken);
 
-        DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+        DateTimeOffset utcNow = await _dbContext.Database
+            .SqlQuery<DateTimeOffset>($"SELECT clock_timestamp() AS \"Value\"")
+            .SingleAsync(cancellationToken);
         DateTimeOffset endsAt = utcNow.AddSeconds(nextQuestion.DurationSeconds);
 
         nextQuestion.StartedAt = utcNow;

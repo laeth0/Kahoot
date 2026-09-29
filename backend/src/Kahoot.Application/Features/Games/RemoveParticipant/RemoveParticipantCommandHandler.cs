@@ -18,8 +18,6 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
     private readonly ICurrentUser _currentUser;
     private readonly IPlayerPresenceService _playerPresenceService;
     private readonly IGameNotificationService _notificationService;
-    private readonly IGameAutoCloseService _autoCloseService;
-    private readonly TimeProvider _timeProvider;
     private readonly ILogger<RemoveParticipantCommandHandler> _logger;
 
     public RemoveParticipantCommandHandler(
@@ -27,16 +25,12 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
         ICurrentUser currentUser,
         IPlayerPresenceService playerPresenceService,
         IGameNotificationService notificationService,
-        IGameAutoCloseService autoCloseService,
-        TimeProvider timeProvider,
         ILogger<RemoveParticipantCommandHandler> logger)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
         _playerPresenceService = playerPresenceService;
         _notificationService = notificationService;
-        _autoCloseService = autoCloseService;
-        _timeProvider = timeProvider;
         _logger = logger;
     }
 
@@ -92,7 +86,9 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             return Result.Success();
         }
 
-        DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+        DateTimeOffset utcNow = await _dbContext.Database
+            .SqlQuery<DateTimeOffset>($"SELECT clock_timestamp() AS \"Value\"")
+            .SingleAsync(cancellationToken);
         // System Design & Tombstone Reservation: Soft-deletes participant to permanently reserve nickname and prevent spoofing
         participant.IsRemoved = true;
         participant.RemovedAt = utcNow;
@@ -110,7 +106,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
         game.PresenceVersion += 1;
 
         GameQuestionSnapshot? activeQuestion = null;
-        bool shouldEvaluateAutoClose = false;
+        QuestionEndedEvent? endedEvent = null;
 
         if (game.Status == GameStatus.Lobby)
         {
@@ -138,7 +134,21 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
                     if (activeQuestion.AcceptedAnswerCount == activeQuestion.EffectiveEligibleParticipantCount &&
                         activeQuestion.EffectiveEligibleParticipantCount > 0)
                     {
-                        shouldEvaluateAutoClose = true;
+                        (GameQuestionSnapshot materializedQuestion, List<GameChoiceSnapshot> choices) =
+                            await QuestionResultsMaterializer.MaterializeAsync(
+                                _dbContext, game, utcNow, cancellationToken);
+                        game.Status = GameStatus.QuestionResults;
+                        game.StateVersion++;
+                        List<QuestionChoiceResultDto> choiceResults = choices
+                            .Select(choice => new QuestionChoiceResultDto(
+                                choice.Id, choice.OrderIndex, choice.Text, choice.IsCorrect, choice.SelectionCount))
+                            .ToList();
+                        endedEvent = new QuestionEndedEvent(
+                            game.Id, game.StateVersion, activeQuestion.Id, activeQuestion.OrderIndex,
+                            materializedQuestion.AcceptedAnswerCount,
+                            materializedQuestion.EffectiveEligibleParticipantCount, utcNow,
+                            choiceResults.Where(choice => choice.IsCorrect)
+                                .Select(choice => choice.ChoiceId).ToList(), choiceResults);
                     }
                 }
             }
@@ -179,18 +189,10 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             presenceEvent,
             CancellationToken.None);
 
-        if (shouldEvaluateAutoClose)
+        if (endedEvent is not null)
         {
-            try
-            {
-                await _autoCloseService.TryAutoCloseQuestionAsync(game.Id, CancellationToken.None);
-            }
-            catch (Exception exception)
-            {
-                _logger.LogError(exception,
-                    "Failed to trigger auto-close after participant removal. GameId={GameId}",
-                    game.Id);
-            }
+            await _notificationService.PublishQuestionEndedAsync(
+                hostAccountId, game.Id, game.StateVersion, endedEvent, CancellationToken.None);
         }
 
         return Result.Success();

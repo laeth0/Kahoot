@@ -129,7 +129,9 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             .CountAsync(snapshot => snapshot.GameId == game.Id && snapshot.HostAccountId == hostAccountId,
                 cancellationToken);
 
-        DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+        DateTimeOffset utcNow = await _dbContext.Database
+            .SqlQuery<DateTimeOffset>($"SELECT clock_timestamp() AS \"Value\"")
+            .SingleAsync(cancellationToken);
         DateTimeOffset endsAt = utcNow.AddSeconds(question1.DurationSeconds);
 
         question1.StartedAt = utcNow;

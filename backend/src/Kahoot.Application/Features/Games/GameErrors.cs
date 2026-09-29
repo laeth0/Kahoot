@@ -78,4 +78,29 @@ public static class GameErrors
     public static readonly Error ValidationFailed = Error.Validation(
         "Validation.Failed",
         "The command parameters do not match the previously recorded command execution.");
+
+    // Question Snapshot Mismatch (PLAY-ERR-001) - Submitted question ID does not match current active question
+    public static readonly Error NotCurrentQuestion = Error.Validation(
+        "Game.NotCurrentQuestion",
+        "The question ID does not match the active question snapshot.");
+
+    // Choice Selection Invariant (PLAY-ERR-002) - Choice list is empty, exceeds 6, or contains invalid choice IDs
+    public static readonly Error InvalidChoices = Error.Validation(
+        "Game.InvalidChoices",
+        "The submitted choices are invalid or do not belong to the active question.");
+
+    // Ejected Participant Guard (PLAY-ERR-004) - Rejects answer submissions from participants removed by host
+    public static readonly Error ParticipantRemoved = Error.Forbidden(
+        "Game.ParticipantRemoved",
+        "The participant was removed from the game session.");
+
+    // Host Availability Guard (PLAY-ERR-007) - Rejects gameplay actions when host account is suspended or game is terminated
+    public static readonly Error Unavailable = Error.Conflict(
+        "Game.Unavailable",
+        "The game session is unavailable because the host account is inactive.");
+
+    // Rate Limit Guard (PLAY-ERR-008) - Rejects submission attempts exceeding per-socket or per-participant limits
+    public static readonly Error TooManyAnswerAttempts = Error.RateLimited(
+        "Game.TooManyAnswerAttempts",
+        "Answer submission rate limit exceeded.");
 }
