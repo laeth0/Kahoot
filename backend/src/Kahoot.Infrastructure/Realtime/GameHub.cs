@@ -261,6 +261,7 @@ public sealed class GameHub : Hub
                     currentParticipant.ConnectionGeneration,
                     Context.Abort);
                 await transaction.CommitAsync(Context.ConnectionAborted);
+                _playerPresence.MarkCommitted(Context.ConnectionId);
             }
             catch
             {
@@ -404,6 +405,7 @@ public sealed class GameHub : Hub
                 participant.ConnectionGeneration,
                 Context.Abort);
             await transaction.CommitAsync(Context.ConnectionAborted);
+            _playerPresence.MarkCommitted(Context.ConnectionId);
         }
         catch
         {

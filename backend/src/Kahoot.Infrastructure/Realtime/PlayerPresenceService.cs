@@ -195,6 +195,29 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         .Select(entry => entry.Key)
         .ToArray();
 
+    internal void MarkCommitted(string connectionId)
+    {
+        if (_connections.TryGetValue(connectionId, out PlayerConnection? connection))
+        {
+            connection.MarkCommitted();
+        }
+    }
+
+    // The hub registers presence before commit; skip that brief provisional state.
+    internal PlayerConnectionSnapshot[] GetConnectionSnapshots() => _connections
+        .Where(entry => entry.Value.IsCommitted)
+        .Select(entry => new PlayerConnectionSnapshot(
+            entry.Key, entry.Value.ParticipantId, entry.Value.ConnectionGeneration))
+        .ToArray();
+
+    internal void AbortConnection(string connectionId)
+    {
+        if (_connections.TryGetValue(connectionId, out PlayerConnection? connection))
+        {
+            connection.Abort();
+        }
+    }
+
     // Generation-Based Stale Socket Eviction - Aborts any local connections for a participant whose generation is strictly less than target.
     public void AbortStaleParticipantConnections(Guid participantId, long generation)
     {
@@ -209,22 +232,42 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
 
     public async Task RenewAllAsync(CancellationToken cancellationToken)
     {
+        const int batchSize = 128;
+        List<Task> renewals = new List<Task>(batchSize);
         foreach (KeyValuePair<string, PlayerConnection> entry in _connections)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            await entry.Value.Gate.WaitAsync(cancellationToken);
-            try
+            renewals.Add(RenewConnectionAsync(entry.Key, entry.Value, cancellationToken));
+            if (renewals.Count == batchSize)
             {
-                if (_connections.TryGetValue(entry.Key, out PlayerConnection? current) &&
-                    ReferenceEquals(current, entry.Value))
-                {
-                    await RefreshAsync(entry.Key, entry.Value);
-                }
+                await Task.WhenAll(renewals);
+                renewals.Clear();
             }
-            finally
+        }
+
+        if (renewals.Count > 0)
+        {
+            await Task.WhenAll(renewals);
+        }
+    }
+
+    private async Task RenewConnectionAsync(
+        string connectionId,
+        PlayerConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await connection.Gate.WaitAsync(cancellationToken);
+        try
+        {
+            if (_connections.TryGetValue(connectionId, out PlayerConnection? current) &&
+                ReferenceEquals(current, connection))
             {
-                entry.Value.Gate.Release();
+                await RefreshAsync(connectionId, connection);
             }
+        }
+        finally
+        {
+            connection.Gate.Release();
         }
     }
 
@@ -248,6 +291,12 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
 
     private sealed class PlayerConnection
     {
+        private int _committed;
+
+        public bool IsCommitted => Volatile.Read(ref _committed) == 1;
+
+        public void MarkCommitted() => Volatile.Write(ref _committed, 1);
+
         public PlayerConnection(
             Guid participantId,
             Guid hostAccountId,
@@ -290,4 +339,9 @@ public readonly record struct PlayerConnectionInfo(
     Guid GameId,
     string Nickname,
     int SeatNumber,
+    long ConnectionGeneration);
+
+internal readonly record struct PlayerConnectionSnapshot(
+    string ConnectionId,
+    Guid ParticipantId,
     long ConnectionGeneration);
