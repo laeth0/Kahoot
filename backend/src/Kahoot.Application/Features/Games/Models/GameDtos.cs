@@ -83,3 +83,17 @@ public sealed record QuestionReportDto(
     int TotalAnswers,
     int CorrectAnswers,
     List<QuestionChoiceResultDto> Choices);
+
+public sealed record ParticipantPresenceChangedEvent(
+    Guid GameId,
+    long PresenceVersion,
+    int ReservedParticipantCount,
+    int ConnectedParticipantCount,
+    string Nickname,
+    int SeatNumber,
+    string Reason);
+
+public sealed record ParticipantRemovedEvent(
+    Guid GameId,
+    Guid ParticipantId,
+    string Reason);

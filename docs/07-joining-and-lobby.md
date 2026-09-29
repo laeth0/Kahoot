@@ -146,6 +146,8 @@ Under standard and burst lobby load:
 * **`JOIN-SEC-001` (Hash Storage)**: Database stores only `SHA256(RawToken)` and `SHA256(JoinOperationId)`. Raw values are returned strictly once in the join response and never logged in server logs or query strings.
 * **`JOIN-SEC-002` (NAT-Friendly Rate Limiting)**: Token bucket rate limiting applied per client IP: baseline capacity 1,200 tokens; refill rate 600 tokens per 10 seconds. Allows an entire classroom (500 players behind single NAT) to join in a rapid burst without false throttling.
 
+For deployments behind a reverse proxy, set `TRUSTED_PROXY_NETWORK_0` to the proxy network CIDR (or configure `TrustedProxies:Networks` through deployment configuration). Only trusted proxy addresses may supply `X-Forwarded-For`; direct client headers are ignored. The Redis token bucket is shared by API replicas and expires idle client entries.
+
 ---
 
 ## 6. Concurrency, Lost-Response & Failure-Mode Contracts

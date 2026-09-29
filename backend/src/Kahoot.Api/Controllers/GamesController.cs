@@ -7,7 +7,11 @@ using Kahoot.Application.Features.Games.CreateGame;
 using Kahoot.Application.Features.Games.EndGame;
 using Kahoot.Application.Features.Games.EndQuestion;
 using Kahoot.Application.Features.Games.GetGame;
+using Kahoot.Application.Features.Games.GetGameParticipants;
 using Kahoot.Application.Features.Games.GetGameReport;
+using Kahoot.Application.Features.Games.GetJoinInfo;
+using Kahoot.Application.Features.Games.JoinGame;
+using Kahoot.Application.Features.Games.RemoveParticipant;
 using Kahoot.Application.Features.Games.ShowLeaderboard;
 using Kahoot.Application.Features.Games.StartGame;
 using Kahoot.Domain.Enums;
@@ -198,6 +202,102 @@ public sealed class GamesController : ApiController
     {
         GetGameReportQuery query = new GetGameReportQuery(id);
         Result<GetGameReportResponse> result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpPost("join")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(JoinGameResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> JoinGame(
+        [FromBody] JoinGameRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        string ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+        JoinGameCommand command = new JoinGameCommand(
+            request.Pin,
+            request.Nickname,
+            request.JoinOperationId,
+            ipAddress);
+
+        Result<JoinGameResponse> result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpGet("join/{pin}")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(GetJoinInfoResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> GetJoinInfo(
+        [FromRoute] string pin,
+        CancellationToken cancellationToken = default)
+    {
+        GetJoinInfoQuery query = new GetJoinInfoQuery(pin);
+        Result<GetJoinInfoResponse> result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpDelete("{id:guid}/participants/{participantId:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    public async Task<IActionResult> RemoveParticipant(
+        [FromRoute] Guid id,
+        [FromRoute] Guid participantId,
+        CancellationToken cancellationToken = default)
+    {
+        RemoveParticipantCommand command = new RemoveParticipantCommand(id, participantId);
+        Result result = await _sender.Send(command, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return NoContent();
+        }
+
+        return Problem(result.Error);
+    }
+
+    [HttpGet("{id:guid}/participants")]
+    [ProducesResponseType(typeof(GetGameParticipantsResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetGameParticipants(
+        [FromRoute] Guid id,
+        [FromQuery] bool includeRemoved = false,
+        [FromQuery] int? limit = null,
+        [FromQuery] int? cursor = null,
+        CancellationToken cancellationToken = default)
+    {
+        GetGameParticipantsQuery query = new GetGameParticipantsQuery(id, includeRemoved, limit, cursor);
+        Result<GetGameParticipantsResponse> result = await _sender.Send(query, cancellationToken);
 
         if (result.IsSuccess)
         {

@@ -40,6 +40,8 @@ public interface IAppDbContext
 
     Task<Game?> GetGameForUpdateAsync(Guid gameId, Guid hostAccountId, CancellationToken cancellationToken);
 
+    Task<Game?> GetGameByPinForUpdateAsync(string pin, CancellationToken cancellationToken);
+
     Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken);
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

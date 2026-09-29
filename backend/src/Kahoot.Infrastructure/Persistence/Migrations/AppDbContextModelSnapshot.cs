@@ -574,6 +574,10 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                     b.HasAlternateKey("Id", "HostAccountId", "GameId")
                         .HasName("ak_participants_id_host_account_id_game_id");
 
+                    b.HasIndex("JoinOperationIdHash")
+                        .IsUnique()
+                        .HasDatabaseName("ux_participants_join_operation");
+
                     b.HasIndex("GameId", "HostAccountId")
                         .HasDatabaseName("ix_participants_game_id_host_account_id");
 
@@ -642,16 +646,14 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_participant_session_tokens_expires_at");
 
                     b.HasIndex("ParticipantId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_participant_session_tokens_participant");
+                        .HasDatabaseName("ix_participant_session_tokens_participant");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
                         .HasDatabaseName("ux_participant_session_tokens_token_hash");
 
                     b.HasIndex("HostAccountId", "GameId", "ParticipantId")
-                        .IsUnique()
-                        .HasDatabaseName("ux_participant_tokens_host_account_game_participant");
+                        .HasDatabaseName("ix_participant_tokens_host_account_game_participant");
 
                     b.HasIndex("ParticipantId", "HostAccountId", "GameId")
                         .HasDatabaseName("ix_participant_session_tokens_participant_id_host_account_id_g");

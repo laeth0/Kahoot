@@ -62,6 +62,15 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return games.Count == 0 ? null : games[0];
     }
 
+    public async Task<Game?> GetGameByPinForUpdateAsync(string pin, CancellationToken cancellationToken)
+    {
+        List<Game> games = await Games
+            .FromSqlInterpolated($"SELECT * FROM games WHERE pin = {pin} AND status != {GameStatus.Finished} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return games.Count == 0 ? null : games[0];
+    }
+
     public async Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken)
     {
         return await Users

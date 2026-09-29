@@ -67,6 +67,10 @@ public sealed class ParticipantConfiguration : IEntityTypeConfiguration<Particip
             .IsUnique()
             .HasDatabaseName("ux_participants_game_join_operation");
 
+        builder.HasIndex(participant => participant.JoinOperationIdHash)
+            .IsUnique()
+            .HasDatabaseName("ux_participants_join_operation");
+
         builder.HasIndex(participant => new { participant.GameId, participant.SeatNumber })
             .IsUnique()
             .HasDatabaseName("ux_participants_game_seat");

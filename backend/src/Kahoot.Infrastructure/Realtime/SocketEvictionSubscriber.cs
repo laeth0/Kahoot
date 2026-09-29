@@ -9,6 +9,7 @@ internal sealed class SocketEvictionSubscriber : IHostedService
 {
     private readonly ISubscriber _subscriber;
     private readonly HostPresenceService _presence;
+    private readonly PlayerPresenceService _playerPresence;
     private readonly ILogger<SocketEvictionSubscriber> _logger;
     private readonly RedisChannel _channel;
 
@@ -16,10 +17,12 @@ internal sealed class SocketEvictionSubscriber : IHostedService
         IConnectionMultiplexer redis,
         IOptions<RealtimeOptions> options,
         HostPresenceService presence,
+        PlayerPresenceService playerPresence,
         ILogger<SocketEvictionSubscriber> logger)
     {
         _subscriber = redis.GetSubscriber();
         _presence = presence;
+        _playerPresence = playerPresence;
         _logger = logger;
         _channel = RedisChannel.Literal($"{options.Value.ChannelPrefix}:host-sockets:evict");
     }
@@ -37,6 +40,7 @@ internal sealed class SocketEvictionSubscriber : IHostedService
             try
             {
                 _presence.AbortHostConnections(hostAccountId);
+                _playerPresence.AbortHostConnections(hostAccountId);
             }
             catch (Exception exception)
             {

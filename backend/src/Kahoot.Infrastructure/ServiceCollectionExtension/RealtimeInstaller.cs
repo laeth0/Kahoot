@@ -37,7 +37,11 @@ public static class RealtimeInstaller
 
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
         services.AddSingleton<HostPresenceService>();
+        services.AddSingleton<PlayerPresenceService>();
+        services.AddSingleton<IPlayerPresenceService>(sp => sp.GetRequiredService<PlayerPresenceService>());
         services.AddHostedService<HostPresenceHeartbeatWorker>();
+        services.AddHostedService<PlayerPresenceHeartbeatWorker>();
+        services.AddHostedService<PlayerSocketEvictionSubscriber>();
         services.AddHostedService<SocketEvictionSubscriber>();
         services.AddScoped<IGameNotificationService, GameNotificationService>();
         services.AddScoped<IPinGeneratorService, PinGeneratorService>();

@@ -30,4 +30,12 @@ public interface IGameNotificationService
         long stateVersion,
         object payload,
         CancellationToken cancellationToken = default);
+
+    Task PublishParticipantPresenceChangedAsync(
+        Guid hostAccountId,
+        Guid gameId,
+        long presenceVersion,
+        object payload,
+        CancellationToken cancellationToken = default);
+
 }
