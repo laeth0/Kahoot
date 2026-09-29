@@ -172,12 +172,12 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
     }
 
     // Distributed Participant Eviction - Publishes kick notice over Redis pub/sub channel to evict participant sockets across the cluster.
-    public async Task EvictParticipantAsync(Guid participantId, Guid gameId, CancellationToken cancellationToken)
+    public async Task EvictParticipantAsync(Guid participantId, Guid gameId, long stateVersion, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         await _subscriber.PublishAsync(
             RedisChannel.Literal($"{_keyPrefix}:player-sockets:evict"),
-            $"kick:{gameId:N}:{participantId:N}").WaitAsync(cancellationToken);
+            $"kick:{gameId:N}:{participantId:N}:{stateVersion}").WaitAsync(cancellationToken);
     }
 
     // Distributed Connection Generation Fencing - Publishes fence notice over Redis to terminate older sockets for this participant.

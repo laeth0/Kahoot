@@ -94,6 +94,7 @@ public sealed record QuestionReportDto(
 
 public sealed record ParticipantPresenceChangedEvent(
     Guid GameId,
+    long StateVersion,
     long PresenceVersion,
     int ReservedParticipantCount,
     int ConnectedParticipantCount,
@@ -103,8 +104,8 @@ public sealed record ParticipantPresenceChangedEvent(
 
 public sealed record ParticipantRemovedEvent(
     Guid GameId,
-    Guid ParticipantId,
-    string Reason);
+    long StateVersion,
+    Guid ParticipantId);
 
 // Scorecard Feedback Telemetry (SCORE-RES-002) - Personal question result delivered to each participant upon question conclusion
 public sealed record PersonalQuestionResultEvent(

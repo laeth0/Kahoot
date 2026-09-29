@@ -80,15 +80,9 @@ public sealed class GameNotificationService : IGameNotificationService
             return;
         }
 
-        // Concurrency & High Throughput (SCORE-SLO-001) - Dispatches all personal scorecards concurrently through SignalR without serialization latency
-        List<Task> dispatchTasks = new List<Task>(personalResults.Count);
-        foreach (PersonalQuestionResultEvent result in personalResults)
-        {
-            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{result.ParticipantId}";
-            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalQuestionResult", result, gameId, cancellationToken));
-        }
-
-        await Task.WhenAll(dispatchTasks);
+        await SendPersonalEventsAsync(
+            hostAccountId, gameId, personalResults, result => result.ParticipantId,
+            "PersonalQuestionResult", cancellationToken);
     }
 
     // Leaderboard Updated Broadcast - Emits ranked standings and score differentials to all game participants and the host.
@@ -128,15 +122,9 @@ public sealed class GameNotificationService : IGameNotificationService
             return;
         }
 
-        // Concurrency & High Throughput (SCORE-SLO-002) - Pushes individual sequential rank position to each player socket concurrently
-        List<Task> dispatchTasks = new List<Task>(personalRanks.Count);
-        foreach (PersonalLeaderboardEvent rank in personalRanks)
-        {
-            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{rank.ParticipantId}";
-            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalLeaderboardUpdated", rank, gameId, cancellationToken));
-        }
-
-        await Task.WhenAll(dispatchTasks);
+        await SendPersonalEventsAsync(
+            hostAccountId, gameId, personalRanks, rank => rank.ParticipantId,
+            "PersonalLeaderboardUpdated", cancellationToken);
     }
 
     // Game Ended Broadcast - Dispatches final game termination frame and podium results to conclude the session.
@@ -176,15 +164,9 @@ public sealed class GameNotificationService : IGameNotificationService
             return;
         }
 
-        // Concurrency & High Throughput (SCORE-SLO-002) - Pushes final standing and score to each participant socket concurrently
-        List<Task> dispatchTasks = new List<Task>(personalRanks.Count);
-        foreach (PersonalGameEndedEvent rank in personalRanks)
-        {
-            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{rank.ParticipantId}";
-            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalGameEnded", rank, gameId, cancellationToken));
-        }
-
-        await Task.WhenAll(dispatchTasks);
+        await SendPersonalEventsAsync(
+            hostAccountId, gameId, personalRanks, rank => rank.ParticipantId,
+            "PersonalGameEnded", cancellationToken);
     }
 
     // Participant Presence Changed Broadcast - Notifies host and players of player connects, disconnects, and reconnects.
@@ -206,6 +188,34 @@ public sealed class GameNotificationService : IGameNotificationService
 
         await TrySendAsync(playerGroup, "ParticipantPresenceChanged", payload, gameId, cancellationToken);
         await TrySendAsync(hostGroup, "ParticipantPresenceChanged", payload, gameId, cancellationToken);
+    }
+
+    // Bound concurrent Redis sends per game so a large game cannot queue 500 personal writes at once.
+    private async Task SendPersonalEventsAsync<T>(
+        Guid hostAccountId,
+        Guid gameId,
+        IReadOnlyList<T> events,
+        Func<T, Guid> participantId,
+        string eventName,
+        CancellationToken cancellationToken) where T : notnull
+    {
+        const int batchSize = 32;
+        List<Task> batch = new List<Task>(batchSize);
+        foreach (T payload in events)
+        {
+            string group = $"host:{hostAccountId}:game:{gameId}:participant:{participantId(payload)}";
+            batch.Add(TrySendAsync(group, eventName, payload, gameId, cancellationToken));
+            if (batch.Count == batchSize)
+            {
+                await Task.WhenAll(batch);
+                batch.Clear();
+            }
+        }
+
+        if (batch.Count > 0)
+        {
+            await Task.WhenAll(batch);
+        }
     }
 
     // Resilient Group Delivery - Traps transient transport exceptions without bubbling errors back into calling command handlers.

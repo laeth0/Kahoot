@@ -9,5 +9,5 @@ public interface IPlayerPresenceService
     Task<int> GetConnectedCountAsync(Guid gameId);
 
     // Participant Socket Eviction (LOBBY-EVICT-001) - Clears Redis presence key and forcefully disconnects participant hub socket
-    Task EvictParticipantAsync(Guid participantId, Guid gameId, CancellationToken cancellationToken);
+    Task EvictParticipantAsync(Guid participantId, Guid gameId, long stateVersion, CancellationToken cancellationToken);
 }

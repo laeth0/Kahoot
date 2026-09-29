@@ -82,8 +82,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
         if (participant.IsRemoved)
         {
             await transaction.CommitAsync(cancellationToken);
-            await _playerPresenceService.EvictParticipantAsync(
-                participant.Id, game.Id, CancellationToken.None);
+            await EvictCommittedParticipantAsync(participant.Id, game.Id, game.StateVersion);
             return Result.Success();
         }
 
@@ -193,28 +192,32 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             participant.SeatNumber);
 
         // Post-Commit Cluster-Wide Socket Eviction: Disconnects removed player's SignalR connection across all cluster nodes
-        await _playerPresenceService.EvictParticipantAsync(
-            participant.Id,
-            game.Id,
-            CancellationToken.None);
+        await EvictCommittedParticipantAsync(participant.Id, game.Id, game.StateVersion);
 
-        int connectedCount = await _playerPresenceService.GetConnectedCountAsync(game.Id);
-        ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
-            game.Id,
-            game.PresenceVersion,
-            game.ReservedParticipantCount,
-            connectedCount,
-            participant.DisplayNickname,
-            participant.SeatNumber,
-            "Removed");
+        try
+        {
+            int connectedCount = await _playerPresenceService.GetConnectedCountAsync(game.Id);
+            ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
+                game.Id,
+                game.StateVersion,
+                game.PresenceVersion,
+                game.ReservedParticipantCount,
+                connectedCount,
+                participant.DisplayNickname,
+                participant.SeatNumber,
+                "Removed");
 
-        // Post-Commit Broadcast Pattern: Fans out presence update to host socket
-        await _notificationService.PublishParticipantPresenceChangedAsync(
-            hostAccountId,
-            game.Id,
-            game.PresenceVersion,
-            presenceEvent,
-            CancellationToken.None);
+            await _notificationService.PublishParticipantPresenceChangedAsync(
+                hostAccountId,
+                game.Id,
+                game.PresenceVersion,
+                presenceEvent,
+                CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Player presence notification failed after removal commit. GameId={GameId}", game.Id);
+        }
 
         if (endedEvent is not null)
         {
@@ -230,5 +233,21 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
         }
 
         return Result.Success();
+    }
+
+    private async Task EvictCommittedParticipantAsync(Guid participantId, Guid gameId, long stateVersion)
+    {
+        try
+        {
+            await _playerPresenceService.EvictParticipantAsync(
+                participantId, gameId, stateVersion, CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            // The removal is already committed; a later reconnect still rejects the revoked session.
+            _logger.LogError(exception,
+                "Participant socket eviction failed after removal commit. GameId={GameId} ParticipantId={ParticipantId}",
+                gameId, participantId);
+        }
     }
 }

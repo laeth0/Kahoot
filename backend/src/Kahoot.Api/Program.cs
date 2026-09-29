@@ -9,6 +9,7 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
 using Kahoot.Infrastructure.Realtime;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.HttpOverrides;
 using IPNetwork = System.Net.IPNetwork;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
@@ -100,7 +101,17 @@ WebApplication app = builder.Build();
     // REST Controllers Mapping - Maps attribute-routed HTTP endpoints.
     app.MapControllers();
     // SignalR Realtime Hub Mapping - Exposes live WebSocket transport hub for host controls and player game interactions.
-    app.MapHub<GameHub>("/hubs/game");
+    app.MapHub<GameHub>("/hubs/game", options =>
+    {
+        // Transport backpressure - Pauses writes at the 64 KB pipe threshold; blocked sends time out and disconnect.
+        options.TransportMaxBufferSize = 64 * 1024;
+        options.ApplicationMaxBufferSize = 64 * 1024;
+        // Close a connection that cannot drain its bounded send buffer.
+        options.TransportSendTimeout = TimeSpan.FromSeconds(2);
+        options.CloseOnAuthenticationExpiration = true;
+        // Transport Protocol Selection - Restricts realtime communication strictly to WebSockets.
+        options.Transports = HttpTransportType.WebSockets;
+    });
 
     // Readiness Health Probe Options - Maps unhealthy or degraded states to 503 Service Unavailable for load balancer traffic cut-off.
     HealthCheckOptions readinessOptions = new()

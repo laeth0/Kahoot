@@ -247,23 +247,30 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             participantId,
             seatNumber);
 
-        int connectedCount = await _playerPresenceService.GetConnectedCountAsync(game.Id);
-        ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
-            game.Id,
-            game.PresenceVersion,
-            game.ReservedParticipantCount,
-            connectedCount,
-            participant.DisplayNickname,
-            participant.SeatNumber,
-            "Joined");
+        try
+        {
+            int connectedCount = await _playerPresenceService.GetConnectedCountAsync(game.Id);
+            ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
+                game.Id,
+                game.StateVersion,
+                game.PresenceVersion,
+                game.ReservedParticipantCount,
+                connectedCount,
+                participant.DisplayNickname,
+                participant.SeatNumber,
+                "Joined");
 
-        // Post-Commit Broadcast Pattern: Publishes presence update to host socket after database transaction commits
-        await _notificationService.PublishParticipantPresenceChangedAsync(
-            game.HostAccountId,
-            game.Id,
-            game.PresenceVersion,
-            presenceEvent,
-            CancellationToken.None);
+            await _notificationService.PublishParticipantPresenceChangedAsync(
+                game.HostAccountId,
+                game.Id,
+                game.PresenceVersion,
+                presenceEvent,
+                CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogError(exception, "Player presence notification failed after join commit. GameId={GameId}", game.Id);
+        }
 
         JoinGameResponse response = new JoinGameResponse(
             participant.Id,

@@ -4,6 +4,7 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Options;
 using Kahoot.Infrastructure.Realtime;
 using Kahoot.Infrastructure.Services;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
@@ -32,13 +33,29 @@ public static class RealtimeInstaller
         string channelPrefix = configuration["Realtime:ChannelPrefix"] ?? string.Empty;
 
         // Redis SignalR Scale-Out Backplane - Enables multi-pod SignalR messaging via Redis pub/sub.
-        services.AddSignalR()
-            .AddStackExchangeRedis(redisConnectionString, options =>
-            {
-                options.Configuration.ChannelPrefix = RedisChannel.Literal(channelPrefix);
-            });
+        services.AddSignalR(options =>
+        {
+            // Frame Size Limit (RT-BOUND-003) - Clamps maximum incoming WebSocket payload to 32 KB
+            options.MaximumReceiveMessageSize = 32 * 1024;
+            // Heartbeat & Ping Interval (RT-FAIL-001) - 15-second server ping frequency
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            // Client Timeout (RT-FAIL-001) - Two missed keep-alive intervals (30 seconds) marks socket dead
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+            // Handshake Timeout - 15-second limit for initial handshake
+            options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+            // Invocation Concurrency Guard - Prevents concurrent in-flight invocations from the same socket
+            options.MaximumParallelInvocationsPerClient = 1;
+            // Global Hub Envelope Filter (RT-HUB-001) - Intercepts unexpected errors into standard envelope responses
+            options.AddFilter<GameHubFilter>();
+        })
+        .AddStackExchangeRedis(redisConnectionString, options =>
+        {
+            options.Configuration.ChannelPrefix = RedisChannel.Literal(channelPrefix);
+        });
 
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddSingleton<UnauthenticatedSocketGuard>();
+        services.AddSingleton<GameHubFilter>();
         services.AddSingleton<HostPresenceService>();
         services.AddSingleton<PlayerPresenceService>();
         services.AddSingleton<IPlayerPresenceService>(sp => sp.GetRequiredService<PlayerPresenceService>());

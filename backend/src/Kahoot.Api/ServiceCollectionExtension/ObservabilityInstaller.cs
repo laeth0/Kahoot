@@ -110,6 +110,9 @@ public static class ObservabilityInstaller
     private static void RemoveInboundRequestTags(Activity activity)
     {
         // Route templates remain available; raw paths and host headers can contain user-controlled values.
+        activity.SetTag("url.full", null);
+        activity.SetTag("http.url", null);
+        activity.SetTag("http.target", null);
         activity.SetTag("url.path", null);
         activity.SetTag("url.query", null);
         activity.SetTag("user_agent.original", null);
