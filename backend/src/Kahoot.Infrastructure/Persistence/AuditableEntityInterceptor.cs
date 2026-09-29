@@ -44,13 +44,17 @@ internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
         return base.SavingChanges(eventData, result);
     }
 
+    // Automated Audit Field Population - Intercepts state changes to stamp CreatedAt, UpdatedAt, CreatedBy, UpdatedBy
     private void StampAuditFields(DbContext context)
     {
+        // Centralized UTC Clock - Queries injected TimeProvider for deterministic UTC timestamps
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
         Guid? currentUserId = _currentUser?.UserId;
 
+        // Change Tracker Enumeration - Scans entity tracker for entities implementing IAuditableEntity
         foreach (EntityEntry<IAuditableEntity> entry in context.ChangeTracker.Entries<IAuditableEntity>())
         {
+            // Creation Timestamp & Actor - Sets initial timestamps and defaults actor ID to ambient caller
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedAt = utcNow;
@@ -66,9 +70,11 @@ internal sealed class AuditableEntityInterceptor : SaveChangesInterceptor
                     entry.Entity.UpdatedBy = currentUserId;
                 }
             }
+            // Mutation Timestamp & Invariant Protection - Updates UpdatedAt while protecting creation metadata from overwrite
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = utcNow;
+                // Creation Immutability - Ensures CreatedAt and CreatedBy are never overwritten on updates
                 entry.Property(e => e.CreatedAt).IsModified = false;
                 entry.Property(e => e.CreatedBy).IsModified = false;
 

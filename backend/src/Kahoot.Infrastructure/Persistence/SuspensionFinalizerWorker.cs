@@ -154,6 +154,7 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
         AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        // Multi-Replica Host Claim (ADMIN-SUSP-002) - Claims suspended host row with 'FOR UPDATE SKIP LOCKED' to avoid concurrent worker conflicts
         List<User> hosts = await dbContext.Users
             .FromSqlInterpolated($"SELECT * FROM users WHERE id = {hostAccountId} FOR UPDATE SKIP LOCKED")
             .AsNoTracking()
@@ -166,6 +167,7 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
             return false;
         }
 
+        // Bounded Game Batch Lock - Locks up to 10 active games owned by the suspended host for transactional termination
         List<Game> batchGames = await dbContext.Games
             .FromSqlInterpolated($"SELECT * FROM games WHERE host_account_id = {hostAccountId} AND status <> {GameStatus.Finished} ORDER BY created_at, id LIMIT {GameBatchSize} FOR UPDATE")
             .ToListAsync(cancellationToken);

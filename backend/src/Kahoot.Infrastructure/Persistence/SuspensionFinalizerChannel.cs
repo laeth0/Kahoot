@@ -9,6 +9,7 @@ internal sealed class SuspensionFinalizerChannel : ISuspensionFinalizerChannel
 
     public SuspensionFinalizerChannel()
     {
+        // Bounded Backpressure Configuration (ADMIN-SUSP-002) - Limits buffer to 1024 items with DropWrite mode to prevent memory exhaustion
         BoundedChannelOptions options = new BoundedChannelOptions(1024)
         {
             SingleReader = true,
@@ -16,10 +17,11 @@ internal sealed class SuspensionFinalizerChannel : ISuspensionFinalizerChannel
             FullMode = BoundedChannelFullMode.DropWrite
         };
 
-        // Notifications only reduce latency; the database sweep recovers dropped hints.
+        // Latency Optimization Handoff - Channel signals prompt wake-up; persistent DB sweep guarantees eventual consistency
         _channel = Channel.CreateBounded<Guid>(options);
     }
 
+    // Non-Blocking Hint Notification - Emits non-blocking signal to wake up background finalizer worker
     public void NotifySuspension(Guid hostAccountId)
     {
         _channel.Writer.TryWrite(hostAccountId);

@@ -125,6 +125,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
 
             await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+            // High-Concurrency Worker Sweep (SCALE-WORK-001) - Claims expired games using 'FOR UPDATE SKIP LOCKED' across replica workers
             List<Game> candidateGames = await dbContext.Games
                 .FromSqlInterpolated($"""
                     SELECT * FROM games
@@ -173,6 +174,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
             }
 
             Guid[] gameIds = abandonedGames.Select(game => game.Id).ToArray();
+            // Batch Deterministic Ranking (SCORE-RANK-001) - Computes final rankings via PostgreSQL window function partitioned by game
             await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
                 WITH ranked AS (
                     SELECT id, row_number() OVER (
@@ -192,6 +194,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
                 .Where(participant => gameIds.Contains(participant.GameId) && participant.IsRemoved)
                 .ExecuteUpdateAsync(setter => setter.SetProperty(participant => participant.Rank, (int?)null), cancellationToken);
 
+            // Podium Materialization - Fetches top 3 players without tracking overhead for announcement payload
             List<Participant> podiumParticipants = await dbContext.Participants
                 .AsNoTracking()
                 .Where(participant => gameIds.Contains(participant.GameId) &&
@@ -224,6 +227,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
                 notifications.Add((game.HostAccountId, game.Id, game.StateVersion, gameEndedPayload));
             }
 
+            // Atomic State Persistence - Commits all state changes before real-time event distribution
             await transaction.CommitAsync(cancellationToken);
 
             foreach ((Guid hostAccountId, Guid gameId, long stateVersion, object payload) in notifications)
@@ -234,6 +238,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
 
                 try
                 {
+                    // Post-Commit Broadcast Pattern (RT-ORD-001) - Publishes GameEnded event using CancellationToken.None to guarantee delivery
                     await notificationService.PublishGameEndedAsync(
                         hostAccountId, gameId, stateVersion, payload, CancellationToken.None);
                 }

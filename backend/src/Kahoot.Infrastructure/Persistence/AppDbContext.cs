@@ -42,8 +42,10 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
     public DbSet<GameCommandIdempotency> GameCommandIdempotencies => Set<GameCommandIdempotency>();
 
+    // Pessimistic Row Lock (USER-LOCK-001) - Acquires raw PostgreSQL 'FOR UPDATE' row-level lock on user record
     public async Task<User?> GetUserForUpdateAsync(Guid userId, CancellationToken cancellationToken)
     {
+        // Parameterized Raw SQL Query - Executes SELECT FOR UPDATE directly on primary key index with AsNoTracking
         List<User> users = await Users
             .FromSqlInterpolated($"SELECT * FROM users WHERE id = {userId} FOR UPDATE")
             .AsNoTracking()
@@ -52,9 +54,11 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return users.Count == 0 ? null : users[0];
     }
 
+    // Pessimistic Row Lock (GAME-LOCK-001) - Acquires PostgreSQL 'FOR UPDATE' row-level lock scoped by host tenant
     public async Task<Game?> GetGameForUpdateAsync(
         Guid gameId, Guid hostAccountId, CancellationToken cancellationToken)
     {
+        // Tenant-Scoped Locking Query - Locks game row to serialize concurrent state machine commands
         List<Game> games = await Games
             .FromSqlInterpolated($"SELECT * FROM games WHERE id = {gameId} AND host_account_id = {hostAccountId} FOR UPDATE")
             .ToListAsync(cancellationToken);
@@ -62,8 +66,10 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return games.Count == 0 ? null : games[0];
     }
 
+    // Pessimistic Capacity Lock (JOIN-LOCK-001) - Locks game row by PIN to enforce 500-player join capacity ceiling
     public async Task<Game?> GetGameByPinForUpdateAsync(string pin, CancellationToken cancellationToken)
     {
+        // PIN Index Lookup With Row Lock - Locks non-finished game session row during lobby joining
         List<Game> games = await Games
             .FromSqlInterpolated($"SELECT * FROM games WHERE pin = {pin} AND status != {GameStatus.Finished} FOR UPDATE")
             .ToListAsync(cancellationToken);
@@ -71,14 +77,17 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return games.Count == 0 ? null : games[0];
     }
 
+    // Pessimistic Ordered Table Lock (ADMIN-LOCK-001) - Locks all active administrators ordered by ID to eliminate deadlocks
     public async Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken)
     {
+        // Deterministic Lock Ordering - ORDER BY id prevents circular wait deadlocks across concurrent admin management commands
         return await Users
             .FromSqlInterpolated($"SELECT * FROM users WHERE role = {UserRole.SystemAdmin} AND status = {UserStatus.Active} ORDER BY id FOR UPDATE")
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
+    // Model Configuration Binding - Discovers and applies all EF Core IEntityTypeConfiguration classes in assembly
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -86,6 +95,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         modelBuilder.ApplyConfigurationsFromAssembly(AssemblyReference.Assembly);
     }
 
+    // Atomic Unit of Work & Exception Translation - Translates vendor-specific PostgreSQL SQLSTATE codes to domain exceptions
     public override async Task<int> SaveChangesAsync(
         bool acceptAllChangesOnSuccess,
         CancellationToken cancellationToken = default)
@@ -94,6 +104,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         {
             return await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
         }
+        // Unique Constraint Collision Interception - Maps PostgreSQL 23505 to vendor-agnostic UniqueConstraintViolationException
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
                                            postgresException.SqlState == PostgresErrorCodes.UniqueViolation)
         {
@@ -101,6 +112,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
                 postgresException.ConstraintName,
                 ex);
         }
+        // Foreign Key Collision Interception - Maps PostgreSQL 23503 to vendor-agnostic ForeignKeyConstraintViolationException
         catch (DbUpdateException ex) when (ex.InnerException is PostgresException postgresException &&
                                            postgresException.SqlState == PostgresErrorCodes.ForeignKeyViolation)
         {

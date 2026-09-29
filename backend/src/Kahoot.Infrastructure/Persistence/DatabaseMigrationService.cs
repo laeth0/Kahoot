@@ -56,14 +56,17 @@ internal sealed class DatabaseMigrationService : IHostedService
                     await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
                     await using NpgsqlCommand command = connection.CreateCommand();
                     command.Transaction = transaction;
+                    // PostgreSQL Advisory Lock (DEPLOY-LOCK-001) - Coordinates schema migration across multi-replica container startups
                     command.CommandText = "SELECT pg_advisory_xact_lock(@lockKey)";
                     command.CommandTimeout = 0;
                     command.Parameters.AddWithValue("lockKey", MigrationLockKey);
 
+                    // Distributed Mutual Exclusion - Blocks until advisory lock is acquired on the database cluster
                     await command.ExecuteNonQueryAsync(cancellationToken);
                     _logger.LogDebug("Database migration lock acquired. EventName={EventName}", "DatabaseMigrationLockAcquired");
 
                     migrationStarted = true;
+                    // Schema Migration Application - Applies pending EF Core schema migrations under exclusive advisory lock
                     await ApplyMigrationsAsync(cancellationToken);
                     await transaction.CommitAsync(cancellationToken);
 
