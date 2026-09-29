@@ -1,6 +1,7 @@
 namespace Kahoot.Application.Features.Games.SubmitAnswer;
 
 using System.Data.Common;
+using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
 using Kahoot.Application.Common.Persistence;
@@ -48,13 +49,8 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
         bool isRateLimited = await _rateLimiter.IsRateLimitedAsync(
             request.ConnectionId, request.GameId, request.ParticipantId,
             rateQuestionId, cancellationToken);
-        if (isRateLimited)
-        {
-            return Result.Failure<SubmitAnswerResponse>(GameErrors.TooManyAnswerAttempts);
-        }
-
         if (request.ChoiceIds is null || request.ChoiceIds.Count == 0 ||
-            request.ChoiceIds.Distinct().Count() > 6 || request.ChoiceIds.Contains(Guid.Empty))
+            request.ChoiceIds.Count > 6 || request.ChoiceIds.Contains(Guid.Empty))
         {
             return Result.Failure<SubmitAnswerResponse>(GameErrors.InvalidChoices);
         }
@@ -63,11 +59,15 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
         {
             try
             {
-                return await ExecuteSubmissionAttemptAsync(request, cancellationToken);
+                return await ExecuteSubmissionAttemptAsync(request, isRateLimited, cancellationToken);
             }
             catch (Exception exception) when (
                 attempt < 3 && !cancellationToken.IsCancellationRequested &&
-                exception.GetBaseException() is DbException { SqlState: "40P01" or "55P03" })
+                (exception.GetBaseException() is DbException { SqlState: "40P01" or "55P03" } ||
+                 exception is UniqueConstraintViolationException
+                 {
+                     ConstraintName: "ux_answer_submissions_once_per_question"
+                 }))
             {
                 // EF retains Added and Modified entities after a failed transaction.
                 _dbContext.ClearTrackedChanges();
@@ -81,6 +81,7 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
 
     private async Task<Result<SubmitAnswerResponse>> ExecuteSubmissionAttemptAsync(
         SubmitAnswerCommand request,
+        bool isRateLimited,
         CancellationToken cancellationToken)
     {
         QuestionEndedEvent? endedEvent = null;
@@ -111,12 +112,12 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
                 return Result.Failure<SubmitAnswerResponse>(GameErrors.Unavailable);
             }
 
-            // The game lock serializes answers with host end and participant removal on every replica.
+            // Shared game locks let different participants score concurrently while excluding host transitions.
             List<Game> games = await _dbContext.Games
                 .FromSqlInterpolated($"""
                     SELECT * FROM games
                     WHERE id = {request.GameId} AND host_account_id = {host.Id}
-                    FOR UPDATE
+                    FOR SHARE
                     """)
                 .ToListAsync(cancellationToken);
             Game? game = games.Count == 0 ? null : games[0];
@@ -162,7 +163,7 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
                 return Result.Failure<SubmitAnswerResponse>(GameErrors.Unavailable);
             }
 
-            GameQuestionSnapshot? question = await _dbContext.GameQuestionSnapshots
+            GameQuestionSnapshot? question = await _dbContext.GameQuestionSnapshots.AsNoTracking()
                 .SingleOrDefaultAsync(snapshot => snapshot.Id == request.QuestionId &&
                                                   snapshot.GameId == game.Id &&
                                                   snapshot.HostAccountId == hostAccountId,
@@ -179,6 +180,11 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
             if (alreadyAnswered)
             {
                 return Result.Success(new SubmitAnswerResponse(true, true));
+            }
+
+            if (isRateLimited)
+            {
+                return Result.Failure<SubmitAnswerResponse>(GameErrors.TooManyAnswerAttempts);
             }
 
             if (game.Status != GameStatus.QuestionActive)
@@ -222,11 +228,11 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
             List<Guid> correctChoiceIds = choices.Where(choice => choice.IsCorrect)
                 .Select(choice => choice.Id).ToList();
             bool isCorrect = ScoringEngine.EvaluateCorrectness(submittedChoices, correctChoiceIds);
-            double elapsedSeconds = Math.Max(0, (acceptedAt - startedAt).TotalSeconds);
+            TimeSpan elapsed = acceptedAt - startedAt;
             int responseTimeMs = (int)Math.Clamp(
-                (acceptedAt - startedAt).TotalMilliseconds, 0, question.DurationSeconds * 1000.0);
+                elapsed.TotalMilliseconds, 0, question.DurationSeconds * 1000.0);
             int points = ScoringEngine.CalculatePoints(
-                question.BasePoints, question.DurationSeconds, elapsedSeconds, isCorrect);
+                question.BasePoints, question.DurationSeconds, elapsed, isCorrect);
 
             Guid submissionId = Guid.NewGuid();
             _dbContext.AnswerSubmissions.Add(new AnswerSubmission
@@ -256,11 +262,26 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
             {
                 participant.TotalScore += points;
             }
-            question.AcceptedAnswerCount++;
             await _dbContext.SaveChangesAsync(cancellationToken);
 
+            // Keep the shared question counter update at the end of the answer transaction.
+            // PostgreSQL serializes only this short update across different participants.
+            await _dbContext.GameQuestionSnapshots
+                .Where(snapshot => snapshot.Id == question.Id &&
+                                   snapshot.GameId == game.Id &&
+                                   snapshot.HostAccountId == hostAccountId)
+                .ExecuteUpdateAsync(setter => setter.SetProperty(
+                    snapshot => snapshot.AcceptedAnswerCount,
+                    snapshot => snapshot.AcceptedAnswerCount + 1), cancellationToken);
+            int acceptedAnswerCount = await _dbContext.GameQuestionSnapshots.AsNoTracking()
+                .Where(snapshot => snapshot.Id == question.Id &&
+                                   snapshot.GameId == game.Id &&
+                                   snapshot.HostAccountId == hostAccountId)
+                .Select(snapshot => snapshot.AcceptedAnswerCount)
+                .SingleAsync(cancellationToken);
+
             if (question.EffectiveEligibleParticipantCount > 0 &&
-                question.AcceptedAnswerCount == question.EffectiveEligibleParticipantCount)
+                acceptedAnswerCount == question.EffectiveEligibleParticipantCount)
             {
                 (GameQuestionSnapshot materializedQuestion, List<GameChoiceSnapshot> materializedChoices) =
                     await QuestionResultsMaterializer.MaterializeAsync(
