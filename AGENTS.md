@@ -86,6 +86,18 @@ Do not reinterpret requirements without a concrete reason.
 > Always keep [`.env.development`](.env.development), [`.env.example`](.env.example), and [`.env.production`](.env.production) in sync.
 > Whenever an environment variable or configuration key is added, modified, renamed, or removed, immediately update all three files to maintain consistency across local development, documentation templates, and production deployments.
 
+<!-- openwolf:begin -->
+### OpenWolf Context & Memory Protocol
+
+> [!IMPORTANT]
+> This project uses **OpenWolf** for token-conscious context management across all AI coding agents (Codex, Antigravity, Gemini, Claude, Cursor).
+> - **Session Resume**: Read [`.wolf/STATUS.md`](.wolf/STATUS.md) FIRST at session start to understand current state and active goals without re-reading previous context.
+> - **File Navigation**: To locate symbols or files, run `openwolf find <name>` in CLI or grep [`.wolf/anatomy.md`](.wolf/anatomy.md) for a single file's path. **NEVER** read `.wolf/anatomy.md` whole (it is an index, ~40KB+).
+> - **Code Generation Guard**: Check [`.wolf/cerebrum.md`](.wolf/cerebrum.md) (`## Do-Not-Repeat` and `## User Preferences`) before generating code.
+> - **Bug Memory**: Search [`.wolf/buglog.json`](.wolf/buglog.json) or run `openwolf bug search` before debugging; log resolved fixes there.
+> - **Handoff**: Keep [`.wolf/STATUS.md`](.wolf/STATUS.md) fresh and run `openwolf scan` when multi-file tasks conclude.
+<!-- openwolf:end -->
+
 ---
 
 # 3. Understand Before Changing
@@ -1741,8 +1753,4 @@ The final objective is:
 
 > Implement the safest, cleanest, simplest, maintainable, secure, and reasonably verified solution that solves the actual requirement while respecting the existing architecture and avoiding unnecessary complexity.
 
-<!-- openwolf:begin -->
-# OpenWolf
 
-This project uses OpenWolf for context management. Read and follow .wolf/OPENWOLF.md at session start. Check .wolf/cerebrum.md before generating code. Grep .wolf/anatomy.md for a file's path before reading it (never read the whole index).
-<!-- openwolf:end -->
