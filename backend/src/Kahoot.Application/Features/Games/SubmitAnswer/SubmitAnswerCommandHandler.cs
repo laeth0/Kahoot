@@ -84,6 +84,7 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
         CancellationToken cancellationToken)
     {
         QuestionEndedEvent? endedEvent = null;
+        List<PersonalQuestionResultEvent>? personalResults = null;
         Guid hostAccountId = Guid.Empty;
         long stateVersion = 0;
 
@@ -278,6 +279,11 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
                     choiceResults.Where(choice => choice.IsCorrect)
                         .Select(choice => choice.ChoiceId).ToList(),
                     choiceResults);
+
+                // Scorecard Materialization (SCORE-RES-002) - Prepares individual scorecard projection for each non-removed participant
+                personalResults = await QuestionResultsMaterializer.MaterializePersonalResultsAsync(
+                    _dbContext, game, materializedQuestion, stateVersion, cancellationToken);
+
                 await _dbContext.SaveChangesAsync(cancellationToken);
             }
 
@@ -286,8 +292,9 @@ public sealed class SubmitAnswerCommandHandler : ICommandHandler<SubmitAnswerCom
 
         if (endedEvent is not null)
         {
-            await _notificationService.PublishQuestionEndedAsync(
-                hostAccountId, request.GameId, stateVersion, endedEvent, CancellationToken.None);
+            // Post-Commit Broadcast Pattern - Fans out QuestionEnded event and personal scorecards to players only after database transaction is durable
+            await _notificationService.PublishQuestionEndedWithPersonalResultsAsync(
+                hostAccountId, request.GameId, stateVersion, endedEvent, personalResults ?? [], CancellationToken.None);
         }
         return Result.Success(new SubmitAnswerResponse(true, false));
     }

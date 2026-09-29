@@ -136,6 +136,13 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             .Select(p => new PodiumParticipantDto(p.Rank!.Value, p.DisplayNickname, p.TotalScore))
             .ToListAsync(cancellationToken);
 
+        // Personal Final Standing Materialization (SCORE-RANK-001) - Projects final rank position for each active participant to push scorecard
+        List<PersonalGameEndedEvent> personalRanks = await _dbContext.Participants
+            .AsNoTracking()
+            .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
+            .Select(p => new PersonalGameEndedEvent(p.Id, game.Id, game.StateVersion, p.Rank!.Value, p.TotalScore))
+            .ToListAsync(cancellationToken);
+
         EndGameResponse response = new EndGameResponse(
             game.Id,
             "FINISHED",
@@ -165,12 +172,13 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             utcNow,
             activeParticipantCount);
 
-        // Post-Commit Broadcast Pattern: Broadcasts game finished event to all connected sockets post-commit
-        await _notificationService.PublishGameEndedAsync(
+        // Post-Commit Broadcast Pattern - Broadcasts game finished event to all connected sockets and individual final ranks post-commit
+        await _notificationService.PublishGameEndedWithPersonalRanksAsync(
             hostAccountId,
             game.Id,
             game.StateVersion,
             response,
+            personalRanks,
             CancellationToken.None);
 
         return Result.Success(response);

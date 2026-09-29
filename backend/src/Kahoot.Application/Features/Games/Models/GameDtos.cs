@@ -105,3 +105,31 @@ public sealed record ParticipantRemovedEvent(
     Guid GameId,
     Guid ParticipantId,
     string Reason);
+
+// Scorecard Feedback Telemetry (SCORE-RES-002) - Personal question result delivered to each participant upon question conclusion
+public sealed record PersonalQuestionResultEvent(
+    Guid ParticipantId,
+    Guid GameId,
+    long StateVersion,
+    Guid QuestionId,
+    int OrderIndex,
+    bool Submitted,
+    bool IsCorrect,
+    int PointsAwarded,
+    long TotalScore);
+
+// Leaderboard Standing Telemetry (GAME-CTRL-003) - Personal rank and score position delivered to each participant upon leaderboard display
+public sealed record PersonalLeaderboardEvent(
+    Guid ParticipantId,
+    Guid GameId,
+    long StateVersion,
+    int Rank,
+    long TotalScore);
+
+// Final Podium Telemetry (SCORE-RANK-001) - Personal final standing delivered to each participant upon game termination
+public sealed record PersonalGameEndedEvent(
+    Guid ParticipantId,
+    Guid GameId,
+    long StateVersion,
+    int Rank,
+    long TotalScore);

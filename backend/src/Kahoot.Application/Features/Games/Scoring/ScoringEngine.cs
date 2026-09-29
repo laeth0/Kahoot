@@ -1,6 +1,5 @@
 namespace Kahoot.Application.Features.Games.Scoring;
 
-// Scoring Engine - Computes exact-set correctness and deterministic speed-decayed points with midpoint-away-from-zero rounding.
 public static class ScoringEngine
 {
     // Exact-Set Correctness Evaluation (SCORE-EXACT-001) - Verifies participant choices match all correct options with zero incorrect choices.

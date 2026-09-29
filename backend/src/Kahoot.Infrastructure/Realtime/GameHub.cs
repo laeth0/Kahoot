@@ -190,6 +190,7 @@ public sealed class GameHub : Hub
         }
 
         string playerGroup = $"host:{participant.HostAccountId}:game:{participant.GameId}:players";
+        string participantGroup = $"host:{participant.HostAccountId}:game:{participant.GameId}:participant:{participant.Id}";
         await using (IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(Context.ConnectionAborted))
         {
             Game? lockedGame = await dbContext.GetGameForUpdateAsync(
@@ -222,6 +223,7 @@ public sealed class GameHub : Hub
             }
 
             await Groups.AddToGroupAsync(Context.ConnectionId, playerGroup, Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, participantGroup, Context.ConnectionAborted);
             try
             {
                 // Player Generation Fencing Registration - Registers connection in Redis presence registry with connection generation counter to evict stale duplicate connections.
@@ -240,6 +242,7 @@ public sealed class GameHub : Hub
             {
                 await _playerPresence.RemoveAsync(Context.ConnectionId, participant.GameId);
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, playerGroup);
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, participantGroup);
                 throw;
             }
         }
@@ -349,7 +352,9 @@ public sealed class GameHub : Hub
         await dbContext.SaveChangesAsync(Context.ConnectionAborted);
 
         string playerGroup = $"host:{game.HostAccountId}:game:{game.Id}:players";
+        string participantGroup = $"host:{game.HostAccountId}:game:{game.Id}:participant:{participant.Id}";
         await Groups.AddToGroupAsync(Context.ConnectionId, playerGroup, Context.ConnectionAborted);
+        await Groups.AddToGroupAsync(Context.ConnectionId, participantGroup, Context.ConnectionAborted);
         try
         {
             await _playerPresence.RegisterAsync(
@@ -367,6 +372,7 @@ public sealed class GameHub : Hub
         {
             await _playerPresence.RemoveAsync(Context.ConnectionId, game.Id);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, playerGroup);
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, participantGroup);
             throw;
         }
 

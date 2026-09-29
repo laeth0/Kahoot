@@ -123,6 +123,13 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
         game.Status = GameStatus.Leaderboard;
         game.StateVersion += 1;
 
+        // Personal Rank Materialization (GAME-CTRL-003) - Projects individual rank position for each active participant to push scorecard
+        List<PersonalLeaderboardEvent> personalRanks = await _dbContext.Participants
+            .AsNoTracking()
+            .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
+            .Select(p => new PersonalLeaderboardEvent(p.Id, game.Id, game.StateVersion, p.Rank!.Value, p.TotalScore))
+            .ToListAsync(cancellationToken);
+
         ShowLeaderboardResponse response = new ShowLeaderboardResponse(
             game.Id,
             "LEADERBOARD",
@@ -150,12 +157,13 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             game.StateVersion,
             activeParticipantCount);
 
-        // Post-Commit Broadcast Pattern: Broadcasts leaderboard update to all connected clients post-commit
-        await _notificationService.PublishLeaderboardUpdatedAsync(
+        // Post-Commit Broadcast Pattern - Broadcasts leaderboard update to all connected clients and individual ranks to each player post-commit
+        await _notificationService.PublishLeaderboardUpdatedWithPersonalRanksAsync(
             hostAccountId,
             game.Id,
             game.StateVersion,
             response,
+            personalRanks,
             CancellationToken.None);
 
         return Result.Success(response);

@@ -107,6 +107,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
         GameQuestionSnapshot? activeQuestion = null;
         QuestionEndedEvent? endedEvent = null;
+        List<PersonalQuestionResultEvent>? personalResults = null;
 
         if (game.Status == GameStatus.Lobby)
         {
@@ -149,6 +150,10 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
                             materializedQuestion.EffectiveEligibleParticipantCount, utcNow,
                             choiceResults.Where(choice => choice.IsCorrect)
                                 .Select(choice => choice.ChoiceId).ToList(), choiceResults);
+
+                        // Scorecard Materialization (SCORE-RES-002) - Prepares individual scorecard projection for each non-removed participant
+                        personalResults = await QuestionResultsMaterializer.MaterializePersonalResultsAsync(
+                            _dbContext, game, materializedQuestion, game.StateVersion, cancellationToken);
                     }
                 }
             }
@@ -191,8 +196,9 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
         if (endedEvent is not null)
         {
-            await _notificationService.PublishQuestionEndedAsync(
-                hostAccountId, game.Id, game.StateVersion, endedEvent, CancellationToken.None);
+            // Post-Commit Broadcast Pattern - Fans out QuestionEnded event and personal scorecards to players only after database transaction is durable
+            await _notificationService.PublishQuestionEndedWithPersonalResultsAsync(
+                hostAccountId, game.Id, game.StateVersion, endedEvent, personalResults ?? [], CancellationToken.None);
         }
 
         return Result.Success();
