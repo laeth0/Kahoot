@@ -40,6 +40,30 @@ public static class GameErrors
         "Game.Full",
         "The game session has reached its maximum participant capacity.");
 
+    public static readonly Error InvalidPin = Error.NotFound(
+        "Game.InvalidPin",
+        "The provided PIN does not match any active game session.");
+
+    public static readonly Error ParticipantNotFound = Error.NotFound(
+        "Game.ParticipantNotFound",
+        "The participant was not found in this game session.");
+
+    public static readonly Error NotJoinable = Error.Conflict(
+        "Game.NotJoinable",
+        "The game is not in lobby state and cannot be joined.");
+
+    public static readonly Error NicknameTaken = Error.Conflict(
+        "Game.NicknameTaken",
+        "The nickname is already taken for this game session.");
+
+    public static readonly Error InvalidSessionToken = Error.Unauthorized(
+        "Game.InvalidSessionToken",
+        "The provided player session token is invalid, revoked, or expired.");
+
+    public static readonly Error RateLimited = Error.RateLimited(
+        "Request.RateLimited",
+        "Join burst rate limit exceeded.");
+
     public static readonly Error ValidationFailed = Error.Validation(
         "Validation.Failed",
         "The command parameters do not match the previously recorded command execution.");

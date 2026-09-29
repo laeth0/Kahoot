@@ -98,6 +98,26 @@ public sealed class GameNotificationService : IGameNotificationService
         await TrySendAsync(hostGroup, "GameEnded", payload, gameId, cancellationToken);
     }
 
+    public async Task PublishParticipantPresenceChangedAsync(
+        Guid hostAccountId,
+        Guid gameId,
+        long presenceVersion,
+        object payload,
+        CancellationToken cancellationToken = default)
+    {
+        string hostGroup = $"host:{hostAccountId}:game:{gameId}:hosts";
+        string playerGroup = $"host:{hostAccountId}:game:{gameId}:players";
+
+        _logger.LogInformation(
+            "Publishing ParticipantPresenceChanged event. EventName={EventName} GameId={GameId} PresenceVersion={PresenceVersion}",
+            "PublishParticipantPresenceChanged",
+            gameId,
+            presenceVersion);
+
+        await TrySendAsync(playerGroup, "ParticipantPresenceChanged", payload, gameId, cancellationToken);
+        await TrySendAsync(hostGroup, "ParticipantPresenceChanged", payload, gameId, cancellationToken);
+    }
+
     private async Task TrySendAsync(
         string group,
         string eventName,

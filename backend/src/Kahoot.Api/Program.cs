@@ -9,6 +9,8 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
 using Kahoot.Infrastructure.Realtime;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.HttpOverrides;
+using IPNetwork = System.Net.IPNetwork;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 
@@ -31,6 +33,27 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
     builder.Services.AddSingleton<ReadinessHealthCheck>();
     builder.Services.AddHealthChecks()
         .AddCheck<ReadinessHealthCheck>("readiness", tags: ["ready"]);
+    string[] trustedProxyNetworks = builder.Configuration
+        .GetSection("TrustedProxies:Networks").Get<string[]>() ?? [];
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        foreach (string configuredNetwork in trustedProxyNetworks)
+        {
+            if (string.IsNullOrWhiteSpace(configuredNetwork))
+            {
+                continue;
+            }
+
+            if (!IPNetwork.TryParse(configuredNetwork, out IPNetwork network))
+            {
+                throw new InvalidOperationException("TrustedProxies:Networks contains an invalid CIDR network.");
+            }
+
+            options.KnownIPNetworks.Add(network);
+        }
+    });
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddAuthorization();
 
@@ -47,6 +70,7 @@ WebApplication app = builder.Build();
     string webRoot = Path.Combine(app.Environment.ContentRootPath, "wwwroot");
     Directory.CreateDirectory(Path.Combine(webRoot, "uploads", "staging"));
 
+    app.UseForwardedHeaders();
     app.UseExceptionHandler();
     app.UseHttpsRedirection();
     app.UseRouting();

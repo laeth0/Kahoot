@@ -4,6 +4,7 @@ using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -12,9 +13,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kahoot.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929125656_EnforceUniqueJoinOperation")]
+    partial class EnforceUniqueJoinOperation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -646,14 +649,16 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("ix_participant_session_tokens_expires_at");
 
                     b.HasIndex("ParticipantId")
-                        .HasDatabaseName("ix_participant_session_tokens_participant");
+                        .IsUnique()
+                        .HasDatabaseName("ux_participant_session_tokens_participant");
 
                     b.HasIndex("TokenHash")
                         .IsUnique()
                         .HasDatabaseName("ux_participant_session_tokens_token_hash");
 
                     b.HasIndex("HostAccountId", "GameId", "ParticipantId")
-                        .HasDatabaseName("ix_participant_tokens_host_account_game_participant");
+                        .IsUnique()
+                        .HasDatabaseName("ux_participant_tokens_host_account_game_participant");
 
                     b.HasIndex("ParticipantId", "HostAccountId", "GameId")
                         .HasDatabaseName("ix_participant_session_tokens_participant_id_host_account_id_g");

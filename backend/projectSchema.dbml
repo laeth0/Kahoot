@@ -306,6 +306,7 @@ Table participants {
     (id, host_account_id, game_id) [unique, name: 'ux_participants_id_host_account_game']
     (game_id, normalized_nickname) [unique, name: 'ux_participants_game_nickname']
     (game_id, join_operation_id_hash) [unique, name: 'ux_participants_game_join_operation']
+    join_operation_id_hash [unique, name: 'ux_participants_join_operation']
     (game_id, seat_number) [unique, name: 'ux_participants_game_seat']
     (host_account_id, game_id, is_removed) [name: 'ix_participants_host_account_game_removed']
   }
@@ -334,9 +335,9 @@ Table participant_session_tokens {
   expires_at timestamptz [null]
 
   indexes {
-    participant_id [unique, name: 'ux_participant_session_tokens_participant']
+    participant_id [name: 'ix_participant_session_tokens_participant']
     token_hash [unique, name: 'ux_participant_session_tokens_token_hash']
-    (host_account_id, game_id, participant_id) [unique, name: 'ux_participant_tokens_host_account_game_participant']
+    (host_account_id, game_id, participant_id) [name: 'ix_participant_tokens_host_account_game_participant']
     expires_at [name: 'ix_participant_session_tokens_expires_at']
   }
 

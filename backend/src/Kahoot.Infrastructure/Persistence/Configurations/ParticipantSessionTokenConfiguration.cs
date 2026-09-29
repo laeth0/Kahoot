@@ -33,16 +33,14 @@ public sealed class ParticipantSessionTokenConfiguration : IEntityTypeConfigurat
         builder.Property(token => token.ExpiresAt);
 
         builder.HasIndex(token => token.ParticipantId)
-            .IsUnique()
-            .HasDatabaseName("ux_participant_session_tokens_participant");
+            .HasDatabaseName("ix_participant_session_tokens_participant");
 
         builder.HasIndex(token => token.TokenHash)
             .IsUnique()
             .HasDatabaseName("ux_participant_session_tokens_token_hash");
 
         builder.HasIndex(token => new { token.HostAccountId, token.GameId, token.ParticipantId })
-            .IsUnique()
-            .HasDatabaseName("ux_participant_tokens_host_account_game_participant");
+            .HasDatabaseName("ix_participant_tokens_host_account_game_participant");
 
         builder.HasIndex(token => token.ExpiresAt)
             .HasDatabaseName("ix_participant_session_tokens_expires_at");

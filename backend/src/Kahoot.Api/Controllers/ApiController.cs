@@ -55,6 +55,11 @@ public abstract class ApiController : ControllerBase
             "Game.AnswerTooLate" => "Answer too late",
             "Game.ArchiveImmutable" => "Archive immutable",
             "Game.Full" => "Game full",
+            "Game.InvalidPin" => "Invalid PIN",
+            "Game.ParticipantNotFound" => "Participant not found",
+            "Game.NotJoinable" => "Game not joinable",
+            "Game.NicknameTaken" => "Nickname taken",
+            "Game.InvalidSessionToken" => "Invalid session token",
             _ => error.Code
         };
 
@@ -63,11 +68,6 @@ public abstract class ApiController : ControllerBase
             ["code"] = error.Code,
             ["requestId"] = HttpContext.TraceIdentifier
         };
-
-        if (System.Diagnostics.Activity.Current is not null)
-        {
-            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
-        }
 
         return Problem(
             detail: error.Description,

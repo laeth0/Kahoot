@@ -12,6 +12,7 @@ services:
       Cors__AllowedOrigins__0: "${CLIENT_BASE_URL:?CLIENT_BASE_URL is required}"
       Realtime__RedisConnectionString: "${REDIS_CONNECTION_STRING:?REDIS_CONNECTION_STRING is required}"
       Realtime__ChannelPrefix: "${REDIS_CHANNEL_PREFIX:?REDIS_CHANNEL_PREFIX is required}"
+      TrustedProxies__Networks__0: "${TRUSTED_PROXY_NETWORK_0:-}"
       BOOTSTRAP_ADMIN_ENABLED: "${BOOTSTRAP_ADMIN_ENABLED:-false}"
       BOOTSTRAP_ADMIN_USERNAME: "${BOOTSTRAP_ADMIN_USERNAME:-}"
       BOOTSTRAP_ADMIN_PASSWORD: "${BOOTSTRAP_ADMIN_PASSWORD:-}"
