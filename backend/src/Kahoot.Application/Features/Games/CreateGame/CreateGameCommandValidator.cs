@@ -6,6 +6,7 @@ public sealed class CreateGameCommandValidator : AbstractValidator<CreateGameCom
 {
     public CreateGameCommandValidator()
     {
+        // Fail-Fast Boundary Validation - Ensures target Quiz identifier is non-empty before initiating game session creation
         RuleFor(command => command.QuizId)
             .NotEmpty()
             .WithMessage("QuizId is required.");

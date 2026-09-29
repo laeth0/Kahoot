@@ -17,6 +17,7 @@ public static class QuestionResultsMaterializer
             throw new InvalidOperationException("An active game has no current question index.");
         }
 
+        // Query Performance: SingleOrDefaultAsync seeks active question snapshot on composite unique index (GameId, HostAccountId, OrderIndex)
         GameQuestionSnapshot question = await dbContext.GameQuestionSnapshots
             .SingleOrDefaultAsync(
                 snapshot => snapshot.GameId == game.Id &&
@@ -30,11 +31,13 @@ public static class QuestionResultsMaterializer
             : closedAt;
         question.ResultsMaterializedAt = closedAt;
 
+        // Query Performance: AsNoTracking() fetches ordered choices for snapshot without tracking allocations
         List<GameChoiceSnapshot> choices = await dbContext.GameChoiceSnapshots
             .Where(choice => choice.GameQuestionId == question.Id && choice.HostAccountId == game.HostAccountId)
             .OrderBy(choice => choice.OrderIndex)
             .ToListAsync(cancellationToken);
 
+        // System Design & Server-Side Aggregation: GroupBy and Count() aggregate selection counts directly in PostgreSQL, eliminating O(N) submission row transfers
         Dictionary<Guid, int> selectionCounts = await dbContext.AnswerSubmissionChoices
             .Where(selection => selection.GameQuestionId == question.Id && selection.HostAccountId == game.HostAccountId)
             .GroupBy(selection => selection.GameChoiceId)
@@ -46,6 +49,7 @@ public static class QuestionResultsMaterializer
             choice.SelectionCount = selectionCounts.GetValueOrDefault(choice.Id);
         }
 
+        // Query Performance: CountAsync counts accepted submissions directly in database engine
         question.AcceptedAnswerCount = await dbContext.AnswerSubmissions
             .CountAsync(
                 submission => submission.GameId == game.Id &&

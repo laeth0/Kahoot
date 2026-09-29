@@ -11,6 +11,7 @@ public static class ParticipantRankMaterializer
         Guid hostAccountId,
         CancellationToken cancellationToken)
     {
+        // System Design & Query Performance: SQL CTE with row_number() window function materializes dense rankings directly in the database without loading players into memory
         await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             WITH ranked AS (
                 SELECT id, row_number() OVER (
@@ -25,6 +26,7 @@ public static class ParticipantRankMaterializer
             WHERE participant.id = ranked.id
             """, cancellationToken);
 
+        // Query Performance: ExecuteUpdateAsync clears rank for removed participants in a single atomic statement without entity materialization
         await dbContext.Participants
             .Where(participant => participant.GameId == gameId &&
                                   participant.HostAccountId == hostAccountId && participant.IsRemoved)

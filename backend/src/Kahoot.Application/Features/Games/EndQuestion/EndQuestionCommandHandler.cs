@@ -47,7 +47,10 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Guarantees question results materialization and state transition commit together
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync serialize question ending
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -60,6 +63,7 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             return Result.Failure<EndQuestionResponse>(GameErrors.NotFound);
         }
 
+        // System Design & Command Idempotency: Ensures retried EndQuestion commands return cached results without re-closing questions
         IdempotencyCheckResult<EndQuestionResponse> idempotencyResult = await _idempotencyService.CheckAsync<EndQuestionResponse>(
             request.GameId,
             request.CommandId,
@@ -87,6 +91,7 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             return Result.Failure<EndQuestionResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Optimistic Concurrency Control (OCC): Prevents conflicting host state transitions
         if (game.StateVersion != request.ExpectedStateVersion)
         {
             return Result.Failure<EndQuestionResponse>(GameErrors.ConcurrentModification);
@@ -98,6 +103,8 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
         }
 
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+
+        // System Design & Results Materialization: Computes submission counts and choice distributions in PostgreSQL before updating state
         (GameQuestionSnapshot currentQuestion, List<GameChoiceSnapshot> choices) =
             await QuestionResultsMaterializer.MaterializeAsync(_dbContext, game, utcNow, cancellationToken);
         int totalAnswers = currentQuestion.AcceptedAnswerCount;
@@ -129,6 +136,7 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             response,
             cancellationToken);
 
+        // Persistence: Commits materialized question results and state version increment
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -140,6 +148,7 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             currentQuestion.OrderIndex,
             totalAnswers);
 
+        // Post-Commit Broadcast Pattern: Fans out QuestionEnded event to all players and host only after database transaction is durable
         await _notificationService.PublishQuestionEndedAsync(
             hostAccountId,
             game.Id,

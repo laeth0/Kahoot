@@ -48,7 +48,10 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Ensures ranking materialization and state version increment commit together
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync serialize leaderboard transitions
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -61,6 +64,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             return Result.Failure<ShowLeaderboardResponse>(GameErrors.NotFound);
         }
 
+        // System Design & Command Idempotency: Returns cached leaderboard snapshot on network retries without mutating ranks
         IdempotencyCheckResult<ShowLeaderboardResponse> idempotencyResult = await _idempotencyService.CheckAsync<ShowLeaderboardResponse>(
             request.GameId,
             request.CommandId,
@@ -88,6 +92,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             return Result.Failure<ShowLeaderboardResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Optimistic Concurrency Control (OCC): Guarantees host command sequence matches expected state version
         if (game.StateVersion != request.ExpectedStateVersion)
         {
             return Result.Failure<ShowLeaderboardResponse>(GameErrors.ConcurrentModification);
@@ -98,6 +103,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             return Result.Failure<ShowLeaderboardResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // System Design & Dense Ranking: Invokes database-side window function ranking for active participants
         await ParticipantRankMaterializer.MaterializeAsync(
             _dbContext, game.Id, hostAccountId, cancellationToken);
 
@@ -105,6 +111,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             .CountAsync(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,
                 cancellationToken);
 
+        // Query Performance & Bounded Payload: AsNoTracking() and Take(5) fetch only top-5 contenders for leaderboard frame
         List<LeaderboardParticipantDto> topParticipants = await _dbContext.Participants
             .AsNoTracking()
             .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
@@ -132,6 +139,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             response,
             cancellationToken);
 
+        // Persistence: Commits leaderboard transition and updated state version
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -142,6 +150,7 @@ public sealed class ShowLeaderboardCommandHandler : ICommandHandler<ShowLeaderbo
             game.StateVersion,
             activeParticipantCount);
 
+        // Post-Commit Broadcast Pattern: Broadcasts leaderboard update to all connected clients post-commit
         await _notificationService.PublishLeaderboardUpdatedAsync(
             hostAccountId,
             game.Id,

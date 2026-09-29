@@ -20,6 +20,7 @@ public sealed class GetJoinInfoQueryHandler : IQueryHandler<GetJoinInfoQuery, Ge
         GetJoinInfoQuery request,
         CancellationToken cancellationToken)
     {
+        // Query Performance: AsNoTracking() retrieves active game by PIN without tracker overhead
         Game? game = await _dbContext.Games
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -36,6 +37,7 @@ public sealed class GetJoinInfoQueryHandler : IQueryHandler<GetJoinInfoQuery, Ge
             return Result.Failure<GetJoinInfoResponse>(GameErrors.NotJoinable);
         }
 
+        // Query Performance: AsNoTracking() verifies host active status using primary key seek
         bool hostIsActive = await _dbContext.Users.AsNoTracking().AnyAsync(
             user => user.Id == game.HostAccountId && user.Role == UserRole.Host &&
                     user.Status == UserStatus.Active,
@@ -45,6 +47,7 @@ public sealed class GetJoinInfoQueryHandler : IQueryHandler<GetJoinInfoQuery, Ge
             return Result.Failure<GetJoinInfoResponse>(GameErrors.InvalidPin);
         }
 
+        // Query Performance: AsNoTracking() counts current active non-removed participants
         int activeParticipantCount = await _dbContext.Participants
             .AsNoTracking()
             .CountAsync(

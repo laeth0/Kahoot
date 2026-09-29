@@ -33,6 +33,7 @@ public sealed class GetGameQueryHandler : IQueryHandler<GetGameQuery, GetGameRes
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Query Performance: AsNoTracking() skips tracker overhead for read-only game metadata projection
         Game? game = await _dbContext.Games
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -44,11 +45,13 @@ public sealed class GetGameQueryHandler : IQueryHandler<GetGameQuery, GetGameRes
             return Result.Failure<GetGameResponse>(GameErrors.NotFound);
         }
 
+        // Query Performance: CountAsync calculates total questions directly in SQL engine
         int totalQuestions = await _dbContext.GameQuestionSnapshots
             .CountAsync(
                 q => q.GameId == game.Id && q.HostAccountId == hostAccountId,
                 cancellationToken);
 
+        // Query Performance: CountAsync computes active participant count directly in SQL engine
         int participantCount = await _dbContext.Participants
             .CountAsync(
                 p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,

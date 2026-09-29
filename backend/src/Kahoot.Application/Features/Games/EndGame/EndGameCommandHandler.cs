@@ -48,7 +48,10 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Wraps game termination, final podium ranking, and PIN release in a single transaction
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync serialize game termination
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -61,6 +64,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             return Result.Failure<EndGameResponse>(GameErrors.NotFound);
         }
 
+        // System Design & Command Idempotency: Ensures retried EndGame requests safely return cached podium response
         IdempotencyCheckResult<EndGameResponse> idempotencyResult = await _idempotencyService.CheckAsync<EndGameResponse>(
             request.GameId,
             request.CommandId,
@@ -88,6 +92,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             return Result.Failure<EndGameResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Optimistic Concurrency Control (OCC): Prevents conflicting terminal state changes
         if (game.StateVersion != request.ExpectedStateVersion)
         {
             return Result.Failure<EndGameResponse>(GameErrors.ConcurrentModification);
@@ -100,6 +105,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
 
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
 
+        // System Design & Final Question Materialization: If terminating during active question, materializes remaining results
         if (game.Status == GameStatus.QuestionActive)
         {
             await QuestionResultsMaterializer.MaterializeAsync(_dbContext, game, utcNow, cancellationToken);
@@ -108,9 +114,12 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
         game.Status = GameStatus.Finished;
         game.FinishedAt = utcNow;
         game.HostGraceExpiresAt = null;
+
+        // System Design & PIN Reclamation: Setting Pin = null releases the 6-digit PIN back into the active pool for new games
         game.Pin = null;
         game.StateVersion += 1;
 
+        // System Design & Final Rank Materialization: Computes definitive ranks for podium and archival reporting
         await ParticipantRankMaterializer.MaterializeAsync(
             _dbContext, game.Id, hostAccountId, cancellationToken);
 
@@ -118,6 +127,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             .CountAsync(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,
                 cancellationToken);
 
+        // Query Performance & Podium Bounding: AsNoTracking() and Take(3) retrieve strictly top-3 finalists for victory ceremony
         List<PodiumParticipantDto> podium = await _dbContext.Participants
             .AsNoTracking()
             .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
@@ -143,6 +153,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             response,
             cancellationToken);
 
+        // Persistence: Commits terminal game status, released PIN, and podium data
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -154,6 +165,7 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
             utcNow,
             activeParticipantCount);
 
+        // Post-Commit Broadcast Pattern: Broadcasts game finished event to all connected sockets post-commit
         await _notificationService.PublishGameEndedAsync(
             hostAccountId,
             game.Id,
