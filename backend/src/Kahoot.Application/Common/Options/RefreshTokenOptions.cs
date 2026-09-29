@@ -1,22 +1,14 @@
 namespace Kahoot.Application.Common.Options;
 
-/// <summary>
-/// Runtime configuration for refresh-token lifecycle.
-/// Owned by Application because Login and future Refresh use cases
-/// both need these values to set DB expiry and family limits.
-/// The API layer reads the same options to keep cookie MaxAge in sync.
-/// </summary>
+// Refresh Token Lifecycle Configuration - Governs individual token validity and rotation family maximum lifetime
 public sealed class RefreshTokenOptions
 {
+    // Configuration Section Name - Key identifying refresh token settings in appsettings
     public const string SectionName = "RefreshToken";
 
-    /// <summary>Number of days a single refresh token remains valid.</summary>
+    // Individual Token Lifetime (AUTH-EXP-001) - Number of days a single issued refresh token remains valid
     public int LifetimeDays { get; set; }
 
-    /// <summary>
-    /// Maximum number of days a token family (rotation chain) may live
-    /// before all tokens in the family are considered expired.
-    /// Must be >= LifetimeDays.
-    /// </summary>
+    // Family Maximum Lifetime (AUTH-ROT-001) - Absolute maximum lifetime in days for an entire rotation family chain
     public int FamilyMaxLifetimeDays { get; set; }
 }

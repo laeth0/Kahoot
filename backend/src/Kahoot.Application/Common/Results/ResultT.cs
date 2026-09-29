@@ -4,6 +4,7 @@ public sealed class Result<TValue> : Result
 {
     private readonly TValue? _value;
 
+    // Typed Result State Invariant - Ensures successful results contain non-null response values
     internal Result(TValue? value, bool isSuccess, Error error)
         : base(isSuccess, error)
     {
@@ -15,6 +16,7 @@ public sealed class Result<TValue> : Result
         _value = value;
     }
 
+    // Guarded Value Accessor - Throws InvalidOperationException if accessed on a failed result
     public TValue Value => IsSuccess
         ? _value!
         : throw new InvalidOperationException("The value of a failing result cannot be accessed.");
