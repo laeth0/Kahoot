@@ -153,4 +153,9 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     {
         return SaveChanges(acceptAllChangesOnSuccess: true);
     }
+
+    public void ClearTrackedChanges()
+    {
+        ChangeTracker.Clear();
+    }
 }

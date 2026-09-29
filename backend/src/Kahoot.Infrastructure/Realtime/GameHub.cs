@@ -7,6 +7,7 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Games.JoinGame;
 using Kahoot.Application.Features.Games.Models;
+using Kahoot.Application.Features.Games.SubmitAnswer;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Kahoot.Infrastructure.Persistence;
@@ -395,6 +396,71 @@ public sealed class GameHub : Hub
         return new { success = true, data = catchUpData, error = (object?)null };
     }
 
+    // Participant Answer Submission Hub Method (PLAY-ANS-001) - Ingests choice selection from connected player socket with authoritative timestamping.
+    public async Task<object> SubmitAnswer(string questionIdString, List<string> choiceIdStrings)
+    {
+        // Participant Connection Mapping - Resolves participant identity from active connection registry.
+        if (!_playerPresence.TryGetConnection(Context.ConnectionId, out PlayerConnectionInfo playerInfo))
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Player is not connected to an active game session." } };
+        }
+
+        // Malformed attempts still reach the participant and socket rate limits.
+        Guid.TryParse(questionIdString, out Guid questionId);
+        List<Guid> choiceGuids = new List<Guid>();
+        if (choiceIdStrings is { Count: > 6 })
+        {
+            choiceGuids.AddRange(Enumerable.Repeat(Guid.Empty, 7));
+        }
+        else if (choiceIdStrings is not null)
+        {
+            foreach (string choiceString in choiceIdStrings)
+            {
+                Guid.TryParse(choiceString, out Guid choiceGuid);
+                choiceGuids.Add(choiceGuid);
+            }
+        }
+
+        await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+        ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
+
+        SubmitAnswerCommand command = new SubmitAnswerCommand(
+            playerInfo.GameId,
+            playerInfo.ParticipantId,
+            questionId,
+            choiceGuids,
+            Context.ConnectionId,
+            null,
+            playerInfo.ConnectionGeneration);
+
+        Result<SubmitAnswerResponse> result = await sender.Send(command, Context.ConnectionAborted);
+
+        if (result.IsSuccess)
+        {
+            return new
+            {
+                success = true,
+                data = new
+                {
+                    accepted = result.Value.Accepted,
+                    alreadyAnswered = result.Value.AlreadyAnswered
+                },
+                error = (object?)null
+            };
+        }
+
+        return new
+        {
+            success = false,
+            data = (object?)null,
+            error = new
+            {
+                code = result.Error.Code,
+                description = result.Error.Description
+            }
+        };
+    }
+
     // Socket Disconnect Lifecycle - Manages host abandonment grace lease initiation and player presence departure broadcasting.
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
@@ -500,31 +566,39 @@ public sealed class GameHub : Hub
                 .CountAsync(q => q.GameId == game.Id, Context.ConnectionAborted);
 
             List<object> choicesList = new List<object>();
-            bool alreadyAnswered = false;
-
-            if (activeQuestion is not null)
+            if (activeQuestion is null)
             {
-                List<GameChoiceSnapshot> choiceSnapshots = await dbContext.GameChoiceSnapshots
-                    .AsNoTracking()
-                    .Where(c => c.GameQuestionId == activeQuestion.Id)
-                    .OrderBy(c => c.OrderIndex)
-                    .ToListAsync(Context.ConnectionAborted);
-
-                foreach (GameChoiceSnapshot choice in choiceSnapshots)
-                {
-                    choicesList.Add(new
-                    {
-                        id = choice.Id,
-                        text = choice.Text,
-                        orderIndex = choice.OrderIndex
-                    });
-                }
-
-                alreadyAnswered = await dbContext.AnswerSubmissions
-                    .AnyAsync(a => a.GameId == game.Id && a.GameQuestionId == activeQuestion.Id && a.ParticipantId == participant.Id, Context.ConnectionAborted);
+                throw new InvalidOperationException("An active game has no current question snapshot.");
             }
 
-            int remainingSeconds = activeQuestion?.EndsAt is not null
+            List<GameChoiceSnapshot> choiceSnapshots = await dbContext.GameChoiceSnapshots
+                .AsNoTracking()
+                .Where(c => c.GameQuestionId == activeQuestion.Id)
+                .OrderBy(c => c.OrderIndex)
+                .ToListAsync(Context.ConnectionAborted);
+
+            foreach (GameChoiceSnapshot choice in choiceSnapshots)
+            {
+                choicesList.Add(new
+                {
+                    id = choice.Id,
+                    text = choice.Text,
+                    orderIndex = choice.OrderIndex
+                });
+            }
+
+            bool alreadyAnswered = await dbContext.AnswerSubmissions.AsNoTracking()
+                .AnyAsync(answer => answer.GameId == game.Id &&
+                                    answer.GameQuestionId == activeQuestion.Id &&
+                                    answer.ParticipantId == participant.Id, Context.ConnectionAborted);
+            // Historical submissions alone determine the score visible before reveal.
+            long revealedTotalScore = await dbContext.AnswerSubmissions.AsNoTracking()
+                .Where(answer => answer.GameId == game.Id &&
+                                 answer.ParticipantId == participant.Id &&
+                                 answer.GameQuestionId != activeQuestion.Id)
+                .SumAsync(answer => (long)answer.PointsAwarded, Context.ConnectionAborted);
+
+            int remainingSeconds = activeQuestion.EndsAt is not null
                 ? Math.Max(0, (int)Math.Ceiling((activeQuestion.EndsAt.Value - now).TotalSeconds))
                 : 0;
 
@@ -533,15 +607,15 @@ public sealed class GameHub : Hub
                 status = "QUESTION_ACTIVE",
                 gameId = game.Id,
                 stateVersion = game.StateVersion,
-                questionIndex = game.CurrentQuestionIndex ?? 1,
+                questionIndex = activeQuestion.OrderIndex - 1,
                 totalQuestions,
-                questionText = activeQuestion?.Text ?? string.Empty,
-                imageUrl = activeQuestion?.ImageUrl,
-                deadlineUtc = activeQuestion?.EndsAt,
+                questionText = activeQuestion.Text,
+                imageUrl = activeQuestion.ImageUrl,
+                deadlineUtc = activeQuestion.EndsAt,
                 remainingSeconds,
                 alreadyAnswered,
                 choices = choicesList,
-                totalScore = participant.TotalScore
+                totalScore = revealedTotalScore
             };
         }
 
@@ -607,7 +681,7 @@ public sealed class GameHub : Hub
                 status = "QUESTION_RESULTS",
                 gameId = game.Id,
                 stateVersion = game.StateVersion,
-                questionIndex = game.CurrentQuestionIndex ?? 1,
+                questionIndex = (game.CurrentQuestionIndex ?? 1) - 1,
                 totalQuestions,
                 questionText = currentQuestion?.Text ?? string.Empty,
                 choices = choicesWithResults,

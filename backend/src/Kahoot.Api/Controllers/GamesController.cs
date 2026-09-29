@@ -1,5 +1,8 @@
 namespace Kahoot.Api.Controllers;
 
+using System.Security.Cryptography;
+using System.Text;
+using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Games;
 using Kahoot.Application.Features.Games.AdvanceQuestion;
@@ -14,11 +17,14 @@ using Kahoot.Application.Features.Games.JoinGame;
 using Kahoot.Application.Features.Games.RemoveParticipant;
 using Kahoot.Application.Features.Games.ShowLeaderboard;
 using Kahoot.Application.Features.Games.StartGame;
+using Kahoot.Application.Features.Games.SubmitAnswer;
+using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 // Live Game Session Management Controller - Orchestrates authoritative 6-state game lifecycle, host command execution, anonymous participant joins, and post-game reporting.
 [ApiController]
@@ -311,6 +317,65 @@ public sealed class GamesController : ApiController
     {
         GetGameParticipantsQuery query = new GetGameParticipantsQuery(id, includeRemoved, limit, cursor);
         Result<GetGameParticipantsResponse> result = await _sender.Send(query, cancellationToken);
+
+        if (result.IsSuccess)
+        {
+            return Ok(result.Value);
+        }
+
+        return Problem(result.Error);
+    }
+
+    // Participant Answer Submission REST Endpoint (PLAY-ANS-001) - Ingests choice selection for active question via player session token authentication.
+    [HttpPost("{id:guid}/answers")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(SubmitAnswerResponse), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status429TooManyRequests)]
+    public async Task<IActionResult> SubmitAnswer(
+        [FromRoute] Guid id,
+        [FromBody] SubmitAnswerRequest request,
+        [FromServices] IAppDbContext dbContext,
+        CancellationToken cancellationToken = default)
+    {
+        string? rawToken = Request.Headers["X-Session-Token"].FirstOrDefault();
+        if (string.IsNullOrWhiteSpace(rawToken))
+        {
+            string? authHeader = Request.Headers.Authorization.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(authHeader) && authHeader.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                rawToken = authHeader["Bearer ".Length..].Trim();
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(rawToken) || rawToken.Length != 68 || !rawToken.StartsWith("pst_", StringComparison.Ordinal))
+        {
+            return Problem(GameErrors.InvalidSessionToken);
+        }
+
+        byte[] tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+        ParticipantSessionToken? sessionToken = await dbContext.ParticipantSessionTokens.AsNoTracking()
+            .FirstOrDefaultAsync(t => t.GameId == id && t.TokenHash == tokenHash && t.RevokedAt == null, cancellationToken);
+
+        if (sessionToken is null)
+        {
+            return Problem(GameErrors.InvalidSessionToken);
+        }
+
+        SubmitAnswerCommand command = new SubmitAnswerCommand(
+            id,
+            sessionToken.ParticipantId,
+            request.QuestionId,
+            request.ChoiceIds,
+            string.Empty,
+            tokenHash,
+            null);
+
+        Result<SubmitAnswerResponse> result = await _sender.Send(command, cancellationToken);
 
         if (result.IsSuccess)
         {

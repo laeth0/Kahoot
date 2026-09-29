@@ -62,6 +62,11 @@ public abstract class ApiController : ControllerBase
             "Game.NotJoinable" => "Game not joinable",
             "Game.NicknameTaken" => "Nickname taken",
             "Game.InvalidSessionToken" => "Invalid session token",
+            "Game.NotCurrentQuestion" => "Question not current",
+            "Game.InvalidChoices" => "Invalid choices",
+            "Game.ParticipantRemoved" => "Participant removed",
+            "Game.Unavailable" => "Game unavailable",
+            "Game.TooManyAnswerAttempts" => "Too many answer attempts",
             _ => error.Code
         };
 

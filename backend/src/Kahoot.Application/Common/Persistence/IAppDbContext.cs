@@ -65,4 +65,6 @@ public interface IAppDbContext
 
     // Atomic Unit of Work - Flushes all tracked entity modifications in a single atomic database transaction
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    void ClearTrackedChanges();
 }

@@ -52,6 +52,7 @@ public static class SecurityInstaller
         services.AddSingleton<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddSingleton<ILoginRateLimiter, LoginRateLimiter>();
         services.AddSingleton<ILobbyJoinRateLimiter, LobbyJoinRateLimiter>();
+        services.AddSingleton<IAnswerRateLimiter, AnswerRateLimiter>();
 
         services.AddOptions<RefreshTokenOptions>()
             .Bind(configuration.GetRequiredSection(RefreshTokenOptions.SectionName))

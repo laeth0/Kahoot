@@ -20,7 +20,10 @@ public sealed record PlayerQuestionStartedEvent(
     int DurationSeconds,
     DateTimeOffset StartedAt,
     DateTimeOffset EndsAt,
-    List<PlayerQuestionChoiceDto> Choices);
+    List<PlayerQuestionChoiceDto> Choices)
+{
+    public int QuestionIndex => OrderIndex - 1;
+}
 
 // System Design & State Topology: Host projection includes correct choices and grading telemetry for presentation display
 public sealed record HostQuestionStartedEvent(
