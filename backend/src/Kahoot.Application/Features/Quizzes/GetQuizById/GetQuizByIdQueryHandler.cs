@@ -92,7 +92,6 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
             quiz.Id,
             quiz.Title,
             quiz.Description,
-            quiz.IsPublished,
             quiz.Revision,
             quiz.CreatedAt,
             quiz.UpdatedAt,

@@ -30,7 +30,7 @@ public sealed class PasswordHasher : IPasswordHasher
     // Using a genuine hash — not zero-filled bytes — ensures that dummy verification
     // performs the same real CPU/memory work as verifying a real password, preventing
     // timing-based username enumeration attacks.
-    // The password used to derive this hash is irrelevant; it is intentionally unpublished.
+    // The password used to derive this hash is irrelevant; it is intentionally kept secret.
     private const string PrecomputedDummyHash =
         "$argon2id$v=19$m=65536,t=3,p=1$cycT0VRAQ5f2pQHSVXARzQ==$pZ8wc4Uvqt1H5tUzQhNtbjxA5d/BCukzj/lNemTYOoY=";
 

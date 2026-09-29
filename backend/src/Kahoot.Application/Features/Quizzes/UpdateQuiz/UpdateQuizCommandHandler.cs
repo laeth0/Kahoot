@@ -6,6 +6,7 @@ using Kahoot.Application.Features.Auth;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Quizzes.UpdateQuiz;
 
@@ -32,6 +33,13 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
         }
 
         Guid hostAccountId = _currentUser.UserId.Value;
+
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure<QuizSummaryResponse>(AuthErrors.Unauthorized);
+        }
 
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:UpdateQuiz")
@@ -62,10 +70,10 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
 
         quiz.Title = trimmedTitle;
         quiz.Description = trimmedDescription;
-        quiz.IsPublished = false;
         quiz.Revision++;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         int questionCount = await _dbContext.Questions
             .TagWith("Quizzes:GetQuestionCount")
@@ -75,7 +83,6 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
             quiz.Id,
             quiz.Title,
             quiz.Description,
-            quiz.IsPublished,
             quiz.Revision,
             questionCount,
             quiz.CreatedAt,

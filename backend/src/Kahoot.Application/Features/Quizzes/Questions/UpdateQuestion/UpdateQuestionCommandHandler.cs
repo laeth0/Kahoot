@@ -42,6 +42,13 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure<QuestionResponse>(AuthErrors.Unauthorized);
+        }
+
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:UpdateQuestion:FindQuiz")
             .Where(q => q.Id == request.QuizId && q.HostAccountId == hostAccountId)
@@ -122,8 +129,6 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
                 .SingleOrDefaultAsync(cancellationToken);
         }
 
-        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
         await _dbContext.Choices
             .TagWith("Quizzes:UpdateQuestion:DeleteOldChoices")
             .Where(c => c.QuestionId == question.Id && c.HostAccountId == hostAccountId)
@@ -160,7 +165,6 @@ public sealed class UpdateQuestionCommandHandler : ICommandHandler<UpdateQuestio
         question.DurationSeconds = request.DurationSeconds;
         question.BasePoints = request.BasePoints;
 
-        quiz.IsPublished = false;
         quiz.Revision++;
 
         try

@@ -74,7 +74,6 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                     host_account_id = table.Column<Guid>(type: "uuid", nullable: false),
                     title = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     description = table.Column<string>(type: "character varying(1000)", maxLength: 1000, nullable: true),
-                    is_published = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     revision = table.Column<long>(type: "bigint", nullable: false, defaultValue: 1L),
                     created_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
@@ -593,26 +592,24 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                 column: "expires_at");
 
             migrationBuilder.CreateIndex(
+                name: "ix_participant_session_tokens_participant",
+                table: "participant_session_tokens",
+                column: "participant_id");
+
+            migrationBuilder.CreateIndex(
                 name: "ix_participant_session_tokens_participant_id_host_account_id_g",
                 table: "participant_session_tokens",
                 columns: new[] { "participant_id", "host_account_id", "game_id" });
 
             migrationBuilder.CreateIndex(
-                name: "ux_participant_session_tokens_participant",
+                name: "ix_participant_tokens_host_account_game_participant",
                 table: "participant_session_tokens",
-                column: "participant_id",
-                unique: true);
+                columns: new[] { "host_account_id", "game_id", "participant_id" });
 
             migrationBuilder.CreateIndex(
                 name: "ux_participant_session_tokens_token_hash",
                 table: "participant_session_tokens",
                 column: "token_hash",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "ux_participant_tokens_host_account_game_participant",
-                table: "participant_session_tokens",
-                columns: new[] { "host_account_id", "game_id", "participant_id" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -647,6 +644,12 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                 name: "ux_participants_id_host_account_game",
                 table: "participants",
                 columns: new[] { "id", "host_account_id", "game_id" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "ux_participants_join_operation",
+                table: "participants",
+                column: "join_operation_id_hash",
                 unique: true);
 
             migrationBuilder.CreateIndex(

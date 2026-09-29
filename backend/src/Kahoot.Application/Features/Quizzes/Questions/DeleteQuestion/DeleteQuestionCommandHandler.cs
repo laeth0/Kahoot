@@ -37,6 +37,13 @@ public sealed class DeleteQuestionCommandHandler : ICommandHandler<DeleteQuestio
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure(AuthErrors.Unauthorized);
+        }
+
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:DeleteQuestion:FindQuiz")
             .Where(q => q.Id == request.QuizId && q.HostAccountId == hostAccountId)
@@ -71,8 +78,6 @@ public sealed class DeleteQuestionCommandHandler : ICommandHandler<DeleteQuestio
 
         int deletedOrderIndex = question.OrderIndex;
 
-        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
         _dbContext.Questions.Remove(question);
 
         if (question.ImageId.HasValue)
@@ -90,7 +95,6 @@ public sealed class DeleteQuestionCommandHandler : ICommandHandler<DeleteQuestio
             }
         }
 
-        quiz.IsPublished = false;
         quiz.Revision++;
 
         await _dbContext.SaveChangesAsync(cancellationToken);

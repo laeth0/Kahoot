@@ -59,7 +59,6 @@ public sealed class ListQuizzesQueryHandler : IQueryHandler<ListQuizzesQuery, Li
                 quiz.Id,
                 quiz.Title,
                 quiz.Description,
-                quiz.IsPublished,
                 quiz.Revision,
                 _dbContext.Questions.Count(question => question.QuizId == quiz.Id && question.HostAccountId == hostAccountId),
                 quiz.CreatedAt,

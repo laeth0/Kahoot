@@ -16,7 +16,7 @@ The game lifecycle manages live quiz sessions from lobby creation to final compl
 
 ```mermaid
 stateDiagram-v2
-    [*] --> CREATED: Host creates game from published quiz
+    [*] --> CREATED: Host creates game from owned quiz
     CREATED --> LOBBY: Transaction commits; PIN allocated
     LOBBY --> QUESTION_ACTIVE: Host starts game; Question 1 snapshot bound
     QUESTION_ACTIVE --> QUESTION_RESULTS: acceptedAnswerCount == effectiveEligible (non-empty) OR Host EndQuestion
@@ -45,7 +45,7 @@ stateDiagram-v2
 ### 2.1 Game Creation & Snapshot Generation `[NORMATIVE]`
 * **`GAME-SNAP-001` (Creation Endpoint)**: `POST /api/games`
 * **`GAME-SNAP-002` (Execution & Deep Snapshot)**:
-  * Verifies quiz belongs to authenticated Host and `IsPublished == true`.
+  * Verifies quiz belongs to authenticated Host and contains at least one question.
   * Atomically creates deep immutable snapshot tables: copies quiz title, question text, choices, correctness flags, image URLs, durations, and base points into game snapshot records.
   * Allocates a unique **4 to 8 numeric digit PIN** (preserving leading zeroes as strings, e.g., `"048912"`) that is not currently in use by any unfinished game.
   * Initializes game state: `Status = LOBBY`, `StateVersion = 1`, `CreatedAt = NOW()`.
@@ -121,10 +121,9 @@ All Host control operations require the target `gameId`, the expected `stateVers
 
 | Status | Code | Meaning | Stable Req ID |
 | :--- | :--- | :--- | :--- |
-| **400** | `Validation.Failed` | Malformed payload, invalid command ID, or parameter mismatch. | `GAME-ERR-001` |
+| **400** | `Validation.Failed` | Malformed payload, invalid command ID, parameter mismatch, or an owned quiz with no questions. | `GAME-ERR-001` |
 | **404** | `Game.NotFound` | Game ID does not exist or belongs to another Host tenant. | `GAME-ERR-002` |
 | **404** | `Quiz.NotFound` | Referenced quiz ID does not exist or belongs to another tenant. | `GAME-ERR-003` |
-| **409** | `Game.QuizNotPublished` | Attempting to create game from an unpublished draft quiz. | `GAME-ERR-004` |
 | **409** | `Game.InvalidStateTransition` | Requested transition is not permitted from current state. | `GAME-ERR-005` |
 | **409** | `Game.NoMoreQuestions` | Attempting to advance beyond the final question. | `GAME-ERR-006` |
 | **409** | `Game.ConcurrentModification` | Client submitted stale `stateVersion`. | `GAME-ERR-007` |
@@ -184,9 +183,9 @@ Under full platform concurrency (200 simultaneous live games, 20,000 players):
 
 | Test ID | Mapped Requirement IDs | Category | Description & Preconditions | Expected Outcome |
 | :--- | :--- | :--- | :--- | :--- |
-| `GAME-TEST-001` | `GAME-SNAP-001`, `GAME-SNAP-002` | Functional | Host launches published quiz. | Game created in `LOBBY`; unique 4–8 digit PIN assigned; deep snapshot created. |
+| `GAME-TEST-001` | `GAME-SNAP-001`, `GAME-SNAP-002` | Functional | Host launches owned quiz. | Game created in `LOBBY`; unique 4–8 digit PIN assigned; deep snapshot created. |
 | `GAME-TEST-002` | `GAME-STATE-001`, `GAME-CTRL-001` through `005` | Functional | Host advances through full lifecycle: `LOBBY` $\rightarrow$ `QUESTION_ACTIVE` $\rightarrow$ `QUESTION_RESULTS` $\rightarrow$ `LEADERBOARD` $\rightarrow$ `QUESTION_ACTIVE` $\rightarrow$ `FINISHED`. | All transitions succeed; state versions increment sequentially; zero non-canonical state names. |
-| `GAME-TEST-003` | `GAME-SNAP-002`, `GAME-ERR-004` | Functional | Host attempts to launch unpublished draft quiz. | Fails with `409 Game.QuizNotPublished`. |
+| `GAME-TEST-003` | `GAME-SNAP-002`, `GAME-ERR-001` | Boundary | Host attempts to launch an owned quiz with no questions. | Rejected with `400 Validation.Failed`; no game or snapshot is created. |
 | `GAME-TEST-004` | `GAME-CTRL-004`, `GAME-ERR-006` | Boundary | Host calls Advance on final question of quiz. | Rejected with `409 Game.NoMoreQuestions`. |
 | `GAME-TEST-005` | `GAME-AUTO-001`, `GAME-ERR-009` | Boundary | Question deadline expires; participant submits answer before Host `EndQuestion`. | Submission rejected with `Game.AnswerTooLate`; game remains in `QUESTION_ACTIVE`. |
 | `GAME-TEST-006` | `GAME-AUTO-002` | Functional | All eligible participants submit answers for question. | Game automatically transitions to `QUESTION_RESULTS`. |

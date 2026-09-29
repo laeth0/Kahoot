@@ -20,7 +20,6 @@ public sealed record QuizDetailsResponse(
     Guid Id,
     string Title,
     string? Description,
-    bool IsPublished,
     long Revision,
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,

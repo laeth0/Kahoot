@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Kahoot.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260929130705_AllowConcurrentJoinRecoveryTokens")]
-    partial class AllowConcurrentJoinRecoveryTokens
+    [Migration("20260929135314_InitialSchema")]
+    partial class InitialSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -817,12 +817,6 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("HostAccountId")
                         .HasColumnType("uuid")
                         .HasColumnName("host_account_id");
-
-                    b.Property<bool>("IsPublished")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_published");
 
                     b.Property<long>("Revision")
                         .ValueGeneratedOnAdd()

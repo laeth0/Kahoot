@@ -815,12 +815,6 @@ namespace Kahoot.Infrastructure.Persistence.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("host_account_id");
 
-                    b.Property<bool>("IsPublished")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("boolean")
-                        .HasDefaultValue(false)
-                        .HasColumnName("is_published");
-
                     b.Property<long>("Revision")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("bigint")

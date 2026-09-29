@@ -134,8 +134,8 @@ To guarantee absolute mathematical data integrity across multi-threaded and mult
 ### 4.2 Quiz & Authoring Races
 | Race ID | Competing Operations | Order A Resolution (First Wins) | Order B Resolution (Second Wins) | Stable Req ID |
 | :---: | :--- | :--- | :--- | :--- |
-| `RACE-QZ-01` | Quiz Question Edit vs. Publish | Edit commits first (`Revision = K+1`, `IsPublished = false`); publish validates updated question set. | Publish commits first (`IsPublished = true`); edit commits immediately after, automatically resetting `IsPublished = false`. | `RACE-VER-009` |
-| `RACE-QZ-02` | Quiz Edit vs. Game Creation Snapshot | Edit commits first; game snapshot captures updated question text and choices. | Game snapshot transaction commits first; captures pre-edit snapshot. Edit succeeds on quiz draft without mutating live game. | `RACE-VER-010` |
+| `RACE-QZ-01` | Quiz Question Edit vs. Quiz Metadata Edit | Question edit commits first (`Revision = K+1`); metadata edit with stale revision fails with `409 Quiz.ConcurrentModification`. | Metadata edit commits first (`Revision = K+1`); question edit with stale revision fails with `409 Quiz.ConcurrentModification`. | `RACE-VER-009` |
+| `RACE-QZ-02` | Quiz Edit vs. Game Creation Snapshot | Edit commits first; game snapshot captures updated question text and choices. | Game snapshot transaction commits first; captures pre-edit snapshot. Game creation commits first and the edit is rejected with `409 Quiz.InUse`; the snapshot remains unchanged. | `RACE-VER-010` |
 | `RACE-QZ-03` | Quiz Deletion vs. Game Creation | Deletion commits first (`204 No Content`); game creation fails with `404 Quiz.NotFound`. | Game creation commits first; quiz marked in-use; deletion attempt fails with `409 Quiz.HasSessions`. | `RACE-VER-011` |
 | `RACE-QZ-04` | Question Reorder vs. Question Insertion | Reorder commits first (`Revision = K+1`); insertion with stale revision fails with `409 Quiz.ConcurrentModification`. | Insertion commits first; reorder fails with `400 Quiz.QuestionSetMismatch` (missing new question ID) or 409. | `RACE-VER-012` |
 | `RACE-QZ-05` | Question Reorder vs. Question Deletion | Reorder commits first; deletion removes target and re-indexes. | Deletion commits first; reorder payload contains deleted question ID, fails with `400 Quiz.QuestionSetMismatch`. | `RACE-VER-013` |
@@ -245,16 +245,13 @@ Every normative requirement from documents 01 through 13 is mapped to its formal
 | `ACCT-ADMIN-003`| 03 | Transactional last-active administrator protection | `ACCT-TEST-005` |
 | `ACCT-SLO-001` | 03 | Immediate revocation latency $p95 \le 100\text{ ms}$ | `ACCT-TEST-007` |
 | `ACCT-SLO-002` | 03 | Socket eviction latency $p95 \le 500\text{ ms}$ | `ACCT-TEST-007` |
-| `QUIZ-AUTH-001`| 04 | Create unpublished quiz draft | `QUIZ-TEST-001` |
-| `QUIZ-AUTH-002`| 04 | Update quiz metadata automatically unpublishes quiz | `QUIZ-TEST-004` |
+| `QUIZ-AUTH-001`| 04 | Create quiz | `QUIZ-TEST-001` |
+| `QUIZ-AUTH-002`| 04 | Update quiz metadata increments revision | `QUIZ-TEST-004` |
 | `QUIZ-DEL-001` | 04 | Never-played delete allowed; ever-played returns 409 | `QUIZ-TEST-005` |
 | `QUIZ-QUEST-001`| 04 | Add question with contiguous OrderIndex | `QUIZ-TEST-002` |
 | `QUIZ-REORDER-001`| 04 | Reorder questions atomically | `QUIZ-TEST-008` |
-| `QUIZ-PUB-001`  | 04 | Publication validation rules (1–200 questions, 2–6 choices) | `QUIZ-TEST-003`, `QUIZ-TEST-010` |
 | `QUIZ-LIMIT-001`| 04 | Technical safety limit: max 200 questions per quiz | `QUIZ-TEST-006` |
-| `QUIZ-OVERFLOW-001`| 04 | Checked 64-bit arithmetic on maximum score | `QUIZ-TEST-009` |
 | `QUIZ-SEC-001`  | 04 | Cross-tenant image attachment rejected (400) | `QUIZ-TEST-011` |
-| `QUIZ-SLO-001`  | 04 | Publish 200-question quiz $p95 \le 300\text{ ms}$ | `QUIZ-TEST-010` |
 | `IMG-UPL-001`   | 05 | Image upload endpoint `POST /api/uploads/images` | `IMG-TEST-001` |
 | `IMG-UPL-003`   | 05 | MIME sniff, bomb guard ($\le 64\text{MB}$), EXIF strip, re-encode | `IMG-TEST-001`, `IMG-TEST-006` |
 | `IMG-MODEL-001` | 05 | Dedicated question-image record with one current question owner | `IMG-TEST-002` |

@@ -1,6 +1,5 @@
 namespace Kahoot.Application.Features.Games.CreateGame;
 
-using System.Data;
 using Kahoot.Application.Common.Exceptions;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Application.Common.Messaging;
@@ -53,7 +52,7 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
         Guid hostAccountId = _currentUser.UserId.Value;
 
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(
-            IsolationLevel.RepeatableRead, cancellationToken);
+            cancellationToken);
 
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
@@ -72,11 +71,6 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
             return Result.Failure<CreateGameResponse>(QuizErrors.NotFound);
         }
 
-        if (!quiz.IsPublished)
-        {
-            return Result.Failure<CreateGameResponse>(GameErrors.QuizNotPublished);
-        }
-
         List<Question> questions = await _dbContext.Questions
             .Include(question => question.Image)
             .AsNoTracking()
@@ -86,7 +80,8 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
 
         if (questions.Count == 0)
         {
-            return Result.Failure<CreateGameResponse>(QuizErrors.QuestionNotFound);
+            return Result.Failure<CreateGameResponse>(Error.Validation(
+                "Validation.Failed", "The quiz must contain at least one question to create a game."));
         }
 
         List<Guid> questionIds = questions.Select(question => question.Id).ToList();

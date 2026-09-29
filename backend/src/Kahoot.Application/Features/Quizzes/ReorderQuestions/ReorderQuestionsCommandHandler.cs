@@ -34,6 +34,13 @@ public sealed class ReorderQuestionsCommandHandler : ICommandHandler<ReorderQues
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure<ReorderQuestionsResponse>(AuthErrors.Unauthorized);
+        }
+
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:Reorder:FindQuiz")
             .Where(q => q.Id == request.QuizId && q.HostAccountId == hostAccountId)
@@ -78,8 +85,6 @@ public sealed class ReorderQuestionsCommandHandler : ICommandHandler<ReorderQues
             return Result.Failure<ReorderQuestionsResponse>(QuizErrors.QuestionSetMismatch);
         }
 
-        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
         for (int i = 0; i < request.QuestionIds.Count; i++)
         {
             Guid questionId = request.QuestionIds[i];
@@ -95,7 +100,6 @@ public sealed class ReorderQuestionsCommandHandler : ICommandHandler<ReorderQues
             .Where(q => q.QuizId == quiz.Id && q.HostAccountId == hostAccountId && q.OrderIndex < 0)
             .ExecuteUpdateAsync(setter => setter.SetProperty(q => q.OrderIndex, q => (-q.OrderIndex) - 1), cancellationToken);
 
-        quiz.IsPublished = false;
         quiz.Revision++;
 
         await _dbContext.SaveChangesAsync(cancellationToken);

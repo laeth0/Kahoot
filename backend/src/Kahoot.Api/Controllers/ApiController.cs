@@ -47,7 +47,6 @@ public abstract class ApiController : ControllerBase
             "Quiz.QuestionSetMismatch" => "Question set mismatch",
             "Quiz.InvalidImageReference" => "Invalid image reference",
             "Game.NotFound" => "Game not found",
-            "Game.QuizNotPublished" => "Quiz not published",
             "Game.InvalidStateTransition" => "Invalid state transition",
             "Game.NoMoreQuestions" => "No more questions",
             "Game.ConcurrentModification" => "Concurrent modification",

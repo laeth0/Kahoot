@@ -8,6 +8,7 @@ using Kahoot.Application.Features.Quizzes.Questions;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Quizzes.Questions.AddQuestion;
 
@@ -37,6 +38,13 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
         }
 
         Guid hostAccountId = _currentUser.UserId.Value;
+
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure<QuestionResponse>(AuthErrors.Unauthorized);
+        }
 
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:AddQuestion:FindQuiz")
@@ -124,7 +132,6 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
                 choice.IsCorrect));
         }
 
-        quiz.IsPublished = false;
         quiz.Revision++;
 
         _dbContext.Questions.Add(question);
@@ -148,6 +155,8 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
         {
             return Result.Failure<QuestionResponse>(QuizErrors.InvalidImageReference);
         }
+
+        await transaction.CommitAsync(cancellationToken);
 
         QuestionResponse response = new QuestionResponse(
             question.Id,

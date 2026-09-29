@@ -63,7 +63,7 @@ Realtime communication coordinates live quiz synchronization across distributed 
 [NON-NORMATIVE REFERENCE DIRECTORY]
 Auth Routes:         POST /api/auth/{register, login, refresh, logout, logout-all, change-password} (Owned by Doc 02)
 Admin Routes:        GET /api/admin/users, POST /api/admin/users/{id}/{suspend, reactivate}, etc. (Owned by Doc 03)
-Quiz Routes:         GET/POST /api/quizzes, PUT/DELETE /api/quizzes/{id}, questions CRUD, reorder, publish (Owned by Doc 04)
+Quiz Routes:         GET/POST /api/quizzes, PUT/DELETE /api/quizzes/{id}, questions CRUD, reorder (Owned by Doc 04)
 Image Routes:        POST /api/uploads/images, GET /uploads/{filename} (Owned by Doc 05)
 Game Controls:       POST /api/games, POST /api/games/{id}/{start, end-question, show-leaderboard, advance, end} (Owned by Doc 06)
 Lobby Routes:        POST /api/games/join, DELETE /api/games/{id}/participants/{pid} (Owned by Doc 07)

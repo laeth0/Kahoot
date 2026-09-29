@@ -6,6 +6,7 @@ using Kahoot.Application.Features.Auth;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Kahoot.Application.Features.Quizzes.DeleteQuiz;
 
@@ -35,6 +36,13 @@ public sealed class DeleteQuizCommandHandler : ICommandHandler<DeleteQuizCommand
         }
 
         Guid hostAccountId = _currentUser.UserId.Value;
+
+        await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return Result.Failure(AuthErrors.Unauthorized);
+        }
 
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:DeleteQuiz:FindQuiz")
@@ -86,6 +94,7 @@ public sealed class DeleteQuizCommandHandler : ICommandHandler<DeleteQuizCommand
 
         _dbContext.Quizzes.Remove(quiz);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

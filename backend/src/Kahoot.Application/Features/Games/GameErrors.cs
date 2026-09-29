@@ -8,10 +8,6 @@ public static class GameErrors
         "Game.NotFound",
         "The requested game session was not found.");
 
-    public static readonly Error QuizNotPublished = Error.Conflict(
-        "Game.QuizNotPublished",
-        "Cannot create a game session from an unpublished draft quiz.");
-
     public static readonly Error InvalidStateTransition = Error.Conflict(
         "Game.InvalidStateTransition",
         "The requested state transition is not permitted from the current game state.");

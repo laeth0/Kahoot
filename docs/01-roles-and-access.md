@@ -34,7 +34,7 @@ The backend enforces this matrix across every REST endpoint, SignalR hub method,
 | **Register Normal Account** | Public flow | Public flow (cannot register admin) | Public flow | `AUTH-REG-001` |
 | **Login / Authenticate** | Public flow | Public flow | Public flow | `AUTH-LOGIN-001` |
 | **Token Refresh / Logout** | Own session only | Own session only | No account authority | `AUTH-REF-001` |
-| **Author / Publish Quizzes & Questions** | Own tenant only | No | No | `QUIZ-AUTH-001` |
+| **Author Quizzes & Questions** | Own tenant only | No | No | `QUIZ-AUTH-001` |
 | **Upload / Manage Image** | Own tenant only | No | No | `IMG-UPL-001` |
 | **Create & Control Game Sessions** | Own game only | No | No | `GAME-CTRL-001` |
 | **List / Search Accounts** | No | Yes | No | `ACCT-QUERY-001` |

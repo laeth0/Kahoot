@@ -89,7 +89,6 @@ Table quizzes {
   title varchar(200) [not null]
   description varchar(1000) [null]
 
-  is_published boolean [not null, default: false]
   revision bigint [not null, default: 1]
   created_at timestamptz [not null]
   updated_at timestamptz [not null]

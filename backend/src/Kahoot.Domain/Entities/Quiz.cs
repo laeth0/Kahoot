@@ -10,8 +10,6 @@ public sealed class Quiz : IAuditableEntity
 
     public string? Description { get; set; }
 
-    public bool IsPublished { get; set; }
-
     public long Revision { get; set; } = 1;
 
     public DateTimeOffset CreatedAt { get; set; }

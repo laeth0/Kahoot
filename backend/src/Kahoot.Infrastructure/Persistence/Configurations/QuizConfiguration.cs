@@ -22,10 +22,6 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(quiz => quiz.Description)
             .HasMaxLength(1000);
 
-        builder.Property(quiz => quiz.IsPublished)
-            .HasDefaultValue(false)
-            .IsRequired();
-
         builder.Property(quiz => quiz.Revision)
             .HasDefaultValue(1L)
             .IsRequired();
