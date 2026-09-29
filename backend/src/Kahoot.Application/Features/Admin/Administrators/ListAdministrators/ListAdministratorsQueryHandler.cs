@@ -26,13 +26,15 @@ public sealed class ListAdministratorsQueryHandler : IQueryHandler<ListAdministr
         ListAdministratorsQuery query,
         CancellationToken cancellationToken)
     {
-        // State: Caller authorization check (must be an authenticated SystemAdmin)
+        // Administrative Role Authorization - Restricts administrator enumeration strictly to authenticated SystemAdmin callers (ACCT-SEC-001)
         if (!_currentUser.IsAuthenticated || !string.Equals(_currentUser.Role, nameof(UserRole.SystemAdmin), StringComparison.Ordinal))
         {
             return Result.Failure<IReadOnlyList<AdministratorResponse>>(AuthErrors.Forbidden);
         }
 
-        // Step: Query all SystemAdmin accounts ordered by creation timestamp
+        // Query Optimization: AsNoTracking - Disables EF Core change tracker for read-only projection
+        // Observability Tagging - Instruments SQL query with TagWith for APM distributed tracing and slow query logs
+        // Metadata Projection & Audit Ordering - Proposes administrative fields only and sorts deterministically by CreatedAt, Id (ACCT-QUERY-002)
         List<AdministratorResponse> administrators = await _dbContext.Users
             .AsNoTracking()
             .TagWith("Admin:ListAdministrators")
