@@ -55,6 +55,7 @@ To prevent health probes from causing connection storms or cascading failures du
 * **`OPS-HEALTH-002` (Zero Information Disclosure)**: Health responses return simple status strings (`"Healthy"`, `"Degraded"`, `"Unhealthy"`). They must **never** disclose database hostnames, schema versions, or exception stack traces.
 
 Container liveness probes target `/health/live` so a dependency outage does not restart an otherwise responsive process. Load balancers and Kubernetes readiness probes target `/health/ready`; image storage failure reports `Degraded` with HTTP 503, while PostgreSQL or Redis failure reports `Unhealthy` with HTTP 503. The response body contains only the status string, including `"Degraded"` when applicable.
+Readiness also returns HTTP 503 before startup completes and as soon as shutdown begins, even if a healthy dependency result is still cached.
 
 ### 2.4 Background Worker Classification & Orchestration `[NORMATIVE]`
 Workers run as internal hosted services and are strictly segregated by criticality:
