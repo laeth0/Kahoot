@@ -1,4 +1,6 @@
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Features.Games;
+using Kahoot.Application.Features.Games.Models;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -200,13 +202,33 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
 
         foreach (Game game in batchGames)
         {
+            if (game.Status == GameStatus.QuestionActive)
+            {
+                await QuestionResultsMaterializer.MaterializeAsync(dbContext, game, host.UpdatedAt, cancellationToken);
+            }
+
             game.Status = GameStatus.Finished;
             game.FinishedAt = host.UpdatedAt;
+            game.HostGraceExpiresAt = null;
             game.Pin = null;
             game.IsTerminatedBySuspension = true;
+            game.StateVersion += 1;
         }
 
         await dbContext.SaveChangesAsync(cancellationToken);
+
+        List<Participant> podiumParticipants = await dbContext.Participants.AsNoTracking()
+            .Where(participant => gameIds.Contains(participant.GameId) &&
+                                  !participant.IsRemoved && participant.Rank <= 3)
+            .OrderBy(participant => participant.GameId)
+            .ThenBy(participant => participant.Rank)
+            .ToListAsync(cancellationToken);
+
+        Dictionary<Guid, List<PodiumParticipantDto>> podiumByGame = podiumParticipants
+            .GroupBy(participant => participant.GameId)
+            .ToDictionary(group => group.Key,
+                group => group.Select(participant => new PodiumParticipantDto(
+                    participant.Rank!.Value, participant.DisplayNickname, participant.TotalScore)).ToList());
 
         bool hasMoreGames = await dbContext.Games
             .AnyAsync(game => game.HostAccountId == hostAccountId && game.Status != GameStatus.Finished, cancellationToken);
@@ -217,6 +239,22 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
         }
 
         await transaction.CommitAsync(cancellationToken);
+
+        IGameNotificationService notificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+        foreach (Game game in batchGames)
+        {
+            object payload = new
+            {
+                gameId = game.Id,
+                status = "FINISHED",
+                stateVersion = game.StateVersion,
+                finishedAt = game.FinishedAt,
+                podium = podiumByGame.GetValueOrDefault(game.Id) ?? new List<PodiumParticipantDto>()
+            };
+
+            await notificationService.PublishGameEndedAsync(
+                hostAccountId, game.Id, game.StateVersion, payload, CancellationToken.None);
+        }
 
         if (!hasMoreGames)
         {
