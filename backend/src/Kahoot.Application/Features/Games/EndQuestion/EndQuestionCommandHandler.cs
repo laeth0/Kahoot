@@ -116,6 +116,10 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             .Select(c => new QuestionChoiceResultDto(c.Id, c.OrderIndex, c.Text, c.IsCorrect, c.SelectionCount))
             .ToList();
 
+        // Scorecard Materialization (SCORE-RES-002) - Prepares individual scorecard projection for each non-removed participant
+        List<PersonalQuestionResultEvent> personalResults = await QuestionResultsMaterializer.MaterializePersonalResultsAsync(
+            _dbContext, game, currentQuestion, game.StateVersion, cancellationToken);
+
         EndQuestionResponse response = new EndQuestionResponse(
             game.Id,
             "QUESTION_RESULTS",
@@ -148,8 +152,8 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
             currentQuestion.OrderIndex,
             totalAnswers);
 
-        // Post-Commit Broadcast Pattern: Fans out QuestionEnded event to all players and host only after database transaction is durable
-        await _notificationService.PublishQuestionEndedAsync(
+        // Post-Commit Broadcast Pattern - Fans out QuestionEnded event and personal scorecards to players only after database transaction is durable
+        await _notificationService.PublishQuestionEndedWithPersonalResultsAsync(
             hostAccountId,
             game.Id,
             game.StateVersion,
@@ -163,6 +167,7 @@ public sealed class EndQuestionCommandHandler : ICommandHandler<EndQuestionComma
                 utcNow,
                 choiceResults.Where(choice => choice.IsCorrect).Select(choice => choice.ChoiceId).ToList(),
                 choiceResults),
+            personalResults,
             CancellationToken.None);
 
         return Result.Success(response);

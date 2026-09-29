@@ -1,6 +1,5 @@
 namespace Kahoot.Application.Features.Games.Scoring;
 
-// Scoring Engine - Computes exact-set correctness and deterministic speed-decayed points with midpoint-away-from-zero rounding.
 public static class ScoringEngine
 {
     // Exact-Set Correctness Evaluation (SCORE-EXACT-001) - Verifies participant choices match all correct options with zero incorrect choices.
@@ -18,10 +17,9 @@ public static class ScoringEngine
     public static int CalculatePoints(
         int basePoints,
         int durationSeconds,
-        double elapsedSeconds,
+        TimeSpan elapsed,
         bool isCorrect)
     {
-        // Zero-Score Short-Circuit - Incorrect answers or questions configured with zero base points award exactly 0 points.
         if (!isCorrect || basePoints <= 0)
         {
             return 0;
@@ -32,13 +30,12 @@ public static class ScoringEngine
             return basePoints;
         }
 
-        // Bounded Response Time Clamping (SCORE-BOUND-001) - Clamps elapsed time to [0, durationSeconds] to prevent clock anomaly point inflation.
-        double clampedTime = Math.Clamp(elapsedSeconds, 0.0, (double)durationSeconds);
-        // Speed Decay Multiplier - Scales score linearly from 100% at t=0 down to 50% at deadline t=D.
-        double speedDecayFraction = 1.0 - (0.5 * (clampedTime / durationSeconds));
-        double rawPoints = basePoints * speedDecayFraction;
+        long durationTicks = TimeSpan.FromSeconds(durationSeconds).Ticks;
+        long elapsedTicks = Math.Clamp(elapsed.Ticks, 0L, durationTicks);
+        Int128 denominator = 2 * (Int128)durationTicks;
+        Int128 numerator = (Int128)basePoints * (denominator - elapsedTicks);
 
-        // Midpoint Rounding Away From Zero (SCORE-ROUND-001) - Ensures odd base points round predictably up at 50% midpoint.
-        return (int)Math.Round(rawPoints, MidpointRounding.AwayFromZero);
+        // The half-denominator adjustment rounds positive half points away from zero exactly.
+        return checked((int)((numerator + durationTicks) / denominator));
     }
 }

@@ -1,6 +1,7 @@
 namespace Kahoot.Infrastructure.Realtime;
 
 using Kahoot.Application.Common.Interfaces;
+using Kahoot.Application.Features.Games.Models;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -63,6 +64,33 @@ public sealed class GameNotificationService : IGameNotificationService
         await TrySendAsync(hostGroup, "QuestionEnded", payload, gameId, cancellationToken);
     }
 
+    // Dual-Audience Question Results Broadcast (SCORE-RES-002) - Emits aggregate distributions to host/players and personal score cards to individual participants
+    public async Task PublishQuestionEndedWithPersonalResultsAsync(
+        Guid hostAccountId,
+        Guid gameId,
+        long stateVersion,
+        object aggregatePayload,
+        IReadOnlyList<PersonalQuestionResultEvent> personalResults,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishQuestionEndedAsync(hostAccountId, gameId, stateVersion, aggregatePayload, cancellationToken);
+
+        if (personalResults.Count == 0)
+        {
+            return;
+        }
+
+        // Concurrency & High Throughput (SCORE-SLO-001) - Dispatches all personal scorecards concurrently through SignalR without serialization latency
+        List<Task> dispatchTasks = new List<Task>(personalResults.Count);
+        foreach (PersonalQuestionResultEvent result in personalResults)
+        {
+            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{result.ParticipantId}";
+            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalQuestionResult", result, gameId, cancellationToken));
+        }
+
+        await Task.WhenAll(dispatchTasks);
+    }
+
     // Leaderboard Updated Broadcast - Emits ranked standings and score differentials to all game participants and the host.
     public async Task PublishLeaderboardUpdatedAsync(
         Guid hostAccountId,
@@ -84,6 +112,33 @@ public sealed class GameNotificationService : IGameNotificationService
         await TrySendAsync(hostGroup, "LeaderboardUpdated", payload, gameId, cancellationToken);
     }
 
+    // Dual-Audience Leaderboard Broadcast (GAME-CTRL-003) - Emits top podium to host/players and individual sequential ranks to each player
+    public async Task PublishLeaderboardUpdatedWithPersonalRanksAsync(
+        Guid hostAccountId,
+        Guid gameId,
+        long stateVersion,
+        object aggregatePayload,
+        IReadOnlyList<PersonalLeaderboardEvent> personalRanks,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishLeaderboardUpdatedAsync(hostAccountId, gameId, stateVersion, aggregatePayload, cancellationToken);
+
+        if (personalRanks.Count == 0)
+        {
+            return;
+        }
+
+        // Concurrency & High Throughput (SCORE-SLO-002) - Pushes individual sequential rank position to each player socket concurrently
+        List<Task> dispatchTasks = new List<Task>(personalRanks.Count);
+        foreach (PersonalLeaderboardEvent rank in personalRanks)
+        {
+            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{rank.ParticipantId}";
+            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalLeaderboardUpdated", rank, gameId, cancellationToken));
+        }
+
+        await Task.WhenAll(dispatchTasks);
+    }
+
     // Game Ended Broadcast - Dispatches final game termination frame and podium results to conclude the session.
     public async Task PublishGameEndedAsync(
         Guid hostAccountId,
@@ -103,6 +158,33 @@ public sealed class GameNotificationService : IGameNotificationService
 
         await TrySendAsync(playerGroup, "GameEnded", payload, gameId, cancellationToken);
         await TrySendAsync(hostGroup, "GameEnded", payload, gameId, cancellationToken);
+    }
+
+    // Dual-Audience Final Podium Broadcast (SCORE-RANK-001) - Emits top finalists to host/players and individual final ranks to each player
+    public async Task PublishGameEndedWithPersonalRanksAsync(
+        Guid hostAccountId,
+        Guid gameId,
+        long stateVersion,
+        object aggregatePayload,
+        IReadOnlyList<PersonalGameEndedEvent> personalRanks,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishGameEndedAsync(hostAccountId, gameId, stateVersion, aggregatePayload, cancellationToken);
+
+        if (personalRanks.Count == 0)
+        {
+            return;
+        }
+
+        // Concurrency & High Throughput (SCORE-SLO-002) - Pushes final standing and score to each participant socket concurrently
+        List<Task> dispatchTasks = new List<Task>(personalRanks.Count);
+        foreach (PersonalGameEndedEvent rank in personalRanks)
+        {
+            string participantGroup = $"host:{hostAccountId}:game:{gameId}:participant:{rank.ParticipantId}";
+            dispatchTasks.Add(TrySendAsync(participantGroup, "PersonalGameEnded", rank, gameId, cancellationToken));
+        }
+
+        await Task.WhenAll(dispatchTasks);
     }
 
     // Participant Presence Changed Broadcast - Notifies host and players of player connects, disconnects, and reconnects.

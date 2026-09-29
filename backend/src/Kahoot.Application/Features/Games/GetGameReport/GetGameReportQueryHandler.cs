@@ -97,12 +97,14 @@ public sealed class GetGameReportQueryHandler : IQueryHandler<GetGameReportQuery
             })
             .ToList();
 
-        // Query Performance: AsNoTracking() loads ranked participants for report leaderboard
+        // Query Performance - AsNoTracking() loads ranked participants for report leaderboard with deterministic tie-breaking (SCORE-RANK-001)
         List<Participant> participants = await _dbContext.Participants
             .AsNoTracking()
             .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
             .OrderBy(p => p.Rank ?? int.MaxValue)
             .ThenByDescending(p => p.TotalScore)
+            .ThenBy(p => p.NormalizedNickname)
+            .ThenBy(p => p.Id)
             .ToListAsync(cancellationToken);
 
         List<LeaderboardParticipantDto> leaderboard = participants

@@ -6,6 +6,7 @@ using Kahoot.Application.Common.Persistence;
 using Kahoot.Application.Common.Results;
 using Kahoot.Application.Features.Auth;
 using Kahoot.Application.Features.Games.Models;
+using Kahoot.Application.Features.Games.ShowLeaderboard;
 using Kahoot.Domain.Entities;
 using Kahoot.Domain.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -107,6 +108,9 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
         GameQuestionSnapshot? activeQuestion = null;
         QuestionEndedEvent? endedEvent = null;
+        List<PersonalQuestionResultEvent>? personalResults = null;
+        ShowLeaderboardResponse? updatedLeaderboard = null;
+        List<PersonalLeaderboardEvent>? updatedRanks = null;
 
         if (game.Status == GameStatus.Lobby)
         {
@@ -149,13 +153,36 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
                             materializedQuestion.EffectiveEligibleParticipantCount, utcNow,
                             choiceResults.Where(choice => choice.IsCorrect)
                                 .Select(choice => choice.ChoiceId).ToList(), choiceResults);
+
+                        // Flush the removal before the no-tracking scorecard query so the removed player is excluded.
+                        await _dbContext.SaveChangesAsync(cancellationToken);
+                        personalResults = await QuestionResultsMaterializer.MaterializePersonalResultsAsync(
+                            _dbContext, game, materializedQuestion, game.StateVersion, cancellationToken);
                     }
                 }
             }
         }
 
-        // Persistence: Commits participant removal and token revocation atomically
+        // Flush the tombstone before ranking so the removed participant is excluded.
         await _dbContext.SaveChangesAsync(cancellationToken);
+        if (game.Status == GameStatus.Leaderboard)
+        {
+            await ParticipantRankMaterializer.MaterializeAsync(
+                _dbContext, game.Id, hostAccountId, cancellationToken);
+            List<LeaderboardParticipantDto> topParticipants = await _dbContext.Participants.AsNoTracking()
+                .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
+                .OrderBy(p => p.Rank)
+                .Take(5)
+                .Select(p => new LeaderboardParticipantDto(p.Id, p.DisplayNickname, p.TotalScore, p.Rank!.Value))
+                .ToListAsync(cancellationToken);
+            updatedRanks = await _dbContext.Participants.AsNoTracking()
+                .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)
+                .Select(p => new PersonalLeaderboardEvent(
+                    p.Id, game.Id, game.StateVersion, p.Rank!.Value, p.TotalScore))
+                .ToListAsync(cancellationToken);
+            updatedLeaderboard = new ShowLeaderboardResponse(
+                game.Id, "LEADERBOARD", game.StateVersion, topParticipants);
+        }
         await transaction.CommitAsync(cancellationToken);
 
         _logger.LogInformation(
@@ -191,8 +218,15 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
         if (endedEvent is not null)
         {
-            await _notificationService.PublishQuestionEndedAsync(
-                hostAccountId, game.Id, game.StateVersion, endedEvent, CancellationToken.None);
+            // Post-Commit Broadcast Pattern - Fans out QuestionEnded event and personal scorecards to players only after database transaction is durable
+            await _notificationService.PublishQuestionEndedWithPersonalResultsAsync(
+                hostAccountId, game.Id, game.StateVersion, endedEvent, personalResults ?? [], CancellationToken.None);
+        }
+
+        if (updatedLeaderboard is not null)
+        {
+            await _notificationService.PublishLeaderboardUpdatedWithPersonalRanksAsync(
+                hostAccountId, game.Id, game.StateVersion, updatedLeaderboard, updatedRanks ?? [], CancellationToken.None);
         }
 
         return Result.Success();
