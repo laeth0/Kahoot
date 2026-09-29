@@ -49,10 +49,12 @@ To prevent health probes from causing connection storms or cascading failures du
 | Endpoint | Probe Target | Checks Performed | Success Response | Failure Response |
 | :--- | :--- | :--- | :--- | :--- |
 | `GET /health/live` | Process Liveness | Verifies event loop responsiveness. **Zero I/O or DB calls.** | `200 OK` in $\le 50\text{ ms}$ | Process hung (Timeout / 500) |
-| `GET /health/ready`| Traffic Readiness | Checks DB connectivity (`SELECT 1`) and storage writeability. Uses **cached/coalesced probe result (2–5 seconds TTL)** to prevent probe amplification during DB outages. | `200 OK` in $\le 500\text{ ms}$ | `503 Service Unavailable` |
-| `GET /health` | Composite Check | Evaluates composite status of all registered health checks. | `200 OK` | `503 Service Unavailable` |
+| `GET /health/ready`| Traffic Readiness | Checks PostgreSQL connectivity, Redis responsiveness, and image storage capacity/writeability. Uses a **3-second cached/coalesced result** and a bounded probe timeout to prevent dependency probe amplification. | `200 OK` in $\le 500\text{ ms}$ | `503 Service Unavailable` for `Degraded` or `Unhealthy` |
+| `GET /health` | Composite Check | Reports the same readiness status for existing monitoring clients. | `200 OK` | `503 Service Unavailable` |
 
-* **`OPS-HEALTH-002` (Zero Information Disclosure)**: Health responses return simple status strings (`"Healthy"`, `"Unhealthy"`). They must **never** disclose database hostnames, schema versions, or exception stack traces.
+* **`OPS-HEALTH-002` (Zero Information Disclosure)**: Health responses return simple status strings (`"Healthy"`, `"Degraded"`, `"Unhealthy"`). They must **never** disclose database hostnames, schema versions, or exception stack traces.
+
+Container liveness probes target `/health/live` so a dependency outage does not restart an otherwise responsive process. Load balancers and Kubernetes readiness probes target `/health/ready`; image storage failure reports `Degraded` with HTTP 503, while PostgreSQL or Redis failure reports `Unhealthy` with HTTP 503. The response body contains only the status string, including `"Degraded"` when applicable.
 
 ### 2.4 Background Worker Classification & Orchestration `[NORMATIVE]`
 Workers run as internal hosted services and are strictly segregated by criticality:

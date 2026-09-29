@@ -52,6 +52,16 @@ public sealed class AppDbContext : DbContext, IAppDbContext
         return users.Count == 0 ? null : users[0];
     }
 
+    public async Task<Game?> GetGameForUpdateAsync(
+        Guid gameId, Guid hostAccountId, CancellationToken cancellationToken)
+    {
+        List<Game> games = await Games
+            .FromSqlInterpolated($"SELECT * FROM games WHERE id = {gameId} AND host_account_id = {hostAccountId} FOR UPDATE")
+            .ToListAsync(cancellationToken);
+
+        return games.Count == 0 ? null : games[0];
+    }
+
     public async Task<List<User>> GetActiveAdministratorsForUpdateAsync(CancellationToken cancellationToken)
     {
         return await Users
