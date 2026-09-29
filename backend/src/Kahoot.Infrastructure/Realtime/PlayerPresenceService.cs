@@ -203,6 +203,15 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         }
     }
 
+    internal void UpdateConnectionGeneration(string connectionId, Guid participantId, long generation)
+    {
+        if (_connections.TryGetValue(connectionId, out PlayerConnection? connection) &&
+            connection.ParticipantId == participantId)
+        {
+            connection.UpdateGeneration(generation);
+        }
+    }
+
     // The hub registers presence before commit; skip that brief provisional state.
     internal PlayerConnectionSnapshot[] GetConnectionSnapshots() => _connections
         .Where(entry => entry.Value.IsCommitted)
@@ -292,6 +301,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
     private sealed class PlayerConnection
     {
         private int _committed;
+        private long _connectionGeneration;
 
         public bool IsCommitted => Volatile.Read(ref _committed) == 1;
 
@@ -311,7 +321,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
             GameId = gameId;
             Nickname = nickname;
             SeatNumber = seatNumber;
-            ConnectionGeneration = connectionGeneration;
+            _connectionGeneration = connectionGeneration;
             Abort = abort;
         }
 
@@ -325,7 +335,9 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
 
         public int SeatNumber { get; }
 
-        public long ConnectionGeneration { get; }
+        public long ConnectionGeneration => Interlocked.Read(ref _connectionGeneration);
+
+        public void UpdateGeneration(long generation) => Interlocked.Exchange(ref _connectionGeneration, generation);
 
         public Action Abort { get; }
 

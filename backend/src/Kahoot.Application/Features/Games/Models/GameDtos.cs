@@ -134,3 +134,73 @@ public sealed record PersonalGameEndedEvent(
     long StateVersion,
     int Rank,
     long TotalScore);
+
+// Reconnection Catch-Up Choice Projection (RECON-CATCH-001, RECON-SEC-002) - Choice option snapshot omitting correctness indicators
+public sealed record PlayerChoiceSnapshotDto(Guid Id, string Text, int OrderIndex);
+
+// Reconnection Catch-Up Leaderboard Entry (RECON-CATCH-001) - Top-ranked contender summary for visible standings
+public sealed record LeaderboardPlayerDto(Guid ParticipantId, string Nickname, int SeatNumber, long TotalScore, int? Rank);
+
+// Reconnection Catch-Up Podium Entry (RECON-CATCH-001) - Top-3 finalist summary for read-only game conclusion
+public sealed record PodiumPlayerDto(Guid ParticipantId, string Nickname, int SeatNumber, long TotalScore, int? Rank);
+
+// Lobby Catch-Up State (RECON-CATCH-001) - Self-contained lobby projection reflecting assigned seat and reservation count
+public sealed record PlayerLobbyStateResponse(
+    string Status,
+    Guid GameId,
+    long StateVersion,
+    string Title,
+    string Nickname,
+    int SeatNumber,
+    int TotalParticipants);
+
+// Question Active Catch-Up State (RECON-CATCH-001, RECON-SEC-002) - Active question projection withholding correctness and provisional points
+public sealed record PlayerQuestionActiveStateResponse(
+    string Status,
+    Guid GameId,
+    long StateVersion,
+    int QuestionIndex,
+    int TotalQuestions,
+    string QuestionText,
+    string? ImageUrl,
+    DateTimeOffset? DeadlineUtc,
+    int RemainingSeconds,
+    bool AlreadyAnswered,
+    List<PlayerChoiceSnapshotDto> Choices,
+    long TotalScore);
+
+// Question Results Catch-Up State (RECON-CATCH-001) - Full reveal of question choices, correctness, stats, and personal score
+public sealed record PlayerQuestionResultsStateResponse(
+    string Status,
+    Guid GameId,
+    long StateVersion,
+    int QuestionIndex,
+    int TotalQuestions,
+    string QuestionText,
+    string? ImageUrl,
+    List<QuestionChoiceResultDto> Choices,
+    List<Guid> CorrectChoiceIds,
+    bool Submitted,
+    bool IsCorrect,
+    int PointsAwarded,
+    List<Guid> SelectedChoiceIds,
+    long TotalScore);
+
+// Leaderboard Catch-Up State (RECON-CATCH-001) - Visible standings with top 5 contenders and personal sequential rank
+public sealed record PlayerLeaderboardStateResponse(
+    string Status,
+    Guid GameId,
+    long StateVersion,
+    long TotalScore,
+    int Rank,
+    List<LeaderboardPlayerDto> TopParticipants);
+
+// Finished Game Catch-Up State (RECON-CATCH-001, RECON-WINDOW-001) - Read-only final summary with podium, rank, and total accepted answers
+public sealed record PlayerFinishedStateResponse(
+    string Status,
+    Guid GameId,
+    long StateVersion,
+    long TotalScore,
+    int Rank,
+    int AcceptedAnswers,
+    List<PodiumPlayerDto> Podium);

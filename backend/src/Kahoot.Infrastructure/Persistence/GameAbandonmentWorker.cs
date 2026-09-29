@@ -174,7 +174,14 @@ internal sealed class GameAbandonmentWorker : BackgroundService
             }
 
             Guid[] gameIds = abandonedGames.Select(game => game.Id).ToArray();
+
+            // Post-Game Expiry Window (RECON-WINDOW-001) - Enforces 24-hour read-only recovery boundary on participant session tokens via ExecuteUpdateAsync
+            await dbContext.ParticipantSessionTokens
+                .Where(token => gameIds.Contains(token.GameId) && token.ExpiresAt == null)
+                .ExecuteUpdateAsync(setter => setter.SetProperty(token => token.ExpiresAt, utcNow.AddHours(24)), cancellationToken);
+
             // Batch Deterministic Ranking (SCORE-RANK-001) - Computes final rankings via PostgreSQL window function partitioned by game
+
             await dbContext.Database.ExecuteSqlInterpolatedAsync($"""
                 WITH ranked AS (
                     SELECT id, row_number() OVER (

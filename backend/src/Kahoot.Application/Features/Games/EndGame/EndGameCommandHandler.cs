@@ -123,6 +123,12 @@ public sealed class EndGameCommandHandler : ICommandHandler<EndGameCommand, EndG
         await ParticipantRankMaterializer.MaterializeAsync(
             _dbContext, game.Id, hostAccountId, cancellationToken);
 
+        // Post-Game Expiry Window (RECON-WINDOW-001) - Enforces 24-hour read-only recovery boundary on participant session tokens via ExecuteUpdateAsync
+        await _dbContext.ParticipantSessionTokens
+            .Where(token => token.GameId == game.Id && token.HostAccountId == hostAccountId && token.ExpiresAt == null)
+            .ExecuteUpdateAsync(setter => setter.SetProperty(token => token.ExpiresAt, utcNow.AddHours(24)), cancellationToken);
+
+
         int activeParticipantCount = await _dbContext.Participants
             .CountAsync(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,
                 cancellationToken);

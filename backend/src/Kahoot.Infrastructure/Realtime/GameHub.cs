@@ -311,23 +311,28 @@ public sealed class GameHub : Hub
         };
     }
 
-    // Player Reconnection Workflow - Restores participant socket binding, bumps generation sequence, fences stale connections, and projects catch-up state.
+    // Player Reconnection Workflow (RECON-REC-001, RECON-REC-002, RECON-GEN-001) - Restores participant socket binding, bumps generation sequence, fences stale connections, and projects catch-up state.
     public async Task<object> Reconnect(string sessionToken)
     {
-        // Session Token Structural Validation - Enforces strict 68-character length and 'pst_' prefix format to short-circuit malformed reconnect requests.
+        // Session Token Structural Validation (RECON-ERR-001) - Enforces strict 68-character length and 'pst_' prefix format to short-circuit malformed reconnect requests.
         if (sessionToken is null || sessionToken.Length != 68 ||
-            !sessionToken.StartsWith("pst_", StringComparison.Ordinal) ||
-            _presence.TryGetConnection(Context.ConnectionId, out _, out _) ||
-            _playerPresence.TryGetConnection(Context.ConnectionId, out _))
+            !sessionToken.StartsWith("pst_", StringComparison.Ordinal))
         {
-            return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token or connection state." } };
+            return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token." } };
         }
 
-        // Session Token Hash Lookup - Resolves participant session record by computing SHA-256 digest of bearer token.
+        // Host sockets cannot be rebound as player sockets.
+        if (_presence.TryGetConnection(Context.ConnectionId, out _, out _))
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Validation.Failed", description = "Connection is already attached to a game." } };
+        }
+
+        // Session Token Hash Lookup (RECON-STORM-001, RECON-RISK-003) - Resolves participant session record via indexed SHA-256 hash lookup.
         byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(sessionToken));
         await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
         AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+        // Indexed Token Lookup (RECON-STORM-001) - Executes AsNoTracking indexed query on TokenHash to short-circuit invalid or missing tokens.
         ParticipantSessionToken? initialToken = await dbContext.ParticipantSessionTokens.AsNoTracking()
             .FirstOrDefaultAsync(t => t.TokenHash == presentedTokenHash, Context.ConnectionAborted);
         if (initialToken is null)
@@ -335,14 +340,46 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token." } };
         }
 
-        await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(Context.ConnectionAborted);
-        Game? game = await dbContext.GetGameForUpdateAsync(
-            initialToken.GameId, initialToken.HostAccountId, Context.ConnectionAborted);
-        if (game is null)
+        // A lost invocation response can be retried on the same live socket, but that socket cannot switch participants.
+        bool alreadyAttached = _playerPresence.TryGetConnection(Context.ConnectionId, out PlayerConnectionInfo existingConnection);
+        if (alreadyAttached && (existingConnection.ParticipantId != initialToken.ParticipantId ||
+                                existingConnection.GameId != initialToken.GameId))
         {
-            return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token." } };
+            return new { success = false, data = (object?)null, error = new { code = "Validation.Failed", description = "Connection is already attached to another player." } };
         }
 
+        await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(Context.ConnectionAborted);
+        // Lock Wait Bound - Sets 3-second statement lock timeout to eliminate hung transactions under thundering herd storms.
+        await dbContext.Database.ExecuteSqlRawAsync("SET LOCAL lock_timeout = '3s'", Context.ConnectionAborted);
+
+        // Shared Host Lock - Keeps suspension from committing between authorization and socket binding.
+        List<User> hosts = await dbContext.Users
+            .FromSqlInterpolated($"SELECT * FROM users WHERE id = {initialToken.HostAccountId} FOR SHARE")
+            .AsNoTracking()
+            .ToListAsync(Context.ConnectionAborted);
+        User? host = hosts.Count == 0 ? null : hosts[0];
+        if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Game.Unavailable", description = "Game host is inactive." } };
+        }
+
+        // Shared Game Lock (RECON-STORM-001, RECON-RISK-003) - Allows different players to reconnect concurrently while excluding game transitions.
+        List<Game> games = await dbContext.Games
+            .FromSqlInterpolated($"""
+                SELECT * FROM games
+                WHERE id = {initialToken.GameId} AND host_account_id = {initialToken.HostAccountId}
+                FOR SHARE
+                """)
+            .ToListAsync(Context.ConnectionAborted);
+        Game? game = games.Count == 0 ? null : games[0];
+
+        // Game Termination & Availability Check (RECON-ERR-003) - Rejects reconnects if game was terminated by admin or does not exist.
+        if (game is null || game.IsTerminatedBySuspension)
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Game.Unavailable", description = "Game was terminated or unavailable." } };
+        }
+
+        // Concurrent Token Revocation Check - Re-evaluates token under transaction lock to prevent races with concurrent kick or removal operations.
         ParticipantSessionToken? currentToken = await dbContext.ParticipantSessionTokens.AsNoTracking()
             .FirstOrDefaultAsync(t => t.ParticipantId == initialToken.ParticipantId &&
                                       t.TokenHash == presentedTokenHash,
@@ -352,11 +389,23 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid or revoked session token." } };
         }
 
-        Participant? participant = await dbContext.Participants
-            .FirstOrDefaultAsync(p => p.Id == currentToken.ParticipantId && p.GameId == game.Id &&
-                                      p.HostAccountId == game.HostAccountId,
-                Context.ConnectionAborted);
-        if (participant is null || participant.IsRemoved)
+        // Pessimistic Participant Row Lock (RECON-RISK-002, RECON-TEST-007) - Acquires FOR UPDATE lock on participant row to serialize simultaneous reconnects from multiple tabs for the same session.
+        List<Participant> participants = await dbContext.Participants
+            .FromSqlInterpolated($"""
+                SELECT * FROM participants
+                WHERE id = {currentToken.ParticipantId} AND game_id = {game.Id} AND host_account_id = {game.HostAccountId}
+                FOR UPDATE
+                """)
+            .ToListAsync(Context.ConnectionAborted);
+        Participant? participant = participants.Count == 0 ? null : participants[0];
+
+        // Participant Tombstone Verification (RECON-ERR-002, RECON-RISK-005, RECON-TEST-010) - Instantly rejects kicked or removed players.
+        if (participant is null)
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token." } };
+        }
+
+        if (participant.IsRemoved)
         {
             return new { success = false, data = (object?)null, error = new { code = "Game.ParticipantRemoved", description = "Participant was removed." } };
         }
@@ -366,62 +415,75 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Session token was revoked." } };
         }
 
-        bool hostIsActive = await dbContext.Users.AsNoTracking().AnyAsync(
-            user => user.Id == game.HostAccountId && user.Role == UserRole.Host &&
-                    user.Status == UserStatus.Active,
-            Context.ConnectionAborted);
-        if (!hostIsActive)
+        // PostgreSQL provides one clock for the strict expiry boundary across replicas.
+        DateTimeOffset now = await dbContext.Database
+            .SqlQuery<DateTimeOffset>($"SELECT clock_timestamp() AS \"Value\"")
+            .SingleAsync(Context.ConnectionAborted);
+        if (game.Status == GameStatus.Finished)
         {
-            return new { success = false, data = (object?)null, error = new { code = "Game.Unavailable", description = "Game host is inactive." } };
+            if (game.FinishedAt is null || now >= game.FinishedAt.Value.AddHours(24))
+            {
+                return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Session token expired." } };
+            }
         }
-
-        DateTimeOffset now = _timeProvider.GetUtcNow();
-        if (game.Status == GameStatus.Finished &&
-            (game.FinishedAt is null || now >= game.FinishedAt.Value.AddHours(24)))
+        else if (currentToken.ExpiresAt is not null && now >= currentToken.ExpiresAt.Value)
         {
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Session token expired." } };
         }
 
-        // Connection Generation Monotonic Increment - Bumps connection generation sequence to fence out prior sockets and serialize reconnecting player instances.
+        if (game.HostGraceExpiresAt is not null && game.HostGraceExpiresAt.Value <= now && game.Status != GameStatus.Finished)
+        {
+            return new { success = false, data = (object?)null, error = new { code = "Game.Unavailable", description = "Game has been abandoned." } };
+        }
+
+        // Connection Generation Monotonic Increment (RECON-GEN-001, RECON-SEC-001) - Bumps connection generation sequence to fence out prior sockets and serialize reconnecting player instances.
         participant.ConnectionGeneration += 1;
         await dbContext.SaveChangesAsync(Context.ConnectionAborted);
 
-        // Read a coherent phase snapshot while the game row still fences concurrent transitions.
-        object catchUpData = await BuildPlayerCatchUpStateAsync(dbContext, game, participant, now);
+        // Authoritative Phase Catch-Up Builder (RECON-CATCH-001) - Builds complete, self-contained state projection under coherent shared snapshot.
+        object catchUpData = await BuildPlayerCatchUpStateAsync(dbContext, game, participant);
 
         string playerGroup = $"host:{game.HostAccountId}:game:{game.Id}:players";
         string participantGroup = $"host:{game.HostAccountId}:game:{game.Id}:participant:{participant.Id}";
-        await Groups.AddToGroupAsync(Context.ConnectionId, playerGroup, Context.ConnectionAborted);
-        await Groups.AddToGroupAsync(Context.ConnectionId, participantGroup, Context.ConnectionAborted);
-        try
+        if (alreadyAttached)
         {
-            await _playerPresence.RegisterAsync(
-                Context.ConnectionId,
-                participant.Id,
-                game.HostAccountId,
-                game.Id,
-                participant.DisplayNickname,
-                participant.SeatNumber,
-                participant.ConnectionGeneration,
-                Context.Abort);
             await transaction.CommitAsync(Context.ConnectionAborted);
-            _playerPresence.MarkCommitted(Context.ConnectionId);
+            _playerPresence.UpdateConnectionGeneration(Context.ConnectionId, participant.Id, participant.ConnectionGeneration);
         }
-        catch
+        else
         {
-            await _playerPresence.RemoveAsync(Context.ConnectionId, game.Id);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, playerGroup);
-            await Groups.RemoveFromGroupAsync(Context.ConnectionId, participantGroup);
-            throw;
+            await Groups.AddToGroupAsync(Context.ConnectionId, playerGroup, Context.ConnectionAborted);
+            await Groups.AddToGroupAsync(Context.ConnectionId, participantGroup, Context.ConnectionAborted);
+            try
+            {
+                await _playerPresence.RegisterAsync(
+                    Context.ConnectionId,
+                    participant.Id,
+                    game.HostAccountId,
+                    game.Id,
+                    participant.DisplayNickname,
+                    participant.SeatNumber,
+                    participant.ConnectionGeneration,
+                    Context.Abort);
+                await transaction.CommitAsync(Context.ConnectionAborted);
+                _playerPresence.MarkCommitted(Context.ConnectionId);
+            }
+            catch
+            {
+                await _playerPresence.RemoveAsync(Context.ConnectionId, game.Id);
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, playerGroup);
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, participantGroup);
+                throw;
+            }
         }
 
         _unauthenticatedGuard.MarkAuthenticated(Context.ConnectionId);
 
-        // Connection Generation Local Eviction - Aborts any local socket connections for this participant holding an older generation counter.
+        // Connection Generation Local Eviction (RECON-GEN-001, RECON-SEC-001) - Aborts any local socket connections for this participant holding an older generation counter.
         _playerPresence.AbortStaleParticipantConnections(participant.Id, participant.ConnectionGeneration);
         try
         {
-            // Distributed Connection Generation Fencing - Broadcasts Redis fence frame to abort stale sockets for this participant across all nodes.
+            // Distributed Connection Generation Fencing (RECON-SEC-001, RECON-TEST-007) - Broadcasts Redis fence frame to abort stale sockets for this participant across all nodes.
             await _playerPresence.FenceParticipantAsync(
                 participant.Id, game.Id, participant.ConnectionGeneration, CancellationToken.None);
         }
@@ -430,19 +492,22 @@ public sealed class GameHub : Hub
             _logger.LogError(exception, "Player socket fencing publication failed. ParticipantId={ParticipantId}", participant.Id);
         }
 
-        try
+        if (!alreadyAttached && game.Status != GameStatus.Finished)
         {
-            int connectedCount = await _playerPresence.GetConnectedCountAsync(game.Id);
-            ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
-                game.Id, game.StateVersion, game.PresenceVersion, game.ReservedParticipantCount, connectedCount,
-                participant.DisplayNickname, participant.SeatNumber, "Reconnected");
-            IGameNotificationService notificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
-            await notificationService.PublishParticipantPresenceChangedAsync(
-                game.HostAccountId, game.Id, game.PresenceVersion, presenceEvent, CancellationToken.None);
-        }
-        catch (Exception exception)
-        {
-            _logger.LogError(exception, "Player presence notification failed after reconnect commit. GameId={GameId}", game.Id);
+            try
+            {
+                int connectedCount = await _playerPresence.GetConnectedCountAsync(game.Id);
+                ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
+                    game.Id, game.StateVersion, game.PresenceVersion, game.ReservedParticipantCount, connectedCount,
+                    participant.DisplayNickname, participant.SeatNumber, "Reconnected");
+                IGameNotificationService notificationService = scope.ServiceProvider.GetRequiredService<IGameNotificationService>();
+                await notificationService.PublishParticipantPresenceChangedAsync(
+                    game.HostAccountId, game.Id, game.PresenceVersion, presenceEvent, CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                _logger.LogError(exception, "Player presence notification failed after reconnect commit. GameId={GameId}", game.Id);
+            }
         }
 
         return new { success = true, data = catchUpData, error = (object?)null };
@@ -556,7 +621,7 @@ public sealed class GameHub : Hub
                 AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
                 Game? game = await dbContext.Games.AsNoTracking().FirstOrDefaultAsync(g => g.Id == playerInfo.GameId);
 
-                if (game is not null)
+                if (game is not null && game.Status != GameStatus.Finished)
                 {
                     // Player Disconnected Presence Broadcast - Emits updated connected count to host and player channels.
                     ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
@@ -589,29 +654,26 @@ public sealed class GameHub : Hub
         }
     }
 
-    // Phase-Specific Catch-Up State Builder - Serializes minimal, secure player state projection corresponding to current game lifecycle phase.
+    // Phase-Specific Catch-Up State Builder (RECON-CATCH-001) - Serializes minimal, secure player state projection corresponding to current game lifecycle phase.
     private async Task<object> BuildPlayerCatchUpStateAsync(
         AppDbContext dbContext,
         Game game,
-        Participant participant,
-        DateTimeOffset now)
+        Participant participant)
     {
-        // Lobby State Catch-Up - Returns participant display metadata and total player reservation count.
-        if (game.Status == GameStatus.Lobby)
+        // Lobby State Catch-Up (RECON-CATCH-001) - Returns participant display metadata and total player reservation count.
+        if (game.Status == GameStatus.Lobby || game.Status == GameStatus.Created)
         {
-            return new
-            {
-                status = "LOBBY",
-                gameId = game.Id,
-                stateVersion = game.StateVersion,
-                title = game.Title,
-                nickname = participant.DisplayNickname,
-                seatNumber = participant.SeatNumber,
-                totalParticipants = game.ReservedParticipantCount
-            };
+            return new PlayerLobbyStateResponse(
+                "LOBBY",
+                game.Id,
+                game.StateVersion,
+                game.Title,
+                participant.DisplayNickname,
+                participant.SeatNumber,
+                game.ReservedParticipantCount);
         }
 
-        // Question Active Catch-Up - Returns active question prompt, choice options, and countdown deadline without leaking correctness flags.
+        // Question Active Catch-Up (RECON-CATCH-001, RECON-SEC-002, RECON-BOUND-002) - Returns active question prompt, choice options, and countdown deadline without leaking correctness flags.
         if (game.Status == GameStatus.QuestionActive)
         {
             GameQuestionSnapshot? activeQuestion = await dbContext.GameQuestionSnapshots
@@ -621,10 +683,14 @@ public sealed class GameHub : Hub
             int totalQuestions = await dbContext.GameQuestionSnapshots
                 .CountAsync(q => q.GameId == game.Id, Context.ConnectionAborted);
 
-            List<object> choicesList = new List<object>();
             if (activeQuestion is null)
             {
                 throw new InvalidOperationException("An active game has no current question snapshot.");
+            }
+
+            if (activeQuestion.EndsAt is null)
+            {
+                throw new InvalidOperationException("An active question has no deadline.");
             }
 
             List<GameChoiceSnapshot> choiceSnapshots = await dbContext.GameChoiceSnapshots
@@ -633,49 +699,46 @@ public sealed class GameHub : Hub
                 .OrderBy(c => c.OrderIndex)
                 .ToListAsync(Context.ConnectionAborted);
 
+            List<PlayerChoiceSnapshotDto> choicesList = new List<PlayerChoiceSnapshotDto>(choiceSnapshots.Count);
             foreach (GameChoiceSnapshot choice in choiceSnapshots)
             {
-                choicesList.Add(new
-                {
-                    id = choice.Id,
-                    text = choice.Text,
-                    orderIndex = choice.OrderIndex
-                });
+                choicesList.Add(new PlayerChoiceSnapshotDto(
+                    choice.Id,
+                    choice.Text,
+                    choice.OrderIndex));
             }
 
             bool alreadyAnswered = await dbContext.AnswerSubmissions.AsNoTracking()
                 .AnyAsync(answer => answer.GameId == game.Id &&
                                     answer.GameQuestionId == activeQuestion.Id &&
                                     answer.ParticipantId == participant.Id, Context.ConnectionAborted);
-            // Historical submissions alone determine the score visible before reveal.
+
+            // Pre-Reveal Secrecy Guarantee (RECON-SEC-002) - Historical submissions alone determine score visible before reveal; provisional points withheld.
             long revealedTotalScore = await dbContext.AnswerSubmissions.AsNoTracking()
                 .Where(answer => answer.GameId == game.Id &&
                                  answer.ParticipantId == participant.Id &&
                                  answer.GameQuestionId != activeQuestion.Id)
                 .SumAsync(answer => (long)answer.PointsAwarded, Context.ConnectionAborted);
 
-            int remainingSeconds = activeQuestion.EndsAt is not null
-                ? Math.Max(0, (int)Math.Ceiling((activeQuestion.EndsAt.Value - now).TotalSeconds))
-                : 0;
+            // Active Question Timer Clamping (RECON-BOUND-002) - If T > Deadline, remaining seconds evaluates strictly to 0.
+            int remainingSeconds = Math.Max(0, (int)Math.Ceiling((activeQuestion.EndsAt.Value - _timeProvider.GetUtcNow()).TotalSeconds));
 
-            return new
-            {
-                status = "QUESTION_ACTIVE",
-                gameId = game.Id,
-                stateVersion = game.StateVersion,
-                questionIndex = activeQuestion.OrderIndex - 1,
+            return new PlayerQuestionActiveStateResponse(
+                "QUESTION_ACTIVE",
+                game.Id,
+                game.StateVersion,
+                activeQuestion.OrderIndex - 1,
                 totalQuestions,
-                questionText = activeQuestion.Text,
-                imageUrl = activeQuestion.ImageUrl,
-                deadlineUtc = activeQuestion.EndsAt,
+                activeQuestion.Text,
+                activeQuestion.ImageUrl,
+                activeQuestion.EndsAt,
                 remainingSeconds,
                 alreadyAnswered,
-                choices = choicesList,
-                totalScore = revealedTotalScore
-            };
+                choicesList,
+                revealedTotalScore);
         }
 
-        // Question Results Catch-Up - Reveals correct choice IDs, answer breakdown counts, participant selection, and points awarded.
+        // Question Results Catch-Up (RECON-CATCH-001) - Reveals correct choice IDs, answer breakdown counts, participant selection, and points awarded.
         if (game.Status == GameStatus.QuestionResults)
         {
             GameQuestionSnapshot? currentQuestion = await dbContext.GameQuestionSnapshots
@@ -685,42 +748,38 @@ public sealed class GameHub : Hub
             int totalQuestions = await dbContext.GameQuestionSnapshots
                 .CountAsync(q => q.GameId == game.Id, Context.ConnectionAborted);
 
-            List<object> choicesWithResults = new List<object>();
+            if (currentQuestion is null)
+            {
+                throw new InvalidOperationException("A results phase has no current question snapshot.");
+            }
+
+            List<QuestionChoiceResultDto> choicesWithResults = new List<QuestionChoiceResultDto>();
             List<Guid> correctChoiceIds = new List<Guid>();
 
-            if (currentQuestion is not null)
-            {
-                List<GameChoiceSnapshot> choiceSnapshots = await dbContext.GameChoiceSnapshots
-                    .AsNoTracking()
-                    .Where(c => c.GameQuestionId == currentQuestion.Id)
-                    .OrderBy(c => c.OrderIndex)
-                    .ToListAsync(Context.ConnectionAborted);
+            List<GameChoiceSnapshot> choiceSnapshots = await dbContext.GameChoiceSnapshots
+                .AsNoTracking()
+                .Where(c => c.GameQuestionId == currentQuestion.Id)
+                .OrderBy(c => c.OrderIndex)
+                .ToListAsync(Context.ConnectionAborted);
 
-                foreach (GameChoiceSnapshot choice in choiceSnapshots)
+            foreach (GameChoiceSnapshot choice in choiceSnapshots)
+            {
+                if (choice.IsCorrect)
                 {
-                    if (choice.IsCorrect)
-                    {
-                        correctChoiceIds.Add(choice.Id);
-                    }
-
-                    choicesWithResults.Add(new
-                    {
-                        id = choice.Id,
-                        text = choice.Text,
-                        orderIndex = choice.OrderIndex,
-                        isCorrect = choice.IsCorrect,
-                        selectionCount = choice.SelectionCount
-                    });
+                    correctChoiceIds.Add(choice.Id);
                 }
+
+                choicesWithResults.Add(new QuestionChoiceResultDto(
+                    choice.Id,
+                    choice.OrderIndex,
+                    choice.Text,
+                    choice.IsCorrect,
+                    choice.SelectionCount));
             }
 
-            AnswerSubmission? submission = null;
-            if (currentQuestion is not null)
-            {
-                submission = await dbContext.AnswerSubmissions
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(a => a.GameId == game.Id && a.GameQuestionId == currentQuestion.Id && a.ParticipantId == participant.Id, Context.ConnectionAborted);
-            }
+            AnswerSubmission? submission = await dbContext.AnswerSubmissions
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.GameId == game.Id && a.GameQuestionId == currentQuestion.Id && a.ParticipantId == participant.Id, Context.ConnectionAborted);
 
             List<Guid> participantSelectedChoiceIds = new List<Guid>();
             if (submission is not null)
@@ -732,26 +791,24 @@ public sealed class GameHub : Hub
                     .ToListAsync(Context.ConnectionAborted);
             }
 
-            return new
-            {
-                status = "QUESTION_RESULTS",
-                gameId = game.Id,
-                stateVersion = game.StateVersion,
-                questionIndex = (game.CurrentQuestionIndex ?? 1) - 1,
+            return new PlayerQuestionResultsStateResponse(
+                "QUESTION_RESULTS",
+                game.Id,
+                game.StateVersion,
+                (game.CurrentQuestionIndex ?? 1) - 1,
                 totalQuestions,
-                questionText = currentQuestion?.Text ?? string.Empty,
-                choices = choicesWithResults,
+                currentQuestion.Text,
+                currentQuestion.ImageUrl,
+                choicesWithResults,
                 correctChoiceIds,
-                submitted = submission is not null,
-                isCorrect = submission?.IsCorrect ?? false,
-                pointsAwarded = submission?.PointsAwarded ?? 0,
-                selectedChoiceIds = participantSelectedChoiceIds,
-                totalScore = participant.TotalScore,
-                rank = participant.Rank
-            };
+                submission is not null,
+                submission?.IsCorrect ?? false,
+                submission?.PointsAwarded ?? 0,
+                participantSelectedChoiceIds,
+                participant.TotalScore);
         }
 
-        // Leaderboard Catch-Up - Queries top 5 scored participants with deterministic tie-breaking.
+        // Leaderboard Catch-Up (RECON-CATCH-001) - Queries top 5 scored participants with deterministic tie-breaking and reports personal sequential rank.
         if (game.Status == GameStatus.Leaderboard)
         {
             List<Participant> top5Participants = await dbContext.Participants
@@ -763,31 +820,29 @@ public sealed class GameHub : Hub
                 .Take(5)
                 .ToListAsync(Context.ConnectionAborted);
 
-            List<object> leaderboard = new List<object>();
+            List<LeaderboardPlayerDto> leaderboard = new List<LeaderboardPlayerDto>(top5Participants.Count);
             foreach (Participant topPlayer in top5Participants)
             {
-                leaderboard.Add(new
-                {
-                    participantId = topPlayer.Id,
-                    nickname = topPlayer.DisplayNickname,
-                    seatNumber = topPlayer.SeatNumber,
-                    totalScore = topPlayer.TotalScore,
-                    rank = topPlayer.Rank
-                });
+                leaderboard.Add(new LeaderboardPlayerDto(
+                    topPlayer.Id,
+                    topPlayer.DisplayNickname,
+                    topPlayer.SeatNumber,
+                    topPlayer.TotalScore,
+                    topPlayer.Rank));
             }
 
-            return new
-            {
-                status = "LEADERBOARD",
-                gameId = game.Id,
-                stateVersion = game.StateVersion,
-                totalScore = participant.TotalScore,
-                rank = participant.Rank,
-                topParticipants = leaderboard
-            };
+            int rank = participant.Rank ?? throw new InvalidOperationException("A leaderboard participant has no materialized rank.");
+
+            return new PlayerLeaderboardStateResponse(
+                "LEADERBOARD",
+                game.Id,
+                game.StateVersion,
+                participant.TotalScore,
+                rank,
+                leaderboard);
         }
 
-        // Finished Game Podium Catch-Up - Materializes top 3 podium participants and reconnected player's overall final rank.
+        // Finished Game Podium Catch-Up (RECON-CATCH-001, RECON-WINDOW-001, RECON-TEST-004) - Materializes top 3 podium participants, final sequential rank, and total accepted answers.
         if (game.Status == GameStatus.Finished)
         {
             List<Participant> podiumParticipants = await dbContext.Participants
@@ -799,42 +854,33 @@ public sealed class GameHub : Hub
                 .Take(3)
                 .ToListAsync(Context.ConnectionAborted);
 
-            List<object> podium = new List<object>();
+            List<PodiumPlayerDto> podium = new List<PodiumPlayerDto>(podiumParticipants.Count);
             foreach (Participant podiumPlayer in podiumParticipants)
             {
-                podium.Add(new
-                {
-                    participantId = podiumPlayer.Id,
-                    nickname = podiumPlayer.DisplayNickname,
-                    seatNumber = podiumPlayer.SeatNumber,
-                    totalScore = podiumPlayer.TotalScore,
-                    rank = podiumPlayer.Rank
-                });
+                podium.Add(new PodiumPlayerDto(
+                    podiumPlayer.Id,
+                    podiumPlayer.DisplayNickname,
+                    podiumPlayer.SeatNumber,
+                    podiumPlayer.TotalScore,
+                    podiumPlayer.Rank));
             }
 
             int acceptedAnswerCount = await dbContext.AnswerSubmissions
                 .CountAsync(a => a.GameId == game.Id && a.ParticipantId == participant.Id, Context.ConnectionAborted);
 
-            return new
-            {
-                status = "FINISHED",
-                gameId = game.Id,
-                stateVersion = game.StateVersion,
-                totalScore = participant.TotalScore,
-                rank = participant.Rank,
-                acceptedAnswers = acceptedAnswerCount,
-                podium
-            };
+            int rank = participant.Rank ?? throw new InvalidOperationException("A finished participant has no materialized rank.");
+
+            return new PlayerFinishedStateResponse(
+                "FINISHED",
+                game.Id,
+                game.StateVersion,
+                participant.TotalScore,
+                rank,
+                acceptedAnswerCount,
+                podium);
         }
 
-        return new
-        {
-            status = game.Status.ToString().ToUpperInvariant(),
-            gameId = game.Id,
-            stateVersion = game.StateVersion,
-            totalScore = participant.TotalScore,
-            rank = participant.Rank
-        };
+        throw new InvalidOperationException($"Unsupported player catch-up state: {game.Status}.");
     }
 
     // Socket Eviction Dispatcher (RT-FAIL-001) - Schedules asynchronous socket abort to allow error response frame transmission before connection severance.
