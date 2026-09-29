@@ -7,9 +7,12 @@ namespace Kahoot.Infrastructure.Persistence;
 
 internal sealed class RefreshTokenCleanupWorker : BackgroundService
 {
+    // Bounded Batch Deletion - Deletes in small 500-row chunks with yielding to avoid lock escalation and WAL spikes
     private const int BatchSize = 500;
     private const int MaxBatchesPerPass = 40;
     private static readonly TimeSpan CleanupInterval = TimeSpan.FromMinutes(10);
+
+    // Forensic Evidence Retention - Retains expired/revoked tokens for 7 days to detect delayed replay attacks
     private static readonly TimeSpan RetentionPeriod = TimeSpan.FromDays(7);
     private static readonly TimeSpan BatchYieldInterval = TimeSpan.FromMilliseconds(100);
     private static readonly TimeSpan[] RetryDelays =
@@ -33,6 +36,7 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
         _logger = logger;
     }
 
+    // Periodic Background Maintenance - PeriodicTimer prevents timer drift during scheduled background sweeps
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using PeriodicTimer timer = new PeriodicTimer(CleanupInterval, _timeProvider);
@@ -115,6 +119,7 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
             for (int batchNumber = 0; batchNumber < MaxBatchesPerPass; batchNumber++)
             {
                 int batchDeletedCount;
+                // Async Service Scope - Resolves scoped DbContext per batch to avoid concurrency bugs and memory leaks in singleton worker
                 await using (AsyncServiceScope scope = _scopeFactory.CreateAsyncScope())
                 {
                     AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -148,13 +153,14 @@ internal sealed class RefreshTokenCleanupWorker : BackgroundService
         }
     }
 
+    // Non-Blocking Multi-Replica Batching (SKIP LOCKED) - LIMIT 500 batches and skips locked rows so replicas do not compete or deadlock
     private static Task<int> DeleteBatchAsync(
         AppDbContext dbContext,
         DateTimeOffset cutoff,
         CancellationToken cancellationToken)
     {
         // Both expiration and revocation must be past the cutoff; rotation alone is not eligible.
-        // One statement is one atomic transaction. Locked candidates are skipped by other replicas.
+        // Query Performance & Concurrency: Raw SQL CTE with LIMIT 500 and FOR UPDATE SKIP LOCKED ensures bounded batch execution without lock escalation or multi-replica deadlocks
         return dbContext.Database.ExecuteSqlInterpolatedAsync($"""
             WITH candidates AS MATERIALIZED (
                 SELECT id

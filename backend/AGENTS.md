@@ -53,6 +53,38 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - **No Fully Qualified Type Names in Code (Use `using` Directives):** Never use long, fully qualified type names inside method bodies, type definitions, or service registrations (e.g., do not write `Kahoot.Application.Common.Interfaces.ISocketEvictionService`). Always add a clean `using` directive at the top of the file (e.g., `using Kahoot.Application.Common.Interfaces;`) and use the short type name (e.g., `ISocketEvictionService`) directly in the code.
 - **Service Registration:** Register services explicitly without reflection or assembly scanning. Extension methods in `ServiceCollectionExtension` must be focused on a single responsibility (e.g., `AddPersistence`, `AddSecurity`, `AddCorsPolicy`, `AddJwtAuthentication`). Framework, hosting, and root service registrations (`AddApplication`, `AddInfrastructure`, `AddScoped<ICurrentUser, CurrentUser>`) belong directly in `Program.cs`.
 
+## Educational Concept Comments and Query Annotations
+
+- **Source of Truth:** Derive concept names from [`docs/`](../docs/) only.
+- **Placement:** Comment directly above the specific statement. Never at class or file level.
+- **Format:** `// <Concept Name> - <concise explanation>`. No prefixes (`BACKEND CONCEPT:`, `NOTE:`, etc.).
+- **Focus:** Security and performance first. Scalability, concurrency, and maintainability patterns are also valid — skip obvious code.
+- **Query Annotations:** Place a comment above every query that uses a notable performance, security, or MVCC mechanism:
+  - `AsNoTracking()` — eliminates change-tracker overhead and snapshot memory for read-only queries.
+  - `AnyAsync` / `SingleOrDefaultAsync` — short-circuits against a unique index; avoids full table scan.
+  - `FOR UPDATE` / `GetUserForUpdateAsync` — acquires a pessimistic row-level lock; serializes concurrent writers and prevents TOCTOU races.
+  - `FOR UPDATE SKIP LOCKED` — skips already-locked rows; enables non-blocking parallel batch processing across replicas without deadlocks.
+  - `ExecuteUpdateAsync` / `ExecuteDeleteAsync` — single atomic SQL statement pushed to the database; no entity materialization or change-tracker allocation.
+  - `Select(x => x.Field)` — column projection; reduces row fetch size, network payload, and allocations.
+  - `RepeatableRead` / `Serializable` isolation — MVCC snapshot prevents phantom reads and non-repeatable reads; note the increased MVCC tuple churn and serialization failure risk.
+  - `pg_advisory_xact_lock` — transaction-scoped advisory lock for cluster-wide singleton coordination (e.g., seeding, scheduled tasks) without a dedicated lock table.
+  - `xmin` row version / `RowVersion` / OCC — optimistic concurrency; detects concurrent modification without holding a lock; prefer for high-throughput, low-contention paths.
+  - CTE (`WITH ... AS MATERIALIZED`) — materializes the subquery result once; prevents the optimizer from inlining and re-evaluating it inside `DELETE`/`UPDATE`.
+  - `LIMIT` / `Take()` — bounds result set size; prevents unbounded memory growth and lock escalation on large tables.
+  - Keyset pagination (`WHERE id > @cursor ORDER BY id`) — O(log n) index seek per page; avoids `OFFSET` full scan degradation on deep pages.
+  - Parameterized queries / `ExecuteSqlInterpolatedAsync` — EF Core translates interpolated strings into parameters; eliminates SQL injection at the query boundary.
+  - Connection pool (`Npgsql`) — annotate when explicitly controlling pool size, `MinPoolSize`, or `MaxPoolSize` for throughput-sensitive paths.
+  - `CancellationToken` propagation — ensures long-running database commands are cancelled on client disconnect or application shutdown, releasing server resources immediately.
+  - Redis pub/sub (`ISubscriber.PublishAsync`) — fan-out to all replicas over a shared channel; annotate channel name and message contract so the reader understands the cluster-wide delivery scope.
+  - Redis distributed lease (`SET NX PX`) — atomic `SET key value NX PX ttl`; only one replica wins the lock; others skip; prevents duplicated background work across pods.
+  - SignalR Redis Backplane — all hub messages pass through Redis so any replica can push to any connected client; annotate when a `SendAsync` or group call relies on the backplane being healthy.
+  - Post-commit broadcast pattern — `SaveChangesAsync` first, then fan-out; guarantees the database row is durable before any replica receives the realtime event; prevents phantom pushes on rollback.
+  - Idempotency key / `JoinOperationId` SHA-256 — deduplicate retried client requests at the database boundary; a unique index on the key makes duplicate execution a no-op instead of a double-write.
+  - N+1 query prevention (`Include` / `Join` / split query) — annotate when eager-loading a collection to explain why a single join or split query replaces N round-trips to the database.
+  - `IMemoryCache` / `IDistributedCache` (Redis) — annotate the cache key, TTL, and invalidation strategy; note whether stale reads are acceptable or whether cache-aside with write-through is required.
+  - Retry + exponential backoff (`Polly`) — annotate transient failure policies on network calls to external services; document max attempts, jitter, and which exceptions are considered transient.
+
+
 ## Database and EF Core Migrations
 
 - **Migration Immutability:** Existing migrations and generated designer files are immutable. Never modify, rename, or delete an existing migration; always add a new migration for subsequent schema changes.

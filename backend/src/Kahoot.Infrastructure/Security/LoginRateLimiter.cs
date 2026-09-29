@@ -18,6 +18,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         _timeProvider = timeProvider;
     }
 
+    // Per-IP Rate Limiting (Dimension 1) - Max 30 attempts per minute per IP to block high-frequency automated scripts
     public bool IsIpRateLimited(string ipAddress)
     {
         string key = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
@@ -27,6 +28,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         return !tracker.TryRecordAttempt(now, MaxAttemptsPerIp, IpWindow);
     }
 
+    // Progressive Exponential Backoff (Dimension 2) - Delays login (1s to 10s) after 5 failures without locking out legitimate users
     public TimeSpan GetUsernameBackoffDelay(string normalizedUsername)
     {
         if (string.IsNullOrWhiteSpace(normalizedUsername))

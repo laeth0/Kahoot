@@ -84,6 +84,7 @@ public sealed class AuthController : ApiController
             return Problem(result.Error);
         }
 
+        // HttpOnly Cookie Transport - Transmits refresh token exclusively via hardened cookie to eliminate XSS theft
         SetRefreshTokenCookie(result.Value.RawRefreshToken);
         SetCsrfCookie();
         return Ok(result.Value.Response);
@@ -197,6 +198,7 @@ public sealed class AuthController : ApiController
         return NoContent();
     }
 
+    // CSRF & Origin Validation - Enforces double-submit cookie verification (FixedTimeEquals) and Origin header whitelist
     private bool ValidateCsrfAndOrigin(bool isCookieAuth)
     {
         if (!Request.Headers.TryGetValue(CsrfHeaderName, out StringValues csrfHeader) ||
@@ -259,6 +261,7 @@ public sealed class AuthController : ApiController
                first.Port == second.Port;
     }
 
+    // Cookie Hardening - Scopes refresh token to HttpOnly, Secure, SameSite=Lax, and /api/auth path
     private void SetRefreshTokenCookie(string rawRefreshToken)
     {
         CookieOptions cookieOptions = new CookieOptions
@@ -273,6 +276,7 @@ public sealed class AuthController : ApiController
         Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
     }
 
+    // Double-Submit CSRF Cookie - Sets readable cookie token for client script to echo back in X-CSRF-Token header
     private void SetCsrfCookie()
     {
         CookieOptions cookieOptions = new CookieOptions
