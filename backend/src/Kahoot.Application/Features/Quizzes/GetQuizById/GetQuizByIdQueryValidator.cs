@@ -6,6 +6,7 @@ public sealed class GetQuizByIdQueryValidator : AbstractValidator<GetQuizByIdQue
 {
     public GetQuizByIdQueryValidator()
     {
+        // Target Resource Validation - Ensures target quiz identifier is non-empty before query execution
         RuleFor(query => query.QuizId)
             .NotEmpty()
             .WithMessage("QuizId is required.");

@@ -27,6 +27,7 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
         UpdateQuizCommand request,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before accepting quiz update
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<QuizSummaryResponse>(AuthErrors.Unauthorized);
@@ -34,13 +35,17 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Consistency Boundary - Serializes host quiz modifications against concurrent game snapshots (QUIZ-RISK-004)
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Serialized Host Mutation Barrier - Acquires SELECT FOR UPDATE on host row to serialize quiz changes
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
             return Result.Failure<QuizSummaryResponse>(AuthErrors.Unauthorized);
         }
 
+        // Multi-Tenant Isolation - Scopes quiz seek strictly to host tenant boundary
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:UpdateQuiz")
             .Where(q => q.Id == request.QuizId && q.HostAccountId == hostAccountId)
@@ -51,6 +56,7 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
             return Result.Failure<QuizSummaryResponse>(QuizErrors.NotFound);
         }
 
+        // Active Session Lock (QUIZ-ERR-006, QUIZ-RISK-001) - Prevents editing quiz while a live game session is active
         bool hasActiveGameSession = await _dbContext.Games
             .TagWith("Quizzes:CheckActiveGameSession")
             .AnyAsync(game => game.SourceQuizId == quiz.Id &&
@@ -63,6 +69,7 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
             return Result.Failure<QuizSummaryResponse>(QuizErrors.InUse);
         }
 
+        // Plain-Text Content Sanitization (QUIZ-SEC-002) - Trims scalar text to prevent whitespace padding
         string trimmedTitle = request.Title.Trim();
         string? trimmedDescription = string.IsNullOrWhiteSpace(request.Description)
             ? null
@@ -70,11 +77,13 @@ public sealed class UpdateQuizCommandHandler : ICommandHandler<UpdateQuizCommand
 
         quiz.Title = trimmedTitle;
         quiz.Description = trimmedDescription;
+        // Monotonic Revision Increment (QUIZ-AUTH-002) - Advances revision to invalidate stale client views and OCC fences
         quiz.Revision++;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
+        // Question Count Aggregation - Queries question count for updated summary DTO
         int questionCount = await _dbContext.Questions
             .TagWith("Quizzes:GetQuestionCount")
             .CountAsync(q => q.QuizId == quiz.Id && q.HostAccountId == hostAccountId, cancellationToken);
