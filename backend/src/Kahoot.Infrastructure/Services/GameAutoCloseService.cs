@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 
+// Question Auto-Close Coordinator - Automatically transitions active question to QuestionResults when all eligible participants have submitted answers.
 public sealed class GameAutoCloseService : IGameAutoCloseService
 {
     private readonly IAppDbContext _dbContext;
@@ -28,9 +29,11 @@ public sealed class GameAutoCloseService : IGameAutoCloseService
         _logger = logger;
     }
 
+    // Auto-Close Evaluation - Atomically checks if submitted answer count matches eligible participant count under pessimistic row lock.
     public async Task<bool> TryAutoCloseQuestionAsync(Guid gameId, CancellationToken cancellationToken)
     {
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        // Pessimistic Game Row Lock - Prevents concurrent answer submissions or timer expirations from double-transitioning the question.
         List<Game> games = await _dbContext.Games
             .FromSqlInterpolated($"SELECT * FROM games WHERE id = {gameId} FOR UPDATE")
             .ToListAsync(cancellationToken);

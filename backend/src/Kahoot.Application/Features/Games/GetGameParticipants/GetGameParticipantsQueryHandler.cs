@@ -26,6 +26,7 @@ public sealed class GetGameParticipantsQueryHandler : IQueryHandler<GetGameParti
         GetGameParticipantsQuery request,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before exposing participant roster
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<GetGameParticipantsResponse>(AuthErrors.Unauthorized);
@@ -33,6 +34,8 @@ public sealed class GetGameParticipantsQueryHandler : IQueryHandler<GetGameParti
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Query Optimization: AsNoTracking - Bypasses EF change tracker overhead for read-only query
+        // Multi-Tenant Isolation - Scopes game existence check strictly to host tenant boundary
         Game? game = await _dbContext.Games
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -44,27 +47,32 @@ public sealed class GetGameParticipantsQueryHandler : IQueryHandler<GetGameParti
             return Result.Failure<GetGameParticipantsResponse>(GameErrors.NotFound);
         }
 
+        // Keyset Pagination Base Query - Uses AsNoTracking to stream participant records efficiently
         IQueryable<Participant> query = _dbContext.Participants
             .AsNoTracking()
             .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId);
 
+        // Soft-Deletion Filter - Excludes tombstoned participants by default unless explicitly requested
         if (!request.IncludeRemoved)
         {
             query = query.Where(p => !p.IsRemoved);
         }
 
+        // Keyset Pagination (Cursor Seek) - Filters by SeatNumber > cursor to leverage B-tree index and avoid O(N) OFFSET scan
         if (request.Cursor.HasValue)
         {
             query = query.Where(p => p.SeatNumber > request.Cursor.Value);
         }
 
         int pageSize = request.Limit ?? 100;
+        // Bounded Page Over-Fetching (Limit + 1) - Reads one extra record to detect next page existence without separate COUNT query
         List<Participant> participants = await query
             .OrderBy(p => p.SeatNumber)
             .Take(pageSize + 1)
             .ToListAsync(cancellationToken);
 
         int? nextCursor = null;
+        // Next Page Cursor Extraction - Sets cursor to last item of requested window and trims extra probe item
         if (participants.Count > pageSize)
         {
             Participant lastParticipant = participants[pageSize - 1];
@@ -72,6 +80,7 @@ public sealed class GetGameParticipantsQueryHandler : IQueryHandler<GetGameParti
             participants.RemoveAt(pageSize);
         }
 
+        // Projection & Information Hiding - Maps entity to DTO without leaking internal connection IDs or IP hashes
         List<ParticipantDto> participantDtos = participants
             .Select(p => new ParticipantDto(
                 p.Id,

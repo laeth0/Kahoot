@@ -16,6 +16,7 @@ using SixLabors.ImageSharp.Formats.Webp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 
+// Secure Image Storage Service - Validates magic bytes, defends against decompression bombs, strips EXIF/IPTC/XMP metadata, and re-encodes images.
 public sealed class ImageStorageService : IImageStorageService
 {
     private readonly IHostEnvironment _hostEnvironment;
@@ -32,12 +33,14 @@ public sealed class ImageStorageService : IImageStorageService
         _logger = logger;
     }
 
+    // Storage Capacity Health Probe - Verifies volume hosting uploads directory has free space above minimum ratio.
     public bool IsStorageAvailable()
     {
         string uploadsDirectory = Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot", _options.UploadsSubdirectory);
         return HasSufficientFreeDiskSpace(uploadsDirectory);
     }
 
+    // Multi-Stage Image Sanitization Pipeline - Stages upload, verifies magic bytes, enforces dimension/memory limits, re-encodes pixels, and atomically commits.
     public async Task<Result<SanitizedImageResult>> SanitizeAndPersistAsync(
         Stream sourceStream,
         string originalFileName,
@@ -64,12 +67,14 @@ public sealed class ImageStorageService : IImageStorageService
             return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
         }
 
+        // Storage Volume Headroom Check - Ensures target storage drive has sufficient free disk space ratio.
         if (!HasSufficientFreeDiskSpace(uploadsDir))
         {
             _logger.LogWarning("Storage volume free space is below the required minimum ratio of {Ratio:P0}.", _options.MinimumFreeStorageRatio);
             return Result.Failure<SanitizedImageResult>(ImageErrors.StorageUnavailable);
         }
 
+        // Quarantine Staging Allocation - Writes inbound stream to isolated temporary file to avoid memory exhaustion on large streams.
         string sourceStagingFilePath = Path.Combine(stagingDir, $"{Guid.NewGuid():D}.tmp");
         try
         {
@@ -365,6 +370,7 @@ public sealed class ImageStorageService : IImageStorageService
         }
     }
 
+    // Compensation Rollback - Deletes orphaned stored image file if downstream database transaction aborts or fails.
     public void CompensateFile(string storagePath)
     {
         try
@@ -382,6 +388,7 @@ public sealed class ImageStorageService : IImageStorageService
         }
     }
 
+    // Path Traversal Defenses - Validates storage path prefix and rejects path traversal sequences ('..', '/', '\\').
     public string? GetPhysicalFilePath(string storagePath)
     {
         if (string.IsNullOrWhiteSpace(storagePath))
@@ -405,6 +412,7 @@ public sealed class ImageStorageService : IImageStorageService
         return Path.Combine(webRoot, _options.UploadsSubdirectory, fileName);
     }
 
+    // Drive Headroom Calculation - Evaluates available disk space ratio using DriveInfo against configured threshold.
     private bool HasSufficientFreeDiskSpace(string targetDirectory)
     {
         try
@@ -426,6 +434,7 @@ public sealed class ImageStorageService : IImageStorageService
         }
     }
 
+    // Polyglot Attack Detection - Checks leading bytes for XML, SVG, or HTML signatures that could execute client-side scripts.
     private static bool IsSvgOrXmlContent(byte[] bytes, long length)
     {
         int checkLength = (int)Math.Min(length, 256);

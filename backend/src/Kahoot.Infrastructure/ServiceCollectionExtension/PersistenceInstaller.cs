@@ -9,8 +9,10 @@ using Npgsql;
 
 namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
+// Persistence Infrastructure Installer - Configures PostgreSQL connection pooling, enum mappings, snake_case conventions, and EF Core interceptors.
 public static class PersistenceInstaller
 {
+    // Persistence Registration Pipeline - Binds database options, registers NpgsqlDataSource with custom PostgreSQL enums, and configures AppDbContext.
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<DatabaseOptions>()
@@ -21,6 +23,7 @@ public static class PersistenceInstaller
             .Validate(options => options.MigrationCommandTimeoutSeconds > 0, "Database:MigrationCommandTimeoutSeconds must be greater than zero.")
             .ValidateOnStart();
 
+        // Optimized Npgsql Multi-Host Data Source - Builds reusable NpgsqlDataSource mapping PostgreSQL native enum types.
         services.AddSingleton(serviceProvider =>
         {
             DatabaseOptions dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
@@ -39,6 +42,7 @@ public static class PersistenceInstaller
 
         services.AddScoped<AuditableEntityInterceptor>();
 
+        // DbContext Connection Pooling & Configuration - Applies snake_case naming conventions and audit interceptors to EF Core.
         services.AddDbContext<AppDbContext>((serviceProvider, options) =>
         {
             NpgsqlDataSource dataSource = serviceProvider.GetRequiredService<NpgsqlDataSource>();

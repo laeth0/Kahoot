@@ -20,6 +20,10 @@ public sealed class GetUserByIdQueryHandler : IQueryHandler<GetUserByIdQuery, Us
         GetUserByIdQuery query,
         CancellationToken cancellationToken)
     {
+        // Query Optimization: AsNoTracking - Disables EF Core change tracker for read-only query
+        // Observability Tagging - Instruments SQL query with TagWith for APM distributed tracing and slow query logs
+        // Metadata Projection & Privacy Barrier - Proposes strictly administrative metadata without tenant content (ACCT-QUERY-002)
+        // Multi-Tenant Isolation - Scopes lookup strictly to registered Host accounts
         UserAdminResponse? user = await _dbContext.Users
             .AsNoTracking()
             .TagWith("Admin:GetUserById")

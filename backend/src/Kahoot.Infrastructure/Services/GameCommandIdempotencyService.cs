@@ -9,6 +9,7 @@ using Kahoot.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
+// Game Command Idempotency Filter - Deduplicates incoming host state-mutating commands using client-supplied command UUID and SHA-256 payload digest.
 public sealed class GameCommandIdempotencyService : IGameCommandIdempotencyService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -31,6 +32,7 @@ public sealed class GameCommandIdempotencyService : IGameCommandIdempotencyServi
         _logger = logger;
     }
 
+    // Idempotency Check - Verifies if command has executed previously and returns cached response or rejects payload mutations.
     public async Task<IdempotencyCheckResult<TResponse>> CheckAsync<TResponse>(
         Guid gameId,
         Guid commandId,
@@ -38,6 +40,7 @@ public sealed class GameCommandIdempotencyService : IGameCommandIdempotencyServi
         object requestPayload,
         CancellationToken cancellationToken)
     {
+        // Cryptographic Payload Digest - Computes SHA-256 hash of JSON-serialized command arguments.
         byte[] requestBytes = JsonSerializer.SerializeToUtf8Bytes(requestPayload, JsonOptions);
         byte[] requestHash = SHA256.HashData(requestBytes);
 
@@ -52,6 +55,7 @@ public sealed class GameCommandIdempotencyService : IGameCommandIdempotencyServi
             return new IdempotencyCheckResult<TResponse>(false, default, null);
         }
 
+        // Constant-Time Hash Comparison - Prevents timing analysis while verifying payload fidelity on replayed command.
         bool hashesMatch = CryptographicOperations.FixedTimeEquals(existingRecord.RequestHash, requestHash);
         if (!hashesMatch || !string.Equals(existingRecord.CommandName, commandName, StringComparison.Ordinal))
         {
@@ -76,6 +80,7 @@ public sealed class GameCommandIdempotencyService : IGameCommandIdempotencyServi
         return new IdempotencyCheckResult<TResponse>(true, cachedResponse, null);
     }
 
+    // Idempotency Record Persistence - Stores executed command payload hash, resulting state version, and response JSON for replay.
     public Task RecordAsync<TResponse>(
         Guid gameId,
         Guid hostAccountId,

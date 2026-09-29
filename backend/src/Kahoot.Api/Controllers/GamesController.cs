@@ -20,6 +20,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+// Live Game Session Management Controller - Orchestrates authoritative 6-state game lifecycle, host command execution, anonymous participant joins, and post-game reporting.
 [ApiController]
 [Route("api/games")]
 [Authorize(Roles = nameof(UserRole.Host))]
@@ -32,6 +33,7 @@ public sealed class GamesController : ApiController
         _sender = sender;
     }
 
+    // Create Game Session Endpoint - Freezes quiz questions into immutable snapshots under RepeatableRead isolation and assigns random 8-digit PIN.
     [HttpPost]
     [ProducesResponseType(typeof(CreateGameResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -54,6 +56,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Get Game Details Endpoint - Retrieves host-scoped game session metadata.
     [HttpGet("{id:guid}")]
     [ActionName(nameof(GetGameById))]
     [ProducesResponseType(typeof(GetGameResponse), StatusCodes.Status200OK)]
@@ -75,6 +78,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Start Game Session Endpoint - Transitions game from Lobby to QuestionActive for the first question.
     [HttpPost("{id:guid}/start")]
     [ProducesResponseType(typeof(StartGameResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -98,6 +102,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // End Question Endpoint - Manually expires question timer and materializes choice selection counts.
     [HttpPost("{id:guid}/end-question")]
     [ProducesResponseType(typeof(EndQuestionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -121,6 +126,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Show Leaderboard Endpoint - Transitions game to Leaderboard state and computes current participant ranks.
     [HttpPost("{id:guid}/show-leaderboard")]
     [ProducesResponseType(typeof(ShowLeaderboardResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -144,6 +150,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Advance Question Endpoint - Advances game to next question snapshot or final leaderboard if no questions remain.
     [HttpPost("{id:guid}/advance")]
     [ProducesResponseType(typeof(AdvanceQuestionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -167,6 +174,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // End Game Session Endpoint - Finalizes live game, releases PIN, and transitions game to Finished status.
     [HttpPost("{id:guid}/end")]
     [ProducesResponseType(typeof(EndGameResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -190,6 +198,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Get Game Report Endpoint - Materializes immutable post-game analytics report including question statistics and participant rankings.
     [HttpGet("{id:guid}/report")]
     [ProducesResponseType(typeof(GetGameReportResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -211,6 +220,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Anonymous Participant Join Endpoint - Validates PIN, claims seat number, and issues participant session token.
     [HttpPost("join")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(JoinGameResponse), StatusCodes.Status200OK)]
@@ -240,6 +250,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Get Join Info Endpoint - Queries public game title and joinability status for a PIN.
     [HttpGet("join/{pin}")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(GetJoinInfoResponse), StatusCodes.Status200OK)]
@@ -261,6 +272,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Remove Participant Endpoint - Ejects participant from active game and publishes eviction notice.
     [HttpDelete("{id:guid}/participants/{participantId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -284,6 +296,7 @@ public sealed class GamesController : ApiController
         return Problem(result.Error);
     }
 
+    // Get Game Participants Endpoint - Returns keyset-paginated roster of game participants.
     [HttpGet("{id:guid}/participants")]
     [ProducesResponseType(typeof(GetGameParticipantsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]

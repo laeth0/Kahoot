@@ -46,6 +46,7 @@ internal sealed class SystemAdminSeeder : ISeeder
             return;
         }
 
+        // Validator Reuse - Re-uses RegisterCommandValidator to enforce identical complexity and Unicode rules on bootstrap admin
         RegisterCommand credentials = new RegisterCommand(_options.Username, _options.Password);
         ValidationResult validation = await _credentialValidator.ValidateAsync(credentials, cancellationToken);
         if (!validation.IsValid)
@@ -76,6 +77,7 @@ internal sealed class SystemAdminSeeder : ISeeder
 
         try
         {
+            // Transactional Atomicity - Guarantees admin account insertion commits atomically
             await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -97,6 +99,7 @@ internal sealed class SystemAdminSeeder : ISeeder
 
     private async Task<UserRole?> GetExistingRoleAsync(string normalizedUsername, CancellationToken cancellationToken)
     {
+        // Query Performance: AsNoTracking() eliminates tracking overhead, Select(Role) projects only the needed column, and SingleOrDefaultAsync short-circuits against unique index
         return await _dbContext.Users
             .AsNoTracking()
             .Where(user => user.NormalizedUsername == normalizedUsername)
@@ -112,6 +115,7 @@ internal sealed class SystemAdminSeeder : ISeeder
             return true;
         }
 
+        // Fail-Closed Startup Invariant - Prevents identity takeover if username was registered by a normal Host account
         if (existingRole is not null)
         {
             throw new InvalidOperationException("Bootstrap administrator username belongs to a Host account.");

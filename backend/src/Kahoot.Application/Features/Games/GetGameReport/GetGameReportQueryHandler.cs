@@ -34,6 +34,7 @@ public sealed class GetGameReportQueryHandler : IQueryHandler<GetGameReportQuery
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Query Performance: AsNoTracking() retrieves finished game without tracker overhead
         Game? game = await _dbContext.Games
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -50,6 +51,7 @@ public sealed class GetGameReportQueryHandler : IQueryHandler<GetGameReportQuery
             return Result.Failure<GetGameReportResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Query Performance: AsNoTracking() loads question snapshots ordered by sequence
         List<GameQuestionSnapshot> questions = await _dbContext.GameQuestionSnapshots
             .AsNoTracking()
             .Where(q => q.GameId == game.Id && q.HostAccountId == hostAccountId)
@@ -58,12 +60,14 @@ public sealed class GetGameReportQueryHandler : IQueryHandler<GetGameReportQuery
 
         List<Guid> questionIds = questions.Select(q => q.Id).ToList();
 
+        // Query Performance: AsNoTracking() and Contains() batch-load choices for all questions in one round trip
         List<GameChoiceSnapshot> choices = await _dbContext.GameChoiceSnapshots
             .AsNoTracking()
             .Where(c => questionIds.Contains(c.GameQuestionId) && c.HostAccountId == hostAccountId)
             .OrderBy(c => c.OrderIndex)
             .ToListAsync(cancellationToken);
 
+        // System Design & Server-Side Aggregation: GroupBy and Count() compute correct answer totals in database without loading submission rows
         Dictionary<Guid, int> correctAnswersCount = await _dbContext.AnswerSubmissions
             .AsNoTracking()
             .Where(sub => sub.GameId == game.Id && sub.HostAccountId == hostAccountId && sub.IsCorrect)
@@ -93,6 +97,7 @@ public sealed class GetGameReportQueryHandler : IQueryHandler<GetGameReportQuery
             })
             .ToList();
 
+        // Query Performance: AsNoTracking() loads ranked participants for report leaderboard
         List<Participant> participants = await _dbContext.Participants
             .AsNoTracking()
             .Where(p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved)

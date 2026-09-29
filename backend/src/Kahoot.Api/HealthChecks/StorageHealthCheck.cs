@@ -6,8 +6,10 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
+// Storage Health Check - Verifies disk availability, free volume thresholds, and write-permission probes for image assets.
 internal sealed class StorageHealthCheck : IHealthCheck
 {
+    // Ephemeral Probe Buffer - Single-byte payload used to test low-overhead disk write operations.
     private static readonly byte[] ProbeContent = [0];
 
     private readonly IHostEnvironment _environment;
@@ -24,12 +26,14 @@ internal sealed class StorageHealthCheck : IHealthCheck
         _options = options.Value;
     }
 
+    // Disk Storage Probe - Tests image storage accessibility and performs zero-leak write-and-delete file tests.
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
         try
         {
+            // Storage Capacity Check - Ensures upload target directory exists and maintains minimum 10% disk free space.
             if (!_imageStorage.IsStorageAvailable())
             {
                 return HealthCheckResult.Degraded("Image storage is unavailable.");
@@ -39,6 +43,7 @@ internal sealed class StorageHealthCheck : IHealthCheck
                 _environment.ContentRootPath, "wwwroot", _options.StagingSubdirectory);
             string probePath = Path.Combine(stagingDirectory, $".health-{Guid.NewGuid():N}");
 
+            // Ephemeral File Probe - Uses DeleteOnClose flag to ensure OS immediately removes probe file upon disposal.
             await using FileStream probe = new(
                 probePath,
                 FileMode.CreateNew,
@@ -55,6 +60,7 @@ internal sealed class StorageHealthCheck : IHealthCheck
         {
             throw;
         }
+        // Degraded Health Status - Marks storage degraded rather than unhealthy so live gameplay can proceed if image uploads fail.
         catch (Exception)
         {
             return HealthCheckResult.Degraded("Image storage is unavailable.");

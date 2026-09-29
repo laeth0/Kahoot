@@ -48,7 +48,10 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Wraps game state transition, question activation, and idempotency record in a single atomic transaction
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync acquire SELECT FOR UPDATE locks, serializing lifecycle actions
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -61,6 +64,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             return Result.Failure<StartGameResponse>(GameErrors.NotFound);
         }
 
+        // System Design & Command Idempotency: Checks SHA-256 payload digest to safely return cached response on network retries without double-execution
         IdempotencyCheckResult<StartGameResponse> idempotencyResult = await _idempotencyService.CheckAsync<StartGameResponse>(
             request.GameId,
             request.CommandId,
@@ -88,6 +92,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             return Result.Failure<StartGameResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Optimistic Concurrency Control (OCC): Rejects command if StateVersion changed, preventing out-of-sequence host commands
         if (game.StateVersion != request.ExpectedStateVersion)
         {
             return Result.Failure<StartGameResponse>(GameErrors.ConcurrentModification);
@@ -98,6 +103,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             return Result.Failure<StartGameResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Query Performance: FirstOrDefaultAsync seeks question 1 in immutable snapshot by order index
         GameQuestionSnapshot? question1 = await _dbContext.GameQuestionSnapshots
             .FirstOrDefaultAsync(
                 q => q.GameId == game.Id && q.HostAccountId == hostAccountId && q.OrderIndex == 1,
@@ -113,6 +119,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             .OrderBy(c => c.OrderIndex)
             .ToListAsync(cancellationToken);
 
+        // Query Performance: CountAsync calculates baseline eligible participants for question start
         int activeParticipantCount = await _dbContext.Participants
             .CountAsync(
                 p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,
@@ -154,6 +161,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             .Select(c => new PlayerQuestionChoiceDto(c.Id, c.OrderIndex, c.Text))
             .ToList();
 
+        // System Design & Audience Isolation: Sanitized player projection excludes correct answers
         PlayerQuestionStartedEvent currentQuestionForPlayers = new PlayerQuestionStartedEvent(
             game.Id,
             game.StateVersion,
@@ -167,6 +175,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             endsAt,
             playerChoices);
 
+        // System Design & State Topology: Host projection includes correct choices and telemetry
         HostQuestionStartedEvent currentQuestionEventForHost = new HostQuestionStartedEvent(
             game.Id,
             game.StateVersion,
@@ -199,6 +208,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             response,
             cancellationToken);
 
+        // Persistence: Commits question activation and state version increment to database
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -209,6 +219,7 @@ public sealed class StartGameCommandHandler : ICommandHandler<StartGameCommand, 
             game.StateVersion,
             1);
 
+        // Post-Commit Broadcast Pattern: Publishes realtime SignalR/Redis events strictly after DB commit succeeds (RT-ORD-001)
         await _notificationService.PublishQuestionStartedAsync(
             hostAccountId,
             game.Id,

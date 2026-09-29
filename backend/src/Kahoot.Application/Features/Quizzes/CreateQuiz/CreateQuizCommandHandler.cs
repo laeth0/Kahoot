@@ -28,6 +28,7 @@ public sealed class CreateQuizCommandHandler : ICommandHandler<CreateQuizCommand
         CreateQuizCommand request,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Enforces authenticated Host session before quiz creation
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<QuizSummaryResponse>(AuthErrors.Unauthorized);
@@ -36,11 +37,13 @@ public sealed class CreateQuizCommandHandler : ICommandHandler<CreateQuizCommand
         Guid hostAccountId = _currentUser.UserId.Value;
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
 
+        // Plain-Text Content Sanitization (QUIZ-SEC-002) - Trims scalar text to prevent whitespace padding
         string trimmedTitle = request.Title.Trim();
         string? trimmedDescription = string.IsNullOrWhiteSpace(request.Description)
             ? null
             : request.Description.Trim();
 
+        // Monotonic Revision Initialization (QUIZ-AUTH-001) - Initializes new quiz with Revision = 1
         Quiz quiz = new Quiz
         {
             Id = Guid.NewGuid(),
@@ -57,6 +60,7 @@ public sealed class CreateQuizCommandHandler : ICommandHandler<CreateQuizCommand
         _dbContext.Quizzes.Add(quiz);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        // Metadata Projection - Returns newly created quiz summary with zero questions
         QuizSummaryResponse response = new QuizSummaryResponse(
             quiz.Id,
             quiz.Title,

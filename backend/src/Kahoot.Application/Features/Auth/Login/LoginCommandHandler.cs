@@ -47,35 +47,35 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
         LoginCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Enforce IP rate limiting (30 login attempts/minute per IP)
+        // IP Rate Limiting - Throttles high-frequency automated requests from a single IP address (Dimension 1)
         if (_loginRateLimiter.IsIpRateLimited(request.IpAddress))
         {
             return Result.Failure<LoginResult>(AuthErrors.RateLimited);
         }
 
-        // 2. Canonical username normalization (NFKC + invariant uppercase, identical to registration)
+        // Canonical Identity Resolution - Matches display and invariant uppercase forms to prevent character collision
         string displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
         string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
-        // 3. Progressive username backoff delay after 5 failed attempts (1s, 2s, 4s, 8s, max 10s)
+        // Progressive Backoff - Exponential delay (1s to 10s) after repeated failures neutralizes credential stuffing without account lockout (Dimension 2)
         TimeSpan backoffDelay = _loginRateLimiter.GetUsernameBackoffDelay(normalizedUsername);
         if (backoffDelay > TimeSpan.Zero)
         {
             await Task.Delay(backoffDelay, _timeProvider, cancellationToken);
         }
 
-        // 4. Lookup user globally across Host and System Administrator accounts
+        // Query Performance: AsNoTracking() eliminates tracking overhead; SingleOrDefaultAsync performs fast indexed seek on unique NormalizedUsername
         User? user = await _dbContext.Users
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.NormalizedUsername == normalizedUsername, cancellationToken);
 
-        // 5. Credential verification under AUTH-HASH-002 gate (max 16 active, max 50 queued)
+        // Credential verification under concurrency gate (max 16 active, max 50 queued)
         bool isPasswordValid;
         try
         {
             if (user is null)
             {
-                // Execute dummy verification with identical parameters to defend against timing enumeration
+                // Timing-Attack Defense - Dummy verification with identical work parameters ensures indistinguishable response time for non-existent users
                 await _passwordHasher.VerifyDummyPasswordAsync(request.Password, cancellationToken);
                 _loginRateLimiter.RecordFailedAttempt(normalizedUsername);
                 return Result.Failure<LoginResult>(AuthErrors.InvalidCredentials);
@@ -94,15 +94,14 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             return Result.Failure<LoginResult>(AuthErrors.InvalidCredentials);
         }
 
-        // 6. Suspended accounts return generic 401 without leaking existence or account status
+        // Account Enumeration Resistance - Returns generic 401 for inactive/suspended accounts without leaking account status
         if (user.Status != UserStatus.Active)
         {
             _loginRateLimiter.RecordFailedAttempt(normalizedUsername);
             return Result.Failure<LoginResult>(AuthErrors.InvalidCredentials);
         }
 
-        // Recheck the account under the same row lock used by password changes,
-        // logout-all, and refresh so a stale password cannot create a new session.
+        // Security & Concurrency: GetUserForUpdateAsync acquires a pessimistic row lock (SELECT FOR UPDATE) to ensure account credentials/status have not changed concurrently
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
         User? currentUser = await _dbContext.GetUserForUpdateAsync(user.Id, cancellationToken);
         if (currentUser is null || currentUser.Status != UserStatus.Active ||
@@ -112,9 +111,10 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             return Result.Failure<LoginResult>(AuthErrors.InvalidCredentials);
         }
 
+        // Stateless Access Token - Generates short-lived bearer JWT carrying claims and TokenSecurityVersion
         AccessTokenResult accessToken = _jwtTokenGenerator.GenerateAccessToken(currentUser);
 
-        // Persist only SHA256(rawToken).
+        // Hashed Refresh Token Storage - Issues cryptographically random secret to client and stores only SHA-256 hash in database
         byte[] randomBytes = RandomNumberGenerator.GetBytes(RefreshTokenEntropyBytes);
         string rawRefreshToken = Base64Url.EncodeToString(randomBytes);
         byte[] tokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(rawRefreshToken));
@@ -134,6 +134,7 @@ public sealed class LoginCommandHandler : ICommandHandler<LoginCommand, LoginRes
             RevokedAt = null
         };
 
+        // Session Persistence: Inserts high-entropy refresh token hash under active row lock
         _dbContext.RefreshTokens.Add(refreshToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);

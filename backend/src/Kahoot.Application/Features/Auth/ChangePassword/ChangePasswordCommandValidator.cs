@@ -9,11 +9,13 @@ public sealed class ChangePasswordCommandValidator : AbstractValidator<ChangePas
 
     public ChangePasswordCommandValidator()
     {
+        // Boundary Validation - Rejects empty inputs and bounds payload length before hashing
         RuleFor(command => command.CurrentPassword)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Current password is required.")
             .MaximumLength(MaxPasswordLength).WithMessage("Current password is too long.");
 
+        // Password Entropy Contract (AUTH-CRED-002) - Enforces 12-128 chars and mixed character classes without mutating entropy
         RuleFor(command => command.NewPassword)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("New password is required.")

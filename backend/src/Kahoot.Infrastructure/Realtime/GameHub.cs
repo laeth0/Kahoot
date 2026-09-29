@@ -18,6 +18,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
+// Realtime Game Hub - Bi-directional WebSocket endpoint orchestrating host session control, anonymous player joins, connection generation fencing, and state synchronization.
 public sealed class GameHub : Hub
 {
     private readonly IServiceScopeFactory _scopeFactory;
@@ -40,6 +41,7 @@ public sealed class GameHub : Hub
         _logger = logger;
     }
 
+    // Host Hub Authorization - Requires authenticated Host role with valid bearer token for host game control endpoints.
     [Authorize(Roles = nameof(UserRole.Host))]
     public async Task<object> JoinAsHost(string gameIdString)
     {
@@ -48,6 +50,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Validation.Failed", description = "Invalid gameId format." } };
         }
 
+        // Host Identity Claims Extraction - Resolves host account ID and TokenSecurityVersion from authenticated bearer token claims.
         string? subject = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier) ?? Context.User?.FindFirstValue("sub");
         if (!Guid.TryParse(subject, out Guid hostAccountId) ||
             !int.TryParse(Context.User?.FindFirstValue("token_security_version"), out int tokenVersion))
@@ -55,6 +58,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Auth.Unauthorized", description = "Unauthorized." } };
         }
 
+        // Connection Mutual Exclusion - Enforces that a single socket connection cannot simultaneously bind to both host and player presence maps.
         if (_playerPresence.TryGetConnection(Context.ConnectionId, out _))
         {
             return new { success = false, data = (object?)null, error = new { code = "Validation.Failed", description = "Connection is already attached to a game." } };
@@ -70,6 +74,7 @@ public sealed class GameHub : Hub
         await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
         AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await using IDbContextTransaction transaction = await dbContext.Database.BeginTransactionAsync(Context.ConnectionAborted);
+        // Pessimistic Game State Lock - Acquires SELECT FOR UPDATE row lock on game record to serialize concurrent host reconnection attempts.
         Game? game = await dbContext.GetGameForUpdateAsync(gameId, hostAccountId, Context.ConnectionAborted);
 
         if (game is null)
@@ -87,6 +92,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidStateTransition", description = "Host reconnection grace has expired." } };
         }
 
+        // Token Security Invalidation Check - Verifies host account remains Active and TokenSecurityVersion matches database state to evict suspended hosts.
         bool hostIsActive = await dbContext.Users.AsNoTracking().AnyAsync(
             user => user.Id == hostAccountId && user.Role == UserRole.Host &&
                     user.Status == UserStatus.Active && user.TokenSecurityVersion == tokenVersion,
@@ -96,12 +102,14 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Auth.Unauthorized", description = "Unauthorized." } };
         }
 
+        // Realtime Host Audience Group - Scopes SignalR group membership to isolated tenant host channel preventing cross-game broadcast leaks.
         string hostGroup = $"host:{hostAccountId}:game:{gameId}:hosts";
         if (!alreadyAttached)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, hostGroup, Context.ConnectionAborted);
             try
             {
+                // Host Presence Registry - Registers active host connection in distributed Redis presence store with lease expiry.
                 await _presence.RegisterAsync(Context.ConnectionId, hostAccountId, gameId, tokenVersion, Context.Abort);
             }
             catch
@@ -121,6 +129,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidStateTransition", description = "Host reconnection grace has expired." } };
         }
 
+        // Host Grace Period Reset - Clears abandonment deadline upon successful host reconnection to resume game session.
         if (game.HostGraceExpiresAt.HasValue)
         {
             game.HostGraceExpiresAt = null;
@@ -132,6 +141,7 @@ public sealed class GameHub : Hub
         return new { success = true, data = new { gameId, connected = true }, error = (object?)null };
     }
 
+    // Anonymous Player Entry Point - Authenticates anonymous participants via ephemeral 6-digit PIN and allocates reserved seat numbers.
     public async Task<object> JoinGame(string pin, string nickname, string joinOperationId)
     {
         if (_presence.TryGetConnection(Context.ConnectionId, out _, out _) ||
@@ -151,6 +161,7 @@ public sealed class GameHub : Hub
         ISender sender = scope.ServiceProvider.GetRequiredService<ISender>();
         AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+        // Mediated Join Command Pipeline - Executes JoinGameCommand through MediatR pipeline applying rate limiting, seat allocation, and nickname reservation.
         JoinGameCommand command = new JoinGameCommand(pin, nickname, joinOpId, ipAddress);
         Result<JoinGameResponse> result = await sender.Send(command, Context.ConnectionAborted);
 
@@ -186,6 +197,7 @@ public sealed class GameHub : Hub
                 .AsNoTracking()
                 .FirstOrDefaultAsync(p => p.Id == participant.Id && p.GameId == participant.GameId,
                     Context.ConnectionAborted);
+            // Player Session Token Hash Verification - Validates presented player session token against SHA-256 hash digest stored in database.
             byte[] presentedHash = SHA256.HashData(Encoding.UTF8.GetBytes(joinResponse.PlayerSessionToken));
             bool tokenIsCurrent = await dbContext.ParticipantSessionTokens.AsNoTracking().AnyAsync(
                 token => token.ParticipantId == participant.Id && token.TokenHash == presentedHash &&
@@ -211,6 +223,7 @@ public sealed class GameHub : Hub
             await Groups.AddToGroupAsync(Context.ConnectionId, playerGroup, Context.ConnectionAborted);
             try
             {
+                // Player Generation Fencing Registration - Registers connection in Redis presence registry with connection generation counter to evict stale duplicate connections.
                 await _playerPresence.RegisterAsync(
                     Context.ConnectionId,
                     participant.Id,
@@ -234,6 +247,7 @@ public sealed class GameHub : Hub
         Game? game = await dbContext.Games.AsNoTracking().FirstOrDefaultAsync(g => g.Id == participant.GameId, Context.ConnectionAborted);
         if (game is not null)
         {
+            // Post-Commit Presence Broadcast - Emits ParticipantPresenceChangedEvent to host and player groups with CancellationToken.None to prevent broadcast cancellation.
             ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
                 game.Id, game.PresenceVersion, game.ReservedParticipantCount, connectedCount,
                 participant.DisplayNickname, participant.SeatNumber, "Reconnected");
@@ -258,8 +272,10 @@ public sealed class GameHub : Hub
         };
     }
 
+    // Player Reconnection Workflow - Restores participant socket binding, bumps generation sequence, fences stale connections, and projects catch-up state.
     public async Task<object> Reconnect(string sessionToken)
     {
+        // Session Token Structural Validation - Enforces strict 68-character length and 'pst_' prefix format to short-circuit malformed reconnect requests.
         if (sessionToken is null || sessionToken.Length != 68 ||
             !sessionToken.StartsWith("pst_", StringComparison.Ordinal) ||
             _presence.TryGetConnection(Context.ConnectionId, out _, out _) ||
@@ -268,6 +284,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Invalid session token or connection state." } };
         }
 
+        // Session Token Hash Lookup - Resolves participant session record by computing SHA-256 digest of bearer token.
         byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(sessionToken));
         await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
         AppDbContext dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -326,6 +343,7 @@ public sealed class GameHub : Hub
             return new { success = false, data = (object?)null, error = new { code = "Game.InvalidSessionToken", description = "Session token expired." } };
         }
 
+        // Connection Generation Monotonic Increment - Bumps connection generation sequence to fence out prior sockets and serialize reconnecting player instances.
         participant.ConnectionGeneration += 1;
         await dbContext.SaveChangesAsync(Context.ConnectionAborted);
 
@@ -351,9 +369,11 @@ public sealed class GameHub : Hub
             throw;
         }
 
+        // Connection Generation Local Eviction - Aborts any local socket connections for this participant holding an older generation counter.
         _playerPresence.AbortStaleParticipantConnections(participant.Id, participant.ConnectionGeneration);
         try
         {
+            // Distributed Connection Generation Fencing - Broadcasts Redis fence frame to abort stale sockets for this participant across all nodes.
             await _playerPresence.FenceParticipantAsync(
                 participant.Id, game.Id, participant.ConnectionGeneration, CancellationToken.None);
         }
@@ -370,14 +390,17 @@ public sealed class GameHub : Hub
         await notificationService.PublishParticipantPresenceChangedAsync(
             game.HostAccountId, game.Id, game.PresenceVersion, presenceEvent, CancellationToken.None);
 
+        // Catch-Up State Synchronization - Materializes phase-specific state snapshot to bring reconnecting participant up to speed.
         object catchUpData = await BuildPlayerCatchUpStateAsync(dbContext, game, participant, now);
         return new { success = true, data = catchUpData, error = (object?)null };
     }
 
+    // Socket Disconnect Lifecycle - Manages host abandonment grace lease initiation and player presence departure broadcasting.
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         try
         {
+            // Host Disconnection Handling - Detects loss of host socket and begins 300-second abandonment grace if zero active hosts remain.
             if (_presence.TryGetConnection(Context.ConnectionId, out Guid hostAccountId, out Guid gameId))
             {
                 await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
@@ -388,6 +411,7 @@ public sealed class GameHub : Hub
                 bool hasRemainingHost = await _presence.RemoveAsync(Context.ConnectionId, gameId);
                 if (!hasRemainingHost && game is not null && game.Status != GameStatus.Finished)
                 {
+                    // Host Grace Period Activation - Initiates 300-second countdown before GameAbandonmentWorker terminates the orphaned game.
                     game.HostGraceExpiresAt = _timeProvider.GetUtcNow().AddSeconds(300);
                     await dbContext.SaveChangesAsync();
                     _logger.LogWarning("Last Host disconnected; abandonment grace started. GameId={GameId} ExpiresAt={ExpiresAt}",
@@ -396,6 +420,7 @@ public sealed class GameHub : Hub
 
                 await transaction.CommitAsync();
             }
+            // Player Disconnection Handling - Cleans up player presence and emits departure event if no concurrent connections remain.
             else if (_playerPresence.TryGetConnection(Context.ConnectionId, out PlayerConnectionInfo playerInfo))
             {
                 await _playerPresence.RemoveAsync(Context.ConnectionId, playerInfo.GameId);
@@ -412,6 +437,7 @@ public sealed class GameHub : Hub
 
                 if (game is not null)
                 {
+                    // Player Disconnected Presence Broadcast - Emits updated connected count to host and player channels.
                     ParticipantPresenceChangedEvent presenceEvent = new ParticipantPresenceChangedEvent(
                         playerInfo.GameId,
                         game.PresenceVersion,
@@ -441,12 +467,14 @@ public sealed class GameHub : Hub
         }
     }
 
+    // Phase-Specific Catch-Up State Builder - Serializes minimal, secure player state projection corresponding to current game lifecycle phase.
     private async Task<object> BuildPlayerCatchUpStateAsync(
         AppDbContext dbContext,
         Game game,
         Participant participant,
         DateTimeOffset now)
     {
+        // Lobby State Catch-Up - Returns participant display metadata and total player reservation count.
         if (game.Status == GameStatus.Lobby)
         {
             return new
@@ -461,6 +489,7 @@ public sealed class GameHub : Hub
             };
         }
 
+        // Question Active Catch-Up - Returns active question prompt, choice options, and countdown deadline without leaking correctness flags.
         if (game.Status == GameStatus.QuestionActive)
         {
             GameQuestionSnapshot? activeQuestion = await dbContext.GameQuestionSnapshots
@@ -516,6 +545,7 @@ public sealed class GameHub : Hub
             };
         }
 
+        // Question Results Catch-Up - Reveals correct choice IDs, answer breakdown counts, participant selection, and points awarded.
         if (game.Status == GameStatus.QuestionResults)
         {
             GameQuestionSnapshot? currentQuestion = await dbContext.GameQuestionSnapshots
@@ -591,6 +621,7 @@ public sealed class GameHub : Hub
             };
         }
 
+        // Leaderboard Catch-Up - Queries top 5 scored participants with deterministic tie-breaking.
         if (game.Status == GameStatus.Leaderboard)
         {
             List<Participant> top5Participants = await dbContext.Participants
@@ -626,6 +657,7 @@ public sealed class GameHub : Hub
             };
         }
 
+        // Finished Game Podium Catch-Up - Materializes top 3 podium participants and reconnected player's overall final rank.
         if (game.Status == GameStatus.Finished)
         {
             List<Participant> podiumParticipants = await dbContext.Participants

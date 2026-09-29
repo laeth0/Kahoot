@@ -38,6 +38,7 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
         UploadImageCommand request,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before accepting image upload
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<UploadImageResponse>(AuthErrors.Unauthorized);
@@ -45,16 +46,19 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Stream Validation - Validates payload stream existence and non-zero length
         if (request.Length <= 0 || request.Content == Stream.Null)
         {
             return Result.Failure<UploadImageResponse>(ImageErrors.MissingFile);
         }
 
+        // Payload Boundary Guard (IMG-BOUND-001) - Enforces 5 MiB ceiling to prevent storage exhaustion
         if (request.Length > MaxFileSizeBytes)
         {
             return Result.Failure<UploadImageResponse>(ImageErrors.TooLarge);
         }
 
+        // Image Sanitization Pipeline (IMG-UPL-003) - Sniffs magic bytes, strips EXIF, re-encodes raw pixels, eliminates polyglots, and writes to durable storage
         Result<SanitizedImageResult> sanitizeResult = await _imageStorageService.SanitizeAndPersistAsync(
             request.Content,
             request.FileName,
@@ -69,6 +73,7 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
         SanitizedImageResult sanitized = sanitizeResult.Value;
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
 
+        // Question-Scoped Image Record (IMG-MODEL-001) - Initializes record with UnreferencedSince = NOW() for 7-day orphan reclamation
         QuestionImage questionImage = new QuestionImage
         {
             Id = sanitized.ImageId,
@@ -84,6 +89,7 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
 
         _dbContext.QuestionImages.Add(questionImage);
 
+        // Dual-Write Failure Compensation (IMG-RISK-001, IMG-RISK-002) - Unlinks persisted file if database rejects metadata row
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);
@@ -103,6 +109,7 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
         }
         catch (Exception exception)
         {
+            // Orphan File Reconciliation Retention (IMG-RISK-001) - Retains file for background reconciliation sweep when commit outcome is uncertain
             _logger.LogError(
                 exception,
                 "QuestionImage {ImageId} commit outcome is uncertain; retaining file {StoragePath} for reconciliation.",
@@ -111,6 +118,7 @@ public sealed class UploadImageCommandHandler : ICommandHandler<UploadImageComma
             throw;
         }
 
+        // Immutable Public Delivery Contract (IMG-PUB-001) - Returns opaque imageId and immutable URL for question attachment
         UploadImageResponse response = new UploadImageResponse(
             sanitized.ImageId,
             sanitized.StoragePath);

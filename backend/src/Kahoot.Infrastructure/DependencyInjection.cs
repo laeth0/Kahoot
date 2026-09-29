@@ -7,8 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Kahoot.Infrastructure;
 
+// Infrastructure Dependency Injection Registrar - Composes persistence, security, storage, realtime, and background worker infrastructure.
 public static class DependencyInjection
 {
+    // Infrastructure Service Registration - Binds all infrastructure sub-modules and registers singleton system TimeProvider.
     public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)

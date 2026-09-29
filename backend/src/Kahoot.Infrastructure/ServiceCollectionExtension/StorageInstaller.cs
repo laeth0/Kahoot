@@ -6,10 +6,13 @@ using Kahoot.Infrastructure.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
+// Storage Infrastructure Installer - Configures local disk uploads directory, staging quarantine, and image sanitization service.
 public static class StorageInstaller
 {
+    // Storage Registration Pipeline - Binds ImageStorageOptions with strict security validation and registers ImageStorageService.
     public static IServiceCollection AddStorage(this IServiceCollection services, IConfiguration configuration)
     {
+        // Image Storage Options Validation - Strictly enforces 5 MiB file size cap, dimension limits, 10% disk headroom, and retention windows.
         services.AddOptions<ImageStorageOptions>()
             .Bind(configuration.GetSection(ImageStorageOptions.SectionName))
             .Validate(options => options.UploadsSubdirectory == "uploads" && options.StagingSubdirectory == "uploads/staging",

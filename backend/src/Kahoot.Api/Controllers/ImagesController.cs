@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
+// Image Management Controller - Handles authenticated image uploads, sanitization, and secure public static file serving with path traversal hardening.
 [ApiController]
 public sealed class ImagesController : ApiController
 {
@@ -35,6 +36,7 @@ public sealed class ImagesController : ApiController
         _logger = logger;
     }
 
+    // Authenticated Image Upload Endpoint - Receives multipart image payload, validates 5 MiB cap, sanitizes metadata, and writes to storage.
     [HttpPost("api/uploads/images")]
     [Authorize(Roles = nameof(UserRole.Host))]
     [Consumes("multipart/form-data")]
@@ -120,6 +122,7 @@ public sealed class ImagesController : ApiController
         return Problem(result.Error);
     }
 
+    // Uploads Root Probe - Rejects directory listing attempts on the base uploads folder.
     [HttpGet("uploads")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
@@ -128,6 +131,7 @@ public sealed class ImagesController : ApiController
         return Problem(ImageErrors.NotFound);
     }
 
+    // Secure Static Image Retrieval Endpoint - Serves sanitized images with path traversal defenses, nosniff headers, and immutable cache policy.
     [HttpGet("uploads/{*filename}")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status200OK)]
@@ -136,6 +140,7 @@ public sealed class ImagesController : ApiController
     {
         string rawPath = HttpContext.Request.Path.Value ?? string.Empty;
 
+        // Path Traversal Sanitization & Regex Guard - Rejects encoded or literal path traversal patterns and strictly enforces UUID filename format.
         if (string.IsNullOrWhiteSpace(filename)
             || rawPath.Contains("%2e%2e", StringComparison.OrdinalIgnoreCase)
             || rawPath.Contains("%2f", StringComparison.OrdinalIgnoreCase)
@@ -182,6 +187,7 @@ public sealed class ImagesController : ApiController
             return Problem(ImageErrors.NotFound);
         }
 
+        // Security and Caching Headers - Enforces nosniff MIME typing and 1-year immutable caching for static assets.
         Response.Headers.Append("X-Content-Type-Options", "nosniff");
         Response.Headers.Append("Cache-Control", "public, max-age=31536000, immutable");
 

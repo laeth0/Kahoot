@@ -34,7 +34,7 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
         SuspendAdministratorCommand request,
         CancellationToken cancellationToken)
     {
-        // State: Caller authorization check (must be an authenticated SystemAdmin)
+        // Administrative Role Authorization - Restricts administrator suspension strictly to authenticated SystemAdmin callers (ACCT-SEC-001)
         if (!_currentUser.IsAuthenticated || !string.Equals(_currentUser.Role, nameof(UserRole.SystemAdmin), StringComparison.Ordinal))
         {
             return Result.Failure(AuthErrors.Forbidden);
@@ -42,10 +42,10 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
 
         Guid? adminId = _currentUser.UserId;
 
-        // Step: Acquire transaction to serialize the admin suspension and active count verification
+        // Transactional Consistency Boundary - Serializes admin suspension and active count verification to prevent split-brain lockout
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
-        // Step: Acquire pessimistic row locks (SELECT FOR UPDATE) on all currently active SystemAdmin rows ordered by ID
+        // Pessimistic Row Lock & Deadlock Prevention - Acquires SELECT FOR UPDATE ordered by ID across active SystemAdmins to serialize count check (ACCT-ADMIN-003, ACCT-RISK-003)
         List<User> activeAdmins = await _dbContext.GetActiveAdministratorsForUpdateAsync(cancellationToken);
 
         User? targetUser = activeAdmins.FirstOrDefault(user => user.Id == request.AdministratorId);
@@ -54,28 +54,28 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
         {
             targetUser = await _dbContext.GetUserForUpdateAsync(request.AdministratorId, cancellationToken);
 
-            // State: Target administrator validation (must exist and belong to SystemAdmin role)
+            // Role & Entity Invariant Check - Verifies user exists and belongs strictly to the SystemAdmin role (ACCT-ERR-004)
             if (targetUser is null || targetUser.Role != UserRole.SystemAdmin)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 return Result.Failure(AccountErrors.NotFound);
             }
 
-            // State: Outcome B - Idempotent replay when previous commit succeeded but client dropped response
+            // Idempotent Replay (Outcome B) - Returns success if previous commit succeeded but network response was dropped
             if (targetUser.Status == UserStatus.Suspended && targetUser.Revision == request.Revision + 1)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 return Result.Success();
             }
 
-            // State: Optimistic Concurrency Control (OCC) - Detect concurrent modification or stale revision
+            // Optimistic Concurrency Control (OCC) - Detects state drift or concurrent modifications via revision mismatch (ACCT-BOUND-001, ACCT-ERR-005)
             if (targetUser.Revision != request.Revision)
             {
                 await transaction.RollbackAsync(cancellationToken);
                 return Result.Failure(AccountErrors.ConcurrentModification);
             }
 
-            // State: Idempotent no-op - Administrator is already suspended under the requested revision
+            // Idempotent No-Op - Fast path if administrator is already suspended under current revision
             if (targetUser.Status == UserStatus.Suspended)
             {
                 await transaction.RollbackAsync(cancellationToken);
@@ -83,14 +83,14 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
             }
         }
 
-        // State: Optimistic Concurrency Control (OCC) - Detect concurrent modification or stale revision
+        // Optimistic Concurrency Control (OCC) - Detects state drift or concurrent modifications via revision mismatch (ACCT-BOUND-001, ACCT-ERR-005)
         if (targetUser.Revision != request.Revision)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure(AccountErrors.ConcurrentModification);
         }
 
-        // State: Last-Active-Administrator Invariant (ACCT-ADMIN-003, ACCT-BOUND-004) - Transactionally prevent suspending final admin
+        // Last-Active-Administrator Invariant - Transactionally prevents suspending the sole remaining active administrator (ACCT-ADMIN-003, ACCT-BOUND-004, ACCT-RISK-003)
         if (activeAdmins.Count <= 1)
         {
             await transaction.RollbackAsync(cancellationToken);
@@ -99,12 +99,12 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
 
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        // Step: Revoke all active refresh tokens for the target administrator
+        // In-Database Bulk Token Revocation - Immediately revokes all active refresh tokens without memory loading
         await _dbContext.RefreshTokens
             .Where(token => token.UserId == request.AdministratorId && token.RevokedAt == null)
             .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RevokedAt, now), cancellationToken);
 
-        // Step: Atomic user update - Suspend status, increment TokenSecurityVersion (JWT cutoff), advance revision
+        // Immediate Suspension Cutoff - Atomically transitions to Suspended and increments TokenSecurityVersion for instant cluster-wide JWT invalidation (ACCT-SLO-001)
         int updatedCount = await _dbContext.Users
             .Where(u => u.Id == request.AdministratorId && u.Revision == request.Revision)
             .ExecuteUpdateAsync(setter => setter
@@ -114,17 +114,17 @@ public sealed class SuspendAdministratorCommandHandler : ICommandHandler<Suspend
                 .SetProperty(u => u.UpdatedAt, now)
                 .SetProperty(u => u.UpdatedBy, adminId), cancellationToken);
 
-        // State: Concurrency check - Verify user row was updated without intervening changes
+        // Concurrency Guard Check - Verifies row was modified under matched revision fence
         if (updatedCount == 0)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure(AccountErrors.ConcurrentModification);
         }
 
-        // Step: Commit administrator suspension transaction
+        // Durable Transaction Commit - Persists suspended administrator state prior to external side effects
         await transaction.CommitAsync(cancellationToken);
 
-        // Step: Evict active socket connections for the suspended administrator
+        // Cluster-Wide Socket Eviction - Sever active SignalR connections within p95 <= 500ms post-commit (ACCT-SLO-002)
         await _socketEvictionService.EvictUserSocketsAsync(request.AdministratorId, cancellationToken);
 
         return Result.Success();

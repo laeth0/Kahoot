@@ -4,9 +4,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 
+// Readiness Health Check - Aggregates application lifecycle, database, redis, and storage probes with short TTL caching.
 internal sealed class ReadinessHealthCheck : IHealthCheck
 {
+    // Health Cache TTL - Dampens thundering herd load from rapid load balancer / orchestrator polling intervals.
     private static readonly TimeSpan CacheDuration = TimeSpan.FromSeconds(3);
+    // Probe Timeout - Bounds per-dependency probe execution to 450ms to fail fast before reverse proxy timeouts trigger.
     private static readonly TimeSpan ProbeTimeout = TimeSpan.FromMilliseconds(450);
 
     private readonly IServiceScopeFactory _scopeFactory;
@@ -31,15 +34,18 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
         _lifetime = lifetime;
     }
 
+    // Health Evaluation - Validates lifecycle state and returns cached result or triggers serialized dependency probes.
     public async Task<HealthCheckResult> CheckHealthAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken = default)
     {
+        // Traffic Drain Guard - Immediately reports unhealthy if server is shutting down to remove pod from balancer routing.
         if (!IsAcceptingTraffic())
         {
             return HealthCheckResult.Unhealthy("Application is not accepting traffic.");
         }
 
+        // Cache Fast Path - Returns volatile cached result if still within 3-second TTL window.
         CachedResult? cached = Volatile.Read(ref _cachedResult);
         if (cached is not null && _timeProvider.GetUtcNow() < cached.ExpiresAt)
         {
@@ -48,6 +54,7 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
                 : HealthCheckResult.Unhealthy("Application is not accepting traffic.");
         }
 
+        // Serialized Refresh - Acquires semaphore to prevent redundant concurrent probe calls against backing infrastructure.
         await _refreshGate.WaitAsync(cancellationToken);
         try
         {
@@ -72,10 +79,12 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
         }
     }
 
+    // Host Lifecycle Gate - Verifies host runtime has completed initialization and has not initiated SIGTERM shutdown.
     private bool IsAcceptingTraffic() =>
         _lifetime.ApplicationStarted.IsCancellationRequested &&
         !_lifetime.ApplicationStopping.IsCancellationRequested;
 
+    // Dependency Probe Pipeline - Concurrently probes backing databases and degrades gracefully if non-critical subsystems fail.
     private async Task<HealthCheckResult> ProbeDependenciesAsync(
         HealthCheckContext context,
         CancellationToken cancellationToken)

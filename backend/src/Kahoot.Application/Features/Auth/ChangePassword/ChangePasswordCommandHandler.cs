@@ -15,17 +15,20 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
     private readonly IAppDbContext _dbContext;
     private readonly ICurrentUser _currentUser;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly ISocketEvictionService _socketEvictionService;
     private readonly TimeProvider _timeProvider;
 
     public ChangePasswordCommandHandler(
         IAppDbContext dbContext,
         ICurrentUser currentUser,
         IPasswordHasher passwordHasher,
+        ISocketEvictionService socketEvictionService,
         TimeProvider timeProvider)
     {
         _dbContext = dbContext;
         _currentUser = currentUser;
         _passwordHasher = passwordHasher;
+        _socketEvictionService = socketEvictionService;
         _timeProvider = timeProvider;
     }
 
@@ -33,14 +36,14 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
         ChangePasswordCommand request,
         CancellationToken cancellationToken)
     {
-        // 1. Resolve account exclusively from the authenticated user
+        // Derived Identity (IDOR Prevention) - Target account is strictly resolved from ICurrentUser token, never from client input
         Guid? userId = _currentUser.UserId;
         if (!userId.HasValue || userId.Value == Guid.Empty)
         {
             return Result.Failure(AuthErrors.Unauthorized);
         }
 
-        // 2. Fetch the current active user state without transaction/locks
+        // Query Performance: AsNoTracking() and Select(PasswordHash) project only the needed column without entity overhead or database locks
         string? currentPasswordHash = await _dbContext.Users
             .AsNoTracking()
             .Where(candidate => candidate.Id == userId.Value && candidate.Status == UserStatus.Active)
@@ -52,7 +55,7 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             return Result.Failure(AuthErrors.Unauthorized);
         }
 
-        // 3. Verify current password under AUTH-HASH-002 gate without holding DB locks
+        // Off-Transaction Verification - Expensive Argon2id check executes outside DB transaction to avoid connection pool starvation
         try
         {
             bool isPasswordValid = await _passwordHasher.VerifyPasswordAsync(
@@ -70,7 +73,7 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             return Result.Failure(AuthErrors.RateLimited);
         }
 
-        // 4. Hash new password under AUTH-HASH-002 gate outside any database transaction
+        // Off-Transaction Hashing - New hash is computed before opening the transaction to minimize database lock hold time
         string newPasswordHash;
         try
         {
@@ -85,9 +88,10 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
 
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        // 5. Atomically commit password update, security version increment, and all refresh-token revocation
+        // Pessimistic Row Lock & Optimistic Guard - Re-checks password hash under row lock to prevent lost updates from concurrent changes
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        // Security & Concurrency: GetUserForUpdateAsync acquires a pessimistic row lock (SELECT FOR UPDATE) to guard against concurrent password mutations
         User? currentUser = await _dbContext.GetUserForUpdateAsync(userId.Value, cancellationToken);
         if (currentUser is null || currentUser.Status != UserStatus.Active ||
             !string.Equals(currentUser.PasswordHash, currentPasswordHash, StringComparison.Ordinal))
@@ -95,7 +99,7 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             return Result.Failure(AuthErrors.InvalidCredentials);
         }
 
-        // Optimistic concurrency guarantee: ensure the password hash has not changed concurrently
+        // Complete Session Severance & Optimistic Guard: ExecuteUpdateAsync updates hash, increments TokenSecurityVersion, and checks PasswordHash matches in a single SQL UPDATE
         int updatedUsers = await _dbContext.Users
             .Where(candidate => candidate.Id == userId.Value
                              && candidate.Status == UserStatus.Active
@@ -112,11 +116,15 @@ public sealed class ChangePasswordCommandHandler : ICommandHandler<ChangePasswor
             return Result.Failure(AuthErrors.InvalidCredentials);
         }
 
+        // Query Performance: ExecuteUpdateAsync revokes all active refresh tokens in a single SQL UPDATE
         await _dbContext.RefreshTokens
             .Where(token => token.UserId == userId.Value && token.RevokedAt == null)
             .ExecuteUpdateAsync(setter => setter.SetProperty(token => token.RevokedAt, now), cancellationToken);
 
         await transaction.CommitAsync(cancellationToken);
+
+        // Post-Commit Broadcast (AUTH-PASS-001): Evicts active SignalR sockets across cluster after DB transaction commits
+        await _socketEvictionService.EvictUserSocketsAsync(userId.Value, cancellationToken);
 
         return Result.Success();
     }

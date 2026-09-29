@@ -9,6 +9,7 @@ public sealed record IdempotencyCheckResult<TResponse>(
 
 public interface IGameCommandIdempotencyService
 {
+    // Idempotent Check (GAME-IDEMP-001) - Verifies if CommandId has been executed; returns cached response or detects payload conflicts
     Task<IdempotencyCheckResult<TResponse>> CheckAsync<TResponse>(
         Guid gameId,
         Guid commandId,
@@ -16,6 +17,7 @@ public interface IGameCommandIdempotencyService
         object requestPayload,
         CancellationToken cancellationToken);
 
+    // Idempotent Execution Persistence (GAME-IDEMP-002) - Caches successful state version and serialized response for future replaying
     Task RecordAsync<TResponse>(
         Guid gameId,
         Guid hostAccountId,

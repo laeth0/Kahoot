@@ -13,6 +13,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
 
     public RegisterCommandValidator()
     {
+        // Invisible Character & Spoofing Defense (AUTH-CRED-001) - Rejects control codes and zero-width spoofing
         RuleFor(command => command.Username)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Username is required.")
@@ -21,6 +22,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
             .Must(BeValidLength)
             .WithMessage($"Username must be between {MinUsernameLength} and {MaxUsernameLength} characters.");
 
+        // Password Entropy Contract (AUTH-CRED-002) - Enforces 12-128 chars and mixed character classes without mutating entropy
         RuleFor(command => command.Password)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Password is required.")
@@ -36,6 +38,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
             .WithMessage("Password must contain at least one special character.");
     }
 
+    // Unicode Category Sanitization - Blocks Control (Cc), Format/Zero-Width (Cf), and Surrogate (Cs)
     private static bool HasInvalidCharacters(string username)
     {
         foreach (char character in username)
@@ -52,6 +55,7 @@ public sealed class RegisterCommandValidator : AbstractValidator<RegisterCommand
         return false;
     }
 
+    // Canonical Length Bounds - Evaluates 3-64 length after Unicode NFKC and case folding to prevent expansion exploits
     private static bool BeValidLength(string username)
     {
         string displayUsername = UsernameNormalization.GetDisplayUsername(username);

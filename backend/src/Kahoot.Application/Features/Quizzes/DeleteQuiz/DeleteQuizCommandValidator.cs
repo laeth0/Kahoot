@@ -6,6 +6,7 @@ public sealed class DeleteQuizCommandValidator : AbstractValidator<DeleteQuizCom
 {
     public DeleteQuizCommandValidator()
     {
+        // Target Resource Validation - Ensures target quiz identifier is non-empty before processing deletion
         RuleFor(command => command.QuizId)
             .NotEmpty()
             .WithMessage("QuizId is required.");

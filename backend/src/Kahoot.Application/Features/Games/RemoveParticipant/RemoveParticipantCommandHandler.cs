@@ -51,8 +51,10 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Wraps participant removal, token revocation, seat count update, and auto-close check in one transaction
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync serialize host control actions
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -70,6 +72,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             return Result.Failure(GameErrors.InvalidStateTransition);
         }
 
+        // Query Performance: FirstOrDefaultAsync seeks participant record by ID within game and host tenant boundaries
         Participant? participant = await _dbContext.Participants
             .FirstOrDefaultAsync(
                 p => p.Id == request.ParticipantId && p.GameId == game.Id && p.HostAccountId == hostAccountId,
@@ -80,6 +83,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             return Result.Failure(GameErrors.ParticipantNotFound);
         }
 
+        // Idempotent Eviction: If already removed, commit and re-evict socket safely
         if (participant.IsRemoved)
         {
             await transaction.CommitAsync(cancellationToken);
@@ -89,9 +93,11 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
         }
 
         DateTimeOffset utcNow = _timeProvider.GetUtcNow();
+        // System Design & Tombstone Reservation: Soft-deletes participant to permanently reserve nickname and prevent spoofing
         participant.IsRemoved = true;
         participant.RemovedAt = utcNow;
 
+        // Query Performance: Retrieves active participant session tokens for batch revocation
         List<ParticipantSessionToken> tokens = await _dbContext.ParticipantSessionTokens
             .Where(t => t.ParticipantId == participant.Id && t.RevokedAt == null)
             .ToListAsync(cancellationToken);
@@ -119,6 +125,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
 
             if (activeQuestion is not null)
             {
+                // Dynamic Auto-Close Evaluation (GAME-AUTO-002): Checks if removed participant had answered; decrements count and triggers auto-close if all remaining answered
                 bool hasAnswered = await _dbContext.AnswerSubmissions
                     .AnyAsync(
                         a => a.GameQuestionId == activeQuestion.Id && a.ParticipantId == participant.Id,
@@ -137,6 +144,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             }
         }
 
+        // Persistence: Commits participant removal and token revocation atomically
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -147,6 +155,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             participant.Id,
             participant.SeatNumber);
 
+        // Post-Commit Cluster-Wide Socket Eviction: Disconnects removed player's SignalR connection across all cluster nodes
         await _playerPresenceService.EvictParticipantAsync(
             participant.Id,
             game.Id,
@@ -162,6 +171,7 @@ public sealed class RemoveParticipantCommandHandler : ICommandHandler<RemovePart
             participant.SeatNumber,
             "Removed");
 
+        // Post-Commit Broadcast Pattern: Fans out presence update to host socket
         await _notificationService.PublishParticipantPresenceChangedAsync(
             hostAccountId,
             game.Id,

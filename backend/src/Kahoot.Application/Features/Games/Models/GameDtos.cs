@@ -8,6 +8,7 @@ public sealed record QuestionChoiceDto(
 
 public sealed record PlayerQuestionChoiceDto(Guid ChoiceId, int OrderIndex, string Text);
 
+// System Design & Audience Isolation: Player projection omits correct choices to eliminate client-side cheating via network inspection
 public sealed record PlayerQuestionStartedEvent(
     Guid GameId,
     long StateVersion,
@@ -21,6 +22,7 @@ public sealed record PlayerQuestionStartedEvent(
     DateTimeOffset EndsAt,
     List<PlayerQuestionChoiceDto> Choices);
 
+// System Design & State Topology: Host projection includes correct choices and grading telemetry for presentation display
 public sealed record HostQuestionStartedEvent(
     Guid GameId,
     long StateVersion,
@@ -37,6 +39,7 @@ public sealed record HostQuestionStartedEvent(
     List<Guid> CorrectChoiceIds,
     List<QuestionChoiceDto> Choices);
 
+// Realtime Telemetry: Question results broadcast with materialized selection distributions
 public sealed record QuestionEndedEvent(
     Guid GameId,
     long StateVersion,
@@ -48,6 +51,7 @@ public sealed record QuestionEndedEvent(
     List<Guid> CorrectChoiceIds,
     List<QuestionChoiceResultDto> Choices);
 
+// State Synchronization - Carries question timer bounds and snapshot metadata for late-joining or reconnecting hosts
 public sealed record CurrentQuestionDto(
     Guid QuestionId,
     int OrderIndex,
@@ -66,6 +70,7 @@ public sealed record QuestionChoiceResultDto(
     bool IsCorrect,
     int SelectionCount);
 
+// System Design & Bounded Payload: Top-ranked leaderboard projection bounds payload size to top 5 contenders
 public sealed record LeaderboardParticipantDto(
     Guid ParticipantId,
     string Nickname,

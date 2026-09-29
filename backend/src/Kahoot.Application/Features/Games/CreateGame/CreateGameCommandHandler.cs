@@ -51,15 +51,18 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Guarantees game, question snapshots, and choice snapshots commit together or roll back entirely
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(
             cancellationToken);
 
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync acquires SELECT FOR UPDATE on Host row, serializing game creation and quiz edits
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
             return Result.Failure<CreateGameResponse>(AuthErrors.Unauthorized);
         }
 
+        // Query Performance: AsNoTracking() retrieves quiz template for cloning without tracking overhead
         Quiz? quiz = await _dbContext.Quizzes
             .AsNoTracking()
             .FirstOrDefaultAsync(
@@ -71,6 +74,7 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
             return Result.Failure<CreateGameResponse>(QuizErrors.NotFound);
         }
 
+        // System Design & Immutable Snapshotting: Clones template questions into independent GameQuestionSnapshot entities, isolating live games from future quiz edits
         List<Question> questions = await _dbContext.Questions
             .Include(question => question.Image)
             .AsNoTracking()
@@ -86,6 +90,7 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
 
         List<Guid> questionIds = questions.Select(question => question.Id).ToList();
 
+        // Query Performance: AsNoTracking() and Contains() batch-load all choices across questions in a single indexed query
         List<Choice> choices = await _dbContext.Choices
             .AsNoTracking()
             .Where(choice => questionIds.Contains(choice.QuestionId) && choice.HostAccountId == hostAccountId)
@@ -166,6 +171,7 @@ public sealed class CreateGameCommandHandler : ICommandHandler<CreateGameCommand
             }
         }
 
+        // System Design & Partial Unique Index: Retries up to 5 times on PIN collision against partial index ux_games_active_pin (WHERE status <> 'FINISHED')
         const int maxPinAttempts = 5;
         for (int attempt = 1; attempt <= maxPinAttempts; attempt++)
         {

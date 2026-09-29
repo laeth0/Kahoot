@@ -32,6 +32,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
         AddQuestionCommand request,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before accepting new question
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<QuestionResponse>(AuthErrors.Unauthorized);
@@ -39,13 +40,17 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Consistency Boundary - Serializes host quiz modifications against concurrent game snapshots (QUIZ-RISK-004)
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Serialized Host Mutation Barrier - Acquires SELECT FOR UPDATE on host row to serialize question creation
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
             return Result.Failure<QuestionResponse>(AuthErrors.Unauthorized);
         }
 
+        // Multi-Tenant Isolation - Scopes quiz seek strictly to host tenant boundary
         Quiz? quiz = await _dbContext.Quizzes
             .TagWith("Quizzes:AddQuestion:FindQuiz")
             .Where(q => q.Id == request.QuizId && q.HostAccountId == hostAccountId)
@@ -56,6 +61,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             return Result.Failure<QuestionResponse>(QuizErrors.NotFound);
         }
 
+        // Active Session Lock (QUIZ-ERR-006, QUIZ-RISK-001) - Prevents question addition while active games are running
         bool hasActiveGameSession = await _dbContext.Games
             .TagWith("Quizzes:AddQuestion:CheckActiveGameSession")
             .AnyAsync(game => game.SourceQuizId == quiz.Id &&
@@ -68,10 +74,12 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             return Result.Failure<QuestionResponse>(QuizErrors.InUse);
         }
 
+        // Current Question Count Check - Verifies technical limit before appending
         int currentQuestionCount = await _dbContext.Questions
             .TagWith("Quizzes:AddQuestion:GetQuestionCount")
             .CountAsync(q => q.QuizId == quiz.Id && q.HostAccountId == hostAccountId, cancellationToken);
 
+        // Technical Safety Limit (QUIZ-LIMIT-001, QUIZ-BOUND-003) - Enforces 200-question ceiling for memory safety and snapshot SLOs
         if (currentQuestionCount >= 200)
         {
             return Result.Failure<QuestionResponse>(QuizErrors.QuestionLimitExceeded);
@@ -79,6 +87,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
 
         string? imageUrl = null;
 
+        // Cross-Tenant Image Isolation & Single-Owner Enforcement (QUIZ-SEC-001, IMG-ATT-001) - Verifies image ownership and prevents multi-question sharing
         if (request.ImageId.HasValue)
         {
             QuestionImage? image = await _dbContext.QuestionImages
@@ -93,9 +102,11 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
             }
 
             imageUrl = image.StoragePath;
+            // Image Attachment Lifecycle - Clears unreferenced marker upon question attachment
             image.UnreferencedSince = null;
         }
 
+        // Contiguous Sequence Assignment (QUIZ-QUEST-001) - Sets OrderIndex to currentQuestionCount for 0-based continuity
         Question question = new Question
         {
             Id = Guid.NewGuid(),
@@ -111,6 +122,7 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
         List<Choice> choices = new List<Choice>(request.Choices.Count);
         List<ChoiceResponse> choiceResponses = new List<ChoiceResponse>(request.Choices.Count);
 
+        // Text-Only Choice Construction - Builds contiguous 0-based choices with plain text sanitization
         for (int i = 0; i < request.Choices.Count; i++)
         {
             ChoiceRequest choiceRequest = request.Choices[i];
@@ -132,10 +144,12 @@ public sealed class AddQuestionCommandHandler : ICommandHandler<AddQuestionComma
                 choice.IsCorrect));
         }
 
+        // Monotonic Revision Increment (QUIZ-AUTH-002) - Advances revision to invalidate stale client views and OCC fences
         quiz.Revision++;
 
         _dbContext.Questions.Add(question);
         _dbContext.Choices.AddRange(choices);
+        // Database Constraint Race Defense - Traps concurrent attachment or foreign key conflicts
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);

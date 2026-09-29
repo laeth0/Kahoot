@@ -34,17 +34,17 @@ public sealed class CreateAdministratorCommandHandler : ICommandHandler<CreateAd
         CreateAdministratorCommand request,
         CancellationToken cancellationToken)
     {
-        // State: Caller authorization check (must be an authenticated SystemAdmin)
+        // Administrative Role Authorization - Restricts administrator provisioning strictly to authenticated SystemAdmin callers (ACCT-SEC-001)
         if (!_currentUser.IsAuthenticated || !string.Equals(_currentUser.Role, nameof(UserRole.SystemAdmin), StringComparison.Ordinal))
         {
             return Result.Failure<AdministratorResponse>(AuthErrors.Forbidden);
         }
 
-        // Step: Normalize username for display and unique comparison
+        // Unicode NFKC Normalization - Normalizes username to canonical Form KC to eliminate visual homoglyph attacks and spoofing
         string displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
         string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
-        // State: Uniqueness check - Verify username is not taken by any existing Host or Administrator
+        // Unique Identity Index Probe - Queries B-tree index on normalized_username to fail fast before expensive password hashing (ACCT-ADMIN-001)
         bool usernameExists = await _dbContext.Users
             .AnyAsync(user => user.NormalizedUsername == normalizedUsername, cancellationToken);
 
@@ -53,7 +53,7 @@ public sealed class CreateAdministratorCommandHandler : ICommandHandler<CreateAd
             return Result.Failure<AdministratorResponse>(AccountErrors.Conflict);
         }
 
-        // Step: Compute cryptographic password hash using configured argon2id algorithm
+        // Memory-Hard Argon2id Hashing - Derives cryptographically secure password hash with CPU/memory saturation defense against GPU cracking
         string passwordHash;
         try
         {
@@ -64,7 +64,7 @@ public sealed class CreateAdministratorCommandHandler : ICommandHandler<CreateAd
             return Result.Failure<AdministratorResponse>(AuthErrors.RateLimited);
         }
 
-        // Step: Instantiate new SystemAdmin user entity with initial security revision
+        // Zero Tenant Boundary Initialization - Provisions global platform administrator entity with base revision and security version without tenant data
         User user = new User
         {
             Id = Guid.NewGuid(),
@@ -80,7 +80,7 @@ public sealed class CreateAdministratorCommandHandler : ICommandHandler<CreateAd
 
         _dbContext.Users.Add(user);
 
-        // Step: Persist administrator to database and catch race condition on unique username constraint
+        // Database Race Defense - Catches concurrent normalized username collisions on ux_users_normalized_username database constraint
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);

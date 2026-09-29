@@ -48,7 +48,10 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Transactional Atomicity: Wraps next question activation, snapshot update, and idempotency logging in atomic transaction
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        // Concurrency & Pessimistic Row Lock: GetUserForUpdateAsync and GetGameForUpdateAsync serialize question advancement
         User? host = await _dbContext.GetUserForUpdateAsync(hostAccountId, cancellationToken);
         if (host is null || host.Role != UserRole.Host || host.Status != UserStatus.Active)
         {
@@ -61,6 +64,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             return Result.Failure<AdvanceQuestionResponse>(GameErrors.NotFound);
         }
 
+        // System Design & Command Idempotency: Returns cached next-question state on retried network requests
         IdempotencyCheckResult<AdvanceQuestionResponse> idempotencyResult = await _idempotencyService.CheckAsync<AdvanceQuestionResponse>(
             request.GameId,
             request.CommandId,
@@ -88,6 +92,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             return Result.Failure<AdvanceQuestionResponse>(GameErrors.InvalidStateTransition);
         }
 
+        // Optimistic Concurrency Control (OCC): Prevents out-of-order question advancements
         if (game.StateVersion != request.ExpectedStateVersion)
         {
             return Result.Failure<AdvanceQuestionResponse>(GameErrors.ConcurrentModification);
@@ -100,6 +105,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
 
         int nextIndex = (game.CurrentQuestionIndex ?? 0) + 1;
 
+        // Query Performance: FirstOrDefaultAsync seeks next question snapshot by calculated order index
         GameQuestionSnapshot? nextQuestion = await _dbContext.GameQuestionSnapshots
             .FirstOrDefaultAsync(
                 q => q.GameId == game.Id && q.HostAccountId == hostAccountId && q.OrderIndex == nextIndex,
@@ -115,6 +121,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             .OrderBy(c => c.OrderIndex)
             .ToListAsync(cancellationToken);
 
+        // Query Performance: CountAsync counts active non-removed participants to initialize question eligibility
         int activeParticipantCount = await _dbContext.Participants
             .CountAsync(
                 p => p.GameId == game.Id && p.HostAccountId == hostAccountId && !p.IsRemoved,
@@ -156,6 +163,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             .Select(c => new PlayerQuestionChoiceDto(c.Id, c.OrderIndex, c.Text))
             .ToList();
 
+        // System Design & Audience Isolation: Sanitized player projection excludes correct answers
         PlayerQuestionStartedEvent currentQuestionForPlayers = new PlayerQuestionStartedEvent(
             game.Id,
             game.StateVersion,
@@ -169,6 +177,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             endsAt,
             playerChoices);
 
+        // System Design & State Topology: Host projection includes correct choices and telemetry
         HostQuestionStartedEvent currentQuestionEventForHost = new HostQuestionStartedEvent(
             game.Id,
             game.StateVersion,
@@ -201,6 +210,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             response,
             cancellationToken);
 
+        // Persistence: Commits next question activation and state version increment
         await _dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 
@@ -211,6 +221,7 @@ public sealed class AdvanceQuestionCommandHandler : ICommandHandler<AdvanceQuest
             game.StateVersion,
             nextIndex);
 
+        // Post-Commit Broadcast Pattern: Fans out question start frame with audience isolation post-commit
         await _notificationService.PublishQuestionStartedAsync(
             hostAccountId,
             game.Id,

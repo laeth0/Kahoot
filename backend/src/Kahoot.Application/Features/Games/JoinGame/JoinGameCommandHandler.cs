@@ -43,20 +43,26 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
         JoinGameCommand request,
         CancellationToken cancellationToken)
     {
+        // System Design & Token Bucket Rate Limiting (LOBBY-RAT-001): Throttles burst join traffic per client IP via Redis token bucket
         if (await _rateLimiter.IsRateLimitedAsync(request.IpAddress, cancellationToken))
         {
             return Result.Failure<JoinGameResponse>(GameErrors.RateLimited);
         }
 
+        // Unicode NFKC & Invariant Folding: Normalizes nickname to prevent visually identical spoofing and control character exploits
         if (!PlayerNickname.TryNormalize(request.Nickname, out string displayNickname, out string normalizedNickname))
         {
             return Result.Failure<JoinGameResponse>(Error.Validation("Validation.Failed", "Invalid nickname."));
         }
+
+        // System Design & Idempotency Key: Computes SHA-256 digest of JoinOperationId to safely deduplicate retried join attempts
         byte[] joinOperationIdHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.JoinOperationId.ToString("D").ToLowerInvariant()));
 
+        // Transactional Atomicity: Guarantees participant insertion, seat number increment, and session token commit together
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(
             cancellationToken);
 
+        // Query Performance: AsNoTracking() checks for prior join operation matching the idempotency key
         Participant? priorOperation = await _dbContext.Participants.AsNoTracking()
             .FirstOrDefaultAsync(p => p.JoinOperationIdHash == joinOperationIdHash, cancellationToken);
         if (priorOperation is not null)
@@ -72,6 +78,7 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             }
         }
 
+        // Concurrency & Pessimistic Row Lock: GetGameByPinForUpdateAsync acquires SELECT FOR UPDATE on game row, serializing seat reservation
         Game? game = await _dbContext.GetGameByPinForUpdateAsync(request.Pin, cancellationToken);
         if (game is null)
         {
@@ -92,6 +99,7 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             return Result.Failure<JoinGameResponse>(GameErrors.NotJoinable);
         }
 
+        // Query Performance: FirstOrDefaultAsync seeks existing participant by JoinOperationIdHash within game boundary
         Participant? existingParticipant = await _dbContext.Participants
             .FirstOrDefaultAsync(
                 p => p.GameId == game.Id && p.JoinOperationIdHash == joinOperationIdHash,
@@ -152,6 +160,7 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
                 existingParticipant.SeatNumber));
         }
 
+        // Query Performance & Nickname Collision: AnyAsync checks for duplicate active or tombstoned nickname in game session
         bool nicknameTaken = await _dbContext.Participants
             .AnyAsync(
                 p => p.GameId == game.Id && p.NormalizedNickname == normalizedNickname,
@@ -162,11 +171,13 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             return Result.Failure<JoinGameResponse>(GameErrors.NicknameTaken);
         }
 
+        // Query Performance: CountAsync checks current active seats against 500-seat ceiling
         int activeSeats = await _dbContext.Participants
             .CountAsync(
                 p => p.GameId == game.Id && !p.IsRemoved,
                 cancellationToken);
 
+        // Capacity Guard (LOBBY-CAP-001): Enforces 500-seat hard limit under active row lock to eliminate race conditions
         if (activeSeats >= 500)
         {
             return Result.Failure<JoinGameResponse>(GameErrors.Full);
@@ -213,6 +224,7 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             ExpiresAt = null
         };
 
+        // Session Persistence: Persists participant record and hashed session token atomically
         _dbContext.Participants.Add(participant);
         _dbContext.ParticipantSessionTokens.Add(newSessionToken);
 
@@ -245,6 +257,7 @@ public sealed class JoinGameCommandHandler : ICommandHandler<JoinGameCommand, Jo
             participant.SeatNumber,
             "Joined");
 
+        // Post-Commit Broadcast Pattern: Publishes presence update to host socket after database transaction commits
         await _notificationService.PublishParticipantPresenceChangedAsync(
             game.HostAccountId,
             game.Id,

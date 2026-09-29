@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kahoot.Api.Controllers;
 
+// System Administrator Management Controller - Enforces SystemAdmin RBAC to manage administrator accounts, suspension, and reactivation.
 [ApiController]
 [Route("api/admin/administrators")]
 [Authorize(Roles = nameof(UserRole.SystemAdmin))]
@@ -24,6 +25,7 @@ public sealed class AdminAdministratorsController : ApiController
         _sender = sender;
     }
 
+    // List Administrators Endpoint - Returns all registered administrative accounts.
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AdministratorResponse>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -41,6 +43,7 @@ public sealed class AdminAdministratorsController : ApiController
         return Problem(result.Error);
     }
 
+    // Create Administrator Endpoint - Provisions a new SystemAdmin account with Argon2id-hashed credentials.
     [HttpPost]
     [ProducesResponseType(typeof(AdministratorResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -62,6 +65,7 @@ public sealed class AdminAdministratorsController : ApiController
         return Problem(result.Error);
     }
 
+    // Suspend Administrator Endpoint - Suspends an administrator account with OCC revision guard and last-admin invariant check.
     [HttpPost("{id:guid}/suspend")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -85,6 +89,7 @@ public sealed class AdminAdministratorsController : ApiController
         return Problem(result.Error);
     }
 
+    // Reactivate Administrator Endpoint - Reactivates a suspended administrator account with OCC revision validation.
     [HttpPost("{id:guid}/reactivate")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

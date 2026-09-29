@@ -1,7 +1,9 @@
 namespace Kahoot.Api.Endpoints;
 
+// Home Page Endpoint - Serves lightweight HTML landing page at root URL for service discovery and API reference navigation.
 internal static class HomePageEndpoint
 {
+    // Root Route Mapping - Maps anonymous GET endpoint for health inspection and documentation links while excluding from OpenAPI schema.
     public static WebApplication MapHomePage(this WebApplication app)
     {
         string html = BuildPage(app.Environment.IsDevelopment());
@@ -13,6 +15,7 @@ internal static class HomePageEndpoint
         return app;
     }
 
+    // Landing Page HTML Builder - Renders self-contained responsive HTML with environment-conditional Scalar API reference link.
     private static string BuildPage(bool isDevelopment)
     {
         string apiReferenceAction = isDevelopment

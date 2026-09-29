@@ -3,11 +3,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kahoot.Api.Controllers;
 
+// Base API Controller - Standardizes error handling and RFC 7807 ProblemDetails mapping across all REST endpoints.
 [ApiController]
 public abstract class ApiController : ControllerBase
 {
+    // RFC 7807 ProblemDetails Mapping - Converts domain Result error types and codes into standardized HTTP status codes and payloads.
     protected IActionResult Problem(Error error)
     {
+        // HTTP Status Code Projection - Maps domain ErrorType enum to canonical HTTP response status code.
         int statusCode = error.Type switch
         {
             ErrorType.NotFound => StatusCodes.Status404NotFound,

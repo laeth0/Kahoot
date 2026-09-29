@@ -3,6 +3,7 @@ using Kahoot.Application.Common.Interfaces;
 
 namespace Kahoot.Infrastructure.Security;
 
+// Multi-Dimensional Login Throttler - Defends authentication boundaries with IP attempt limits and progressive exponential backoff.
 public sealed class LoginRateLimiter : ILoginRateLimiter
 {
     private const int MaxAttemptsPerIp = 30;
@@ -18,6 +19,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         _timeProvider = timeProvider;
     }
 
+    // Per-IP Rate Limiting (Dimension 1) - Max 30 attempts per minute per IP to block high-frequency automated scripts.
     public bool IsIpRateLimited(string ipAddress)
     {
         string key = string.IsNullOrWhiteSpace(ipAddress) ? "unknown" : ipAddress.Trim();
@@ -27,6 +29,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         return !tracker.TryRecordAttempt(now, MaxAttemptsPerIp, IpWindow);
     }
 
+    // Progressive Exponential Backoff (Dimension 2) - Delays login (1s to 10s) after 5 failures without locking out legitimate users.
     public TimeSpan GetUsernameBackoffDelay(string normalizedUsername)
     {
         if (string.IsNullOrWhiteSpace(normalizedUsername))
@@ -59,6 +62,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         }
     }
 
+    // Failed Attempt Tracker - Increments failed attempt counter for target username within rolling 15-minute window.
     public void RecordFailedAttempt(string normalizedUsername)
     {
         if (string.IsNullOrWhiteSpace(normalizedUsername))
@@ -81,6 +85,7 @@ public sealed class LoginRateLimiter : ILoginRateLimiter
         }
     }
 
+    // Successful Login Reset - Clears accumulated failed attempt state upon successful credential verification.
     public void ResetFailedAttempts(string normalizedUsername)
     {
         if (string.IsNullOrWhiteSpace(normalizedUsername))

@@ -179,12 +179,14 @@ internal sealed class QuestionImageCleanupWorker : BackgroundService
         }
     }
 
+    // Atomic CTE Batch Deletion (IMG-CLEAN-001) - Deletes orphaned images using MATERIALIZED CTE with FOR UPDATE SKIP LOCKED
     private static async Task<List<string>> DeleteDatabaseOrphanBatchAsync(
         AppDbContext dbContext,
         DateTimeOffset cutoff,
         int batchSize,
         CancellationToken cancellationToken)
     {
+        // High-Concurrency Worker Batch - Locks eligible rows and deletes them atomically in a single statement
         return await dbContext.Database.SqlQuery<string>($"""
             WITH candidates AS MATERIALIZED (
                 SELECT qi.id, qi.storage_path

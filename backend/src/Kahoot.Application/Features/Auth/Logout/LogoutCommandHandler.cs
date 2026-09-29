@@ -26,15 +26,16 @@ public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
         LogoutCommand request,
         CancellationToken cancellationToken)
     {
+        // Enumeration-Resistant Logout - Returns success regardless of token presence/validity to prevent probing
         if (string.IsNullOrWhiteSpace(request.RawRefreshToken))
         {
             return Result.Success();
         }
 
-        // 1. Hash the presented raw refresh token using SHA-256 (raw token is never queried or stored)
+        // Hash presented raw token using SHA-256 (raw secrets are never stored)
         byte[] presentedTokenHash = SHA256.HashData(Encoding.UTF8.GetBytes(request.RawRefreshToken));
 
-        // 2. Indexed lookup by TokenHash
+        // Query Performance: AsNoTracking() eliminates tracking overhead; SingleOrDefaultAsync performs indexed seek on TokenHash
         RefreshToken? token = await _dbContext.RefreshTokens
             .AsNoTracking()
             .SingleOrDefaultAsync(candidate => candidate.TokenHash == presentedTokenHash, cancellationToken);
@@ -46,15 +47,16 @@ public sealed class LogoutCommandHandler : ICommandHandler<LogoutCommand>
 
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        // 3. Atomically revoke every non-revoked refresh token belonging to that family
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        // Security & Concurrency: GetUserForUpdateAsync acquires a pessimistic row lock (SELECT FOR UPDATE) to ensure account exists and serialize changes
         User? user = await _dbContext.GetUserForUpdateAsync(token.UserId, cancellationToken);
         if (user is null)
         {
             return Result.Success();
         }
 
+        // Query Performance & Soft Revocation: ExecuteUpdateAsync revokes active family tokens in a single SQL statement; retains records for 7-day forensic window
         await _dbContext.RefreshTokens
             .Where(candidate => candidate.UserId == token.UserId &&
                                 candidate.TokenFamilyId == token.TokenFamilyId &&

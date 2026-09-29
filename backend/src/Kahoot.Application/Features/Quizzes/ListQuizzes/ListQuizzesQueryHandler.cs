@@ -26,6 +26,7 @@ public sealed class ListQuizzesQueryHandler : IQueryHandler<ListQuizzesQuery, Li
         ListQuizzesQuery query,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before enumerating quizzes
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<ListQuizzesResponse>(AuthErrors.Unauthorized);
@@ -33,11 +34,15 @@ public sealed class ListQuizzesQueryHandler : IQueryHandler<ListQuizzesQuery, Li
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Query Optimization: AsNoTracking - Disables EF change tracker for high-throughput pagination
+        // Observability Tagging - Instruments SQL query with TagWith for APM distributed tracing
+        // Multi-Tenant Isolation - Scopes quiz listing strictly to host tenant boundary
         IQueryable<Quiz> queryable = _dbContext.Quizzes
             .AsNoTracking()
             .TagWith("Quizzes:ListQuizzes")
             .Where(quiz => quiz.HostAccountId == hostAccountId);
 
+        // Keyset Cursor Seek (QUIZ-QUERY-001) - Decodes opaque cursor and seeks via compound index (CreatedAt, Id) avoiding O(N) OFFSET scan
         if (!string.IsNullOrWhiteSpace(query.Cursor) &&
             KeysetCursor.TryDecode(query.Cursor, out KeysetCursor? cursor) &&
             cursor is not null)
@@ -47,12 +52,15 @@ public sealed class ListQuizzesQueryHandler : IQueryHandler<ListQuizzesQuery, Li
                 (quiz.CreatedAt == cursor.CreatedAt && quiz.Id < cursor.Id));
         }
 
+        // Deterministic Composite Sorting - Guarantees stable pagination order on (created_at DESC, id DESC) matching index
         queryable = queryable
             .OrderByDescending(quiz => quiz.CreatedAt)
             .ThenByDescending(quiz => quiz.Id);
 
+        // Bounded Page Over-Fetching (Limit + 1) - Reads one extra record to detect next page existence without separate COUNT(*) query
         int fetchLimit = query.PageSize + 1;
 
+        // Correlated Subquery Aggregation - Computes question count directly inside PostgreSQL in single query
         List<QuizSummaryResponse> items = await queryable
             .Take(fetchLimit)
             .Select(quiz => new QuizSummaryResponse(
@@ -65,6 +73,7 @@ public sealed class ListQuizzesQueryHandler : IQueryHandler<ListQuizzesQuery, Li
                 quiz.UpdatedAt))
             .ToListAsync(cancellationToken);
 
+        // Next Page Cursor Extraction - Encodes opaque cursor from last item of requested window and trims extra probe item
         bool hasMore = items.Count > query.PageSize;
         if (hasMore)
         {

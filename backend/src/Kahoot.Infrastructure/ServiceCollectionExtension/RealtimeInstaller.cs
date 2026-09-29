@@ -8,8 +8,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
+// Realtime Infrastructure Installer - Configures Redis backplane for SignalR, presence leases, pub/sub subscribers, and realtime game services.
 public static class RealtimeInstaller
 {
+    // Realtime Registration Pipeline - Sets up Redis-backed SignalR scale-out and registers presence workers.
     public static IServiceCollection AddRealtime(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddOptions<GameJoinOptions>()
@@ -29,6 +31,7 @@ public static class RealtimeInstaller
         string redisConnectionString = configuration["Realtime:RedisConnectionString"] ?? string.Empty;
         string channelPrefix = configuration["Realtime:ChannelPrefix"] ?? string.Empty;
 
+        // Redis SignalR Scale-Out Backplane - Enables multi-pod SignalR messaging via Redis pub/sub.
         services.AddSignalR()
             .AddStackExchangeRedis(redisConnectionString, options =>
             {

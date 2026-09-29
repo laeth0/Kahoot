@@ -14,6 +14,7 @@ public sealed class CreateAdministratorCommandValidator : AbstractValidator<Crea
 
     public CreateAdministratorCommandValidator()
     {
+        // Fail-Fast Username Boundary Validation - Enforces NFKC printable alphanumeric rules and bounds length between 3 and 64 (ACCT-ADMIN-001)
         RuleFor(command => command.Username)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Username is required.")
@@ -24,6 +25,7 @@ public sealed class CreateAdministratorCommandValidator : AbstractValidator<Crea
             .Must(BeAllowedCharacters)
             .WithMessage("Username must contain only alphanumeric characters, hyphens, and underscores.");
 
+        // Password Entropy Enforcement - Enforces 12 to 128 characters with upper, lower, digit, and special character requirements (ACCT-ADMIN-001)
         RuleFor(command => command.Password)
             .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Password is required.")

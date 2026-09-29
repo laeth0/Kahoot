@@ -1,10 +1,9 @@
 namespace Kahoot.Application.Common.Exceptions;
 
-/// <summary>
-/// Represents a database-provider-independent error that occurs when a unique constraint is violated.
-/// </summary>
+// Relational Constraint Abstraction - Database-provider-independent exception representing unique constraint collisions
 public sealed class UniqueConstraintViolationException : Exception
 {
+    // Constraint Identifier - Captures database constraint name for targeted handler filtering
     public string? ConstraintName { get; }
 
     public UniqueConstraintViolationException(string? constraintName, Exception? innerException)

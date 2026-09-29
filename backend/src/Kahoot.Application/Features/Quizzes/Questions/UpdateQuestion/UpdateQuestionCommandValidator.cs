@@ -17,14 +17,17 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
 
     public UpdateQuestionCommandValidator()
     {
+        // Target Resource Validation - Ensures non-empty identifier for parent quiz
         RuleFor(command => command.QuizId)
             .NotEmpty()
             .WithMessage("QuizId is required.");
 
+        // Target Resource Validation - Ensures non-empty identifier for target question
         RuleFor(command => command.QuestionId)
             .NotEmpty()
             .WithMessage("QuestionId is required.");
 
+        // Question Text Boundary Validation (QUIZ-QUEST-001) - Enforces non-empty plain-text between 1 and 500 characters after trimming
         RuleFor(command => command.Text)
             .Cascade(CascadeMode.Stop)
             .NotEmpty()
@@ -34,14 +37,17 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
             .Must(text => text.Trim().Length is >= MinTextLength and <= MaxTextLength)
             .WithMessage($"Question text must be between {MinTextLength} and {MaxTextLength} characters.");
 
+        // Duration Boundary Validation (QUIZ-QUEST-002) - Constrains question countdown timer between 5 and 300 seconds
         RuleFor(command => command.DurationSeconds)
             .InclusiveBetween(MinDurationSeconds, MaxDurationSeconds)
             .WithMessage($"DurationSeconds must be between {MinDurationSeconds} and {MaxDurationSeconds} seconds.");
 
+        // Base Points Boundary Validation (QUIZ-QUEST-003) - Enforces non-negative base score weighting (0 to int.MaxValue)
         RuleFor(command => command.BasePoints)
             .InclusiveBetween(MinBasePoints, MaxBasePoints)
             .WithMessage($"BasePoints must be between {MinBasePoints} and {MaxBasePoints}.");
 
+        // Choice Cardinality & Correctness Invariants (QUIZ-QUEST-004, QUIZ-ERR-005) - Enforces 2 to 6 choices and at least one correct choice
         RuleFor(command => command.Choices)
             .Cascade(CascadeMode.Stop)
             .NotNull()
@@ -51,6 +57,7 @@ public sealed class UpdateQuestionCommandValidator : AbstractValidator<UpdateQue
             .Must(choices => choices.Any(choice => choice.IsCorrect))
             .WithMessage("At least one choice must be marked as correct.");
 
+        // Nested Collection Item Validation - Validates each individual choice against payload constraints
         RuleForEach(command => command.Choices)
             .SetValidator(new ChoiceRequestValidator());
     }

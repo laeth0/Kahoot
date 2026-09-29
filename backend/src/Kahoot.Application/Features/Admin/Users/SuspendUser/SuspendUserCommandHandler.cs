@@ -37,7 +37,7 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
         SuspendUserCommand request,
         CancellationToken cancellationToken)
     {
-        // State: Caller authorization check (must be an authenticated SystemAdmin)
+        // Administrative Role Authorization - Restricts host suspension strictly to authenticated SystemAdmin callers (ACCT-SEC-001)
         if (!_currentUser.IsAuthenticated || !string.Equals(_currentUser.Role, nameof(UserRole.SystemAdmin), StringComparison.Ordinal))
         {
             return Result.Failure<SuspendUserResult>(AuthErrors.Forbidden);
@@ -45,53 +45,52 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
 
         Guid? adminId = _currentUser.UserId;
 
-        // Step: Acquire pessimistic row lock (SELECT FOR UPDATE) inside transaction to serialize mutation
+        // Transactional Consistency Boundary - Serializes Phase 1 suspension cutoff in a single lightweight transaction
         await using IDbContextTransaction transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
+        // Pessimistic Row Lock (SELECT FOR UPDATE) - Locks target host account row to serialize concurrent lifecycle changes
         User? user = await _dbContext.GetUserForUpdateAsync(request.AccountId, cancellationToken);
 
-        // State: Target account validation (must exist and belong to Host role)
+        // Role & Entity Invariant Check - Verifies account exists and belongs strictly to the Host role (ACCT-ERR-004)
         if (user is null || user.Role != UserRole.Host)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure<SuspendUserResult>(AccountErrors.NotFound);
         }
 
-        // State: Outcome B - Idempotent replay when previous commit succeeded but client dropped response
+        // Idempotent Replay (Outcome B) - Returns success if previous commit succeeded but network response was dropped
         if (user.Status == UserStatus.Suspended && user.Revision == request.Revision + 1)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Success(new SuspendUserResult(user.TerminationPending));
         }
 
-        // State: Optimistic Concurrency Control (OCC) - Detect concurrent modification or stale revision
+        // Optimistic Concurrency Control (OCC) - Detects state drift or concurrent modifications via revision mismatch (ACCT-BOUND-001, ACCT-ERR-005)
         if (user.Revision != request.Revision)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure<SuspendUserResult>(AccountErrors.ConcurrentModification);
         }
 
-        // State: Idempotent no-op - Account is already suspended under the requested revision
+        // Idempotent No-Op - Fast path if account is already suspended under current revision
         if (user.Status == UserStatus.Suspended)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Success(new SuspendUserResult(user.TerminationPending));
         }
 
-        // Step: Detect any active unfinished games owned by host (CREATED, LOBBY, QUESTION_ACTIVE, etc.)
+        // Active Game Detection (ACCT-SUSP-002) - Detects unfinished games to determine whether Phase 2 background finalization is required
         bool hasUnfinishedGames = await _dbContext.Games
             .AnyAsync(game => game.HostAccountId == request.AccountId && game.Status != GameStatus.Finished, cancellationToken);
 
-        // Game commands must reject a suspended host until the worker materializes each game.
-
         DateTimeOffset now = _timeProvider.GetUtcNow();
 
-        // Step: Revoke all active refresh tokens for the target host account
+        // In-Database Bulk Token Revocation - Immediately revokes all active refresh tokens without memory loading
         await _dbContext.RefreshTokens
             .Where(token => token.UserId == request.AccountId && token.RevokedAt == null)
             .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RevokedAt, now), cancellationToken);
 
-        // Step: Atomic user update - Suspend status, increment TokenSecurityVersion (JWT cutoff), advance revision
+        // Immediate Suspension Cutoff - Atomically transitions to Suspended, flags terminationPending, and increments TokenSecurityVersion for instant cluster-wide JWT invalidation (ACCT-SLO-001)
         int updatedCount = await _dbContext.Users
             .Where(u => u.Id == request.AccountId && u.Revision == request.Revision)
             .ExecuteUpdateAsync(setter => setter
@@ -102,23 +101,23 @@ public sealed class SuspendUserCommandHandler : ICommandHandler<SuspendUserComma
                 .SetProperty(u => u.UpdatedAt, now)
                 .SetProperty(u => u.UpdatedBy, adminId), cancellationToken);
 
-        // State: Concurrency check - Verify user row was updated without intervening changes
+        // Concurrency Guard Check - Verifies row was modified under matched revision fence
         if (updatedCount == 0)
         {
             await transaction.RollbackAsync(cancellationToken);
             return Result.Failure<SuspendUserResult>(AccountErrors.ConcurrentModification);
         }
 
-        // Step: Atomically commit Phase 1 suspension transaction
+        // Phase 1 Commit - Atomically persists suspended cutoff state prior to background sweep or socket eviction
         await transaction.CommitAsync(cancellationToken);
 
-        // Step: Trigger Phase 2 background worker if host has active unfinished games (ACCT-SUSP-004)
+        // Phase 2 Asynchronous Handoff (ACCT-SUSP-004, ACCT-RISK-001) - Dispatches channel notification to background worker for bounded batch game termination
         if (hasUnfinishedGames)
         {
             _suspensionFinalizerChannel.NotifySuspension(request.AccountId);
         }
 
-        // Step: Evict active SignalR socket connections for host and players across cluster (ACCT-SLO-002)
+        // Cluster-Wide Socket Eviction - Severs active SignalR connections for host and connected game sessions within p95 <= 500ms (ACCT-SLO-002)
         await _socketEvictionService.EvictUserSocketsAsync(request.AccountId, cancellationToken);
 
         return Result.Success(new SuspendUserResult(hasUnfinishedGames));

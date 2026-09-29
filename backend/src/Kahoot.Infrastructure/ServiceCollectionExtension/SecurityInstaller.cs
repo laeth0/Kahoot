@@ -6,12 +6,15 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Kahoot.Infrastructure.ServiceCollectionExtension;
 
+// Security Infrastructure Installer - Configures Argon2id password hasher, JWT token generator, multi-dimensional rate limiters, and bootstrap admin validation.
 public static class SecurityInstaller
 {
+    // Security Registration Pipeline - Registers cryptographic primitives, rate limiters, and validates security options at application startup.
     public static IServiceCollection AddSecurity(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddSingleton<IPasswordHasher, PasswordHasher>();
 
+        // Bootstrap Admin Configuration - Binds environment credentials and validates password complexity requirements (16-128 chars).
         services.AddOptions<BootstrapAdminOptions>()
             .Bind(configuration.GetRequiredSection(BootstrapAdminOptions.SectionName))
             .Configure(options =>

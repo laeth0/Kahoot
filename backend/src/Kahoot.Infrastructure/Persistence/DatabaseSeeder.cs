@@ -39,16 +39,19 @@ internal sealed class DatabaseSeeder : IHostedService
             await using NpgsqlTransaction transaction = await connection.BeginTransactionAsync(cancellationToken);
             await using NpgsqlCommand command = connection.CreateCommand();
             command.Transaction = transaction;
+            // PostgreSQL Advisory Lock (SEED-LOCK-001) - Coordinates bootstrap seeding across multi-replica container startups
             command.CommandText = "SELECT pg_advisory_xact_lock(@lockKey)";
             command.CommandTimeout = 0;
             command.Parameters.AddWithValue("lockKey", SeedingLockKey);
 
+            // Distributed Mutual Exclusion - Blocks until advisory lock is acquired on the database cluster
             await command.ExecuteNonQueryAsync(cancellationToken);
             _logger.LogDebug("Database seeding lock acquired. EventName={EventName}", "DatabaseSeedingLockAcquired");
 
             await using AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
             IEnumerable<ISeeder> seeders = scope.ServiceProvider.GetServices<ISeeder>();
 
+            // Idempotent Seeder Execution - Executes all registered ISeeder implementations under advisory lock
             foreach (ISeeder seeder in seeders)
             {
                 await seeder.SeedAsync(cancellationToken);

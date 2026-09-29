@@ -25,6 +25,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
         GetQuizByIdQuery query,
         CancellationToken cancellationToken)
     {
+        // Tenant Isolation - Authenticates host session before querying quiz details
         if (!_currentUser.UserId.HasValue)
         {
             return Result.Failure<QuizDetailsResponse>(AuthErrors.Unauthorized);
@@ -32,6 +33,8 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
 
         Guid hostAccountId = _currentUser.UserId.Value;
 
+        // Query Optimization: AsNoTracking - Bypasses change tracker overhead for read-only projection
+        // Multi-Tenant Isolation - Enforces tenant boundary lookup on (Id, HostAccountId)
         Quiz? quiz = await _dbContext.Quizzes
             .AsNoTracking()
             .TagWith("Quizzes:GetQuizById")
@@ -43,6 +46,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
             return Result.Failure<QuizDetailsResponse>(QuizErrors.NotFound);
         }
 
+        // Split Query Strategy: Questions - Eager-loads questions and attached image metadata sorted by OrderIndex
         List<Question> questions = await _dbContext.Questions
             .AsNoTracking()
             .TagWith("Quizzes:GetQuizQuestions")
@@ -57,6 +61,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
         {
             List<Guid> questionIds = questions.Select(question => question.Id).ToList();
 
+            // N+1 Query Elimination - Batch-loads all choices across questions in a single IN (...) query
             List<Choice> choices = await _dbContext.Choices
                 .AsNoTracking()
                 .TagWith("Quizzes:GetQuizChoices")
@@ -64,6 +69,7 @@ public sealed class GetQuizByIdQueryHandler : IQueryHandler<GetQuizByIdQuery, Qu
                 .OrderBy(choice => choice.OrderIndex)
                 .ToListAsync(cancellationToken);
 
+            // In-Memory Hash Lookup - Groups choices by QuestionId with O(1) correlation
             ILookup<Guid, Choice> choicesByQuestionId = choices.ToLookup(choice => choice.QuestionId);
 
             foreach (Question question in questions)

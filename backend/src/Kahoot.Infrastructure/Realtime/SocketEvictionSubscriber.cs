@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
+// Host Socket Eviction Subscriber - Listens for host invalidation messages and forcibly terminates local host and associated player sockets.
 internal sealed class SocketEvictionSubscriber : IHostedService
 {
     private readonly ISubscriber _subscriber;
@@ -27,6 +28,7 @@ internal sealed class SocketEvictionSubscriber : IHostedService
         _channel = RedisChannel.Literal($"{options.Value.ChannelPrefix}:host-sockets:evict");
     }
 
+    // Pub/Sub Subscription Startup - Registers handler callback for cluster-wide host eviction events.
     public async Task StartAsync(CancellationToken cancellationToken)
     {
         await _subscriber.SubscribeAsync(_channel, (_, message) =>
@@ -39,6 +41,7 @@ internal sealed class SocketEvictionSubscriber : IHostedService
 
             try
             {
+                // Cascade Socket Teardown - Forcibly terminates all host sockets and associated player sockets for suspended tenant.
                 _presence.AbortHostConnections(hostAccountId);
                 _playerPresence.AbortHostConnections(hostAccountId);
             }
@@ -49,6 +52,7 @@ internal sealed class SocketEvictionSubscriber : IHostedService
         });
     }
 
+    // Pub/Sub Subscription Teardown - Unsubscribes from Redis eviction channel during host application shutdown.
     public async Task StopAsync(CancellationToken cancellationToken)
     {
         await _subscriber.UnsubscribeAsync(_channel);

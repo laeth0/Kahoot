@@ -28,9 +28,11 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
         RegisterCommand request,
         CancellationToken cancellationToken)
     {
+        // Dual Identity & Unicode Normalization - Generates display form and canonical NFKC representation for DB uniqueness
         string displayUsername = UsernameNormalization.GetDisplayUsername(request.Username);
         string normalizedUsername = UsernameNormalization.GetNormalizedUsername(displayUsername);
 
+        // Performance & Resource Protection: AnyAsync performs an indexed EXISTS query without loading entities into memory, skipping expensive hashing if username is taken
         bool usernameExists = await _dbContext.Users
             .AnyAsync(user => user.NormalizedUsername == normalizedUsername, cancellationToken);
 
@@ -39,6 +41,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
             return Result.Failure<RegisterResponse>(AuthErrors.UsernameUnavailable);
         }
 
+        // Memory-Hard Hashing (Argon2id) & Anti-DoS - Concurrency-gated hashing consumes 64 MiB RAM per call
         string passwordHash;
         try
         {
@@ -49,6 +52,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
             return Result.Failure<RegisterResponse>(AuthErrors.RateLimited);
         }
 
+        // Tenant Boundary Provisioning - In this multi-tenant architecture, Host user.Id establishes the tenant boundary
         User user = new User
         {
             Id = Guid.NewGuid(),
@@ -64,6 +68,7 @@ public sealed class RegisterCommandHandler : ICommandHandler<RegisterCommand, Re
 
         _dbContext.Users.Add(user);
 
+        // Defensive Concurrency - Catches database unique constraint violations if a concurrent registration raced past the pre-check
         try
         {
             await _dbContext.SaveChangesAsync(cancellationToken);

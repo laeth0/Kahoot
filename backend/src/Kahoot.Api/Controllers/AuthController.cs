@@ -20,6 +20,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Kahoot.Api.Controllers;
 
+// Authentication and Session Controller - Manages user registration, credential login, refresh token rotation, and multi-tenant session invalidation.
 [ApiController]
 [Route("api/auth")]
 public sealed class AuthController : ApiController
@@ -43,6 +44,7 @@ public sealed class AuthController : ApiController
         _corsOptions = corsOptions;
     }
 
+    // Host Registration Endpoint - Creates new Host tenant account with Argon2id password hashing and unique username validation.
     [HttpPost("register")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(RegisterResponse), StatusCodes.Status201Created)]
@@ -64,6 +66,7 @@ public sealed class AuthController : ApiController
         return Problem(result.Error);
     }
 
+    // Host Credential Login Endpoint - Verifies credentials, issues short-lived JWT, sets hardened HttpOnly refresh cookie, and issues CSRF token.
     [HttpPost("login")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
@@ -84,11 +87,13 @@ public sealed class AuthController : ApiController
             return Problem(result.Error);
         }
 
+        // HttpOnly Cookie Transport - Transmits refresh token exclusively via hardened cookie to eliminate XSS theft.
         SetRefreshTokenCookie(result.Value.RawRefreshToken);
         SetCsrfCookie();
         return Ok(result.Value.Response);
     }
 
+    // Refresh Token Rotation Endpoint - Exchanges current refresh token for a newly rotated refresh token and fresh JWT access token.
     [HttpPost("refresh")]
     [AllowAnonymous]
     [ProducesResponseType(typeof(RefreshResponse), StatusCodes.Status200OK)]
@@ -127,6 +132,7 @@ public sealed class AuthController : ApiController
         return Ok(result.Value.Response);
     }
 
+    // Single Device Logout Endpoint - Revokes current refresh token family and clears local authentication cookies.
     [HttpPost("logout")]
     [AllowAnonymous]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -153,6 +159,7 @@ public sealed class AuthController : ApiController
         return NoContent();
     }
 
+    // All-Device Logout Endpoint - Increments TokenSecurityVersion to invalidate all extant bearer tokens and revokes all refresh tokens.
     [HttpPost("logout-all")]
     [Authorize(Roles = $"{nameof(UserRole.Host)},{nameof(UserRole.SystemAdmin)}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -173,6 +180,7 @@ public sealed class AuthController : ApiController
         return NoContent();
     }
 
+    // Change Password Endpoint - Verifies current password, re-hashes new password with Argon2id, and revokes all other sessions.
     [HttpPost("change-password")]
     [Authorize(Roles = $"{nameof(UserRole.Host)},{nameof(UserRole.SystemAdmin)}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -197,6 +205,7 @@ public sealed class AuthController : ApiController
         return NoContent();
     }
 
+    // CSRF & Origin Validation - Enforces double-submit cookie verification (FixedTimeEquals) and Origin header whitelist.
     private bool ValidateCsrfAndOrigin(bool isCookieAuth)
     {
         if (!Request.Headers.TryGetValue(CsrfHeaderName, out StringValues csrfHeader) ||
@@ -259,6 +268,7 @@ public sealed class AuthController : ApiController
                first.Port == second.Port;
     }
 
+    // Cookie Hardening - Scopes refresh token to HttpOnly, Secure, SameSite=Lax, and /api/auth path
     private void SetRefreshTokenCookie(string rawRefreshToken)
     {
         CookieOptions cookieOptions = new CookieOptions
@@ -273,6 +283,7 @@ public sealed class AuthController : ApiController
         Response.Cookies.Append(RefreshTokenCookieName, rawRefreshToken, cookieOptions);
     }
 
+    // Double-Submit CSRF Cookie - Sets readable cookie token for client script to echo back in X-CSRF-Token header
     private void SetCsrfCookie()
     {
         CookieOptions cookieOptions = new CookieOptions
