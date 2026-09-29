@@ -7,6 +7,9 @@ using Kahoot.Api.Services;
 using Kahoot.Application;
 using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure;
+using Kahoot.Infrastructure.Realtime;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Scalar.AspNetCore;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
@@ -22,7 +25,12 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
     builder.Services.AddOpenApi();
     builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
     builder.Services.AddProblemDetails();
-    builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
+    builder.Services.AddScoped<DatabaseHealthCheck>();
+    builder.Services.AddSingleton<RedisHealthCheck>();
+    builder.Services.AddSingleton<StorageHealthCheck>();
+    builder.Services.AddSingleton<ReadinessHealthCheck>();
+    builder.Services.AddHealthChecks()
+        .AddCheck<ReadinessHealthCheck>("readiness", tags: ["ready"]);
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddAuthorization();
 
@@ -53,7 +61,24 @@ WebApplication app = builder.Build();
     }
 
     app.MapControllers();
-    app.MapHealthChecks("/health").AllowAnonymous();
+    app.MapHub<GameHub>("/hubs/game");
+    HealthCheckOptions readinessOptions = new()
+    {
+        Predicate = registration => registration.Tags.Contains("ready"),
+        ResultStatusCodes =
+        {
+            [HealthStatus.Healthy] = StatusCodes.Status200OK,
+            [HealthStatus.Degraded] = StatusCodes.Status503ServiceUnavailable,
+            [HealthStatus.Unhealthy] = StatusCodes.Status503ServiceUnavailable
+        }
+    };
+
+    app.MapHealthChecks("/health/live", new HealthCheckOptions
+    {
+        Predicate = _ => false
+    }).AllowAnonymous();
+    app.MapHealthChecks("/health/ready", readinessOptions).AllowAnonymous();
+    app.MapHealthChecks("/health", readinessOptions).AllowAnonymous();
     app.MapHomePage();
 
     app.Run();

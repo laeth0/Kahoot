@@ -202,6 +202,9 @@ Production configuration loaded via non-committed `.env` files:
 | `JWT_REFRESH_TOKEN_DAYS` | `14` | No | Host refresh token sliding window (14d). | `ARCH-CFG-009` |
 | `JWT_REFRESH_FAMILY_MAX_DAYS` | `30` | No | Absolute maximum refresh token family lifetime (30d). | `ARCH-CFG-010` |
 | `CLIENT_BASE_URL` | `https://quiz.example.com` | No | Canonical origin for generating join links. | `ARCH-CFG-011` |
+| `REDIS_CONNECTION_STRING` | TLS-enabled Redis endpoint and credentials from a secret store | **YES** | Shared SignalR backplane and Host-presence leases. | `ARCH-CFG-011` |
+| `REDIS_CHANNEL_PREFIX` | Unique prefix per environment | No | Isolates SignalR channels and Host-presence keys. | `ARCH-CFG-011` |
+| `REDIS_PORT` | `6379` for local Compose only | No | Loopback port for the local Redis reference service. | `ARCH-CFG-011` |
 | `CORS_ALLOWED_ORIGINS` | `https://quiz.example.com` | No | Whitelisted CORS origins; wildcards rejected. | `ARCH-CFG-012` |
 | `AUTH_SECURE_COOKIES` | `true` | No | Enforces `SameSite=Lax; Secure; HttpOnly` on refresh cookies. | `ARCH-CFG-013` |
 | `BOOTSTRAP_ADMIN_ENABLED` | `true` (initial boot only) | No | Gates initial System Administrator seeding. | `ARCH-CFG-014` |
@@ -216,6 +219,8 @@ Production configuration loaded via non-committed `.env` files:
 | `OTEL_TRACES_SAMPLER` | `parentbased_traceidratio` | No | Sampling mechanism for distributed tracing (`parentbased_traceidratio` or `always_on`). | `ARCH-CFG-023` |
 | `OTEL_TRACES_SAMPLER_ARG` | `0.10` | No | Sampling probability ratio when ratio sampler is active (e.g. 0.10 = 10%). | `ARCH-CFG-024` |
 | `GRAFANA_ADMIN_PASSWORD` | Strong generated secret (min 16 chars) | **YES** | Initial administrator password for Grafana web dashboard. | `ARCH-CFG-025` |
+
+Set `CLIENT_BASE_URL` to the public frontend origin in every staging and production deployment. Compose supplies that value to `GameJoin:ClientBaseUrl` and the frontend CORS allowlist, so generated `/join/{pin}` links use the deployed domain. Production starts only when this URL and the Redis connection and channel prefix are configured. Use a secured Redis service close to the API replicas, and configure load-balancer affinity for SignalR negotiation and WebSocket connections. The bundled Redis container is a local reference service; production Redis credentials and transport security must be supplied by the deployment platform.
 
 ### 2.5 Reference Observability Architecture `[NORMATIVE]`
 

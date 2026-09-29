@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Kahoot.Api.ServiceCollectionExtension;
@@ -44,6 +45,18 @@ public static class JwtAuthenticationInstaller
 
                 options.Events = new JwtBearerEvents
                 {
+                    OnMessageReceived = context =>
+                    {
+                        // Browser WebSocket clients cannot set Authorization headers after negotiation.
+                        if (context.Request.Path.StartsWithSegments("/hubs/game") &&
+                            context.Request.Query.TryGetValue("access_token", out StringValues accessToken) &&
+                            !StringValues.IsNullOrEmpty(accessToken))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    },
                     // After signature/lifetime validation succeeds, verify that the token's
                     // token_security_version still matches the current value in the database.
                     // This is the mechanism that makes logout-all and account suspension take
