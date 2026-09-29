@@ -38,13 +38,16 @@ public sealed class QuizConfiguration : IEntityTypeConfiguration<Quiz>
         builder.Property(quiz => quiz.UpdatedBy)
             .IsRequired(false);
 
+        // Composite Multi-Tenant Key - Supports composite foreign key references from child questions to preserve tenant partitioning
         builder.HasIndex(quiz => new { quiz.Id, quiz.HostAccountId })
             .IsUnique()
             .HasDatabaseName("ux_quizzes_id_host_account");
 
+        // Composite Index For Keyset Listing - Supports host-filtered descending keyset pagination (CreatedAt, Id)
         builder.HasIndex(quiz => new { quiz.HostAccountId, quiz.CreatedAt, quiz.Id })
             .HasDatabaseName("ix_quizzes_host_account_created_id");
 
+        // Referential Integrity Constraint - Restricts deletion of host User while quizzes remain
         builder.HasOne<User>()
             .WithMany()
             .HasForeignKey(quiz => quiz.HostAccountId)

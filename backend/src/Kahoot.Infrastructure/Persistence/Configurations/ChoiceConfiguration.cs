@@ -28,17 +28,21 @@ public sealed class ChoiceConfiguration : IEntityTypeConfiguration<Choice>
         builder.Property(choice => choice.OrderIndex)
             .IsRequired();
 
+        // Composite Multi-Tenant Key - Supports composite foreign key references from submission choices
         builder.HasIndex(choice => new { choice.Id, choice.HostAccountId })
             .IsUnique()
             .HasDatabaseName("ux_choices_id_host_account");
 
+        // Unique Choice Index (QUIZ-QUEST-004) - Enforces contiguous unique display order index per question
         builder.HasIndex(choice => new { choice.QuestionId, choice.OrderIndex })
             .IsUnique()
             .HasDatabaseName("ux_choices_question_order");
 
+        // Composite Index For Choices Seek - Optimizes batch loading of choices by question
         builder.HasIndex(choice => new { choice.HostAccountId, choice.QuestionId, choice.OrderIndex })
             .HasDatabaseName("ix_choices_host_account_question_order");
 
+        // Composite Multi-Tenant Foreign Key (TENANT-001) - Scopes choices strictly to parent question's host tenant
         builder.HasOne<Question>()
             .WithMany()
             .HasForeignKey(choice => new { choice.QuestionId, choice.HostAccountId })
