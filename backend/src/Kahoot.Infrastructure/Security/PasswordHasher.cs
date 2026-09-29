@@ -6,12 +6,13 @@ using Konscious.Security.Cryptography;
 
 namespace Kahoot.Infrastructure.Security;
 
+// Memory-Hard Argon2id Password Hasher - Computes salted hashes using 64 MiB RAM and gates concurrency to protect system memory.
 public sealed class PasswordHasher : IPasswordHasher
 {
     private const string ExpectedAlgorithm = "argon2id";
     private const string ExpectedVersion = "v=19";
 
-    // Memory-Hard Cryptographic Hashing (Argon2id) - 64 MiB RAM per calculation resists massively parallel GPU/ASIC cracking
+    // Memory-Hard Cryptographic Hashing (Argon2id) - 64 MiB RAM per calculation resists massively parallel GPU/ASIC cracking.
     private const int MemorySizeKiB = 65_536; // 64 MiB
     private const int Iterations = 3;
     private const int Parallelism = 1;
@@ -19,17 +20,18 @@ public sealed class PasswordHasher : IPasswordHasher
     private const int SaltSize = 16;
     private const int HashSize = 32;
 
-    // Concurrency Gating & Memory Cap (Anti-DoS) - Limits active hashing to 16 (1 GiB ceiling) and queues 50 to prevent OOM crash
+    // Concurrency Gating & Memory Cap (Anti-DoS) - Limits active hashing to 16 (1 GiB ceiling) and queues 50 to prevent OOM crash.
     private const int MaxActiveHashingOperations = 16;
     private const int MaxQueuedHashingOperations = 50;
 
     private readonly SemaphoreSlim _gate = new(MaxActiveHashingOperations, MaxActiveHashingOperations);
     private int _queuedCount;
 
-    // Dummy-Hash Verification - Genuine precomputed hash ensures dummy check performs identical CPU/RAM work to defeat timing side-channels
+    // Dummy-Hash Verification - Genuine precomputed hash ensures dummy check performs identical CPU/RAM work to defeat timing side-channels.
     private const string PrecomputedDummyHash =
         "$argon2id$v=19$m=65536,t=3,p=1$cycT0VRAQ5f2pQHSVXARzQ==$pZ8wc4Uvqt1H5tUzQhNtbjxA5d/BCukzj/lNemTYOoY=";
 
+    // Salted Password Hash Generation - Derives 32-byte cryptographic hash using cryptographically secure 16-byte random salt.
     public async Task<string> HashPasswordAsync(string password, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(password);
@@ -42,6 +44,7 @@ public sealed class PasswordHasher : IPasswordHasher
         return $"${ExpectedAlgorithm}${ExpectedVersion}${ExpectedParameters}${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
     }
 
+    // Constant-Time Password Verification - Validates Argon2id parameters, re-hashes password, and compares digests in constant time.
     public async Task<bool> VerifyPasswordAsync(string password, string passwordHash, CancellationToken cancellationToken = default)
     {
         if (password is null || string.IsNullOrEmpty(passwordHash))

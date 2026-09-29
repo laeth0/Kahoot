@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kahoot.Api.Controllers;
 
+// System Admin User Management Controller - Provides administrative oversight over Host accounts, keyset-paginated discovery, and suspension lifecycles.
 [ApiController]
 [Route("api/admin/users")]
 [Authorize(Roles = nameof(UserRole.SystemAdmin))]
@@ -23,6 +24,7 @@ public sealed class AdminUsersController : ApiController
         _sender = sender;
     }
 
+    // List Users Endpoint - Returns keyset-paginated list of registered users filtered by status and username prefix.
     [HttpGet]
     [ProducesResponseType(typeof(ListUsersResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -46,6 +48,7 @@ public sealed class AdminUsersController : ApiController
         return Problem(result.Error);
     }
 
+    // Get User By Id Endpoint - Retrieves complete administrative profile for a specific host account.
     [HttpGet("{accountId:guid}")]
     [ProducesResponseType(typeof(UserAdminResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -67,6 +70,7 @@ public sealed class AdminUsersController : ApiController
         return Problem(result.Error);
     }
 
+    // Suspend User Endpoint - Suspends host account, revokes refresh tokens, bumps TokenSecurityVersion, and enqueues async game teardown.
     [HttpPost("{accountId:guid}/suspend")]
     [ProducesResponseType(typeof(SuspendUserResponse), StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -96,6 +100,7 @@ public sealed class AdminUsersController : ApiController
         return Problem(result.Error);
     }
 
+    // Reactivate User Endpoint - Restores a suspended user account back to Active status with OCC revision check.
     [HttpPost("{accountId:guid}/reactivate")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

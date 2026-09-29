@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Diagnostics;
 
 namespace Kahoot.Api.Middleware;
 
+// Global Exception Handler - Centralized RFC 7807 ProblemDetails middleware interceptor normalizing uncaught application exceptions.
 internal sealed class GlobalExceptionHandler : IExceptionHandler
 {
     private readonly ILogger<GlobalExceptionHandler> _logger;
@@ -13,11 +14,13 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
         _logger = logger;
     }
 
+    // Exception Mapping Pipeline - Maps typed domain/infrastructure exceptions to standard HTTP error representations with trace correlations.
     public async ValueTask<bool> TryHandleAsync(
         HttpContext httpContext,
         Exception exception,
         CancellationToken cancellationToken)
     {
+        // Payload Limit Interception - Converts ASP.NET Core request body size limit rejections into typed image payload error responses.
         if (exception is BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge } &&
             string.Equals(httpContext.Request.Path.Value, "/api/uploads/images", StringComparison.OrdinalIgnoreCase))
         {
@@ -33,6 +36,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        // Validation Problem Details - Aggregates FluentValidation failures into RFC 7807 validation error dictionaries with 400 Bad Request.
         if (exception is ValidationException validationException)
         {
             Dictionary<string, string[]> errors = validationException.Errors
@@ -53,6 +57,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        // Argon2id Concurrency Protection - Returns 429 Too Many Requests when password hashing semaphore capacity is exhausted.
         if (exception is Kahoot.Application.Common.Exceptions.PasswordHashingRateLimitedException)
         {
             await Results.Problem(
@@ -67,6 +72,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        // Transient Fault Shield - Classifies transient Npgsql exceptions and timeouts into 503 Service Unavailable responses.
         Exception rootException = exception.GetBaseException();
         if (rootException is Npgsql.NpgsqlException { IsTransient: true } or TimeoutException)
         {
@@ -84,6 +90,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
+        // Unhandled Exception Redaction - Catches unexpected errors, logs full stack traces internally, and returns sanitized 500 responses.
         _logger.LogError(exception, "Unhandled request exception");
 
         await Results.Problem(
@@ -94,6 +101,7 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
         return true;
     }
 
+    // Distributed Trace Extensions - Enriches ProblemDetails payloads with HTTP TraceIdentifier and W3C distributed traceId.
     private static Dictionary<string, object?> CreateExtensions(HttpContext httpContext, string? code = null)
     {
         Dictionary<string, object?> extensions = new()

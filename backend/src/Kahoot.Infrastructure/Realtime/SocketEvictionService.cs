@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 
+// Host Socket Eviction Service - Broadcasts host account invalidation signals over Redis pub/sub upon account suspension.
 internal sealed class SocketEvictionService : ISocketEvictionService
 {
     private readonly ISubscriber _subscriber;
@@ -21,6 +22,7 @@ internal sealed class SocketEvictionService : ISocketEvictionService
         _logger = logger;
     }
 
+    // Distributed Host Eviction Dispatch - Emits host account ID to Redis channel to immediately terminate active host sockets cluster-wide.
     public async Task EvictUserSocketsAsync(Guid hostAccountId, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();

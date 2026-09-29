@@ -12,8 +12,10 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Kahoot.Api.ServiceCollectionExtension;
 
+// JWT Authentication Installer - Configures Bearer token validation, SignalR query string token extraction, and real-time revocation checks.
 public static class JwtAuthenticationInstaller
 {
+    // JWT Bearer Registration - Binds token validation parameters, zero clock skew, and authentication event hooks.
     public static IServiceCollection AddJwtAuthentication(this IServiceCollection services, IConfiguration configuration)
     {
         IConfigurationSection jwtSection = configuration.GetSection(JwtOptions.SectionName);
@@ -28,7 +30,9 @@ public static class JwtAuthenticationInstaller
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                // Claim Type Preservation - Disables default WS-Federation XML schema claim mapping to preserve standard OIDC JWT claim keys.
                 options.MapInboundClaims = false;
+                // Strict Token Validation - Enforces issuer, audience, symmetric cryptographic signature, and exact lifetime expiration.
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -39,16 +43,15 @@ public static class JwtAuthenticationInstaller
                     IssuerSigningKey = new SymmetricSecurityKey(signingKeyBytes),
                     ValidateLifetime = true,
                     RoleClaimType = "role",
-                    // No clock skew: tokens expire exactly at Exp to keep the 15-minute access-token
-                    // lifetime tight and consistent with the security model.
+                    // Zero Clock Skew - Eliminates default 5-minute leeway to ensure strict 15-minute access token expiration.
                     ClockSkew = TimeSpan.Zero
                 };
 
                 options.Events = new JwtBearerEvents
                 {
+                    // WebSocket Query Token Extraction - Extracts Bearer access_token from query string for browser SignalR WebSocket connections.
                     OnMessageReceived = context =>
                     {
-                        // Browser WebSocket clients cannot set Authorization headers after negotiation.
                         if (context.Request.Path.StartsWithSegments("/hubs/game") &&
                             context.Request.Query.TryGetValue("access_token", out StringValues accessToken) &&
                             !StringValues.IsNullOrEmpty(accessToken))
@@ -58,10 +61,7 @@ public static class JwtAuthenticationInstaller
 
                         return Task.CompletedTask;
                     },
-                    // After signature/lifetime validation succeeds, verify that the token's
-                    // token_security_version still matches the current value in the database.
-                    // This is the mechanism that makes logout-all and account suspension take
-                    // effect for access tokens that are structurally still valid.
+                    // Security Version Revocation Check - Queries database to verify user status, role, and TokenSecurityVersion match active credentials.
                     OnTokenValidated = async context =>
                     {
                         string? sub = context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier)
@@ -101,9 +101,7 @@ public static class JwtAuthenticationInstaller
                         }
                     },
 
-                    // Produce a consistent RFC7807 ProblemDetails 401 instead of the default
-                    // WWW-Authenticate challenge so clients receive the same error shape as
-                    // all other API errors.
+                    // RFC 7807 Unauthorized Challenge - Renders standardized ProblemDetails 401 response with trace correlation identifiers.
                     OnChallenge = async context =>
                     {
                         context.HandleResponse();
@@ -132,6 +130,7 @@ public static class JwtAuthenticationInstaller
                         await problem.ExecuteAsync(context.HttpContext);
                     },
 
+                    // RFC 7807 Forbidden Event - Renders standardized ProblemDetails 403 response when principal lacks required role permissions.
                     OnForbidden = async context =>
                     {
                         Dictionary<string, object?> extensions = new()
@@ -160,5 +159,6 @@ public static class JwtAuthenticationInstaller
         return services;
     }
 
+    // User Security State Projection - Minimal DTO projecting user status, role, and security version for token validation.
     private sealed record UserSecurityState(UserStatus Status, UserRole Role, int TokenSecurityVersion);
 }

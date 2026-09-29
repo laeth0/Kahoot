@@ -49,12 +49,12 @@ public sealed class LogoutAllCommandHandler : ICommandHandler<LogoutAllCommand>
             return Result.Failure(AuthErrors.Unauthorized);
         }
 
-        // Bulk Session Revocation & Performance: ExecuteUpdateAsync issues a direct SQL UPDATE across all sessions without change-tracker memory overhead
+        // Bulk Session Revocation & Performance - ExecuteUpdateAsync issues a direct SQL UPDATE across all sessions without change-tracker memory overhead
         await _dbContext.RefreshTokens
             .Where(token => token.UserId == userId.Value && token.RevokedAt == null)
             .ExecuteUpdateAsync(setter => setter.SetProperty(t => t.RevokedAt, now), cancellationToken);
 
-        // Stateless JWT Invalidation (TokenSecurityVersion): Increments version via ExecuteUpdateAsync so nodes reject existing JWTs without a distributed blacklist
+        // Stateless JWT Invalidation (TokenSecurityVersion) - Increments version via ExecuteUpdateAsync so nodes reject existing JWTs without a distributed blacklist
         int updatedUsers = await _dbContext.Users
             .Where(user => user.Id == userId.Value && user.Status == UserStatus.Active)
             .ExecuteUpdateAsync(setter => setter

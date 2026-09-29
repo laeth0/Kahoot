@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
+// Player Socket Eviction Subscriber - Background listener consuming Redis pub/sub eviction frames to abort stale or kicked player sockets across nodes.
 internal sealed class PlayerSocketEvictionSubscriber : BackgroundService
 {
     private readonly ISubscriber _subscriber;
@@ -28,6 +29,7 @@ internal sealed class PlayerSocketEvictionSubscriber : BackgroundService
         _logger = logger;
     }
 
+    // Message Consumption Loop - Reads pub/sub eviction messages and executes fencing or kick procedures.
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         ChannelMessageQueue queue = await _subscriber.SubscribeAsync(_channel);
@@ -45,6 +47,7 @@ internal sealed class PlayerSocketEvictionSubscriber : BackgroundService
                     continue;
                 }
 
+                // Distributed Connection Generation Fencing - Aborts older sockets presenting generation strictly below published threshold.
                 if (identifiers[0] == "fence" && identifiers.Length == 4 &&
                     long.TryParse(identifiers[3], out long generation))
                 {
@@ -58,6 +61,7 @@ internal sealed class PlayerSocketEvictionSubscriber : BackgroundService
                     continue;
                 }
 
+                // Participant Removal Frame Dispatch - Sends ParticipantRemoved event frame to participant's connected client sockets.
                 string[] connectionIds = _presence.GetParticipantConnectionIds(participantId);
                 foreach (string connectionId in connectionIds)
                 {
@@ -75,6 +79,7 @@ internal sealed class PlayerSocketEvictionSubscriber : BackgroundService
                     }
                 }
 
+                // Final Socket Abort - Hard terminates all socket connections for kicked participant on this instance.
                 _presence.AbortParticipantConnections(participantId);
             }
         }

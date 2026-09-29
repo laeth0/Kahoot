@@ -5,9 +5,12 @@ using Kahoot.Application.Common.Interfaces;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 
+// Distributed Player Presence Service - Orchestrates player socket presence, cross-replica connection count tracking, and generation fencing.
 public sealed class PlayerPresenceService : IPlayerPresenceService
 {
+    // Player Presence Lease Duration - Sets 45-second sliding lease renewed periodically by background heartbeat workers.
     private static readonly TimeSpan LeaseDuration = TimeSpan.FromSeconds(45);
+    // Key Retention TTL - Retains Redis player presence keys for 10 minutes past inactivity for graceful cleanup.
     private static readonly TimeSpan KeyRetention = TimeSpan.FromMinutes(10);
 
     private readonly ConcurrentDictionary<string, PlayerConnection> _connections = new();
@@ -28,6 +31,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         _timeProvider = timeProvider;
     }
 
+    // Connection Lookup - Retrieves immutable connection metadata for an active player socket.
     public bool TryGetConnection(string connectionId, out PlayerConnectionInfo info)
     {
         if (_connections.TryGetValue(connectionId, out PlayerConnection? connection))
@@ -46,6 +50,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         return false;
     }
 
+    // Active Connection Check - Prunes expired lease scores and returns whether a participant holds any active socket across all pods.
     public async Task<bool> HasActiveConnectionAsync(Guid participantId, CancellationToken cancellationToken)
     {
         RedisKey key = ParticipantKey(participantId);
@@ -55,6 +60,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         return await _database.SortedSetLengthAsync(key).WaitAsync(cancellationToken) > 0;
     }
 
+    // Player Connection Registration - Binds new socket to local connection map and updates Redis game and participant presence sets.
     public async Task RegisterAsync(
         string connectionId,
         Guid participantId,
@@ -97,6 +103,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         }
     }
 
+    // Player Connection Removal - Removes socket entry from local registry and Redis sorted sets, returning true if other players remain.
     public async Task<bool> RemoveAsync(string connectionId, Guid gameId)
     {
         if (_connections.TryGetValue(connectionId, out PlayerConnection? connection))
@@ -120,6 +127,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         return await HasAnyAsync(gameId);
     }
 
+    // Connected Player Count Query - Counts active unexpired player connections for a game in Redis using ZREMRANGEBYSCORE and ZCARD.
     public async Task<int> GetConnectedCountAsync(Guid gameId)
     {
         RedisKey key = Key(gameId);
@@ -129,6 +137,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         return (int)count;
     }
 
+    // Game Player Activity Check - Determines whether any active player sockets remain connected to the specified game.
     public async Task<bool> HasAnyAsync(Guid gameId)
     {
         RedisKey key = Key(gameId);
@@ -138,6 +147,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         return count > 0;
     }
 
+    // Targeted Participant Socket Abort - Aborts all local SignalR sockets belonging to a specific participant.
     public void AbortParticipantConnections(Guid participantId)
     {
         foreach (PlayerConnection connection in _connections.Values)
@@ -149,6 +159,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         }
     }
 
+    // Host-Scoped Player Sockets Abort - Aborts all player sockets associated with a suspended host account.
     public void AbortHostConnections(Guid hostAccountId)
     {
         foreach (PlayerConnection connection in _connections.Values)
@@ -160,6 +171,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         }
     }
 
+    // Distributed Participant Eviction - Publishes kick notice over Redis pub/sub channel to evict participant sockets across the cluster.
     public async Task EvictParticipantAsync(Guid participantId, Guid gameId, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -168,6 +180,7 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
             $"kick:{gameId:N}:{participantId:N}").WaitAsync(cancellationToken);
     }
 
+    // Distributed Connection Generation Fencing - Publishes fence notice over Redis to terminate older sockets for this participant.
     public async Task FenceParticipantAsync(Guid participantId, Guid gameId, long generation, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -176,11 +189,13 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
             $"fence:{gameId:N}:{participantId:N}:{generation}").WaitAsync(cancellationToken);
     }
 
+    // Local Connection ID Lookup - Queries all local socket IDs currently bound to a specific participant.
     public string[] GetParticipantConnectionIds(Guid participantId) => _connections
         .Where(entry => entry.Value.ParticipantId == participantId)
         .Select(entry => entry.Key)
         .ToArray();
 
+    // Generation-Based Stale Socket Eviction - Aborts any local connections for a participant whose generation is strictly less than target.
     public void AbortStaleParticipantConnections(Guid participantId, long generation)
     {
         foreach (PlayerConnection connection in _connections.Values)

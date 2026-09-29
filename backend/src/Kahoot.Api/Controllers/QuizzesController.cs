@@ -18,6 +18,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Kahoot.Api.Controllers;
 
+// Quiz Management Controller - Manages tenant-isolated quiz creation, question definitions, choice options, and question reordering.
 [ApiController]
 [Route("api/quizzes")]
 [Authorize(Roles = nameof(UserRole.Host))]
@@ -30,6 +31,7 @@ public sealed class QuizzesController : ApiController
         _sender = sender;
     }
 
+    // Create Quiz Endpoint - Creates new quiz container for the authenticated Host tenant.
     [HttpPost]
     [ProducesResponseType(typeof(QuizSummaryResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -50,6 +52,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // List Quizzes Endpoint - Returns keyset-paginated list of quizzes owned by the authenticated Host.
     [HttpGet]
     [ProducesResponseType(typeof(ListQuizzesResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -71,6 +74,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Get Quiz Details Endpoint - Retrieves complete quiz aggregate including ordered questions and choices.
     [HttpGet("{quizId:guid}")]
     [ProducesResponseType(typeof(QuizDetailsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -91,6 +95,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Update Quiz Endpoint - Updates quiz title and description with optimistic revision increment.
     [HttpPut("{quizId:guid}")]
     [ProducesResponseType(typeof(QuizSummaryResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -114,6 +119,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Delete Quiz Endpoint - Cascades deletion to questions, choices, and images, rejecting deletion if active live games exist.
     [HttpDelete("{quizId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -135,6 +141,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Add Question Endpoint - Appends question to quiz and binds choice options with atomic transaction and revision check.
     [HttpPost("{quizId:guid}/questions")]
     [ProducesResponseType(typeof(QuestionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -165,6 +172,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Update Question Endpoint - Mutates question text, media, time limits, and choice collection under optimistic revision guard.
     [HttpPut("{quizId:guid}/questions/{questionId:guid}")]
     [ProducesResponseType(typeof(QuestionResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -197,6 +205,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Delete Question Endpoint - Removes question and compacts remaining question display sequence numbers.
     [HttpDelete("{quizId:guid}/questions/{questionId:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
@@ -219,6 +228,7 @@ public sealed class QuizzesController : ApiController
         return Problem(result.Error);
     }
 
+    // Reorder Questions Endpoint - Re-sequences question ordinal positions in a single transaction, verifying complete id set matches.
     [HttpPost("{quizId:guid}/reorder")]
     [ProducesResponseType(typeof(ReorderQuestionsResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]

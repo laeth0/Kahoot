@@ -51,7 +51,7 @@ public sealed record QuestionEndedEvent(
     List<Guid> CorrectChoiceIds,
     List<QuestionChoiceResultDto> Choices);
 
-// State Synchronization: Carries question timer bounds and snapshot metadata for late-joining or reconnecting hosts
+// State Synchronization - Carries question timer bounds and snapshot metadata for late-joining or reconnecting hosts
 public sealed record CurrentQuestionDto(
     Guid QuestionId,
     int OrderIndex,

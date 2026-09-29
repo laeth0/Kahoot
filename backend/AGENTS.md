@@ -59,7 +59,7 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
 - **Placement:** Comment directly above the specific statement. Never at class or file level.
 - **Format:** `// <Concept Name> - <concise explanation>`. No prefixes (`BACKEND CONCEPT:`, `NOTE:`, etc.).
 - **Focus:** Security and performance first. Scalability, concurrency, and maintainability patterns are also valid — skip obvious code.
-- **Query Annotations:** Place a comment above every query that uses a notable performance, security, or MVCC mechanism:
+- **Query, Concurrency & Database Annotations:** Place a comment above every query or persistence statement using a notable performance, security, or MVCC mechanism:
   - `AsNoTracking()` — eliminates change-tracker overhead and snapshot memory for read-only queries.
   - `AnyAsync` / `SingleOrDefaultAsync` — short-circuits against a unique index; avoids full table scan.
   - `FOR UPDATE` / `GetUserForUpdateAsync` — acquires a pessimistic row-level lock; serializes concurrent writers and prevents TOCTOU races.
@@ -68,21 +68,37 @@ These instructions apply to `backend/`. Read the affected code and nearby depend
   - `Select(x => x.Field)` — column projection; reduces row fetch size, network payload, and allocations.
   - `RepeatableRead` / `Serializable` isolation — MVCC snapshot prevents phantom reads and non-repeatable reads; note the increased MVCC tuple churn and serialization failure risk.
   - `pg_advisory_xact_lock` — transaction-scoped advisory lock for cluster-wide singleton coordination (e.g., seeding, scheduled tasks) without a dedicated lock table.
-  - `xmin` row version / `RowVersion` / OCC — optimistic concurrency; detects concurrent modification without holding a lock; prefer for high-throughput, low-contention paths.
+  - `xmin` row version / `RowVersion` / OCC (`Revision`) — optimistic concurrency; detects concurrent modification without holding a lock; prefer for high-throughput, low-contention paths.
   - CTE (`WITH ... AS MATERIALIZED`) — materializes the subquery result once; prevents the optimizer from inlining and re-evaluating it inside `DELETE`/`UPDATE`.
   - `LIMIT` / `Take()` — bounds result set size; prevents unbounded memory growth and lock escalation on large tables.
   - Keyset pagination (`WHERE id > @cursor ORDER BY id`) — O(log n) index seek per page; avoids `OFFSET` full scan degradation on deep pages.
   - Parameterized queries / `ExecuteSqlInterpolatedAsync` — EF Core translates interpolated strings into parameters; eliminates SQL injection at the query boundary.
   - Connection pool (`Npgsql`) — annotate when explicitly controlling pool size, `MinPoolSize`, or `MaxPoolSize` for throughput-sensitive paths.
   - `CancellationToken` propagation — ensures long-running database commands are cancelled on client disconnect or application shutdown, releasing server resources immediately.
+  - N+1 query prevention (`Include` / `Join` / split query) — annotate when eager-loading a collection to explain why a single join or split query replaces N round-trips to the database.
+  - Two-phase unique re-indexing (Negative staging) — temporarily offsets entity sequence ordinals into negative space before assigning target positions, avoiding unique constraint collisions (`(QuizId, OrderIndex)`) during bulk reordering in a single transaction.
+  - Immutable aggregate snapshotting (`RepeatableRead`) — creates deep, point-in-time domain copies (quizzes, questions, choices) during game session creation under MVCC snapshot isolation, completely isolating active games from subsequent author edits or deletions.
+  - Permanent tombstones / Reservation slots — preserves soft-deleted or removed participant nicknames to prevent race conditions, replay attacks, or unauthorized re-joins within active game sessions.
+  - Periodic batch cleanup pacing (`ExecuteDeleteAsync` + sleep) — processes large-volume deletions (expired refresh tokens, orphan images) in bounded batches with pacing intervals, mitigating database lock contention and WAL write spikes.
+- **System Design & Distributed Patterns:** Place a comment above statements and architectural boundaries implementing notable distributed system or resiliency patterns:
   - Redis pub/sub (`ISubscriber.PublishAsync`) — fan-out to all replicas over a shared channel; annotate channel name and message contract so the reader understands the cluster-wide delivery scope.
   - Redis distributed lease (`SET NX PX`) — atomic `SET key value NX PX ttl`; only one replica wins the lock; others skip; prevents duplicated background work across pods.
   - SignalR Redis Backplane — all hub messages pass through Redis so any replica can push to any connected client; annotate when a `SendAsync` or group call relies on the backplane being healthy.
   - Post-commit broadcast pattern — `SaveChangesAsync` first, then fan-out; guarantees the database row is durable before any replica receives the realtime event; prevents phantom pushes on rollback.
   - Idempotency key / `JoinOperationId` SHA-256 — deduplicate retried client requests at the database boundary; a unique index on the key makes duplicate execution a no-op instead of a double-write.
-  - N+1 query prevention (`Include` / `Join` / split query) — annotate when eager-loading a collection to explain why a single join or split query replaces N round-trips to the database.
   - `IMemoryCache` / `IDistributedCache` (Redis) — annotate the cache key, TTL, and invalidation strategy; note whether stale reads are acceptable or whether cache-aside with write-through is required.
   - Retry + exponential backoff (`Polly`) — annotate transient failure policies on network calls to external services; document max attempts, jitter, and which exceptions are considered transient.
+  - `Channel<T>` / In-Memory Producer-Consumer — decouples hot synchronous request paths from asynchronous background processing (e.g., host socket evictions, session finalization) without blocking thread pool threads.
+  - Token Bucket / Sliding Window rate limiting (`ILobbyJoinRateLimiter` / `LoginRateLimiter`) — bounds traffic bursts and protects against credential stuffing or join flood DDoS across replicas using Redis atomic counters and TTLs.
+  - Concurrency throttling / Backpressure (`SemaphoreSlim`) — caps concurrent execution of CPU/memory-heavy operations (e.g., Argon2id hashing) to physical core limits, rejecting excess load with HTTP 429 instead of degrading server latency or inducing OOM crashes.
+  - Cache stampede shield / Mutex locking (Single-flight) — serializes concurrent cache refreshes or external dependency health probes using semaphores to protect downstream databases from thundering herd spikes.
+  - Circuit Breaker / Graceful degradation (`Degraded` health status) — isolates failing auxiliary dependencies (e.g., image disk storage) to keep critical path workflows (live game lobbies and question countdowns) operational.
+  - State machine version fencing (`StateVersion`) — authoritative monotonic sequence numbers broadcast across SignalR and verified in mutations to detect and reject out-of-order frames, network replays, or stale socket events.
+  - Distributed heartbeat & lease renewals (`HostPresenceService` / `PlayerPresenceService`) — background workers maintain active session presence keys in Redis with short TTLs, enabling automatic room cleanup and seat reclamation when hosts or players disconnect.
+  - Cluster socket eviction (`ISocketEvictionService`) — publishes cluster-wide eviction frames over Redis pub/sub to force-close active WebSocket connections across all server pods upon user suspension or game termination.
+  - Reverse proxy header validation (`KnownIPNetworks`) — restricts `X-Forwarded-For` and `X-Forwarded-Proto` trust strictly to configured CIDR blocks, preventing IP spoofing attacks that bypass rate limiters or compromise audit logs.
+  - Telemetry PII scrubbing & span filtering — strips query strings, auth tokens, client headers, and `/health` probe traces at the OpenTelemetry boundary, protecting sensitive data and preventing trace storage bloat.
+  - Zero clock skew token validation (`ClockSkew = TimeSpan.Zero`) — eliminates the default 5-minute leeway on JWT validation, strictly enforcing the 15-minute access token lifetime and security version revocation boundaries.
 
 
 ## Database and EF Core Migrations

@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace Kahoot.Infrastructure.Security;
 
+// JWT Token Generator - Issues cryptographically signed HMAC-SHA256 bearer tokens carrying subject and TokenSecurityVersion claims.
 public sealed class JwtTokenGenerator : IJwtTokenGenerator
 {
     private readonly JwtOptions _options;
@@ -24,6 +25,7 @@ public sealed class JwtTokenGenerator : IJwtTokenGenerator
         _timeProvider = timeProvider;
     }
 
+    // Access Token Issuance - Assembles claims payload, binds TokenSecurityVersion, and signs compact JWT representation.
     public AccessTokenResult GenerateAccessToken(User user)
     {
         ArgumentNullException.ThrowIfNull(user);
