@@ -171,6 +171,15 @@ public sealed class PlayerPresenceService : IPlayerPresenceService
         }
     }
 
+    // Graceful Shutdown Abort (OPS-SHUT-001) - Force-closes all active player connections upon host termination to trigger client reconnection.
+    public void AbortAllConnections()
+    {
+        foreach (PlayerConnection connection in _connections.Values)
+        {
+            connection.Abort();
+        }
+    }
+
     // Distributed Participant Eviction - Publishes kick notice over Redis pub/sub channel to evict participant sockets across the cluster.
     public async Task EvictParticipantAsync(Guid participantId, Guid gameId, long stateVersion, CancellationToken cancellationToken)
     {

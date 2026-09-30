@@ -2,6 +2,7 @@ using Kahoot.Application.Common.Interfaces;
 using Kahoot.Infrastructure.Persistence;
 using Kahoot.Infrastructure.Realtime;
 using Kahoot.Infrastructure.ServiceCollectionExtension;
+using Kahoot.Infrastructure.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -15,11 +16,26 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
+        string? reconciliationSetting = configuration["DR_RECONCILIATION_ON_STARTUP"];
+        bool reconcileOnStartup = false;
+        if (reconciliationSetting is not null &&
+            !bool.TryParse(reconciliationSetting, out reconcileOnStartup))
+        {
+            throw new InvalidOperationException("DR_RECONCILIATION_ON_STARTUP must be true or false.");
+        }
+
+        if (reconcileOnStartup)
+        {
+            throw new InvalidOperationException(
+                "Disaster recovery admission requires reconciliation against an independently backed-up security ledger before startup.");
+        }
+
         services.AddPersistence(configuration);
         services.AddSecurity(configuration);
         services.AddStorage(configuration);
-        services.AddRealtime(configuration);
+        services.AddSingleton<ICriticalWorkerFailureTracker, CriticalWorkerFailureTracker>();
         services.AddHostedService<DatabaseSeeder>();
+        services.AddRealtime(configuration);
         services.AddHostedService<RefreshTokenCleanupWorker>();
         services.AddSingleton<ISuspensionFinalizerChannel, SuspensionFinalizerChannel>();
         services.AddHostedService<SuspensionFinalizerWorker>();

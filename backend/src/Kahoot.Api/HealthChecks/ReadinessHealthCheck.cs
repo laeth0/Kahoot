@@ -1,5 +1,6 @@
 namespace Kahoot.Api.HealthChecks;
 
+using Kahoot.Application.Common.Interfaces;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
@@ -15,6 +16,7 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly RedisHealthCheck _redis;
     private readonly StorageHealthCheck _storage;
+    private readonly ICriticalWorkerFailureTracker _workerFailureTracker;
     private readonly TimeProvider _timeProvider;
     private readonly IHostApplicationLifetime _lifetime;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
@@ -24,12 +26,14 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
         IServiceScopeFactory scopeFactory,
         RedisHealthCheck redis,
         StorageHealthCheck storage,
+        ICriticalWorkerFailureTracker workerFailureTracker,
         TimeProvider timeProvider,
         IHostApplicationLifetime lifetime)
     {
         _scopeFactory = scopeFactory;
         _redis = redis;
         _storage = storage;
+        _workerFailureTracker = workerFailureTracker;
         _timeProvider = timeProvider;
         _lifetime = lifetime;
     }
@@ -55,7 +59,11 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
         }
 
         // Serialized Refresh - Acquires semaphore to prevent redundant concurrent probe calls against backing infrastructure.
-        await _refreshGate.WaitAsync(cancellationToken);
+        if (!await _refreshGate.WaitAsync(ProbeTimeout, cancellationToken))
+        {
+            return HealthCheckResult.Unhealthy("Readiness probe is busy.");
+        }
+
         try
         {
             cached = _cachedResult;
@@ -109,9 +117,18 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
             }
 
             HealthCheckResult storageResult = await _storage.CheckHealthAsync(context, timeout.Token);
-            return storageResult.Status == HealthStatus.Healthy
-                ? HealthCheckResult.Healthy()
-                : HealthCheckResult.Degraded("Image storage is unavailable.");
+            if (storageResult.Status != HealthStatus.Healthy)
+            {
+                return HealthCheckResult.Degraded("Image storage is unavailable.");
+            }
+
+            // Critical Worker Backlog Escalation (OPS-WORK-002) - Marks readiness degraded if a critical finalization worker backlog persists beyond 15 minutes
+            if (_workerFailureTracker.HasDegradedBacklog(out string? failingWorker, out TimeSpan? duration))
+            {
+                return HealthCheckResult.Degraded($"Critical worker {failingWorker} backlog has persisted beyond 15 minutes.");
+            }
+
+            return HealthCheckResult.Healthy();
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

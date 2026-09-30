@@ -53,6 +53,10 @@ public static class ObservabilityInstaller
 
         Sampler traceSampler = ResolveSampler(configuration, environment);
 
+        // Hosting request-start logs run before middleware and can contain SignalR access_token
+        // query parameters. Suppress that category's informational request logging at the source.
+        logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
+
         // Distributed Tracing Pipeline - Instruments ASP.NET Core, HttpClient, and Npgsql with health probe filtering and sensitive tag redaction.
         services.AddOpenTelemetry()
             .ConfigureResource(configureResource)

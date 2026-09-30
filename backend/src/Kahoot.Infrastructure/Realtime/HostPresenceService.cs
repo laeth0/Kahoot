@@ -162,6 +162,15 @@ public sealed class HostPresenceService
         }
     }
 
+    // Graceful Shutdown Abort (OPS-SHUT-001) - Force-closes all active host connections upon host termination to trigger client reconnection.
+    public void AbortAllConnections()
+    {
+        foreach (HostConnection connection in _connections.Values)
+        {
+            connection.Abort();
+        }
+    }
+
     // Connected Host Query - Collects distinct host account IDs currently holding active sockets on this server instance.
     public Guid[] GetConnectedHostAccountIds() => _connections.Values
         .Select(connection => connection.HostAccountId)

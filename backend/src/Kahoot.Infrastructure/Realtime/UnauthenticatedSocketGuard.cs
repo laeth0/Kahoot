@@ -54,6 +54,19 @@ public sealed class UnauthenticatedSocketGuard
         }
     }
 
+    // Graceful Shutdown Abort (OPS-SHUT-001) - Disposes and aborts all pending unauthenticated sockets on server termination.
+    public void AbortAll()
+    {
+        foreach (KeyValuePair<string, SocketTimeoutRegistration> entry in _registrations)
+        {
+            if (_registrations.TryRemove(entry.Key, out SocketTimeoutRegistration? registration))
+            {
+                registration.Abort();
+                registration.Dispose();
+            }
+        }
+    }
+
     // Handshake Timeout Callback - Forcefully aborts zombie socket if client fails to invoke JoinGame, Reconnect, or JoinAsHost within 15 seconds.
     private void OnTimeout(object? state)
     {

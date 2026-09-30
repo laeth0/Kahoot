@@ -76,6 +76,12 @@ public abstract class ApiController : ControllerBase
             ["requestId"] = HttpContext.TraceIdentifier
         };
 
+        // Distributed Trace Correlation (OPS-OBS-004) - Includes 32-character hexadecimal traceId in ProblemDetails if ambient Activity exists
+        if (System.Diagnostics.Activity.Current is not null)
+        {
+            extensions["traceId"] = System.Diagnostics.Activity.Current.TraceId.ToString();
+        }
+
         return Problem(
             detail: error.Description,
             instance: HttpContext.Request.Path,

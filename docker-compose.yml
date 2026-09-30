@@ -16,6 +16,7 @@ services:
       BOOTSTRAP_ADMIN_ENABLED: "${BOOTSTRAP_ADMIN_ENABLED:-false}"
       BOOTSTRAP_ADMIN_USERNAME: "${BOOTSTRAP_ADMIN_USERNAME:-}"
       BOOTSTRAP_ADMIN_PASSWORD: "${BOOTSTRAP_ADMIN_PASSWORD:-}"
+      DR_RECONCILIATION_ON_STARTUP: "${DR_RECONCILIATION_ON_STARTUP:-false}"
       OTEL_SERVICE_NAME: "${OTEL_SERVICE_NAME:-kahoot-api}"
       OTEL_RESOURCE_ATTRIBUTES: "${OTEL_RESOURCE_ATTRIBUTES:-deployment.environment.name=production}"
       OTEL_EXPORTER_OTLP_ENDPOINT: "${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}"
@@ -41,6 +42,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
+    stop_grace_period: 35s
     restart: unless-stopped
 
   db:

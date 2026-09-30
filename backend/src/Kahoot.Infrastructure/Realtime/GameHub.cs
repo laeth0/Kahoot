@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 // Realtime Game Hub - Bi-directional WebSocket endpoint orchestrating host session control, anonymous player joins, connection generation fencing, and state synchronization.
@@ -26,6 +27,7 @@ public sealed class GameHub : Hub
     private readonly HostPresenceService _presence;
     private readonly PlayerPresenceService _playerPresence;
     private readonly UnauthenticatedSocketGuard _unauthenticatedGuard;
+    private readonly IHostApplicationLifetime _lifetime;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GameHub> _logger;
 
@@ -34,6 +36,7 @@ public sealed class GameHub : Hub
         HostPresenceService presence,
         PlayerPresenceService playerPresence,
         UnauthenticatedSocketGuard unauthenticatedGuard,
+        IHostApplicationLifetime lifetime,
         TimeProvider timeProvider,
         ILogger<GameHub> logger)
     {
@@ -41,6 +44,7 @@ public sealed class GameHub : Hub
         _presence = presence;
         _playerPresence = playerPresence;
         _unauthenticatedGuard = unauthenticatedGuard;
+        _lifetime = lifetime;
         _timeProvider = timeProvider;
         _logger = logger;
     }
@@ -48,6 +52,13 @@ public sealed class GameHub : Hub
     // Socket Connection Lifecycle - Tracks unauthenticated socket and initializes 15-second handshake abandonment timer (RT-FAIL-001, RT-RISK-004, RT-TEST-009).
     public override async Task OnConnectedAsync()
     {
+        // Graceful Rolling Shutdown Gate (OPS-SHUT-001 item 2) - Ceases accepting new WebSocket connections once SIGTERM drain begins
+        if (_lifetime.ApplicationStopping.IsCancellationRequested)
+        {
+            Context.Abort();
+            return;
+        }
+
         _unauthenticatedGuard.Track(Context.ConnectionId, Context.Abort);
         await base.OnConnectedAsync();
     }
@@ -585,6 +596,13 @@ public sealed class GameHub : Hub
         {
             // Handshake Guard Cleanup - Removes pending handshake abandonment tracking upon socket disconnection.
             _unauthenticatedGuard.Remove(Context.ConnectionId);
+
+            // The lease expires on peers; querying PostgreSQL for every socket during a planned
+            // replica drain would amplify shutdown into a database outage.
+            if (_lifetime.ApplicationStopping.IsCancellationRequested)
+            {
+                return;
+            }
 
             // Host Disconnection Handling - Detects loss of host socket and begins 300-second abandonment grace if zero active hosts remain.
             if (_presence.TryGetConnection(Context.ConnectionId, out Guid hostAccountId, out Guid gameId))

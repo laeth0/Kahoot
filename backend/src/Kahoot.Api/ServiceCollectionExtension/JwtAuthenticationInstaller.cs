@@ -49,14 +49,23 @@ public static class JwtAuthenticationInstaller
 
                 options.Events = new JwtBearerEvents
                 {
-                    // WebSocket Query Token Extraction - Extracts Bearer access_token from query string for browser SignalR WebSocket connections.
+                    // WebSocket Query Token Extraction - Extracts Bearer access_token from HttpContext.Items (redacted) or query string for browser SignalR connections.
                     OnMessageReceived = context =>
                     {
-                        if (context.Request.Path.StartsWithSegments("/hubs/game") &&
-                            context.Request.Query.TryGetValue("access_token", out StringValues accessToken) &&
-                            !StringValues.IsNullOrEmpty(accessToken))
+                        if (context.Request.Path.StartsWithSegments("/hubs/game"))
                         {
-                            context.Token = accessToken;
+                            if (context.HttpContext.Items.TryGetValue("access_token", out object? tokenObj) &&
+                                tokenObj is string token &&
+                                !string.IsNullOrEmpty(token))
+                            {
+                                context.Token = token;
+                            }
+                            else if (context.Request.Query.TryGetValue("access_token", out StringValues accessToken) &&
+                                     !StringValues.IsNullOrEmpty(accessToken) &&
+                                     !string.Equals(accessToken.ToString(), "[REDACTED]", StringComparison.Ordinal))
+                            {
+                                context.Token = accessToken;
+                            }
                         }
 
                         return Task.CompletedTask;

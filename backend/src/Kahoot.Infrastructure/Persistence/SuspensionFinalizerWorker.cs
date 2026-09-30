@@ -19,17 +19,21 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
 
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ISuspensionFinalizerChannel _channel;
+    private readonly ICriticalWorkerFailureTracker _failureTracker;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<SuspensionFinalizerWorker> _logger;
+    private bool _hostBatchFailed;
 
     public SuspensionFinalizerWorker(
         IServiceScopeFactory scopeFactory,
         ISuspensionFinalizerChannel channel,
+        ICriticalWorkerFailureTracker failureTracker,
         TimeProvider timeProvider,
         ILogger<SuspensionFinalizerWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _channel = channel;
+        _failureTracker = failureTracker;
         _timeProvider = timeProvider;
         _logger = logger;
     }
@@ -87,7 +91,12 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
     {
         try
         {
+            _hostBatchFailed = false;
             await ProcessAllPendingSuspensionsAsync(cancellationToken);
+            if (!_hostBatchFailed)
+            {
+                _failureTracker.ReportSuccess("SuspensionGameFinalizer");
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -95,6 +104,8 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
         }
         catch (Exception exception)
         {
+            // Critical Worker Failure Escalation (OPS-WORK-002) - Escalates error tracking if suspension sweep fails repeatedly beyond 15 minutes
+            _failureTracker.ReportFailure("SuspensionGameFinalizer", exception);
             _logger.LogError(exception, "Suspension finalization sweep failed. EventName={EventName}", "SuspensionFinalizerSweepError");
         }
     }
@@ -143,6 +154,8 @@ internal sealed class SuspensionFinalizerWorker : BackgroundService
         }
         catch (Exception exception)
         {
+            _hostBatchFailed = true;
+            _failureTracker.ReportFailure("SuspensionGameFinalizer", exception);
             _logger.LogError(exception, "Suspension finalization failed for host {HostAccountId}. EventName={EventName}",
                 hostAccountId, "SuspensionFinalizerHostError");
         }

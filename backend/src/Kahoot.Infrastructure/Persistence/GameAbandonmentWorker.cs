@@ -20,17 +20,20 @@ internal sealed class GameAbandonmentWorker : BackgroundService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly TimeProvider _timeProvider;
     private readonly HostPresenceService _presence;
+    private readonly ICriticalWorkerFailureTracker _failureTracker;
     private readonly ILogger<GameAbandonmentWorker> _logger;
     private Guid _lastRecoveryGameId;
 
     public GameAbandonmentWorker(
         IServiceScopeFactory scopeFactory,
         HostPresenceService presence,
+        ICriticalWorkerFailureTracker failureTracker,
         TimeProvider timeProvider,
         ILogger<GameAbandonmentWorker> logger)
     {
         _scopeFactory = scopeFactory;
         _presence = presence;
+        _failureTracker = failureTracker;
         _timeProvider = timeProvider;
         _logger = logger;
     }
@@ -43,8 +46,8 @@ internal sealed class GameAbandonmentWorker : BackgroundService
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                await RecoverMissingGraceTimersAsync(stoppingToken);
-                await SweepAbandonedGamesAsync(stoppingToken);
+                bool recoverySucceeded = await RecoverMissingGraceTimersAsync(stoppingToken);
+                await SweepAbandonedGamesAsync(recoverySucceeded, stoppingToken);
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -53,7 +56,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
         }
     }
 
-    private async Task RecoverMissingGraceTimersAsync(CancellationToken cancellationToken)
+    private async Task<bool> RecoverMissingGraceTimersAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -70,7 +73,7 @@ internal sealed class GameAbandonmentWorker : BackgroundService
             if (gameIds.Count == 0)
             {
                 _lastRecoveryGameId = Guid.Empty;
-                return;
+                return true;
             }
 
             _lastRecoveryGameId = gameIds[^1];
@@ -102,6 +105,8 @@ internal sealed class GameAbandonmentWorker : BackgroundService
             {
                 _lastRecoveryGameId = Guid.Empty;
             }
+
+            return true;
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -109,11 +114,13 @@ internal sealed class GameAbandonmentWorker : BackgroundService
         }
         catch (Exception exception)
         {
+            _failureTracker.ReportFailure("AbandonedGameFinalizer", exception);
             _logger.LogError(exception, "Abandonment grace recovery failed.");
+            return false;
         }
     }
 
-    private async Task SweepAbandonedGamesAsync(CancellationToken cancellationToken)
+    private async Task SweepAbandonedGamesAsync(bool recoverySucceeded, CancellationToken cancellationToken)
     {
         try
         {
@@ -140,6 +147,10 @@ internal sealed class GameAbandonmentWorker : BackgroundService
 
             if (candidateGames.Count == 0)
             {
+                if (recoverySucceeded)
+                {
+                    _failureTracker.ReportSuccess("AbandonedGameFinalizer");
+                }
                 return;
             }
 
@@ -170,6 +181,10 @@ internal sealed class GameAbandonmentWorker : BackgroundService
             if (abandonedGames.Count == 0)
             {
                 await transaction.CommitAsync(cancellationToken);
+                if (recoverySucceeded)
+                {
+                    _failureTracker.ReportSuccess("AbandonedGameFinalizer");
+                }
                 return;
             }
 
@@ -256,6 +271,10 @@ internal sealed class GameAbandonmentWorker : BackgroundService
                         gameId, stateVersion);
                 }
             }
+            if (recoverySucceeded)
+            {
+                _failureTracker.ReportSuccess("AbandonedGameFinalizer");
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -263,6 +282,8 @@ internal sealed class GameAbandonmentWorker : BackgroundService
         }
         catch (Exception exception)
         {
+            // Critical Worker Failure Escalation (OPS-WORK-002) - Escalates error tracking if abandonment sweep fails repeatedly beyond 15 minutes
+            _failureTracker.ReportFailure("AbandonedGameFinalizer", exception);
             _logger.LogError(
                 exception,
                 "Error occurred while sweeping abandoned games. EventName={EventName}",

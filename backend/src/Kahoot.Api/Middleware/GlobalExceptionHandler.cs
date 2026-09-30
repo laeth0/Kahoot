@@ -20,6 +20,8 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
         Exception exception,
         CancellationToken cancellationToken)
     {
+        Exception rootException = exception.GetBaseException();
+
         // Payload Limit Interception - Converts ASP.NET Core request body size limit rejections into typed image payload error responses.
         if (exception is BadHttpRequestException { StatusCode: StatusCodes.Status413PayloadTooLarge } &&
             string.Equals(httpContext.Request.Path.Value, "/api/uploads/images", StringComparison.OrdinalIgnoreCase))
@@ -72,11 +74,44 @@ internal sealed class GlobalExceptionHandler : IExceptionHandler
             return true;
         }
 
-        // Transient Fault Shield - Classifies transient Npgsql exceptions and timeouts into 503 Service Unavailable responses.
-        Exception rootException = exception.GetBaseException();
-        if (rootException is Npgsql.NpgsqlException { IsTransient: true } or TimeoutException)
+        // Npgsql pool timeouts can wrap a TimeoutException, so inspect the exception chain before classifying the failure.
+        Npgsql.NpgsqlException? databaseException = null;
+        for (Exception? current = exception; current is not null; current = current.InnerException)
         {
-            _logger.LogError(exception, "Database service is temporarily unavailable.");
+            if (current is Npgsql.NpgsqlException npgsqlException)
+            {
+                databaseException = npgsqlException;
+                break;
+            }
+        }
+
+        bool isPoolExhausted = databaseException is not null &&
+            (databaseException.Message.Contains("pool has been exhausted", StringComparison.OrdinalIgnoreCase) ||
+             databaseException.Message.Contains("connection pool", StringComparison.OrdinalIgnoreCase) ||
+             databaseException.SqlState == "53300");
+
+        if (isPoolExhausted)
+        {
+            _logger.LogError(exception, "Database connection pool exhausted. EventName={EventName}", "DatabasePoolExhausted");
+            httpContext.Response.Headers.RetryAfter = "5";
+
+            await Results.Problem(
+                instance: httpContext.Request.Path,
+                statusCode: StatusCodes.Status503ServiceUnavailable,
+                title: "Database.PoolExhausted",
+                detail: "Database connection pool capacity exceeded. Please retry after the specified interval.",
+                type: "https://api.kahoot-saas.local/errors/Database.PoolExhausted",
+                extensions: CreateExtensions(httpContext, "Database.PoolExhausted"))
+                .ExecuteAsync(httpContext);
+
+            return true;
+        }
+
+        // Transient Fault Shield - Classifies transient Npgsql exceptions and timeouts into 503 Service Unavailable responses with Retry-After: 5 header.
+        if (databaseException?.IsTransient == true || rootException is TimeoutException)
+        {
+            _logger.LogError(exception, "Database service is temporarily unavailable. EventName={EventName}", "DatabaseUnavailable");
+            httpContext.Response.Headers.RetryAfter = "5";
 
             await Results.Problem(
                 instance: httpContext.Request.Path,

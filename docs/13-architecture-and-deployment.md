@@ -151,6 +151,8 @@ server {
 
     # SignalR WebSocket Hub
     location /hubs/game {
+        # Browser access_token query parameters must never enter ingress access logs.
+        access_log off;
         proxy_pass http://backend_nodes;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
