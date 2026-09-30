@@ -29,6 +29,25 @@ public static class PersistenceInstaller
             DatabaseOptions dbOptions = serviceProvider.GetRequiredService<IOptions<DatabaseOptions>>().Value;
 
             NpgsqlConnectionStringBuilder connStrBuilder = new(dbOptions.ConnectionString);
+            // ================================================================================================
+            // BACKPRESSURE PATTERN: Database Connection Pool Bounds & Acquisition Timeout
+            // (ARCH-POOL-001, ARCH-POOL-002)
+            // ------------------------------------------------------------------------------------------------
+            // Context / Problem:
+            // Under high database concurrency across horizontally scaled replicas, allowing unbounded connection
+            // pool expansion or infinite waiting for connection leases can exhaust PostgreSQL server process limits,
+            // saturate database connections, and block application request threads indefinitely.
+            //
+            // Approach & Implementation:
+            // 1. Connection Pool Ceilings (MaxPoolSize = 80, MinPoolSize = 10): Enforces strict upper and lower
+            //    bounds on open PostgreSQL connection handles per replica, keeping backend nodes within engine capacity.
+            // 2. Bounded Acquisition Timeout (Timeout = 15s): If all 80 connections are active, new requests wait
+            //    at most 15 seconds. If a connection cannot be acquired within this window, Npgsql throws
+            //    NpgsqlException with SQLState 53300 ("pool has been exhausted").
+            // 3. Upstream Load Shedding: GlobalExceptionHandler catches the exhausted pool exception and returns
+            //    HTTP 503 (Database.PoolExhausted) with a 'Retry-After: 5' header, shedding load cleanly and
+            //    informing load balancers to route traffic away or throttle retries.
+            // ================================================================================================
             // Bounded Pool Acquisition Timeout (ARCH-POOL-002) - Sets maximum 15-second connection acquisition timeout
             if (connStrBuilder.Timeout <= 0 || connStrBuilder.Timeout > 15)
             {

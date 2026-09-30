@@ -10,6 +10,21 @@ using StackExchange.Redis;
 // Redis Token-Bucket Rate Limiter - Enforces client IP join rate limits using an atomic Lua script to defend against bot spam.
 public sealed class LobbyJoinRateLimiter : ILobbyJoinRateLimiter
 {
+    // ====================================================================================================
+    // BACKPRESSURE PATTERN: Distributed Token-Bucket Ingress Rate Limiting (Redis Atomic Lua)
+    // ----------------------------------------------------------------------------------------------------
+    // Context / Problem:
+    // Game lobbies accept player join requests over HTTP. A malicious client or botnet could attempt a join
+    // flood (DDoS), saturating backend thread pools, opening hundreds of unnecessary database transactions,
+    // and exhausting Redis connection state.
+    //
+    // Approach & Implementation:
+    // 1. Token-Bucket Algorithm: Tokens replenish continuously at 60 tokens/sec up to a burst ceiling of 1200.
+    // 2. Atomic Redis Evaluation: Evaluated via an atomic Lua script across distributed backend replicas,
+    //    ensuring consistent rate enforcement without distributed locks.
+    // 3. Fast-Failure Ingress Rejection: When tokens are exhausted, the request fails fast, rejecting excess
+    //    traffic at the gateway boundary before hitting expensive database operations.
+    // ====================================================================================================
     // Atomic Token-Bucket Lua Script - Computes elapsed time, replenishes tokens at 60 tokens/sec (0.06/ms), and deducts 1 token atomically.
     private const string ConsumeScript = """
         local time = redis.call('TIME')

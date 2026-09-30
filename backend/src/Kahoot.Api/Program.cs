@@ -139,6 +139,25 @@ WebApplication app = builder.Build();
     // SignalR Realtime Hub Mapping - Exposes live WebSocket transport hub for host controls and player game interactions.
     app.MapHub<GameHub>("/hubs/game", options =>
     {
+        // ====================================================================================================
+        // BACKPRESSURE PATTERN: SignalR Realtime Transport Backpressure & Slow-Client Protection
+        // (RT-SEC-002, RT-BOUND-002, RT-RISK-001)
+        // ----------------------------------------------------------------------------------------------------
+        // Context / Problem:
+        // In a live multiplayer game with up to 500 participants, a broadcast (question start, leaderboard) fans
+        // out to all connected sockets. If a client has a poor network connection (e.g., degraded 3G) or pauses
+        // their browser, they cannot drain their TCP receive buffer. Without backpressure, outbound messages
+        // accumulate indefinitely in the server's per-connection send queue, causing unbounded memory bloat and OOM.
+        //
+        // Approach & Implementation:
+        // 1. Pipe Buffer Ceiling (64 KB): TransportMaxBufferSize and ApplicationMaxBufferSize cap the
+        //    underlying System.IO.Pipelines socket buffer to 64 KB. Once 64 KB of unconsumed bytes accumulate,
+        //    the runtime pauses further writes to that client (backpressure asserted).
+        // 2. Timed Disconnect Eviction: TransportSendTimeout (2 seconds) ensures that if a slow client cannot
+        //    drain its bounded buffer within 2 seconds, the server severs the socket connection.
+        // 3. Blast-Radius Containment: Severing the unresponsive client protects host server memory headroom
+        //    and guarantees that remaining 499 players receive broadcasts with zero latency degradation.
+        // ====================================================================================================
         // Transport backpressure - Pauses writes at the 64 KB pipe threshold; blocked sends time out and disconnect.
         options.TransportMaxBufferSize = 64 * 1024;
         options.ApplicationMaxBufferSize = 64 * 1024;

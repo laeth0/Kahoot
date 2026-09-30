@@ -7,6 +7,21 @@ namespace Kahoot.Infrastructure.Persistence;
 
 internal sealed class RefreshTokenCleanupWorker : BackgroundService
 {
+    // ====================================================================================================
+    // BACKPRESSURE PATTERN: Database Write Pacing & Cooperative Yielding (Chunked Batch Deletions)
+    // ----------------------------------------------------------------------------------------------------
+    // Context / Problem:
+    // Large background batch deletions (e.g., millions of expired tokens) in a single database transaction
+    // cause long-held row/table locks, PostgreSQL Write-Ahead Log (WAL) volume spikes, and replication lag,
+    // which starves online interactive transactional traffic.
+    //
+    // Approach & Implementation:
+    // 1. Chunked Bounded Batches (BatchSize = 500, MaxBatchesPerPass = 40): Deletes records in small 500-row
+    //    chunks within short, isolated DbContext transactions (releasing locks immediately per batch).
+    // 2. Cooperative Backpressure Yielding (BatchYieldInterval = 100ms): Between consecutive batch deletions,
+    //    the background worker asynchronously yields execution (Task.Delay) for 100ms. This inserts deliberate
+    //    pacing to allow PostgreSQL engine write queues and concurrent user transactions to process without contention.
+    // ====================================================================================================
     // Bounded Batch Deletion - Deletes in small 500-row chunks with yielding to avoid lock escalation and WAL spikes
     private const int BatchSize = 500;
     private const int MaxBatchesPerPass = 40;

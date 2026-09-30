@@ -8,6 +8,21 @@ using StackExchange.Redis;
 // Multi-Tier Answer Rate Limiter - Enforces per-connection bursts and participant-scoped attempt limits via atomic Redis scripts.
 public sealed class AnswerRateLimiter : IAnswerRateLimiter
 {
+    // ====================================================================================================
+    // BACKPRESSURE PATTERN: Multi-Tier Sliding-Window Ingress Rate Limiting (Redis Sorted Sets)
+    // ----------------------------------------------------------------------------------------------------
+    // Context / Problem:
+    // During active quiz questions, up to 500 players submit answers concurrently. Scripted bots or rapid-click
+    // spam can overwhelm the database with write transactions, lock contention on the game record, and
+    // score calculation overhead.
+    //
+    // Approach & Implementation:
+    // 1. Sliding Window on Socket (Redis ZSET): Clamps connection burst submissions to at most 5 attempts per
+    //    3 seconds by tracking timestamped entries in a Redis sorted set with rolling pruning (ZREMRANGEBYSCORE).
+    // 2. Participant Attempt Ceiling: Caps absolute attempts per participant per question to 10 attempts.
+    // 3. Early Circuit-Breaker: Fails fast in Redis before acquiring PostgreSQL row locks or running EF Core
+    //    queries, insulating the transactional database from submission spikes.
+    // ====================================================================================================
     // Redis TIME keeps the rolling socket window consistent across application replicas.
     private const string RateLimitScript = """
         local socket_limited = false

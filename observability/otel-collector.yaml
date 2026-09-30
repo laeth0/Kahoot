@@ -7,6 +7,18 @@ receivers:
         endpoint: 0.0.0.0:4318
 
 processors:
+  # ====================================================================================================
+  # BACKPRESSURE PATTERN: OpenTelemetry Collector Memory Limiter & Sending Queue
+  # ----------------------------------------------------------------------------------------------------
+  # Context / Problem:
+  # If backend replicas generate a sudden flood of traces/logs, or if storage backends (Jaeger, Loki)
+  # slow down, the collector can run out of memory (OOM) buffering telemetry data.
+  #
+  # Approach & Implementation:
+  # 1. memory_limiter: Periodically checks memory usage (check_interval: 1s). If usage reaches 400 MiB,
+  #    it asserts backpressure by refusing incoming OTLP batches and returning retryable errors (HTTP 429/503).
+  # 2. sending_queue (exporters): Caps in-memory sending buffers to 1000 batches per exporter.
+  # ====================================================================================================
   memory_limiter:
     check_interval: 1s
     limit_mib: 400

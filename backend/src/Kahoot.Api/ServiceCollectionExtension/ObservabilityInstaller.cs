@@ -57,6 +57,20 @@ public static class ObservabilityInstaller
         // query parameters. Suppress that category's informational request logging at the source.
         logging.AddFilter("Microsoft.AspNetCore.Hosting.Diagnostics", LogLevel.Warning);
 
+        // ====================================================================================================
+        // BACKPRESSURE PATTERN: Telemetry Buffer Protection & Bounded Batch Export Pipeline
+        // ----------------------------------------------------------------------------------------------------
+        // Context / Problem:
+        // Exporting telemetry (traces, metrics, logs) synchronously or via unbounded in-memory buffers would
+        // couple application request throughput to external telemetry collector latency. If the collector slows
+        // down, application threads could hang or consume unbounded RAM.
+        //
+        // Approach & Implementation:
+        // 1. Asynchronous In-Memory Batching: OpenTelemetry uses bounded internal queues and asynchronous export.
+        //    If the OTLP collector is slow or unreachable, telemetry spans are dropped to protect host memory.
+        // 2. High-Frequency Probe Filtering: Readiness and liveness probes (/health) are filtered out at the
+        //    source, preventing high-frequency health checks from saturating telemetry queues and collector buffers.
+        // ====================================================================================================
         // Distributed Tracing Pipeline - Instruments ASP.NET Core, HttpClient, and Npgsql with health probe filtering and sensitive tag redaction.
         services.AddOpenTelemetry()
             .ConfigureResource(configureResource)

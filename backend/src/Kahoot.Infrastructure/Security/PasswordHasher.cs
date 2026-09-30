@@ -20,6 +20,24 @@ public sealed class PasswordHasher : IPasswordHasher
     private const int SaltSize = 16;
     private const int HashSize = 32;
 
+    // ====================================================================================================
+    // BACKPRESSURE PATTERN: CPU/Memory Concurrency Throttling & Fast-Failure Load Shedding (SemaphoreSlim)
+    // ----------------------------------------------------------------------------------------------------
+    // Context / Problem:
+    // Argon2id key derivation is intentionally tuned for high security: 64 MiB RAM and 3 iterations per hash.
+    // Under credential-stuffing attacks or login traffic spikes, unconstrained concurrent hashing would cause
+    // catastrophic memory consumption (e.g., 100 concurrent hashes = 6.4 GiB RAM) and CPU starvation, crashing
+    // the node via OOM or causing severe thread-pool exhaustion.
+    //
+    // Approach & Implementation:
+    // 1. Physical Core Ceiling (MaxActiveHashingOperations = 16): Limits active hashing operations to 16,
+    //    enforcing a strict ~1 GiB peak memory ceiling matching physical processor core limits.
+    // 2. Bounded Waiting Queue (MaxQueuedHashingOperations = 50): Callers waiting for a free slot are tracked
+    //    using an atomic counter (_queuedCount).
+    // 3. Load Shedding via 429: If all 16 slots are active and 50 callers are already waiting in queue, excess
+    //    callers are immediately rejected with PasswordHashingRateLimitedException (surfacing HTTP 429 Too
+    //    Many Requests). This sheds excess load at the boundary instead of degrading server response times.
+    // ====================================================================================================
     // Concurrency Gating & Memory Cap (Anti-DoS) - Limits active hashing to 16 (1 GiB ceiling) and queues 50 to prevent OOM crash.
     private const int MaxActiveHashingOperations = 16;
     private const int MaxQueuedHashingOperations = 50;
