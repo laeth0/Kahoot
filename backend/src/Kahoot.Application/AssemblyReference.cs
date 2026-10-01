@@ -1,4 +1,7 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("Kahoot.Application.UnitTests")]
 
 namespace Kahoot.Application;
 

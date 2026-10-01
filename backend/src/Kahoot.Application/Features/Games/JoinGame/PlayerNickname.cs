@@ -1,8 +1,8 @@
-namespace Kahoot.Application.Features.Games.JoinGame;
-
 using System.Buffers;
 using System.Globalization;
 using System.Text;
+
+namespace Kahoot.Application.Features.Games.JoinGame;
 
 internal static class PlayerNickname
 {
