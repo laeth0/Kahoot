@@ -5,4 +5,13 @@
     <Project Path="src/Kahoot.Domain/Kahoot.Domain.csproj" />
     <Project Path="src/Kahoot.Infrastructure/Kahoot.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Kahoot.Api.IntegrationTests/Kahoot.Api.IntegrationTests.csproj" />
+    <Project Path="test/Kahoot.Api.UnitTests/Kahoot.Api.UnitTests.csproj" />
+    <Project Path="test/Kahoot.Application.IntegrationTests/Kahoot.Application.IntegrationTests.csproj" />
+    <Project Path="test/Kahoot.Application.UnitTests/Kahoot.Application.UnitTests.csproj" />
+    <Project Path="test/Kahoot.Domain.UnitTests/Kahoot.Domain.UnitTests.csproj" />
+    <Project Path="test/Kahoot.Infrastructure.IntegrationTests/Kahoot.Infrastructure.IntegrationTests.csproj" />
+    <Project Path="test/Kahoot.Infrastructure.UnitTests/Kahoot.Infrastructure.UnitTests.csproj" />
+  </Folder>
 </Solution>

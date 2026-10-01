@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Kahoot.Infrastructure\Kahoot.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Persistence\" />
+    <Folder Include="Realtime\" />
+    <Folder Include="Security\" />
+    <Folder Include="Storage\" />
+  </ItemGroup>
+
+</Project>
