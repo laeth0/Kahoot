@@ -19,7 +19,7 @@ internal sealed class ReadinessHealthCheck : IHealthCheck
     private readonly ICriticalWorkerFailureTracker _workerFailureTracker;
     private readonly TimeProvider _timeProvider;
     private readonly IHostApplicationLifetime _lifetime;
-    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private readonly SemaphoreSlim _refreshGate = new SemaphoreSlim(1, 1);
     private CachedResult? _cachedResult;
 
     public ReadinessHealthCheck(
