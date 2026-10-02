@@ -1,6 +1,6 @@
 ---
 name: dotnet-backend-patterns
-description: Master C#/.NET backend development patterns for building robust APIs, MCP servers, and enterprise applications. Covers async/await, dependency injection, Entity Framework Core, Dapper, configuration, caching, and testing with xUnit. Use when developing .NET backends, reviewing C# code, or designing API architectures.
+description: Master C#/.NET backend development patterns for building robust APIs, MCP servers, and enterprise applications. Covers async/await, dependency injection, Entity Framework Core, configuration, caching, and testing with xUnit. Use when developing .NET backends, reviewing C# code, or designing API architectures.
 ---
 
 # .NET Backend Development Patterns
@@ -14,7 +14,7 @@ Master C#/.NET patterns for building production-grade APIs, MCP servers, and ent
 - Designing service architectures with dependency injection
 - Implementing caching strategies with Redis
 - Writing unit and integration tests
-- Optimizing database access with EF Core or Dapper
+- Optimizing database access with EF Core
 - Configuring applications with IOptions pattern
 - Handling errors and implementing resilience patterns
 
@@ -35,7 +35,7 @@ src/
 │   ├── Validators/
 │   └── Interfaces/
 ├── Infrastructure/             # External implementations
-│   ├── Data/                   # EF Core, Dapper repositories
+│   ├── Data/                   # EF Core repositories
 │   ├── Caching/                # Redis, Memory cache
 │   ├── External/               # HTTP clients, third-party APIs
 │   └── DependencyInjection/    # Service registration
@@ -373,110 +373,6 @@ public class ProductRepository : IProductRepository
 }
 ```
 
-### Dapper for Performance
-
-```csharp
-public class DapperProductRepository : IProductRepository
-{
-    private readonly IDbConnection _connection;
-
-    public async Task<Product?> GetByIdAsync(string id, CancellationToken ct = default)
-    {
-        const string sql = """
-            SELECT Id, Name, Sku, Price, CategoryId, Stock, CreatedAt
-            FROM Products
-            WHERE Id = @Id AND IsDeleted = 0
-            """;
-
-        return await _connection.QueryFirstOrDefaultAsync<Product>(
-            new CommandDefinition(sql, new { Id = id }, cancellationToken: ct));
-    }
-
-    public async Task<IReadOnlyList<Product>> SearchAsync(
-        ProductSearchCriteria criteria,
-        CancellationToken ct = default)
-    {
-        var sql = new StringBuilder("""
-            SELECT Id, Name, Sku, Price, CategoryId, Stock, CreatedAt
-            FROM Products
-            WHERE IsDeleted = 0
-            """);
-
-        var parameters = new DynamicParameters();
-
-        if (!string.IsNullOrWhiteSpace(criteria.SearchTerm))
-        {
-            sql.Append(" AND Name LIKE @SearchTerm");
-            parameters.Add("SearchTerm", $"%{criteria.SearchTerm}%");
-        }
-
-        if (criteria.CategoryId.HasValue)
-        {
-            sql.Append(" AND CategoryId = @CategoryId");
-            parameters.Add("CategoryId", criteria.CategoryId);
-        }
-
-        if (criteria.MinPrice.HasValue)
-        {
-            sql.Append(" AND Price >= @MinPrice");
-            parameters.Add("MinPrice", criteria.MinPrice);
-        }
-
-        if (criteria.MaxPrice.HasValue)
-        {
-            sql.Append(" AND Price <= @MaxPrice");
-            parameters.Add("MaxPrice", criteria.MaxPrice);
-        }
-
-        sql.Append(" ORDER BY Name OFFSET @Offset ROWS FETCH NEXT @PageSize ROWS ONLY");
-        parameters.Add("Offset", (criteria.Page - 1) * criteria.PageSize);
-        parameters.Add("PageSize", criteria.PageSize);
-
-        var results = await _connection.QueryAsync<Product>(
-            new CommandDefinition(sql.ToString(), parameters, cancellationToken: ct));
-
-        return results.ToList();
-    }
-
-    // Multi-mapping for related data
-    public async Task<Order?> GetOrderWithItemsAsync(int orderId, CancellationToken ct = default)
-    {
-        const string sql = """
-            SELECT o.*, oi.*, p.*
-            FROM Orders o
-            LEFT JOIN OrderItems oi ON o.Id = oi.OrderId
-            LEFT JOIN Products p ON oi.ProductId = p.Id
-            WHERE o.Id = @OrderId
-            """;
-
-        var orderDictionary = new Dictionary<int, Order>();
-
-        await _connection.QueryAsync<Order, OrderItem, Product, Order>(
-            new CommandDefinition(sql, new { OrderId = orderId }, cancellationToken: ct),
-            (order, item, product) =>
-            {
-                if (!orderDictionary.TryGetValue(order.Id, out var existingOrder))
-                {
-                    existingOrder = order;
-                    existingOrder.Items = new List<OrderItem>();
-                    orderDictionary.Add(order.Id, existingOrder);
-                }
-
-                if (item != null)
-                {
-                    item.Product = product;
-                    existingOrder.Items.Add(item);
-                }
-
-                return existingOrder;
-            },
-            splitOn: "Id,Id");
-
-        return orderDictionary.Values.FirstOrDefault();
-    }
-}
-```
-
 ## Caching Patterns
 
 ### Multi-Level Cache with Redis
@@ -780,7 +676,7 @@ public class ProductsApiTests : IClassFixture<WebApplicationFactory<Program>>
 3. **Use IOptions<T>** for typed configuration
 4. **Return Result types** instead of throwing exceptions for business logic
 5. **Use CancellationToken** in all async methods
-6. **Prefer Dapper** for read-heavy, performance-critical queries
+6. **Use AsNoTracking() and projections** for read-heavy, performance-critical queries
 7. **Use EF Core** for complex domain models with change tracking
 8. **Cache aggressively** with proper invalidation strategies
 9. **Write unit tests** for business logic, integration tests for APIs

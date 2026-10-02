@@ -1,5 +1,5 @@
 // Repository Implementation Template for .NET 8+
-// Demonstrates EF Core repository and unit of work patterns
+// Demonstrates EF Core repository and specification patterns
 
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
